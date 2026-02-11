@@ -2,54 +2,73 @@ package codegen
 
 import "fmt"
 
+// Position represents a position in the source code.
+type Position struct {
+	Line   int
+	Column int
+}
+
 // Schema is the root node of a TL schema AST.
 type Schema struct {
-	Layer        int          // Detected or provided layer version
-	Types        []TypeDecl   // From ---types--- section
-	Functions    []FuncDecl   // From ---functions--- section
+	Layer        int           // Detected or provided layer version
+	Types        []TypeDecl    // From ---types--- section
+	Functions    []FuncDecl    // From ---functions--- section
 	Constructors []Constructor // All constructors from types
+}
+
+// GenericParam represents a generic type parameter like {t:Type}.
+type GenericParam struct {
+	Name       string // "t", "X"
+	Constraint string // "Type", "Int", etc.
+	Pos        Position
 }
 
 // TypeDecl represents a type declaration with all its constructors.
 type TypeDecl struct {
-	Name         string       // e.g., "User", "Message"
+	Name         string        // e.g., "User", "Message"
 	Constructors []Constructor // All constructors for this type
-	IsUnion      bool         // true if multiple constructors
+	IsUnion      bool          // true if multiple constructors
 }
 
 // Constructor represents a single constructor in TL.
 type Constructor struct {
-	Name       string      // e.g., "user", "userEmpty"
-	ID         uint32      // Hex ID or computed CRC32
-	Params     []Parameter
-	ResultType TypeRef     // Return type
-	IsBare     bool        // % prefix
+	Name          string         // e.g., "user", "userEmpty"
+	ID            uint32         // Hex ID or computed CRC32
+	GenericParams []GenericParam // NEW: {t:Type}
+	Params        []Parameter
+	ResultType    TypeRef // Return type
+	IsBare        bool    // % prefix
+	VectorCount   *string // NEW: element variable for vectors, e.g., "t" in "# [ t ]"
 }
 
 // FuncDecl represents a function declaration.
 type FuncDecl struct {
-	Name       string      // e.g., "auth.sendCode"
-	ID         uint32
-	Params     []Parameter
-	ResultType TypeRef
+	Name          string // e.g., "auth.sendCode"
+	ID            uint32
+	GenericParams []GenericParam // NEW: {X:Type}
+	Params        []Parameter
+	ResultType    TypeRef
+	IsTemplate    bool // NEW: true if return type is generic param (e.g., = X)
 }
 
 // Parameter represents a parameter in a constructor or function.
 type Parameter struct {
-	Name     string
-	Type     TypeRef
-	FlagBit  *int       // nil if not conditional
+	Name    string
+	Type    TypeRef
+	FlagBit *int // nil if not conditional
 }
 
 // TypeRef represents a type reference, possibly generic or conditional.
 type TypeRef struct {
-	Name      string     // "int", "long", "User", etc.
-	Namespace string     // "mtproto" in "mtproto.Object"
-	IsVector  bool
-	IsBare    bool       // ! prefix for bare types
-	Generic   *TypeRef   // For vector<Generic>
-	Optional  bool       // flags.N?Type
-	FlagBit   *int       // Conditional on this flag bit
+	Name       string // "int", "long", "User", etc.
+	Namespace  string // "mtproto" in "mtproto.Object"
+	IsVector   bool
+	IsBare     bool     // ! prefix for bare types
+	Generic    *TypeRef // For vector<Generic>
+	GenericArg string   // NEW: for "Vector t" - the "t" part
+	Optional   bool     // flags.N?Type
+	FlagBit    *int     // Conditional on this flag bit
+	IsTypeVar  bool     // NEW: true if this is a type variable like "t" or "X"
 }
 
 // NewTypeRef creates a simple type reference.
@@ -108,6 +127,11 @@ func (t TypeRef) String() string {
 
 	result += t.Name
 
+	// Handle generic argument like "Vector t"
+	if t.GenericArg != "" {
+		result += " " + t.GenericArg
+	}
+
 	if t.IsVector {
 		result += "<"
 		if t.Generic != nil {
@@ -140,6 +164,20 @@ func (t TypeRef) IsBuiltin() bool {
 	default:
 		return false
 	}
+}
+
+// isTypeVariable returns true if the given name is a type variable (single letter).
+func isTypeVariable(name string) bool {
+	if len(name) != 1 {
+		return false
+	}
+	ch := name[0]
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
+// String returns a string representation of a generic parameter.
+func (p GenericParam) String() string {
+	return fmt.Sprintf("%s:%s", p.Name, p.Constraint)
 }
 
 // NewSchema creates a new schema with the given layer.

@@ -112,6 +112,55 @@ func (p *Parser) parseConstructors(schema *Schema) error {
 	return nil
 }
 
+// parseGenericParams parses generic parameters like {t:Type, X:Type}.
+func (p *Parser) parseGenericParams() ([]GenericParam, error) {
+	var params []GenericParam
+
+	if p.cur.Type != TokenLBrace {
+		return nil, p.errorf("expected { to start generic params")
+	}
+	p.nextToken() // consume {
+
+	for p.cur.Type != TokenRBrace && p.cur.Type != TokenEOF {
+		if p.cur.Type != TokenIdent {
+			return nil, p.errorf("expected identifier in generic param")
+		}
+		param := GenericParam{
+			Name: p.cur.Literal,
+			Pos:  Position{Line: p.cur.Line, Column: p.cur.Column},
+		}
+		p.nextToken() // consume name
+
+		if p.cur.Type != TokenColon {
+			return nil, p.errorf("expected : in generic param")
+		}
+		p.nextToken() // consume :
+
+		// Parse constraint type (simple identifier for now)
+		if p.cur.Type != TokenIdent {
+			return nil, p.errorf("expected type constraint in generic param")
+		}
+		param.Constraint = p.cur.Literal
+		p.nextToken() // consume constraint
+
+		params = append(params, param)
+
+		// Check for comma or end
+		if p.cur.Type == TokenComma {
+			p.nextToken() // consume ,
+		} else if p.cur.Type != TokenRBrace {
+			return nil, p.errorf("expected , or } in generic params")
+		}
+	}
+
+	if p.cur.Type != TokenRBrace {
+		return nil, p.errorf("expected } to close generic params")
+	}
+	p.nextToken() // consume }
+
+	return params, nil
+}
+
 // parseFunctionsSection parses a ---functions--- section.
 func (p *Parser) parseFunctionsSection(schema *Schema) error {
 	p.expect(TokenFunctions)
@@ -151,7 +200,7 @@ func (p *Parser) parseConstructor() (*Constructor, error) {
 	p.nextToken() // consume #
 
 	var id uint32
-	if p.cur.Type == TokenNumber {
+	if p.cur.Type == TokenNumber || (p.cur.Type == TokenIdent && isAllHexDigits(p.cur.Literal)) {
 		id, err = p.parseHexID()
 		if err != nil {
 			return nil, err
@@ -159,6 +208,31 @@ func (p *Parser) parseConstructor() (*Constructor, error) {
 	} else {
 		// No explicit ID, will be computed later
 		id = 0 // Placeholder
+	}
+
+	// NEW: Parse optional generic params {t:Type}
+	var genericParams []GenericParam
+	if p.cur.Type == TokenLBrace {
+		genericParams, err = p.parseGenericParams()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// NEW: Parse optional vector count # [ t ]
+	var vectorCount *string
+	if p.cur.Type == TokenHashBracket {
+		p.nextToken() // consume # [
+		if p.cur.Type != TokenIdent {
+			return nil, p.errorf("expected element variable name after # [")
+		}
+		count := p.cur.Literal
+		vectorCount = &count
+		p.nextToken() // consume ident
+		if p.cur.Type != TokenRBracket {
+			return nil, p.errorf("expected ] after element variable")
+		}
+		p.nextToken() // consume ]
 	}
 
 	params, err := p.parseParams()
@@ -176,6 +250,13 @@ func (p *Parser) parseConstructor() (*Constructor, error) {
 		return nil, err
 	}
 
+	// Check for generic arg like "Vector t"
+	if p.cur.Type == TokenIdent {
+		resultType.GenericArg = p.cur.Literal
+		resultType.IsTypeVar = isTypeVariable(resultType.GenericArg)
+		p.nextToken()
+	}
+
 	// If no explicit ID, compute CRC32
 	if id == 0 {
 		format := p.computeConstructorFormat(name, params, resultType)
@@ -183,11 +264,13 @@ func (p *Parser) parseConstructor() (*Constructor, error) {
 	}
 
 	return &Constructor{
-		Name:       name,
-		ID:         id,
-		Params:     params,
-		ResultType: resultType,
-		IsBare:     isBare,
+		Name:          name,
+		ID:            id,
+		GenericParams: genericParams,
+		Params:        params,
+		ResultType:    resultType,
+		IsBare:        isBare,
+		VectorCount:   vectorCount,
 	}, nil
 }
 
@@ -208,6 +291,15 @@ func (p *Parser) parseFunction() (*FuncDecl, error) {
 		return nil, err
 	}
 
+	// NEW: Parse optional generic params {X:Type}
+	var genericParams []GenericParam
+	if p.cur.Type == TokenLBrace {
+		genericParams, err = p.parseGenericParams()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	params, err := p.parseParams()
 	if err != nil {
 		return nil, err
@@ -223,11 +315,29 @@ func (p *Parser) parseFunction() (*FuncDecl, error) {
 		return nil, err
 	}
 
+	// Check for generic arg like "X"
+	if p.cur.Type == TokenIdent {
+		resultType.GenericArg = p.cur.Literal
+		resultType.IsTypeVar = isTypeVariable(resultType.GenericArg)
+		p.nextToken()
+	}
+
+	// Check if this is a template function (return type is a generic param)
+	isTemplate := false
+	for _, gp := range genericParams {
+		if resultType.Name == gp.Name {
+			isTemplate = true
+			break
+		}
+	}
+
 	return &FuncDecl{
-		Name:       name,
-		ID:         id,
-		Params:     params,
-		ResultType: resultType,
+		Name:          name,
+		ID:            id,
+		GenericParams: genericParams,
+		Params:        params,
+		ResultType:    resultType,
+		IsTemplate:    isTemplate,
 	}, nil
 }
 
@@ -257,12 +367,15 @@ func (p *Parser) parseIdent() (string, error) {
 
 // parseHexID parses a hex ID (with or without 0x prefix).
 func (p *Parser) parseHexID() (uint32, error) {
-	if p.cur.Type != TokenNumber {
+	if p.cur.Type != TokenNumber && p.cur.Type != TokenIdent {
 		return 0, p.errorf("expected hex number, got %s", p.cur.Type)
 	}
 
 	literal := p.cur.Literal
 	p.nextToken()
+	if !isAllHexDigits(literal) {
+		return 0, p.errorf("expected hex number, got %s", literal)
+	}
 
 	// Remove 0x prefix if present
 	if strings.HasPrefix(literal, "0x") {
@@ -349,7 +462,6 @@ func (p *Parser) parseParam() (*Parameter, error) {
 	return param, nil
 }
 
-
 // parseTypeRef parses a type reference.
 func (p *Parser) parseTypeRef() (TypeRef, error) {
 	var typeRef TypeRef
@@ -360,8 +472,8 @@ func (p *Parser) parseTypeRef() (TypeRef, error) {
 		p.nextToken()
 	}
 
-	// Check for conditional type: flags.N?Type
-	if p.cur.Type == TokenIdent && p.cur.Literal == "flags" {
+	// Check for conditional type: flags.N?Type or flags2.N?Type
+	if p.cur.Type == TokenIdent && strings.HasPrefix(p.cur.Literal, "flags") {
 		return p.parseConditionalTypeRef()
 	}
 
@@ -379,6 +491,7 @@ func (p *Parser) parseTypeRef() (TypeRef, error) {
 	} else {
 		typeRef.Name = name
 	}
+	typeRef.IsTypeVar = isTypeVariable(typeRef.Name)
 
 	// Handle generic types like vector<Type>
 	if p.cur.Type == TokenLess {
@@ -408,8 +521,11 @@ func (p *Parser) parseTypeRef() (TypeRef, error) {
 
 // parseConditionalTypeRef parses conditional type references like "flags.0?string"
 func (p *Parser) parseConditionalTypeRef() (TypeRef, error) {
-	p.expect(TokenIdent) // "flags"
-	p.expect(TokenDot)   // "."
+	if p.cur.Type != TokenIdent || !strings.HasPrefix(p.cur.Literal, "flags") {
+		return TypeRef{}, p.errorf("expected flags identifier, got %s", p.cur.Type)
+	}
+	p.nextToken()      // consume flags identifier
+	p.expect(TokenDot) // "."
 
 	if p.cur.Type != TokenNumber {
 		return TypeRef{}, p.errorf("expected flag bit number, got %s", p.cur.Type)

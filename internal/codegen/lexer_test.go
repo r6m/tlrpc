@@ -125,7 +125,7 @@ func TestLexer_NextToken(t *testing.T) {
 				{Type: TokenDot, Literal: "."},
 				{Type: TokenIdent, Literal: "sendCode"},
 				{Type: TokenHash, Literal: "#"},
-				{Type: TokenNumber, Literal: "a677244f"},
+				{Type: TokenIdent, Literal: "a677244f"},
 				{Type: TokenIdent, Literal: "phone_number"},
 				{Type: TokenColon, Literal: ":"},
 				{Type: TokenIdent, Literal: "string"},
@@ -150,7 +150,7 @@ func TestLexer_NextToken(t *testing.T) {
 				{Type: TokenPercent, Literal: "%"},
 				{Type: TokenIdent, Literal: "userEmpty"},
 				{Type: TokenHash, Literal: "#"},
-				{Type: TokenNumber, Literal: "d3bc4b7c"},
+				{Type: TokenIdent, Literal: "d3bc4b7c"},
 				{Type: TokenEquals, Literal: "="},
 				{Type: TokenIdent, Literal: "User"},
 				{Type: TokenSemi, Literal: ";"},
@@ -313,6 +313,43 @@ func TestLexer_TokenPosition(t *testing.T) {
 	token = lexer.NextToken() // #
 	if token.Line != 2 || token.Column != 3 {
 		t.Errorf("'#' token position: expected 2:3, got %d:%d", token.Line, token.Column)
+	}
+}
+
+func TestLexer_GenericTokens(t *testing.T) {
+	input := `vector#1cb5c415 {t:Type} # [ t ] = Vector t;`
+	lexer := NewLexer(input)
+
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{TokenIdent, "vector"},
+		{TokenHash, "#"},
+		{TokenNumber, "1cb5c415"},
+		{TokenLBrace, "{"},
+		{TokenIdent, "t"},
+		{TokenColon, ":"},
+		{TokenIdent, "Type"},
+		{TokenRBrace, "}"},
+		{TokenHashBracket, "# ["},
+		{TokenIdent, "t"},
+		{TokenRBracket, "]"},
+		{TokenEquals, "="},
+		{TokenIdent, "Vector"},
+		{TokenIdent, "t"},
+		{TokenSemi, ";"},
+		{TokenEOF, ""},
+	}
+
+	for i, tt := range tests {
+		tok := lexer.NextToken()
+		if tok.Type != tt.expectedType {
+			t.Errorf("test %d: expected type %s, got %s", i, tt.expectedType, tok.Type)
+		}
+		if tok.Literal != tt.expectedLiteral {
+			t.Errorf("test %d: expected literal %q, got %q", i, tt.expectedLiteral, tok.Literal)
+		}
 	}
 }
 

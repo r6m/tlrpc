@@ -87,3 +87,15 @@ func TestIntegration_CircularSchema(t *testing.T) {
 	}
 	assert.True(t, circularErrors > 0, "Should have circular dependency errors")
 }
+
+func TestIntegration_RealSchema(t *testing.T) {
+	data, err := ioutil.ReadFile(filepath.Join("..", "..", "testdata", "schema.tl"))
+	require.NoError(t, err)
+
+	parser := NewParser(string(data))
+	schema, err := parser.Parse()
+	require.NoError(t, err)
+
+	assert.True(t, len(schema.Types) > 0)
+	assert.True(t, len(schema.Constructors) > 0)
+}

@@ -9,9 +9,9 @@ import (
 // Lexer tokenizes TL schema input.
 type Lexer struct {
 	input string
-	pos   int  // current position in input
-	line  int  // current line number
-	col   int  // current column number
+	pos   int // current position in input
+	line  int // current line number
+	col   int // current column number
 }
 
 // NewLexer creates a new lexer for the given input.
@@ -70,7 +70,21 @@ func (l *Lexer) NextToken() Token {
 		return l.newToken(TokenGreater, string(ch))
 	case '?':
 		return l.newToken(TokenQuestion, string(ch))
+	case ',':
+		return l.newToken(TokenComma, string(ch))
 	case '#':
+		// Handle special case: # [ for vector count syntax
+		if l.peekChar() == ' ' && l.peekCharN(2) == '[' {
+			// This is vector count syntax: # [ t ]
+			tok := Token{
+				Type:    TokenHashBracket,
+				Literal: "# [",
+				Line:    l.line,
+				Column:  l.col,
+			}
+			l.advance(3) // skip # space [
+			return tok
+		}
 		return l.newToken(TokenHash, string(ch))
 	case '!':
 		return l.newToken(TokenBang, string(ch))
@@ -111,7 +125,7 @@ func (l *Lexer) newToken(tokenType TokenType, literal string) Token {
 	token := Token{
 		Type:    tokenType,
 		Literal: literal,
-		Line:     l.line,
+		Line:    l.line,
 		Column:  l.col,
 	}
 
@@ -141,6 +155,14 @@ func (l *Lexer) peekChar() byte {
 		return 0
 	}
 	return l.input[l.pos+1]
+}
+
+// peekCharN returns the nth character ahead without advancing.
+func (l *Lexer) peekCharN(n int) byte {
+	if l.pos+n >= len(l.input) {
+		return 0
+	}
+	return l.input[l.pos+n]
 }
 
 // skipWhitespace skips whitespace characters (but not newlines).
@@ -236,7 +258,7 @@ func (l *Lexer) readIdent() Token {
 	l.col += len(literal)
 
 	// Check if this looks like a hex number - if so, return as number token
-	if isAllHexDigits(literal) {
+	if isAllHexDigits(literal) && unicode.IsDigit(rune(literal[0])) {
 		return Token{Type: TokenNumber, Literal: literal, Line: l.line, Column: col}
 	}
 

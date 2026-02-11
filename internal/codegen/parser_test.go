@@ -178,9 +178,9 @@ func TestParser_ParseHexIDs(t *testing.T) {
 
 func TestParser_ErrorHandling(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		errMsg   string
+		name   string
+		input  string
+		errMsg string
 	}{
 		{
 			name:   "missing hash",
@@ -227,6 +227,104 @@ func TestParser_ErrorHandling(t *testing.T) {
 // 	ctor := schema.Constructors[0]
 // 	assert.NotEqual(t, uint32(0), ctor.ID) // Should have computed an ID
 // }
+
+func TestParser_ParseVectorConstructor(t *testing.T) {
+	input := `vector#1cb5c415 {t:Type} # [ t ] = Vector t;`
+
+	parser := NewParser(input)
+	schema, err := parser.Parse()
+	require.NoError(t, err)
+
+	require.Len(t, schema.Types, 1)
+	vectorType := schema.Types[0]
+	assert.Equal(t, "Vector", vectorType.Name)
+	require.Len(t, vectorType.Constructors, 1)
+
+	ctor := vectorType.Constructors[0]
+	assert.Equal(t, "vector", ctor.Name)
+	assert.Equal(t, uint32(0x1cb5c415), ctor.ID)
+
+	// Check generic params
+	require.Len(t, ctor.GenericParams, 1)
+	assert.Equal(t, "t", ctor.GenericParams[0].Name)
+	assert.Equal(t, "Type", ctor.GenericParams[0].Constraint)
+
+	// Check vector count
+	require.NotNil(t, ctor.VectorCount)
+	assert.Equal(t, "t", *ctor.VectorCount)
+
+	// Check result type
+	assert.Equal(t, "Vector", ctor.ResultType.Name)
+	assert.Equal(t, "t", ctor.ResultType.GenericArg)
+	assert.True(t, ctor.ResultType.IsTypeVar)
+}
+
+func TestParser_ParseInvokeWithLayerFunction(t *testing.T) {
+	input := `---functions---
+invokeWithLayer#da9b0d0d {X:Type} layer:int query:!X = X;`
+
+	parser := NewParser(input)
+	schema, err := parser.Parse()
+	require.NoError(t, err)
+
+	require.Len(t, schema.Functions, 1)
+	fn := schema.Functions[0]
+	assert.Equal(t, "invokeWithLayer", fn.Name)
+	assert.Equal(t, uint32(0xda9b0d0d), fn.ID)
+
+	// Check generic params
+	require.Len(t, fn.GenericParams, 1)
+	assert.Equal(t, "X", fn.GenericParams[0].Name)
+	assert.Equal(t, "Type", fn.GenericParams[0].Constraint)
+
+	// Check params
+	require.Len(t, fn.Params, 2)
+	assert.Equal(t, "layer", fn.Params[0].Name)
+	assert.Equal(t, "int", fn.Params[0].Type.Name)
+	assert.Equal(t, "query", fn.Params[1].Name)
+	assert.Equal(t, "X", fn.Params[1].Type.Name)
+	assert.True(t, fn.Params[1].Type.IsBare)
+	assert.True(t, fn.Params[1].Type.IsTypeVar)
+
+	// Check result type and template flag
+	assert.Equal(t, "X", fn.ResultType.Name)
+	assert.True(t, fn.ResultType.IsTypeVar)
+	assert.True(t, fn.IsTemplate)
+}
+
+func TestLexer_VectorTokens(t *testing.T) {
+	input := `vector#1cb5c415 {t:Type} # [ t ] = Vector t;`
+	lexer := NewLexer(input)
+
+	expected := []Token{
+		{Type: TokenIdent, Literal: "vector"},
+		{Type: TokenHash, Literal: "#"},
+		{Type: TokenNumber, Literal: "1cb5c415"},
+		{Type: TokenLBrace, Literal: "{"},
+		{Type: TokenIdent, Literal: "t"},
+		{Type: TokenColon, Literal: ":"},
+		{Type: TokenIdent, Literal: "Type"},
+		{Type: TokenRBrace, Literal: "}"},
+		{Type: TokenHashBracket, Literal: "# ["},
+		{Type: TokenIdent, Literal: "t"},
+		{Type: TokenRBracket, Literal: "]"},
+		{Type: TokenEquals, Literal: "="},
+		{Type: TokenIdent, Literal: "Vector"},
+		{Type: TokenIdent, Literal: "t"},
+		{Type: TokenSemi, Literal: ";"},
+		{Type: TokenEOF, Literal: ""},
+	}
+
+	for i, exp := range expected {
+		tok := lexer.NextToken()
+		if tok.Type != exp.Type {
+			t.Errorf("token %d: expected %s, got %s", i, exp.Type, tok.Type)
+		}
+		if tok.Literal != exp.Literal {
+			t.Errorf("token %d: expected literal %q, got %q", i, exp.Literal, tok.Literal)
+		}
+	}
+}
 
 // Benchmark parsing performance
 // func BenchmarkParser_Parse(b *testing.B) {

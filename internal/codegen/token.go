@@ -27,11 +27,13 @@ const (
 	TokenBang       // !
 	TokenPercent    // %
 	TokenDot        // .
+	TokenComma      // ,
 	TokenUnderscore // _
 	TokenNewLine     // \n
 	TokenComment    // // comment
 	TokenTypes      // ---types---
 	TokenFunctions  // ---functions---
+	TokenHashBracket // # [ for vector count syntax
 )
 
 // String returns a string representation of the token type.
@@ -75,6 +77,8 @@ func (t TokenType) String() string {
 		return "PERCENT"
 	case TokenDot:
 		return "DOT"
+	case TokenComma:
+		return "COMMA"
 	case TokenUnderscore:
 		return "UNDERSCORE"
 	case TokenNewLine:
@@ -85,6 +89,8 @@ func (t TokenType) String() string {
 		return "TYPES"
 	case TokenFunctions:
 		return "FUNCTIONS"
+	case TokenHashBracket:
+		return "HASH_BRACKET"
 	default:
 		return fmt.Sprintf("UNKNOWN(%d)", int(t))
 	}

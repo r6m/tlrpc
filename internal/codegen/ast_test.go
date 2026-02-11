@@ -49,6 +49,15 @@ func TestTypeRef_String(t *testing.T) {
 			},
 			expected: "!mtproto.User<int>?",
 		},
+		{
+			name: "type with generic arg",
+			typeRef: TypeRef{
+				Name:       "Vector",
+				GenericArg: "t",
+				IsTypeVar:  true,
+			},
+			expected: "Vector t",
+		},
 	}
 
 	for _, tt := range tests {
@@ -275,6 +284,36 @@ func TestParameter_String(t *testing.T) {
 	assert.Contains(t, str, "Parameter{Name: \"id\"")
 	assert.Contains(t, str, "Type: long")
 	assert.NotContains(t, str, "FlagBit")
+}
+
+func TestGenericParam_String(t *testing.T) {
+	param := GenericParam{
+		Name:       "t",
+		Constraint: "Type",
+		Pos:        Position{Line: 1, Column: 5},
+	}
+
+	assert.Equal(t, "t:Type", param.String())
+}
+
+func TestIsTypeVariable(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{"lowercase single letter", "t", true},
+		{"uppercase single letter", "T", true},
+		{"multiple letters", "Type", false},
+		{"empty string", "", false},
+		{"number", "1", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, isTypeVariable(tt.input))
+		})
+	}
 }
 
 // Helper function to create int pointer for tests
