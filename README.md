@@ -47,11 +47,3 @@ TLRPC follows a layered architecture:
 3. **Protocol Layer**: MTProto message framing and session management
 4. **Layer Adapter**: Handles different client layer versions
 5. **Service Layer**: Your business logic implementation
-
-## Project Status
-
-Alpha - API may change. Not production ready.
-
-## License
-
-MIT

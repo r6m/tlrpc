@@ -1,0 +1,10 @@
+/bin/
+/coverage.out
+/coverage.html
+/internal/testdata/gen/
+/examples/echo/gen/
+/gen/
+*.test
+*.out
+*.log
+.DS_Store
