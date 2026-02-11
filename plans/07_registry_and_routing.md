@@ -9,7 +9,7 @@
 **Documents**: API.md service registration
 
 **Specifications**:
-Create `pkg/tlrpc/registry.go`.
+Create `pkg/registry/registry.go`.
 
 **Structure**:
 ```go
@@ -42,8 +42,8 @@ func (r *serviceRegistry) listServices() []string
 - Verify implementation matches interface (via reflection or code generation)
 
 **Deliverables**:
-- `pkg/tlrpc/registry.go` - Registry implementation
-- `pkg/tlrpc/registry_test.go` - Registration tests
+- `pkg/registry/registry.go` - Registry implementation
+- `pkg/registry/registry_test.go` - Registration tests
 
 **Verification**:
 - [ ] Thread-safe registration
@@ -57,7 +57,7 @@ func (r *serviceRegistry) listServices() []string
 **Documents**: API.md interceptors
 
 **Specifications**:
-Create `pkg/tlrpc/interceptor.go`.
+Create `pkg/registry/interceptor.go`.
 
 **Chain Builder**:
 ```go
@@ -88,8 +88,8 @@ func AuthKeyIDFromContext(ctx context.Context) crypto.KeyID
 ```
 
 **Deliverables**:
-- `pkg/tlrpc/interceptor.go` - Chain and built-ins
-- `pkg/tlrpc/interceptor_test.go` - Chain tests
+- `pkg/registry/interceptor.go` - Chain and built-ins
+- `pkg/registry/interceptor_test.go` - Chain tests
 
 **Verification**:
 - [ ] Interceptors execute in correct order

@@ -145,7 +145,7 @@ import (
     "log"
     "net"
 
-    "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/pkg/tlrpc"
     "github.com/r6m/tlrpc/gen"
 )
 

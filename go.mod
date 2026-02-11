@@ -3,8 +3,8 @@ module github.com/r6m/tlrpc
 go 1.25
 
 require (
+	github.com/gorilla/websocket v1.5.3
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.17.0
 )
 
 require (

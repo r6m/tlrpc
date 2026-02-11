@@ -18,7 +18,7 @@ package layer
 import (
     "io"
     
-    "github.com/r6m/tlrpc/pkg/mtproto"
+    "github.com/r6m/tlrpc/pkg/protocol"
 )
 
 // Layer handles serialization for a specific TL layer version
@@ -93,7 +93,7 @@ package layer195
 import (
     "io"
     
-    "github.com/r6m/tlrpc/pkg/mtproto"
+    "github.com/r6m/tlrpc/pkg/protocol"
 )
 
 type Layer struct{}
@@ -145,8 +145,8 @@ func (l *Layer) GetMethodName(obj mtproto.TLObject) (string, bool) {
 ```
 
 **Deliverables**:
-- Update `pkg/codegen/` to generate layer packages
-- `pkg/codegen/gen_layer.go` - Layer generator
+- Update `internal/codegen/` to generate layer packages
+- `internal/codegen/gen_layer.go` - Layer generator
 
 **Verification**:
 - [ ] Generated layers implement interface

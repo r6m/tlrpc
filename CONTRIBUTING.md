@@ -15,14 +15,14 @@ make test
 - `pkg/transport/`: Transport implementations
 - `pkg/crypto/`: Cryptographic primitives
 - `pkg/session/`: Session management
-- `pkg/mtproto/`: MTProto protocol
+- `pkg/protocol/`: MTProto protocol
 - `pkg/layer/`: Layer support
-- `pkg/codegen/`: Code generation library
+- `internal/codegen/`: Code generation library
 - `cmd/tlrpc-gen/`: CLI tool
 
 ## Code Standards
 
-- **Go Version**: 1.21+
+- **Go Version**: 1.24+
 - **Linting**: `golangci-lint` with strict config
 - **Testing**: >80% coverage for core, >90% for crypto
 - **Documentation**: All exported types documented
@@ -37,8 +37,8 @@ make test
 
 ## Adding Code Generation Features
 
-1. Modify `pkg/codegen/generator.go`
-2. Add template to `pkg/codegen/templates.go`
+1. Modify `internal/codegen/generator.go`
+2. Add template to `internal/codegen/templates.go`
 3. Regenerate test files: `make generate-test`
 4. Verify with `make test`
 

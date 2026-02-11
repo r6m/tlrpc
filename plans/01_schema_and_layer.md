@@ -9,7 +9,7 @@
 **Documents**: TL grammar in ARCHITECTURE.md, DESIGN.md
 
 **Specifications**:
-Create `pkg/codegen/lexer.go` that tokenizes TL schema syntax.
+Create `internal/codegen/lexer.go` that tokenizes TL schema syntax.
 
 **Token Types**:
 ```go
@@ -65,9 +65,9 @@ func (l *Lexer) PeekToken() Token
 - Whitespace is significant for separation but skipped between tokens
 
 **Deliverables**:
-- `pkg/codegen/lexer.go` - Lexer implementation
-- `pkg/codegen/token.go` - Token definitions
-- `pkg/codegen/lexer_test.go` - Unit tests with 100% coverage
+- `internal/codegen/lexer.go` - Lexer implementation
+- `internal/codegen/token.go` - Token definitions
+- `internal/codegen/lexer_test.go` - Unit tests with 100% coverage
 
 **Verification**:
 - [ ] Tokenizes `layer222.tl` without errors
@@ -82,7 +82,7 @@ func (l *Lexer) PeekToken() Token
 **Documents**: AST design in ARCHITECTURE.md
 
 **Specifications**:
-Create `pkg/codegen/ast.go` defining the Abstract Syntax Tree types.
+Create `internal/codegen/ast.go` defining the Abstract Syntax Tree types.
 
 **AST Nodes**:
 ```go
@@ -132,9 +132,9 @@ type TypeRef struct {
 ```
 
 **Deliverables**:
-- `pkg/codegen/ast.go` - All AST types
-- `pkg/codegen/ast_test.go` - Test AST construction
-- `pkg/codegen/ast_string.go` - String() methods for debugging
+- `internal/codegen/ast.go` - All AST types
+- `internal/codegen/ast_test.go` - Test AST construction
+- `internal/codegen/ast_string.go` - String() methods for debugging
 
 **Verification**:
 - [ ] All AST types can be constructed
@@ -148,7 +148,7 @@ type TypeRef struct {
 **Documents**: TL grammar in ARCHITECTURE.md
 
 **Specifications**:
-Create `pkg/codegen/parser.go` implementing recursive descent parser.
+Create `internal/codegen/parser.go` implementing recursive descent parser.
 
 **Grammar Rules** (from ARCHITECTURE.md):
 ```
@@ -205,9 +205,9 @@ func computeCRC32(format string) uint32
 ```
 
 **Deliverables**:
-- `pkg/codegen/parser.go` - Parser implementation
-- `pkg/codegen/parser_test.go` - Comprehensive tests
-- `pkg/codegen/errors.go` - Error types with context
+- `internal/codegen/parser.go` - Parser implementation
+- `internal/codegen/parser_test.go` - Comprehensive tests
+- `internal/codegen/errors.go` - Error types with context
 
 **Verification**:
 - [ ] Parses complete `layer222.tl` (from Telegram desktop repo)
@@ -222,7 +222,7 @@ func computeCRC32(format string) uint32
 **Documents**: DESIGN.md validation rules
 
 **Specifications**:
-Create `pkg/codegen/validate.go` to validate parsed schemas.
+Create `internal/codegen/validate.go` to validate parsed schemas.
 
 **Validation Rules**:
 1. **Unique Constructor IDs**: No duplicate IDs in schema
@@ -256,9 +256,9 @@ func (v *Validator) Validate() error // Returns multi-error if any
 ```
 
 **Deliverables**:
-- `pkg/codegen/validate.go` - Validator implementation
-- `pkg/codegen/validate_test.go` - Test cases for each rule
-- `pkg/codegen/builtin.go` - Built-in type definitions
+- `internal/codegen/validate.go` - Validator implementation
+- `internal/codegen/validate_test.go` - Test cases for each rule
+- `internal/codegen/builtin.go` - Built-in type definitions
 
 **Verification**:
 - [ ] Detects duplicate constructor IDs

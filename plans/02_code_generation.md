@@ -10,7 +10,7 @@
 **Documents**: DESIGN.md naming conventions
 
 **Specifications**:
-Create `pkg/codegen/names.go` for consistent Go naming.
+Create `internal/codegen/names.go` for consistent Go naming.
 
 **Mapping Rules**:
 | TL Name | Go Name | Notes |
@@ -44,9 +44,9 @@ func (n *Namer) PackageName(name string) string
 ```
 
 **Deliverables**:
-- `pkg/codegen/names.go` - Name mapping logic
-- `pkg/codegen/names_test.go` - Test all mapping rules
-- `pkg/codegen/reserved.go` - Go reserved keywords list
+- `internal/codegen/names.go` - Name mapping logic
+- `internal/codegen/names_test.go` - Test all mapping rules
+- `internal/codegen/reserved.go` - Go reserved keywords list
 
 **Verification**:
 - [ ] All TL names from layer222 map to valid Go identifiers
@@ -60,7 +60,7 @@ func (n *Namer) PackageName(name string) string
 **Documents**: DESIGN.md generated code structure
 
 **Specifications**:
-Create `pkg/codegen/gen_types.go` to generate Go structs from TL types.
+Create `internal/codegen/gen_types.go` to generate Go structs from TL types.
 
 **Generated Structure**:
 ```go
@@ -116,9 +116,9 @@ func (g *TypeGenerator) GenerateConstructor(ctor *Constructor) error
 ```
 
 **Deliverables**:
-- `pkg/codegen/gen_types.go` - Type generator
-- `pkg/codegen/gen_types_test.go` - Generate and compile test
-- `pkg/codegen/template_types.go` - Text templates (optional)
+- `internal/codegen/gen_types.go` - Type generator
+- `internal/codegen/gen_types_test.go` - Generate and compile test
+- `internal/codegen/template_types.go` - Text templates (optional)
 
 **Verification**:
 - [ ] Generates compilable Go code for layer222 types
@@ -133,7 +133,7 @@ func (g *TypeGenerator) GenerateConstructor(ctor *Constructor) error
 **Documents**: API.md service definitions
 
 **Specifications**:
-Create `pkg/codegen/gen_service.go` for service interfaces.
+Create `internal/codegen/gen_service.go` for service interfaces.
 
 **Generated Structure**:
 ```go
@@ -190,8 +190,8 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error
 ```
 
 **Deliverables**:
-- `pkg/codegen/gen_service.go` - Service generator
-- `pkg/codegen/gen_service_test.go` - Interface compliance tests
+- `internal/codegen/gen_service.go` - Service generator
+- `internal/codegen/gen_service_test.go` - Interface compliance tests
 
 **Verification**:
 - [ ] Generated interfaces compile
@@ -206,7 +206,7 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error
 **Documents**: Project structure in README.md
 
 **Specifications**:
-Create `pkg/codegen/writer.go` to organize generated code into files.
+Create `internal/codegen/writer.go` to organize generated code into files.
 
 **File Organization**:
 ```
@@ -248,8 +248,8 @@ import (
 ```
 
 **Deliverables**:
-- `pkg/codegen/writer.go` - File writer
-- `pkg/codegen/writer_test.go` - File creation tests
+- `internal/codegen/writer.go` - File writer
+- `internal/codegen/writer_test.go` - File creation tests
 
 **Verification**:
 - [ ] Creates valid Go package structure

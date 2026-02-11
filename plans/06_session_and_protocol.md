@@ -78,7 +78,7 @@ type MemoryManager struct {
 **Documents**: MTProto specification
 
 **Specifications**:
-Create `pkg/mtproto/message.go` for MTProto message structure.
+Create `pkg/protocol/message.go` for MTProto message structure.
 
 **Message Types**:
 ```go
@@ -120,8 +120,8 @@ func (m *InnerData) Encrypt(key crypto.AuthKey, authKeyID crypto.KeyID) (*Encryp
 SHA1(auth_key_fragment + decrypted_data)[:16]
 
 **Deliverables**:
-- `pkg/mtproto/message.go` - Message types
-- `pkg/mtproto/message_test.go` - Serialization tests
+- `pkg/protocol/message.go` - Message types
+- `pkg/protocol/message_test.go` - Serialization tests
 
 **Verification**:
 - [ ] Unencrypted messages serialize correctly
@@ -135,7 +135,7 @@ SHA1(auth_key_fragment + decrypted_data)[:16]
 **Documents**: ARCHITECTURE.md data flow
 
 **Specifications**:
-Create `pkg/tlrpc/conn.go` handling individual client connections.
+Create `pkg/transport/conn.go` handling individual client connections.
 
 **Structure**:
 ```go
@@ -172,8 +172,8 @@ func (h *connHandler) sendError(err error)
 9. Encrypt and send
 
 **Deliverables**:
-- `pkg/tlrpc/conn.go` - Connection handler
-- `pkg/tlrpc/conn_test.go` - Mock-based tests
+- `pkg/transport/conn.go` - Connection handler
+- `pkg/transport/conn_test.go` - Mock-based tests
 
 **Verification**:
 - [ ] Handles complete RPC cycle

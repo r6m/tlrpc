@@ -4,7 +4,7 @@ This tutorial will guide you through building a Telegram server using TLRPC.
 
 ## Prerequisites
 
-- Go 1.21+
+- Go 1.24+
 - Basic understanding of Telegram's MTProto protocol
 
 ## Step 1: Set up your project
@@ -82,7 +82,7 @@ import (
     "log"
     "net"
 
-    "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/pkg/tlrpc"
     "my-telegram-server/gen"
 )
 
