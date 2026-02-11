@@ -14,7 +14,7 @@ This directory contains TL schema files used for testing the parser and validato
 These files can be used to test the parser and validator:
 
 ```go
-data, _ := ioutil.ReadFile("testdata/schemas/simple.tl")
+data, _ := os.ReadFile("testdata/schemas/simple.tl")
 parser := codegen.NewParser(string(data))
 schema, err := parser.Parse()
 // Test parsing

@@ -1,7 +1,7 @@
 package codegen
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestIntegration_SimpleSchema(t *testing.T) {
-	data, err := ioutil.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "simple.tl"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "simple.tl"))
 	require.NoError(t, err)
 
 	parser := NewParser(string(data))
@@ -29,7 +29,7 @@ func TestIntegration_SimpleSchema(t *testing.T) {
 }
 
 func TestIntegration_SchemaWithErrors(t *testing.T) {
-	data, err := ioutil.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "with_errors.tl"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "with_errors.tl"))
 	require.NoError(t, err)
 
 	parser := NewParser(string(data))
@@ -45,7 +45,7 @@ func TestIntegration_SchemaWithErrors(t *testing.T) {
 }
 
 func TestIntegration_FlagsSchema(t *testing.T) {
-	data, err := ioutil.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "flags.tl"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "flags.tl"))
 	require.NoError(t, err)
 
 	parser := NewParser(string(data))
@@ -67,7 +67,7 @@ func TestIntegration_FlagsSchema(t *testing.T) {
 }
 
 func TestIntegration_CircularSchema(t *testing.T) {
-	data, err := ioutil.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "circular.tl"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "circular.tl"))
 	require.NoError(t, err)
 
 	parser := NewParser(string(data))
@@ -89,7 +89,7 @@ func TestIntegration_CircularSchema(t *testing.T) {
 }
 
 func TestIntegration_RealSchema(t *testing.T) {
-	data, err := ioutil.ReadFile(filepath.Join("..", "..", "testdata", "schema.tl"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schema.tl"))
 	require.NoError(t, err)
 
 	parser := NewParser(string(data))
