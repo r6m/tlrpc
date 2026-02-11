@@ -19,7 +19,7 @@ import (
     "sync"
     "time"
     
-    "github.com/yourorg/tlrpc/pkg/crypto"
+    "github.com/r6m/tlrpc/pkg/crypto"
 )
 
 type Session struct {
@@ -142,9 +142,9 @@ Create `pkg/tlrpc/conn.go` handling individual client connections.
 package tlrpc
 
 import (
-    "github.com/yourorg/tlrpc/pkg/crypto"
-    "github.com/yourorg/tlrpc/pkg/session"
-    "github.com/yourorg/tlrpc/pkg/transport"
+    "github.com/r6m/tlrpc/pkg/crypto"
+    "github.com/r6m/tlrpc/pkg/session"
+    "github.com/r6m/tlrpc/pkg/transport"
 )
 
 type connHandler struct {

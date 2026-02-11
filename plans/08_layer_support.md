@@ -18,7 +18,7 @@ package layer
 import (
     "io"
     
-    "github.com/yourorg/tlrpc/pkg/mtproto"
+    "github.com/r6m/tlrpc/pkg/mtproto"
 )
 
 // Layer handles serialization for a specific TL layer version
@@ -93,7 +93,7 @@ package layer195
 import (
     "io"
     
-    "github.com/yourorg/tlrpc/pkg/mtproto"
+    "github.com/r6m/tlrpc/pkg/mtproto"
 )
 
 type Layer struct{}

@@ -22,7 +22,7 @@ go mod init my-telegram-server
 Add TLRPC to your dependencies:
 
 ```bash
-go get github.com/yourorg/tlrpc
+go get github.com/r6m/tlrpc
 ```
 
 ## Step 3: Create your TL schema
@@ -42,7 +42,7 @@ getUser#12345678 user_id:long = User;
 Install the code generator and generate Go code:
 
 ```bash
-go install github.com/yourorg/tlrpc/cmd/tlrpc-gen@latest
+go install github.com/r6m/tlrpc/cmd/tlrpc-gen@latest
 tlrpc-gen --schema=schema.tl --out=./gen
 ```
 
@@ -82,7 +82,7 @@ import (
     "log"
     "net"
 
-    "github.com/yourorg/tlrpc"
+    "github.com/r6m/tlrpc"
     "my-telegram-server/gen"
 )
 

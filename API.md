@@ -145,8 +145,8 @@ import (
     "log"
     "net"
 
-    "github.com/yourorg/tlrpc"
-    "github.com/yourorg/tlrpc/gen"
+    "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/gen"
 )
 
 // Implement the generated interface

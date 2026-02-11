@@ -8,7 +8,7 @@ TLRPC is a high-performance framework for building Telegram servers. It handles 
 
 ```bash
 # Install the code generator
-go install github.com/yourorg/tlrpc/cmd/tlrpc-gen@latest
+go install github.com/r6m/tlrpc/cmd/tlrpc-gen@latest
 
 # Generate service code from TL schema
 tlrpc-gen --schema=layer222.tl --out=./gen

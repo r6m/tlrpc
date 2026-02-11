@@ -3,7 +3,7 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/yourorg/tlrpc.git
+git clone https://github.com/r6m/tlrpc.git
 cd tlrpc
 make deps
 make test

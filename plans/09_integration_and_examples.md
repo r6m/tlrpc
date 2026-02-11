@@ -39,8 +39,8 @@ import (
     "log"
     "net"
     
-    "github.com/yourorg/tlrpc"
-    "github.com/yourorg/tlrpc/examples/echo/gen"
+    "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/examples/echo/gen"
 )
 
 type EchoService struct {
@@ -98,8 +98,8 @@ package integration
 import (
     "testing"
     
-    "github.com/yourorg/tlrpc"
-    "github.com/yourorg/tlrpc/internal/testutil"
+    "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/internal/testutil"
 )
 
 func TestBasicConnectivity(t *testing.T) {
