@@ -2,7 +2,7 @@
 package layer
 
 import (
-	"github.com/yourorg/tlrpc/pkg/mtproto"
+	"github.com/r6m/tlrpc/pkg/mtproto"
 )
 
 // Layer represents a Telegram API layer.
@@ -22,8 +22,8 @@ type Layer interface {
 
 // BaseLayer provides a base implementation of Layer.
 type BaseLayer struct {
-	version       int
-	constructors  mtproto.ConstructorMap
+	version      int
+	constructors mtproto.ConstructorMap
 }
 
 // NewBaseLayer creates a new base layer.

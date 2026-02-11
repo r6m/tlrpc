@@ -4,10 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/yourorg/tlrpc/pkg/codegen"
+	"github.com/r6m/tlrpc/pkg/codegen"
 )
 
 func main() {

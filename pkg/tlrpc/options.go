@@ -2,9 +2,6 @@ package tlrpc
 
 import (
 	"time"
-
-	"github.com/yourorg/tlrpc/pkg/session"
-	"github.com/yourorg/tlrpc/pkg/transport"
 )
 
 // WithLogger sets the logger.

@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/yourorg/tlrpc"
+	"github.com/r6m/tlrpc"
 )
 
 // TestServer creates a test server.

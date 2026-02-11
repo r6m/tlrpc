@@ -4,18 +4,17 @@ package tlrpc
 import (
 	"context"
 	"fmt"
-	"net"
 	"time"
 
-	"github.com/yourorg/tlrpc/pkg/transport"
+	"github.com/r6m/tlrpc/pkg/transport"
 )
 
 // Client is a TLRPC client for testing.
 type Client struct {
-	conn     transport.Conn
-	encoder  *encoder
-	decoder  *decoder
-	nextSeq  int32
+	conn    transport.Conn
+	encoder *encoder
+	decoder *decoder
+	nextSeq int32
 }
 
 // Dial creates a new client connection to the given address.

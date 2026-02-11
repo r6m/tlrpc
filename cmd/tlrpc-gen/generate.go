@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/yourorg/tlrpc/pkg/codegen"
+	"github.com/r6m/tlrpc/pkg/codegen"
 )
 
 // generateCommand handles the code generation logic

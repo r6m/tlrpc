@@ -4,13 +4,12 @@ package tlrpc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"sync"
 
-	"github.com/yourorg/tlrpc/pkg/layer"
-	"github.com/yourorg/tlrpc/pkg/session"
-	"github.com/yourorg/tlrpc/pkg/transport"
+	"github.com/r6m/tlrpc/pkg/layer"
+	"github.com/r6m/tlrpc/pkg/session"
+	"github.com/r6m/tlrpc/pkg/transport"
 )
 
 // Server is a Telegram RPC server.
@@ -22,10 +21,10 @@ type Server struct {
 	interceptors []Interceptor
 	maxLayer     int
 
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	listeners []net.Listener
-	conns    map[net.Conn]struct{}
-	closed   bool
+	conns     map[net.Conn]struct{}
+	closed    bool
 }
 
 // ServerOption configures a Server.

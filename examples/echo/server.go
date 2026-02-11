@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/yourorg/tlrpc"
+	"github.com/r6m/tlrpc"
 )
 
 func main() {
