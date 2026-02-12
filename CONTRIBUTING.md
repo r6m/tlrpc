@@ -11,12 +11,12 @@ make test
 
 ## Project Structure
 
-- `pkg/tlrpc/`: Core framework - stable API
-- `pkg/transport/`: Transport implementations
-- `pkg/crypto/`: Cryptographic primitives
-- `pkg/session/`: Session management
-- `pkg/protocol/`: MTProto protocol
-- `pkg/layer/`: Layer support
+- `tlrpc` (repo root package): Core framework - stable API
+- `transport/`: Transport implementations
+- `crypto/`: Cryptographic primitives
+- `session/`: Session management
+- `mtproto/`: MTProto protocol
+- `layer/`: Layer support
 - `internal/codegen/`: Code generation library
 - `cmd/tlrpc-gen/`: CLI tool
 
@@ -31,7 +31,7 @@ make test
 ## Adding a New Transport
 
 1. Implement `Transport`, `Listener`, `Conn` interfaces
-2. Add to `pkg/transport/yourtransport.go`
+2. Add to `transport/yourtransport.go`
 3. Add tests with `transport_test.go` pattern
 4. Update documentation
 

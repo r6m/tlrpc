@@ -9,7 +9,7 @@ This document outlines best practices for building servers with TLRPC.
 Organize your services by domain:
 
 ```
-pkg/
+services/
 ├── auth/
 │   ├── service.go
 │   └── models.go

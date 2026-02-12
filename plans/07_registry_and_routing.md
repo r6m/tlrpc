@@ -9,7 +9,7 @@
 **Documents**: API.md service registration
 
 **Specifications**:
-Create `pkg/registry/registry.go`.
+Create `registry/registry.go`.
 
 **Structure**:
 ```go
@@ -39,11 +39,15 @@ func (r *serviceRegistry) listServices() []string
 
 **Registration Validation**:
 - Check for duplicate method names
-- Verify implementation matches interface (via reflection or code generation)
+- Verify implementation matches `HandlerType` (grpc-style: panic on invalid registration in `Server.RegisterService`)
+
+**Service Descriptor Notes**:
+- `ServiceDesc` includes `HandlerType` for implementation checks.
+- `MethodDesc.Handler` has signature `func(srv interface{}, ctx context.Context, req interface{}) (interface{}, error)`.
 
 **Deliverables**:
-- `pkg/registry/registry.go` - Registry implementation
-- `pkg/registry/registry_test.go` - Registration tests
+- `registry/registry.go` - Registry implementation
+- `registry/registry_test.go` - Registration tests
 
 **Verification**:
 - [ ] Thread-safe registration
@@ -57,7 +61,7 @@ func (r *serviceRegistry) listServices() []string
 **Documents**: API.md interceptors
 
 **Specifications**:
-Create `pkg/registry/interceptor.go`.
+Create `registry/interceptor.go`.
 
 **Chain Builder**:
 ```go
@@ -88,11 +92,10 @@ func AuthKeyIDFromContext(ctx context.Context) crypto.KeyID
 ```
 
 **Deliverables**:
-- `pkg/registry/interceptor.go` - Chain and built-ins
-- `pkg/registry/interceptor_test.go` - Chain tests
+- `registry/interceptor.go` - Chain and built-ins
+- `registry/interceptor_test.go` - Chain tests
 
 **Verification**:
 - [ ] Interceptors execute in correct order
 - [ ] Context values propagate
 - [ ] Recovery catches panics
-

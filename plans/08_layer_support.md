@@ -9,7 +9,7 @@
 **Documents**: DESIGN.md layer handling
 
 **Specifications**:
-Create `pkg/layer/layer.go` and `pkg/layer/registry.go`.
+Create `layer/layer.go` and `layer/registry.go`.
 
 **Layer Interface**:
 ```go
@@ -18,7 +18,7 @@ package layer
 import (
     "io"
     
-    "github.com/r6m/tlrpc/pkg/protocol"
+    "github.com/r6m/tlrpc/mtproto"
 )
 
 // Layer handles serialization for a specific TL layer version
@@ -55,9 +55,9 @@ func (r *Registry) Max() int
 Each generated layer package implements this interface.
 
 **Deliverables**:
-- `pkg/layer/layer.go` - Interface
-- `pkg/layer/registry.go` - Registry
-- `pkg/layer/registry_test.go` - Tests
+- `layer/layer.go` - Interface
+- `layer/registry.go` - Registry
+- `layer/registry_test.go` - Tests
 
 **Verification**:
 - [ ] Can register multiple layers
@@ -93,7 +93,7 @@ package layer195
 import (
     "io"
     
-    "github.com/r6m/tlrpc/pkg/protocol"
+    "github.com/r6m/tlrpc/mtproto"
 )
 
 type Layer struct{}

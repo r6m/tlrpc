@@ -9,7 +9,7 @@
 **Documents**: MTProto specification (external)
 
 **Specifications**:
-Create `pkg/crypto/aes.go` implementing AES-256-IGE mode.
+Create `crypto/aes.go` implementing AES-256-IGE mode.
 
 **IGE Mode**:
 - Infinite Garble Extension
@@ -36,9 +36,9 @@ func DecryptIGE(dst, src []byte, block cipher.Block, iv []byte)
 - IV size: 32 bytes (16 for x, 16 for y)
 
 **Deliverables**:
-- `pkg/crypto/aes.go` - IGE implementation
-- `pkg/crypto/aes_test.go` - Test vectors from MTProto spec
-- `pkg/crypto/aes_bench_test.go` - Performance benchmarks
+- `crypto/aes.go` - IGE implementation
+- `crypto/aes_test.go` - Test vectors from MTProto spec
+- `crypto/aes_bench_test.go` - Performance benchmarks
 
 **Verification**:
 - [ ] Matches test vectors from Telegram docs
@@ -52,7 +52,7 @@ func DecryptIGE(dst, src []byte, block cipher.Block, iv []byte)
 **Documents**: ARCHITECTURE.md crypto section
 
 **Specifications**:
-Create `pkg/crypto/authkey.go` for auth key handling.
+Create `crypto/authkey.go` for auth key handling.
 
 **Types**:
 ```go
@@ -84,9 +84,9 @@ type AuthKeyManager interface {
 - Interface for pluggable storage
 
 **Deliverables**:
-- `pkg/crypto/authkey.go` - Auth key types
-- `pkg/crypto/authkey_memory.go` - In-memory store
-- `pkg/crypto/authkey_test.go` - Tests
+- `crypto/authkey.go` - Auth key types
+- `crypto/authkey_memory.go` - In-memory store
+- `crypto/authkey_test.go` - Tests
 
 **Verification**:
 - [ ] KeyID calculation matches Telegram
@@ -100,7 +100,7 @@ type AuthKeyManager interface {
 **Documents**: MTProto specification (external)
 
 **Specifications**:
-Create `pkg/crypto/handshake.go` for initial key exchange.
+Create `crypto/handshake.go` for initial key exchange.
 
 **Handshake Steps**:
 1. Client sends `req_pq_multi` (unencrypted)
@@ -120,8 +120,8 @@ func (h *Handshake) Process(req []byte) (resp []byte, key AuthKey, err error)
 **Note**: Full handshake is complex; implement simplified version for framework, document that production needs full implementation.
 
 **Deliverables**:
-- `pkg/crypto/handshake.go` - Handshake logic
-- `pkg/crypto/handshake_test.go` - Test with known vectors
+- `crypto/handshake.go` - Handshake logic
+- `crypto/handshake_test.go` - Test with known vectors
 
 **Verification**:
 - [ ] Generates valid auth keys

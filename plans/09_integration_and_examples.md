@@ -39,7 +39,7 @@ import (
     "log"
     "net"
     
-    "github.com/r6m/tlrpc/pkg/tlrpc"
+    "github.com/r6m/tlrpc"
     "github.com/r6m/tlrpc/examples/echo/gen"
 )
 
@@ -98,7 +98,7 @@ package integration
 import (
     "testing"
     
-    "github.com/r6m/tlrpc/pkg/tlrpc"
+    "github.com/r6m/tlrpc"
     "github.com/r6m/tlrpc/internal/testutil"
 )
 

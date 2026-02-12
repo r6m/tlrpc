@@ -9,7 +9,7 @@
 **Documents**: API.md transport section
 
 **Specifications**:
-Create `pkg/transport/transport.go` defining transport abstractions.
+Create `transport/transport.go` defining transport abstractions.
 
 **Interfaces**:
 ```go
@@ -68,9 +68,9 @@ N bytes: payload
 ```
 
 **Deliverables**:
-- `pkg/transport/transport.go` - Core interfaces
-- `pkg/transport/common.go` - Shared framing logic
-- `pkg/transport/transport_test.go` - Interface tests
+- `transport/transport.go` - Core interfaces
+- `transport/common.go` - Shared framing logic
+- `transport/transport_test.go` - Interface tests
 
 **Verification**:
 - [ ] Interfaces are implementable
@@ -84,7 +84,7 @@ N bytes: payload
 **Documents**: ARCHITECTURE.md transport section
 
 **Specifications**:
-Create `pkg/transport/tcp.go` implementing TCP transport.
+Create `transport/tcp.go` implementing TCP transport.
 
 **Features**:
 - Standard TCP sockets
@@ -111,8 +111,8 @@ type tcpConn struct {
 ```
 
 **Deliverables**:
-- `pkg/transport/tcp.go` - TCP implementation
-- `pkg/transport/tcp_test.go` - Unit and integration tests
+- `transport/tcp.go` - TCP implementation
+- `transport/tcp_test.go` - Unit and integration tests
 
 **Verification**:
 - [ ] Passes transport interface tests
@@ -127,7 +127,7 @@ type tcpConn struct {
 **Documents**: ARCHITECTURE.md transport section
 
 **Specifications**:
-Create `pkg/transport/websocket.go` for WebSocket clients.
+Create `transport/websocket.go` for WebSocket clients.
 
 **Features**:
 - Binary message mode only
@@ -151,8 +151,8 @@ type wsConn struct {
 ```
 
 **Deliverables**:
-- `pkg/transport/websocket.go` - WebSocket implementation
-- `pkg/transport/websocket_test.go` - Tests with gorilla/websocket
+- `transport/websocket.go` - WebSocket implementation
+- `transport/websocket_test.go` - Tests with gorilla/websocket
 
 **Verification**:
 - [ ] Works with browser clients

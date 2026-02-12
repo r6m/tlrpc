@@ -9,7 +9,7 @@
 **Documents**: API.md session section
 
 **Specifications**:
-Create `pkg/session/session.go` and `pkg/session/manager.go`.
+Create `session/session.go` and `session/manager.go`.
 
 **Session Structure**:
 ```go
@@ -19,7 +19,7 @@ import (
     "sync"
     "time"
     
-    "github.com/r6m/tlrpc/pkg/crypto"
+    "github.com/r6m/tlrpc/crypto"
 )
 
 type Session struct {
@@ -62,9 +62,9 @@ type MemoryManager struct {
 ```
 
 **Deliverables**:
-- `pkg/session/session.go` - Session type
-- `pkg/session/manager.go` - Manager interface and memory impl
-- `pkg/session/manager_test.go` - Tests
+- `session/session.go` - Session type
+- `session/manager.go` - Manager interface and memory impl
+- `session/manager_test.go` - Tests
 
 **Verification**:
 - [ ] Thread-safe operations
@@ -78,7 +78,7 @@ type MemoryManager struct {
 **Documents**: MTProto specification
 
 **Specifications**:
-Create `pkg/protocol/message.go` for MTProto message structure.
+Create `mtproto/message.go` for MTProto message structure.
 
 **Message Types**:
 ```go
@@ -120,8 +120,8 @@ func (m *InnerData) Encrypt(key crypto.AuthKey, authKeyID crypto.KeyID) (*Encryp
 SHA1(auth_key_fragment + decrypted_data)[:16]
 
 **Deliverables**:
-- `pkg/protocol/message.go` - Message types
-- `pkg/protocol/message_test.go` - Serialization tests
+- `mtproto/message.go` - Message types
+- `mtproto/message_test.go` - Serialization tests
 
 **Verification**:
 - [ ] Unencrypted messages serialize correctly
@@ -135,16 +135,16 @@ SHA1(auth_key_fragment + decrypted_data)[:16]
 **Documents**: ARCHITECTURE.md data flow
 
 **Specifications**:
-Create `pkg/transport/conn.go` handling individual client connections.
+Create `transport/conn.go` handling individual client connections.
 
 **Structure**:
 ```go
 package tlrpc
 
 import (
-    "github.com/r6m/tlrpc/pkg/crypto"
-    "github.com/r6m/tlrpc/pkg/session"
-    "github.com/r6m/tlrpc/pkg/transport"
+    "github.com/r6m/tlrpc/crypto"
+    "github.com/r6m/tlrpc/session"
+    "github.com/r6m/tlrpc/transport"
 )
 
 type connHandler struct {
@@ -172,8 +172,8 @@ func (h *connHandler) sendError(err error)
 9. Encrypt and send
 
 **Deliverables**:
-- `pkg/transport/conn.go` - Connection handler
-- `pkg/transport/conn_test.go` - Mock-based tests
+- `transport/conn.go` - Connection handler
+- `transport/conn_test.go` - Mock-based tests
 
 **Verification**:
 - [ ] Handles complete RPC cycle

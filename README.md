@@ -12,21 +12,34 @@ go install github.com/r6m/tlrpc/cmd/tlrpc-gen@latest
 
 # Generate service code from TL schema
 tlrpc-gen --schema=layer222.tl --out=./gen
+```
 
-# Implement your service
+```go
+package main
+
+import (
+    "context"
+    "net"
+
+    "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/gen"
+)
+
 type MyAuthService struct {
     gen.UnimplementedAuthServer
 }
 
 func (s *MyAuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*gen.AuthSentCode, error) {
-    // Your implementation
-    return &gen.AuthSentCode{...}, nil
+    return &gen.AuthSentCode{ /* ... */ }, nil
 }
 
-# Start server
-server := tlrpc.NewServer()
-gen.RegisterAuthServer(server, &MyAuthService{})
-server.Serve(listener)
+func main() {
+    server := tlrpc.NewServer()
+    gen.RegisterAuthServer(server, &MyAuthService{})
+
+    lis, _ := net.Listen("tcp", ":443")
+    _ = server.Serve(lis)
+}
 ```
 
 ## Features

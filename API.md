@@ -10,8 +10,17 @@ type Server struct { /* internal */ }
 func NewServer(opts ...ServerOption) *Server
 func (s *Server) RegisterService(desc ServiceDesc, impl interface{})
 func (s *Server) Serve(lis net.Listener) error
+func (s *Server) ServeTransport(lis Listener) error
 func (s *Server) Stop() error
 ```
+
+Note: `RegisterService` panics on invalid registrations (duplicate methods, invalid implementation). This mirrors grpc-style behavior and keeps startup failures explicit.
+
+### grpc-style Conventions
+
+- Register all services during startup; registration failures should be immediate and fatal.
+- Invalid service descriptors or implementations trigger panics to avoid partial startup.
+- Handler signatures are fixed and enforced by generated code, similar to grpc stubs.
 
 ### Server Options
 
@@ -22,6 +31,7 @@ func WithLayers(layers ...int) ServerOption
 func WithInterceptor(i Interceptor) ServerOption
 func WithSessionStore(store SessionStore) ServerOption
 func WithLogger(l Logger) ServerOption
+func WithCodec(codec Codec) ServerOption
 ```
 
 ### Context Functions
@@ -40,6 +50,21 @@ type Handler func(ctx context.Context, req interface{}) (interface{}, error)
 type Interceptor func(next Handler) Handler
 
 func ChainInterceptors(interceptors ...Interceptor) Interceptor
+```
+
+### Service Descriptors
+
+```go
+type ServiceDesc struct {
+    ServiceName string
+    HandlerType interface{}
+    Methods     []MethodDesc
+}
+
+type MethodDesc struct {
+    MethodName string
+    Handler    func(ctx context.Context, req interface{}) (interface{}, error)
+}
 ```
 
 ### Errors
@@ -80,6 +105,8 @@ type Conn interface {
 }
 ```
 
+For concrete transports and framing, see `transport`.
+
 ## Session Interface
 
 ```go
@@ -104,6 +131,15 @@ type SessionStore interface {
 type TLObject interface {
     ConstructorID() uint32
     Method() string // for RPC types
+}
+```
+
+## Codec Interface
+
+```go
+type Codec interface {
+    Decode(layer int, data []byte) (TLObject, error)
+    Encode(layer int, obj TLObject) ([]byte, error)
 }
 ```
 
@@ -145,7 +181,7 @@ import (
     "log"
     "net"
 
-    "github.com/r6m/tlrpc/pkg/tlrpc"
+    "github.com/r6m/tlrpc"
     "github.com/r6m/tlrpc/gen"
 )
 

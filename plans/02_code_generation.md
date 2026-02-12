@@ -243,7 +243,7 @@ package {{.PackageName}}
 
 import (
     "context"
-    "github.com/r6m/tlrpc/pkg/tlrpc"
+    "github.com/r6m/tlrpc"
 )
 ```
 

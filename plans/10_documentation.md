@@ -63,7 +63,7 @@ Optimize critical paths.
 - [ ] Sharded session maps
 
 **Deliverables**:
-- `pkg/pool/` - Object pooling utilities
+- `internal/pool/` - Object pooling utilities
 - Benchmarks in all packages
 - `PERFORMANCE.md` with results
 

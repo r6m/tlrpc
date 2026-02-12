@@ -1,0 +1,158 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/r6m/tlrpc/internal/codegen"
+)
+
+func main() {
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+func run(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("tlrpc-gen", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+
+	schemaPath := fs.String("schema", "", "Path to TL schema file (required)")
+	outDir := fs.String("out", "./gen", "Output directory")
+	pkgName := fs.String("package", "gen", "Go package name")
+	layers := fs.String("layers", "", "Comma-separated layer versions")
+	verbose := fs.Bool("verbose", false, "Verbose logging")
+
+	if err := fs.Parse(args); err != nil {
+		return 3
+	}
+	if *schemaPath == "" {
+		fmt.Fprintln(stderr, "--schema is required")
+		fs.Usage()
+		return 3
+	}
+
+	data, err := os.ReadFile(*schemaPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "read schema: %v\n", err)
+		return 3
+	}
+
+	parser := codegen.NewParser(string(data))
+	layer := parseLayer(*layers)
+	var schema *codegen.Schema
+	if layer > 0 {
+		schema, err = parser.ParseWithLayer(layer)
+	} else {
+		schema, err = parser.Parse()
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "%v\n", err)
+		return 1
+	}
+
+	validator := codegen.NewValidator(schema)
+	if err := validator.Validate(); err != nil {
+		fmt.Fprintf(stderr, "%v\n", err)
+		return 1
+	}
+
+	if *verbose {
+		fmt.Fprintf(stdout, "Parsing schema: %s...\n", *schemaPath)
+		fmt.Fprintf(stdout, "Found %d constructors, %d functions\n", len(schema.Constructors), len(schema.Functions))
+	}
+
+	writer := codegen.NewFileWriter(*outDir, *pkgName, filepath.Base(*schemaPath), schema.Layer)
+	namer := codegen.NewNamer()
+
+	typesOut := writer.NewFile("types.go")
+	interfacesOut := writer.NewFile("interfaces.go")
+	servicesOut := writer.NewFile("services.go")
+	registerOut := writer.NewFile("register.go")
+	requestsOut := writer.NewFile("requests.go")
+	responsesOut := writer.NewFile("responses.go")
+	constantsOut := writer.NewFile("constants.go")
+
+	if *verbose {
+		fmt.Fprintln(stdout, "Generating types...")
+	}
+	for i := range schema.Types {
+		gen := codegen.NewTypeGenerator(namer, typesOut)
+		ifaceGen := codegen.NewTypeGenerator(namer, interfacesOut)
+		if err := gen.GenerateType(&schema.Types[i]); err != nil {
+			fmt.Fprintf(stderr, "generate types: %v\n", err)
+			return 2
+		}
+		if err := ifaceGen.GenerateInterface(&schema.Types[i]); err != nil {
+			fmt.Fprintf(stderr, "generate interfaces: %v\n", err)
+			return 2
+		}
+	}
+
+	if *verbose {
+		fmt.Fprintln(stdout, "Generating services...")
+	}
+	serviceGen := codegen.NewServiceGenerator(namer, servicesOut)
+	if err := serviceGen.GenerateService(schema.Functions); err != nil {
+		fmt.Fprintf(stderr, "generate services: %v\n", err)
+		return 2
+	}
+	regGen := codegen.NewServiceGenerator(namer, registerOut)
+	if err := regGen.GenerateRegistration(schema.Functions); err != nil {
+		fmt.Fprintf(stderr, "generate registration: %v\n", err)
+		return 2
+	}
+	reqGen := codegen.NewServiceGenerator(namer, requestsOut)
+	if err := reqGen.GenerateRequests(schema.Functions); err != nil {
+		fmt.Fprintf(stderr, "generate requests: %v\n", err)
+		return 2
+	}
+	_ = responsesOut
+
+	if *verbose {
+		fmt.Fprintln(stdout, "Generating constants...")
+	}
+	if err := codegen.GenerateConstructorConstants(namer, constantsOut, schema.Constructors); err != nil {
+		fmt.Fprintf(stderr, "generate constants: %v\n", err)
+		return 2
+	}
+
+	if *verbose {
+		fmt.Fprintf(stdout, "Writing files to %s...\n", *outDir)
+	}
+	if err := writer.WriteAll(); err != nil {
+		fmt.Fprintf(stderr, "write files: %v\n", err)
+		return 3
+	}
+	if *verbose {
+		fmt.Fprintln(stdout, "Formatting with gofmt...")
+	}
+	if err := writer.Format(); err != nil {
+		fmt.Fprintf(stderr, "format: %v\n", err)
+		return 3
+	}
+
+	if *verbose {
+		fmt.Fprintf(stdout, "Done. Generated %d files in %s\n", len(writer.Files()), *outDir)
+	}
+
+	return 0
+}
+
+func parseLayer(raw string) int {
+	if raw == "" {
+		return 0
+	}
+	parts := strings.Split(raw, ",")
+	if len(parts) == 0 {
+		return 0
+	}
+	value, err := strconv.Atoi(strings.TrimSpace(parts[0]))
+	if err != nil {
+		return 0
+	}
+	return value
+}

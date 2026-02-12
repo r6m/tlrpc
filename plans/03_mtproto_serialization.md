@@ -9,7 +9,7 @@
 **Documents**: ARCHITECTURE.md serialization section
 
 **Specifications**:
-Create `pkg/protocol/serialize.go` for primitive type serialization.
+Create `mtproto/serialize.go` for primitive type serialization.
 
 **Functions**:
 ```go
@@ -49,9 +49,9 @@ func WriteVectorHeader(w io.Writer, count int) error
 Use `sync.Pool` for `*bytes.Buffer` to reduce allocations.
 
 **Deliverables**:
-- `pkg/protocol/serialize.go` - Writers
-- `pkg/protocol/serialize_test.go` - Round-trip tests
-- `pkg/protocol/buffer.go` - Buffer pool
+- `mtproto/serialize.go` - Writers
+- `mtproto/serialize_test.go` - Round-trip tests
+- `mtproto/buffer.go` - Buffer pool
 
 **Verification**:
 - [ ] All primitives round-trip correctly
@@ -66,7 +66,7 @@ Use `sync.Pool` for `*bytes.Buffer` to reduce allocations.
 **Documents**: ARCHITECTURE.md deserialization section
 
 **Specifications**:
-Create `pkg/protocol/deserialize.go` for primitive type deserialization.
+Create `mtproto/deserialize.go` for primitive type deserialization.
 
 **Functions**:
 ```go
@@ -93,8 +93,8 @@ func ReadVector(r io.Reader, fn func() error) error
 - `ErrStringTooLong` for strings > 2^31 bytes
 
 **Deliverables**:
-- `pkg/protocol/deserialize.go` - Readers
-- `pkg/protocol/deserialize_test.go` - Round-trip tests
+- `mtproto/deserialize.go` - Readers
+- `mtproto/deserialize_test.go` - Round-trip tests
 
 **Verification**:
 - [ ] Perfect round-trip with serializers
