@@ -22,6 +22,7 @@ import (
     "net"
 
     "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/codec"
     "github.com/r6m/tlrpc/gen"
 )
 
@@ -34,7 +35,14 @@ func (s *MyAuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) 
 }
 
 func main() {
-    server := tlrpc.NewServer()
+    registry := codec.NewRegistry()
+    registry.RegisterConstructor((&gen.SendCodeRequest{}).ConstructorID(), func() tlrpc.TLObject {
+        return &gen.SendCodeRequest{}
+    })
+
+    server := tlrpc.NewServer(
+        tlrpc.WithCodec(codec.New(registry)),
+    )
     gen.RegisterAuthServer(server, &MyAuthService{})
 
     lis, _ := net.Listen("tcp", ":443")
@@ -42,10 +50,13 @@ func main() {
 }
 ```
 
+Note: the default handshake handler is a minimal stub (only `req_pq`), so production deployments should provide a full MTProto handshake or a custom handler.
+
 ## Features
 
 - **Multi-Layer Support**: Handle clients from different Telegram versions seamlessly
 - **Auto-Generated Code**: Generate Go types and service interfaces from TL schema
+- **Codec Registry**: Constructor-based TL decoding/encoding via codec registry
 - **Pluggable Transports**: TCP, UDP, WebSocket support
 - **Interceptor Chain**: Middleware for logging, auth, metrics
 - **Type Safety**: Full compile-time type safety for all TL types
@@ -58,5 +69,5 @@ TLRPC follows a layered architecture:
 1. **Transport Layer**: Handles raw connections (TCP/UDP/WS)
 2. **Crypto Layer**: MTProto encryption/decryption
 3. **Protocol Layer**: MTProto message framing and session management
-4. **Layer Adapter**: Handles different client layer versions
+4. **Codec (TL)**: Constructor registry and TL serialization
 5. **Service Layer**: Your business logic implementation

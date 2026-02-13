@@ -16,12 +16,13 @@ The service registry provides:
 ```go
 type ServiceDesc struct {
     ServiceName string
+    HandlerType interface{}
     Methods     []MethodDesc
 }
 
 type MethodDesc struct {
     MethodName string
-    Handler    HandlerFunc
+    Handler    func(ctx context.Context, req interface{}) (interface{}, error)
 }
 
 func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
@@ -32,7 +33,7 @@ func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
 2. Find registered handler in service registry
 3. Build and execute interceptor chain
 4. Call user service implementation
-5. Serialize response using appropriate layer
+5. Serialize response using the configured codec
 
 ## Interceptors
 
@@ -44,4 +45,4 @@ Support for request/response interceptors including:
 
 ## Integration
 
-Works with the layer adapter to handle different client versions and with the protocol layer for message processing.
+Works with the codec to handle constructor decoding and with the protocol layer for message processing.

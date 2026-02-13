@@ -143,6 +143,8 @@ type Codec interface {
 }
 ```
 
+The default workflow uses `codec.Registry` to register constructor IDs for request types.
+
 ## Code Generation
 
 ### CLI: tlrpc-gen

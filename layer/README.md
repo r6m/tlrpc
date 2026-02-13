@@ -1,25 +1,18 @@
-# Layer Adapter
+# Layer Support (Planned)
 
-This package provides the layer abstraction that handles different Telegram client layer versions and their serialization formats.
+This package is reserved for future layer abstractions. Today, layer handling is implemented through the `codec` package and the `Codec` interface in `tlrpc`.
 
 ## Overview
 
-The layer adapter manages:
-- Per-layer type serialization/deserialization
+When implemented, this package is expected to provide:
+- Per-layer type serialization registries
 - Constructor ID routing based on client layer
 - Layer version tracking and validation
-- Type-safe object handling across layers
 
-## Interface
+## Current Approach
 
-```go
-type Layer interface {
-    Version() int
-    Deserialize(constructorID uint32, data []byte) (TLObject, error)
-    Serialize(obj TLObject) ([]byte, error)
-    GetConstructorID(obj TLObject) uint32
-}
-```
+- Use `codec.Registry` to map constructor IDs to concrete TL types.
+- Implement per-layer behavior in a custom `Codec` (the `layer` argument is passed to `Decode`/`Encode`).
 
 ## Design Principles
 
@@ -30,4 +23,4 @@ type Layer interface {
 
 ## Usage
 
-Each supported Telegram layer gets its own generated implementation, allowing seamless handling of clients at different protocol versions.
+Each supported Telegram layer can be expressed as a distinct registry or codec implementation.

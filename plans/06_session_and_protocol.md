@@ -135,7 +135,7 @@ SHA1(auth_key_fragment + decrypted_data)[:16]
 **Documents**: ARCHITECTURE.md data flow
 
 **Specifications**:
-Create `transport/conn.go` handling individual client connections.
+Create `tlrpc/conn.go` handling individual client connections.
 
 **Structure**:
 ```go
@@ -149,34 +149,31 @@ import (
 
 type connHandler struct {
     server *Server
-    conn   transport.Conn
-    session *session.Session
-    authKey crypto.AuthKey
+    conn   connIO
 }
 
 func (h *connHandler) run()
-func (h *connHandler) handleMessage(data []byte) error
-func (h *connHandler) processRPC(data []byte) ([]byte, error)
-func (h *connHandler) sendError(err error)
+func (h *connHandler) processMessage(data []byte) error
+func (h *connHandler) handleEncryptedMessage(data []byte, keyID crypto.KeyID) error
+func (h *connHandler) handleUnencryptedMessage(msg *mtproto.UnencryptedMessage) error
 ```
 
 **Flow**:
 1. Accept connection
-2. Perform handshake (get auth key)
+2. Perform handshake for unencrypted messages (get auth key)
 3. Create/load session
 4. Read encrypted messages
 5. Decrypt → get inner data
-6. Deserialize TL object (using session.Layer)
+6. Decode TL object via codec (using session.Layer)
 7. Route to service
 8. Serialize response
 9. Encrypt and send
 
 **Deliverables**:
-- `transport/conn.go` - Connection handler
-- `transport/conn_test.go` - Mock-based tests
+- `tlrpc/conn.go` - Connection handler
+- `tlrpc/handshake.go` - Handshake routing
 
 **Verification**:
 - [ ] Handles complete RPC cycle
 - [ ] Proper error responses
 - [ ] Session persistence across messages
-

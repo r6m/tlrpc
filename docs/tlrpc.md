@@ -8,7 +8,7 @@ This package provides:
 - **Server**: RPC server with automatic layer handling
 - **Transport**: Pluggable transport abstractions (TCP, WebSocket, etc.)
 - **Session Management**: Session storage and lifecycle management
-- **Layer Support**: Automatic handling of different Telegram protocol layers
+- **Layer Support**: Codec-controlled handling of different Telegram protocol layers
 - **Interceptors**: Middleware for request/response processing
 - **Type Safety**: Generated type-safe interfaces from TL schemas
 
@@ -133,7 +133,7 @@ type Conn interface {
 
 ## Layer Support
 
-The framework automatically handles different Telegram protocol layers. Each layer version has its own serialization format and constructor IDs. The server can support multiple layers simultaneously.
+Layer handling is performed by the configured `Codec`. Use per-layer registries or a codec implementation that switches on the `layer` argument to support multiple protocol versions.
 
 ## Error Handling
 
@@ -187,17 +187,29 @@ This generates:
 - Service interfaces (e.g., `AuthServer`)
 - Unimplemented stubs (e.g., `UnimplementedAuthServer`)
 - Registration helpers (e.g., `RegisterAuthServer`)
-- Layer-specific implementations
+- Request types with `ConstructorID`, `Method`, `SerializeTL`, and `DeserializeTL`
 
 ## Codec
 
-The server requires a `Codec` to decode/encode TL objects. Configure it with `tlrpc.WithCodec(...)`.
+The server requires a `Codec` to decode/encode TL objects. Configure it with `tlrpc.WithCodec(...)` and register request constructors in a `codec.Registry`.
+
+```go
+registry := codec.NewRegistry()
+registry.RegisterConstructor((&gen.SendCodeRequest{}).ConstructorID(), func() tlrpc.TLObject {
+    return &gen.SendCodeRequest{}
+})
+
+server := tlrpc.NewServer(
+    tlrpc.WithCodec(codec.New(registry)),
+)
+```
 
 ## Dependencies
 
 This package depends on:
 - `transport/`: Transport implementations
 - `mtproto/`: MTProto protocol handling
-- `layer/`: Layer abstraction
+- `codec/`: TL encode/decode and constructor registry
+- `layer/`: Reserved for future layer abstractions
 - `session/`: Session management
 - `crypto/`: Cryptographic primitives

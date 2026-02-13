@@ -84,7 +84,7 @@ func main() {
 Create `tests/integration/` with full integration tests.
 
 **Test Scenarios**:
-1. **Basic Connectivity**: Client connects, handshake succeeds
+1. **Basic Connectivity**: Client connects, handshake (req_pq) succeeds
 2. **RPC Round-trip**: Request → Response with correct data
 3. **Multi-layer**: Layer 195 and Layer 222 clients work
 4. **Error Handling**: Invalid requests return proper errors
@@ -104,7 +104,9 @@ import (
 
 func TestBasicConnectivity(t *testing.T) {
     // Setup server
-    server := tlrpc.NewServer()
+    registry := codec.NewRegistry()
+    registry.RegisterConstructor((&gen.PingRequest{}).ConstructorID(), func() tlrpc.TLObject { return &gen.PingRequest{} })
+    server := tlrpc.NewServer(tlrpc.WithCodec(codec.New(registry)))
     // ... register services
     
     lis := testutil.NewLocalListener()
@@ -132,4 +134,3 @@ func TestBasicConnectivity(t *testing.T) {
 - [ ] All tests pass
 - [ ] Tests run in CI
 - [ ] Coverage >80%
-

@@ -1,154 +1,84 @@
-## Phase 8: Layer Support
+## Phase 8: Layer Support (Codec-Based)
 **Duration**: 2 weeks
-**Goal**: Multi-layer client support
+**Goal**: Multi-layer client support via codecs and registries
 
 ---
 
-### Task 8.1: Layer Registry
-**Agent**: Layer Agent
-**Documents**: DESIGN.md layer handling
+### Task 8.1: Codec Registry
+**Agent**: Core Agent
+**Documents**: codec package design
 
 **Specifications**:
-Create `layer/layer.go` and `layer/registry.go`.
+Provide a constructor registry that maps TL constructor IDs and method names to concrete Go types.
 
-**Layer Interface**:
+**API**:
 ```go
-package layer
+package codec
 
-import (
-    "io"
-    
-    "github.com/r6m/tlrpc/mtproto"
-)
+type ConstructorFunc func() tlrpc.TLObject
 
-// Layer handles serialization for a specific TL layer version
-type Layer interface {
-    Version() int
-    
-    // Deserialize TL object from reader
-    // Returns (object, constructorID, error)
-    Deserialize(r io.Reader) (mtproto.TLObject, uint32, error)
-    
-    // Serialize TL object to writer
-    Serialize(w io.Writer, obj mtproto.TLObject) error
-    
-    // Get constructor ID for an object
-    GetConstructorID(obj mtproto.TLObject) (uint32, bool)
-    
-    // Get method name for RPC object
-    GetMethodName(obj mtproto.TLObject) (string, bool)
-}
-
-// Registry holds all supported layers
 type Registry struct {
-    mu     sync.RWMutex
-    layers map[int]Layer
-    max    int
+    // constructor ID -> new instance
 }
 
-func (r *Registry) Register(l Layer)
-func (r *Registry) Get(version int) (Layer, bool)
-func (r *Registry) Max() int
+func (r *Registry) RegisterConstructor(id uint32, fn ConstructorFunc)
+func (r *Registry) RegisterMethod(name string, fn ConstructorFunc)
+func (r *Registry) LookupConstructor(id uint32) (ConstructorFunc, bool)
+func (r *Registry) LookupMethod(name string) (ConstructorFunc, bool)
 ```
 
-**Generated Layer Implementation**:
-Each generated layer package implements this interface.
-
 **Deliverables**:
-- `layer/layer.go` - Interface
-- `layer/registry.go` - Registry
-- `layer/registry_test.go` - Tests
+- `codec/codec.go` registry + codec
 
 **Verification**:
-- [ ] Can register multiple layers
-- [ ] Lookup by version works
-- [ ] Max layer tracked correctly
+- [ ] Lookup by constructor ID works
+- [ ] Unknown constructor returns clear error
 
 ---
 
-### Task 8.2: Layer Code Generation
+### Task 8.2: Generated Constructor Registration
 **Agent**: CodeGen Agent
-**Documents**: Phase 2 output
+**Documents**: tlrpc-gen output
 
 **Specifications**:
-Extend code generator to create per-layer packages.
+Extend codegen to emit a helper to populate a registry with TL constructors and RPC request types.
 
-**Generated Structure**:
-```
-gen/
-├── layer195/
-│   ├── layer.go          # Implements layer.Layer
-│   ├── types.go          # All types for layer 195
-│   ├── serialize.go      # SerializeTL methods
-│   └── deserialize.go    # DeserializeTL methods
-├── layer196/
-│   └── ...
-└── ...
-```
-
-**Layer Implementation Template**:
+**Generated Helper**:
 ```go
-package layer195
-
-import (
-    "io"
-    
-    "github.com/r6m/tlrpc/mtproto"
-)
-
-type Layer struct{}
-
-func (l *Layer) Version() int { return 195 }
-
-func (l *Layer) Deserialize(r io.Reader) (mtproto.TLObject, uint32, error) {
-    // Read constructor ID
-    var ctorID uint32
-    if err := binary.Read(r, binary.LittleEndian, &ctorID); err != nil {
-        return nil, 0, err
-    }
-    
-    // Route to deserializer
-    switch ctorID {
-    case 0x8f97c628: // user
-        obj := &User{}
-        return obj, ctorID, obj.DeserializeTL(r)
-    // ... other constructors
-    default:
-        return nil, ctorID, fmt.Errorf("unknown constructor: %x", ctorID)
-    }
-}
-
-func (l *Layer) Serialize(w io.Writer, obj mtproto.TLObject) error {
-    // Type switch to find correct serializer
-    switch o := obj.(type) {
-    case *User:
-        return o.SerializeTL(w)
-    // ... other types
-    default:
-        return fmt.Errorf("unknown type: %T", obj)
-    }
-}
-
-func (l *Layer) GetConstructorID(obj mtproto.TLObject) (uint32, bool) {
-    if t, ok := obj.(interface{ ConstructorID() uint32 }); ok {
-        return t.ConstructorID(), true
-    }
-    return 0, false
-}
-
-func (l *Layer) GetMethodName(obj mtproto.TLObject) (string, bool) {
-    if t, ok := obj.(interface{ Method() string }); ok {
-        return t.Method(), true
-    }
-    return "", false
+func RegisterCodec(reg *codec.Registry) {
+    reg.RegisterConstructor(UserConstructorID, func() tlrpc.TLObject { return &User{} })
+    reg.RegisterConstructor((&SendCodeRequest{}).ConstructorID(), func() tlrpc.TLObject { return &SendCodeRequest{} })
 }
 ```
 
 **Deliverables**:
-- Update `internal/codegen/` to generate layer packages
-- `internal/codegen/gen_layer.go` - Layer generator
+- `internal/codegen/gen_codec.go`
 
 **Verification**:
-- [ ] Generated layers implement interface
-- [ ] Can deserialize all types in layer
-- [ ] Constructor ID routing is correct
+- [ ] Requests can be decoded via codec registry
+- [ ] Non-RPC TL objects decode/encode
+
+---
+
+### Task 8.3: Layered Codecs
+**Agent**: Core Agent
+**Documents**: tlrpc Codec interface
+
+**Specifications**:
+Provide a codec implementation that dispatches by `layer` argument to different registries.
+
+**Example**:
+```go
+type LayeredCodec struct {
+    byLayer map[int]*codec.Registry
+}
+
+func (c *LayeredCodec) Decode(layer int, data []byte) (tlrpc.TLObject, error)
+func (c *LayeredCodec) Encode(layer int, obj tlrpc.TLObject) ([]byte, error)
+```
+
+**Deliverables**:
+- `codec/layered.go` (optional)
+
+**Verification**:
+- [ ] Can register two layers and route correctly

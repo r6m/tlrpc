@@ -83,11 +83,19 @@ import (
     "net"
 
     "github.com/r6m/tlrpc"
+    "github.com/r6m/tlrpc/codec"
     "my-telegram-server/gen"
 )
 
 func main() {
-    server := tlrpc.NewServer()
+    registry := codec.NewRegistry()
+    registry.RegisterConstructor((&gen.GetUserRequest{}).ConstructorID(), func() tlrpc.TLObject {
+        return &gen.GetUserRequest{}
+    })
+
+    server := tlrpc.NewServer(
+        tlrpc.WithCodec(codec.New(registry)),
+    )
 
     gen.RegisterUserServer(server, &UserService{})
 
@@ -100,6 +108,8 @@ func main() {
     server.Serve(lis)
 }
 ```
+
+Note: the default handshake handler is a minimal stub; for production MTProto you should provide a full handshake implementation.
 
 ## Step 7: Test your server
 

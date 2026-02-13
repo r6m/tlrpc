@@ -215,7 +215,7 @@ gen/
 ├── interfaces.go         # Polymorphic type interfaces
 ├── services.go           # Service interfaces
 ├── register.go           # Registration functions
-├── requests.go           # Request structs (grouped by service)
+├── requests.go           # Request structs + TLObject methods + TL serialize/deserialize
 ├── responses.go          # Response structs
 └── constants.go          # Constructor IDs as constants
 ```
@@ -241,10 +241,7 @@ func (w *FileWriter) Format() error   // gofmt all files
 
 package {{.PackageName}}
 
-import (
-    "context"
-    "github.com/r6m/tlrpc"
-)
+// imports are file-specific and generated per output file
 ```
 
 **Deliverables**:
@@ -301,4 +298,3 @@ Done. Generated 7 files in ./gen
 - [ ] Generates code for layer222 that compiles
 - [ ] Help text is comprehensive
 - [ ] Error messages are actionable
-

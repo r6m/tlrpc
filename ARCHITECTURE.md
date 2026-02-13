@@ -29,9 +29,9 @@ TLRPC is designed as a framework for building Telegram-compatible servers. It ab
 │  │  - Interceptor chain        │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
-│  │    Layer Adapter            │    │
-│  │  - Per-layer serialization  │    │
-│  │  - Constructor routing      │    │
+│  │    Codec (TL)               │    │
+│  │  - Constructor registry     │    │
+│  │  - Encode/decode objects    │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
 │  │    MTProto Protocol         │    │
@@ -110,28 +110,27 @@ type Conn interface {
 - `EncryptedMessage`: All RPC calls
 - `Container`: Batched messages
 
+`UnencryptedMessage` is routed through a handshake handler. The default handler is a minimal stub and should be replaced for production MTProto handshakes.
+
 **Features**:
 - Message ID generation (time-based)
 - Sequence numbers for ordering
 - Acknowledgment tracking
 - Resend requests
 
-### 4. Layer Adapter
+### 4. Codec (TL Serialization)
 
-**Responsibility**: Handle different client layer versions
+**Responsibility**: Decode/encode TL objects from bytes
 
 **Design**:
-- Each layer has its own generated serializer
-- Constructor ID → Type mapping per layer
-- No automatic upgrade/downgrade (user handles in service)
-- Layer exposed to service via context
+- Constructor ID → type mapping via `codec.Registry`
+- Per-layer routing handled by codec implementations
+- Layer version exposed to service via context
 
 ```go
-type Layer interface {
-    Version() int
-    Deserialize(constructorID uint32, data []byte) (TLObject, error)
-    Serialize(obj TLObject) ([]byte, error)
-    GetConstructorID(obj TLObject) uint32
+type Codec interface {
+    Decode(layer int, data []byte) (TLObject, error)
+    Encode(layer int, obj TLObject) ([]byte, error)
 }
 ```
 
@@ -148,7 +147,7 @@ type ServiceDesc struct {
 
 type MethodDesc struct {
     MethodName string
-    Handler    HandlerFunc
+    Handler    func(ctx context.Context, req interface{}) (interface{}, error)
 }
 
 func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
@@ -169,7 +168,7 @@ func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
 1. Transport receives encrypted bytes
 2. Crypto decrypts → plaintext TL bytes
 3. Protocol parses message header
-4. Layer adapter deserializes body (per client layer)
+4. Codec decodes TL object (constructor registry, per-layer if configured)
 5. Registry routes to service handler
 6. Interceptors execute (auth, logging, etc.)
 7. User service implementation executes

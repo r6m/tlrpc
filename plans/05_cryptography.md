@@ -100,7 +100,7 @@ type AuthKeyManager interface {
 **Documents**: MTProto specification (external)
 
 **Specifications**:
-Create `crypto/handshake.go` for initial key exchange.
+Create a simplified handshake in `tlrpc/handshake.go` backed by crypto primitives.
 
 **Handshake Steps**:
 1. Client sends `req_pq_multi` (unencrypted)
@@ -120,11 +120,10 @@ func (h *Handshake) Process(req []byte) (resp []byte, key AuthKey, err error)
 **Note**: Full handshake is complex; implement simplified version for framework, document that production needs full implementation.
 
 **Deliverables**:
-- `crypto/handshake.go` - Handshake logic
-- `crypto/handshake_test.go` - Test with known vectors
+- `tlrpc/handshake.go` - Handshake routing and default handler
+- `crypto/handshake.go` - Simplified key derivation helper
 
 **Verification**:
 - [ ] Generates valid auth keys
-- [ ] Handles all handshake steps
+- [ ] Handles `req_pq` and surfaces errors for unsupported steps
 - [ ] Rejects invalid requests
-

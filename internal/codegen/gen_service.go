@@ -104,6 +104,9 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error {
 
 // GenerateRequests emits request structs for functions.
 func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
+	if _, err := io.WriteString(g.out, "import (\n\t\"fmt\"\n\t\"io\"\n\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n"); err != nil {
+		return err
+	}
 	services := groupByService(funcs)
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
@@ -128,7 +131,149 @@ func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
 			if _, err := io.WriteString(g.out, "}\n\n"); err != nil {
 				return err
 			}
+
+			if err := g.generateRequestMethods(fn, method); err != nil {
+				return err
+			}
 		}
+	}
+	return nil
+}
+
+func (g *ServiceGenerator) generateRequestMethods(fn FuncDecl, method string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) ConstructorID() uint32 { return 0x%08x }\n", method, fn.ID); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) Method() string { return %q }\n\n", method, fn.Name); err != nil {
+		return err
+	}
+
+	if err := g.generateRequestSerialize(fn, method); err != nil {
+		return err
+	}
+	if err := g.generateRequestDeserialize(fn, method); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *ServiceGenerator) generateRequestSerialize(fn FuncDecl, method string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) SerializeTL(w io.Writer) error {\n", method); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+		return err
+	}
+	for _, param := range fn.Params {
+		if shouldSkipParam(param) {
+			continue
+		}
+		fieldName := g.namer.FieldName(param.Name)
+		if err := g.writeRequestSerializeField(param, fieldName); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(g.out, "\treturn nil\n}\n\n"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *ServiceGenerator) writeRequestSerializeField(param Parameter, fieldName string) error {
+	typeRef := param.Type
+	if typeRef.IsVector && typeRef.Generic != nil {
+		if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteVectorHeader(w, len(r.%s)); err != nil {\n\t\treturn err\n\t}\n", fieldName); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "\tfor i := range r.%s {\n", fieldName); err != nil {
+			return err
+		}
+		if err := g.writeRequestSerializeValue(*typeRef.Generic, fmt.Sprintf("r.%s[i]", fieldName), "\t\t"); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
+			return err
+		}
+		return nil
+	}
+	return g.writeRequestSerializeValue(typeRef, "r."+fieldName, "\t")
+}
+
+func (g *ServiceGenerator) writeRequestSerializeValue(t TypeRef, value, indent string) error {
+	writeCall, ok := serializeBuiltinCall(t, value)
+	if ok {
+		_, err := fmt.Fprintf(g.out, "%s%s\n", indent, writeCall)
+		return err
+	}
+	_, err := fmt.Fprintf(g.out, "%sif err := %s.SerializeTL(w); err != nil {\n%s\treturn err\n%s}\n", indent, value, indent, indent)
+	return err
+}
+
+func (g *ServiceGenerator) generateRequestDeserialize(fn FuncDecl, method string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) DeserializeTL(rd io.Reader) error {\n", method); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(g.out, "\tctorID, err := mtproto.ReadUint32(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(g.out, "\tif ctorID != r.ConstructorID() {\n\t\treturn fmt.Errorf(\"wrong constructor: got %%x, want %%x\", ctorID, r.ConstructorID())\n\t}\n"); err != nil {
+		return err
+	}
+	for _, param := range fn.Params {
+		if shouldSkipParam(param) {
+			continue
+		}
+		fieldName := g.namer.FieldName(param.Name)
+		if err := g.writeRequestDeserializeField(param, fieldName); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(g.out, "\treturn nil\n}\n\n"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *ServiceGenerator) writeRequestDeserializeField(param Parameter, fieldName string) error {
+	typeRef := param.Type
+	if typeRef.IsVector && typeRef.Generic != nil {
+		elementType := g.goBaseType(*typeRef.Generic)
+		if _, err := fmt.Fprintf(g.out, "\tvar items []%s\n", elementType); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.ReadVector(rd, func() error {\n"); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "\t\tvar item %s\n", elementType); err != nil {
+			return err
+		}
+		if err := g.writeRequestDeserializeValue(*typeRef.Generic, "item"); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(g.out, "\t\titems = append(items, item)\n\t\treturn nil\n\t}); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "\tr.%s = items\n", fieldName); err != nil {
+			return err
+		}
+		return nil
+	}
+	return g.writeRequestDeserializeValue(typeRef, "r."+fieldName)
+}
+
+func (g *ServiceGenerator) writeRequestDeserializeValue(t TypeRef, target string) error {
+	readCall, ok := deserializeBuiltinCall(t)
+	if ok {
+		if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := %s\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n", readCall); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "\t\t%s = value\n\t}\n", target); err != nil {
+			return err
+		}
+		return nil
+	}
+	if _, err := fmt.Fprintf(g.out, "\tif err := %s.DeserializeTL(rd); err != nil {\n\t\treturn err\n\t}\n", target); err != nil {
+		return err
 	}
 	return nil
 }

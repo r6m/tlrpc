@@ -14,7 +14,7 @@ The protocol layer manages:
 
 ## Message Types
 
-- **UnencryptedMessage**: Used only during initial handshake
+- **UnencryptedMessage**: Used only during initial handshake (routed via `tlrpc/handshake.go`)
 - **EncryptedMessage**: Standard encrypted RPC messages
 - **Container**: Batched message containers for efficiency
 

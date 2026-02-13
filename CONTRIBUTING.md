@@ -17,6 +17,7 @@ make test
 - `session/`: Session management
 - `mtproto/`: MTProto protocol
 - `layer/`: Layer support
+- `codec/`: TL encode/decode registry
 - `internal/codegen/`: Code generation library
 - `cmd/tlrpc-gen/`: CLI tool
 

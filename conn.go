@@ -8,7 +8,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
 	"github.com/r6m/tlrpc/session"
 )
@@ -31,114 +30,10 @@ func (h *connHandler) run() error {
 		if err != nil {
 			return err
 		}
-		if err := h.handleMessage(payload); err != nil {
+		if err := h.processMessage(payload); err != nil {
 			return err
 		}
 	}
-}
-
-func (h *connHandler) handleMessage(payload []byte) error {
-	if len(payload) < 8 {
-		return io.ErrUnexpectedEOF
-	}
-	keyID := crypto.KeyID(binary.LittleEndian.Uint64(payload[:8]))
-	if keyID == 0 {
-		return ErrUnauthorized
-	}
-	if len(payload) < 24 {
-		return io.ErrUnexpectedEOF
-	}
-
-	var msgKey [16]byte
-	copy(msgKey[:], payload[8:24])
-	enc := &mtproto.EncryptedMessage{
-		AuthKeyID:     keyID,
-		MsgKey:        msgKey,
-		EncryptedData: payload[24:],
-	}
-
-	authKey, err := h.server.authKeys.Get(keyID)
-	if err != nil {
-		return ErrUnauthorized
-	}
-	inner, err := enc.Decrypt(authKey)
-	if err != nil {
-		return err
-	}
-
-	sess, err := h.server.sessions.Get(keyID)
-	if err != nil {
-		if errors.Is(err, session.ErrSessionNotFound) {
-			sess, err = h.server.sessions.Create(keyID)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	if sess != nil {
-		sess.Touch()
-		_ = h.server.sessions.Save(sess)
-	}
-
-	if h.server.codec == nil {
-		return errors.New("tlrpc: codec is not configured")
-	}
-	ctx := h.conn.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	ctx = withSession(ctx, sess)
-	ctx = withAuthKeyID(ctx, int64(keyID))
-	if sess != nil {
-		ctx = withLayer(ctx, sess.Layer)
-		ctx = withUserID(ctx, sess.UserID)
-	}
-
-	req, err := h.server.codec.Decode(layerFromSession(sess), inner.Data)
-	if err != nil {
-		return err
-	}
-	methodName := req.Method()
-	if methodName == "" {
-		return ErrMethodNotFound
-	}
-	method, ok := h.server.registry.GetMethod(methodName)
-	if !ok {
-		return ErrMethodNotFound
-	}
-
-	handler := method.Handler
-	if len(h.server.interceptors) > 0 {
-		handler = ChainInterceptors(h.server.interceptors...)(handler)
-	}
-	resp, err := handler(ctx, req)
-	if err != nil {
-		return err
-	}
-	if resp == nil {
-		return nil
-	}
-	respObj, ok := resp.(TLObject)
-	if !ok {
-		return errors.New("tlrpc: response does not implement TLObject")
-	}
-	respData, err := h.server.codec.Encode(layerFromSession(sess), respObj)
-	if err != nil {
-		return err
-	}
-
-	innerResp := &mtproto.InnerData{
-		Salt:      inner.Salt,
-		SessionID: inner.SessionID,
-		MsgID:     nextMsgID(),
-		SeqNo:     nextSeqNo(sess),
-		Data:      respData,
-	}
-	encResp, err := innerResp.Encrypt(authKey, keyID)
-	if err != nil {
-		return err
-	}
-	return h.conn.WriteMessage(serializeEncrypted(encResp))
 }
 
 func layerFromSession(sess *session.Session) int {
@@ -152,7 +47,7 @@ func nextMsgID() int64 {
 	return time.Now().UnixNano() &^ 3
 }
 
-func nextSeqNo(sess *session.Session) int32 {
+func nextSeqNo(sess *Session) int32 {
 	if sess == nil {
 		return 0
 	}

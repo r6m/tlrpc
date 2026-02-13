@@ -1,13 +1,12 @@
 # Crypto Engine
 
-This package implements the cryptographic operations required by MTProto, including encryption, decryption, and key management.
+This package implements the cryptographic operations required by MTProto, including encryption, decryption, and key management. The handshake in this repo is simplified and is not a full MTProto implementation.
 
 ## Overview
 
 The crypto layer handles:
 - AES-256-IGE encryption/decryption for messages
-- RSA operations for initial handshake
-- Diffie-Hellman key exchange
+- Simplified handshake primitives (see `tlrpc/handshake.go` for server flow)
 - Auth key derivation and management
 - Session key generation
 
