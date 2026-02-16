@@ -5,6 +5,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"text/template"
 )
 
 // ServiceGenerator generates service interfaces and registrations.
@@ -18,6 +19,46 @@ func NewServiceGenerator(namer *Namer, out io.Writer) *ServiceGenerator {
 	return &ServiceGenerator{namer: namer, out: out}
 }
 
+// ServiceTemplateData holds data for service template
+type ServiceTemplateData struct {
+	Name        string
+	Methods     []MethodTemplateData
+	StubMethods []StubMethodTemplateData
+}
+
+// MethodTemplateData holds data for interface methods
+type MethodTemplateData struct {
+	Name     string
+	ReqType  string
+	RespType string
+}
+
+// StubMethodTemplateData holds data for unimplemented stub methods
+type StubMethodTemplateData struct {
+	ServiceName string
+	Name        string
+	ReqType     string
+	RespType    string
+	ZeroValue   string
+}
+
+// serviceInterfaceTemplate generates a service interface
+const serviceInterfaceTemplate = `type {{.Name}} interface {
+{{- range .Methods}}
+	{{.Name}}(ctx context.Context, req *{{.ReqType}}) ({{.RespType}}, error)
+{{- end}}
+}
+
+type Unimplemented{{.Name}} struct{}
+
+func (Unimplemented{{.Name}}) testEmbeddedByValue() {}
+{{range .StubMethods}}
+func (Unimplemented{{$.Name}}) {{.Name}}(context.Context, *{{.ReqType}}) ({{.RespType}}, error) {
+	return {{.ZeroValue}}, ErrMethodNotImplemented
+}
+{{end}}
+`
+
 // GenerateService emits service interfaces and unimplemented stubs.
 func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 	services := groupByService(funcs)
@@ -26,11 +67,17 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 	}
 
 	serviceNames := sortedKeys(services)
+	tmpl, err := template.New("service").Funcs(templateFuncMap()).Parse(serviceInterfaceTemplate)
+	if err != nil {
+		return err
+	}
+
 	for _, service := range serviceNames {
 		name := g.namer.ServiceName(service)
-		if _, err := fmt.Fprintf(g.out, "type %s interface {\n", name); err != nil {
-			return err
-		}
+
+		var methods []MethodTemplateData
+		var stubMethods []StubMethodTemplateData
+
 		for _, fn := range services[service] {
 			if fn.IsTemplate {
 				continue
@@ -38,32 +85,30 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 			method := g.namer.MethodName(fn.Name)
 			reqType := g.namer.RequestName(fn.Name)
 			respType := g.responseType(fn.ResultType)
-			if _, err := fmt.Fprintf(g.out, "\t%s(ctx context.Context, req *%s) (%s, error)\n", method, reqType, respType); err != nil {
-				return err
-			}
-		}
-		if _, err := io.WriteString(g.out, "}\n\n"); err != nil {
-			return err
+
+			methods = append(methods, MethodTemplateData{
+				Name:     method,
+				ReqType:  reqType,
+				RespType: respType,
+			})
+
+			stubMethods = append(stubMethods, StubMethodTemplateData{
+				ServiceName: name,
+				Name:        method,
+				ReqType:     reqType,
+				RespType:    respType,
+				ZeroValue:   zeroValue(respType),
+			})
 		}
 
-		if _, err := fmt.Fprintf(g.out, "type Unimplemented%s struct{}\n\n", name); err != nil {
-			return err
+		data := ServiceTemplateData{
+			Name:        name,
+			Methods:     methods,
+			StubMethods: stubMethods,
 		}
 
-		// Add the embedded test method (gRPC-style safety check)
-		if _, err := fmt.Fprintf(g.out, "func (Unimplemented%s) testEmbeddedByValue() {}\n\n", name); err != nil {
+		if err := tmpl.Execute(g.out, data); err != nil {
 			return err
-		}
-		for _, fn := range services[service] {
-			if fn.IsTemplate {
-				continue
-			}
-			method := g.namer.MethodName(fn.Name)
-			reqType := g.namer.RequestName(fn.Name)
-			respType := g.responseType(fn.ResultType)
-			if _, err := fmt.Fprintf(g.out, "func (Unimplemented%s) %s(context.Context, *%s) (%s, error) {\n\treturn %s, ErrMethodNotImplemented\n}\n\n", name, method, reqType, respType, zeroValue(respType)); err != nil {
-				return err
-			}
 		}
 	}
 

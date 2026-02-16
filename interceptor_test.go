@@ -1,0 +1,372 @@
+package tlrpc
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"testing"
+
+	"github.com/r6m/tlrpc/session"
+)
+
+// mockAuthorizer implements Authorizer interface for testing
+type mockAuthorizer struct {
+	shouldFail bool
+}
+
+func (m *mockAuthorizer) Authorize(ctx context.Context, req interface{}) error {
+	if m.shouldFail {
+		return errors.New("authorization failed")
+	}
+	return nil
+}
+
+func TestChainUnaryInterceptors(t *testing.T) {
+	callOrder := []string{}
+
+	interceptor1 := func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		callOrder = append(callOrder, "interceptor1")
+		return handler(ctx, req)
+	}
+
+	interceptor2 := func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		callOrder = append(callOrder, "interceptor2")
+		return handler(ctx, req)
+	}
+
+	chained := ChainUnaryInterceptors(interceptor1, interceptor2)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		callOrder = append(callOrder, "handler")
+		return "response", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := chained(context.Background(), "request", info, handler)
+
+	if err != nil {
+		t.Errorf("chained interceptor returned error: %v", err)
+	}
+
+	if resp != "response" {
+		t.Errorf("chained interceptor returned wrong response: got %v, want %v", resp, "response")
+	}
+
+	// Verify call order (interceptors applied in reverse order, so interceptor1 is outermost)
+	expectedOrder := []string{"interceptor1", "interceptor2", "handler"}
+	if len(callOrder) != len(expectedOrder) {
+		t.Errorf("wrong call order length: got %d, want %d", len(callOrder), len(expectedOrder))
+	}
+
+	for i, expected := range expectedOrder {
+		if i >= len(callOrder) || callOrder[i] != expected {
+			t.Errorf("wrong call order at position %d: got %v, want %v", i, callOrder, expectedOrder)
+		}
+	}
+}
+
+func TestChainInterceptors(t *testing.T) {
+	callOrder := []string{}
+
+	interceptor1 := func(next Handler) Handler {
+		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			callOrder = append(callOrder, "interceptor1")
+			return next(ctx, req)
+		}
+	}
+
+	interceptor2 := func(next Handler) Handler {
+		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			callOrder = append(callOrder, "interceptor2")
+			return next(ctx, req)
+		}
+	}
+
+	chained := ChainInterceptors(interceptor1, interceptor2)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		callOrder = append(callOrder, "handler")
+		return "response", nil
+	}
+
+	wrappedHandler := chained(handler)
+	resp, err := wrappedHandler(context.Background(), "request")
+
+	if err != nil {
+		t.Errorf("chained legacy interceptor returned error: %v", err)
+	}
+
+	if resp != "response" {
+		t.Errorf("chained legacy interceptor returned wrong response: got %v, want %v", resp, "response")
+	}
+
+	// Verify call order (interceptors applied in reverse order, so interceptor1 is outermost)
+	expectedOrder := []string{"interceptor1", "interceptor2", "handler"}
+	if len(callOrder) != len(expectedOrder) {
+		t.Errorf("wrong call order length: got %d, want %d", len(callOrder), len(expectedOrder))
+	}
+
+	for i, expected := range expectedOrder {
+		if i >= len(callOrder) || callOrder[i] != expected {
+			t.Errorf("wrong call order at position %d: got %v, want %v", i, callOrder, expectedOrder)
+		}
+	}
+}
+
+func TestRecoveryInterceptor(t *testing.T) {
+	panicMsg := "test panic"
+
+	// Test with custom error factory
+	errorFactory := func(message string) error {
+		return fmt.Errorf("custom error: %s", message)
+	}
+
+	interceptor := RecoveryInterceptor(errorFactory)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		panic(panicMsg)
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	_, err := interceptor(context.Background(), "request", info, handler)
+
+	if err == nil {
+		t.Error("expected error from recovery interceptor")
+	}
+
+	expectedErrMsg := fmt.Sprintf("custom error: panic: %s", panicMsg)
+	if err.Error() != expectedErrMsg {
+		t.Errorf("wrong error message: got %v, want %v", err.Error(), expectedErrMsg)
+	}
+}
+
+func TestRecoveryInterceptorDefault(t *testing.T) {
+	panicMsg := "test panic"
+
+	// Test with nil error factory (should use default)
+	interceptor := RecoveryInterceptor(nil)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		panic(panicMsg)
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	_, err := interceptor(context.Background(), "request", info, handler)
+
+	if err == nil {
+		t.Error("expected error from recovery interceptor")
+	}
+
+	expectedErrMsg := fmt.Sprintf("panic: %s", panicMsg)
+	if err.Error() != expectedErrMsg {
+		t.Errorf("wrong error message: got %v, want %v", err.Error(), expectedErrMsg)
+	}
+}
+
+func TestRecoveryInterceptorNoPanic(t *testing.T) {
+	interceptor := RecoveryInterceptor(nil)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "success", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := interceptor(context.Background(), "request", info, handler)
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if resp != "success" {
+		t.Errorf("wrong response: got %v, want %v", resp, "success")
+	}
+}
+
+func TestLoggingInterceptor(t *testing.T) {
+	logMsgs := []string{}
+
+	logger := &mockLogger{
+		infoMsgs:  logMsgs,
+		errorMsgs: logMsgs,
+	}
+
+	interceptor := LoggingInterceptor(logger)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "success", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := interceptor(context.Background(), "request", info, handler)
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if resp != "success" {
+		t.Errorf("wrong response: got %v, want %v", resp, "success")
+	}
+
+	// Should have logged request and response
+	if len(logger.infoMsgs) != 2 {
+		t.Errorf("expected 2 info log messages, got %d", len(logger.infoMsgs))
+	}
+}
+
+func TestLoggingInterceptorWithError(t *testing.T) {
+	logger := &mockLogger{}
+
+	interceptor := LoggingInterceptor(logger)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, errors.New("handler error")
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	_, err := interceptor(context.Background(), "request", info, handler)
+
+	if err == nil {
+		t.Error("expected error from handler")
+	}
+
+	// Should have logged request and error
+	if len(logger.infoMsgs) != 1 {
+		t.Errorf("expected 1 info log message, got %d", len(logger.infoMsgs))
+	}
+	if len(logger.errorMsgs) != 1 {
+		t.Errorf("expected 1 error log message, got %d", len(logger.errorMsgs))
+	}
+}
+
+func TestLoggingInterceptorNilLogger(t *testing.T) {
+	interceptor := LoggingInterceptor(nil)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "success", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := interceptor(context.Background(), "request", info, handler)
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if resp != "success" {
+		t.Errorf("wrong response: got %v, want %v", resp, "success")
+	}
+
+	// Should not panic with nil logger
+}
+
+func TestAuthInterceptor(t *testing.T) {
+	authorizer := &mockAuthorizer{shouldFail: false}
+
+	interceptor := AuthInterceptor(authorizer)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "authorized", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := interceptor(context.Background(), "request", info, handler)
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if resp != "authorized" {
+		t.Errorf("wrong response: got %v, want %v", resp, "authorized")
+	}
+}
+
+func TestAuthInterceptorFailure(t *testing.T) {
+	authorizer := &mockAuthorizer{shouldFail: true}
+
+	interceptor := AuthInterceptor(authorizer)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "should not reach here", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := interceptor(context.Background(), "request", info, handler)
+
+	if err == nil {
+		t.Error("expected authorization error")
+	}
+
+	if resp != nil {
+		t.Errorf("expected nil response on auth failure, got %v", resp)
+	}
+
+	if err.Error() != "authorization failed" {
+		t.Errorf("wrong error message: got %v, want %v", err.Error(), "authorization failed")
+	}
+}
+
+func TestAuthInterceptorNilAuthorizer(t *testing.T) {
+	interceptor := AuthInterceptor(nil)
+
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "no auth required", nil
+	}
+
+	info := &UnaryServerInfo{FullMethod: "test.method"}
+	resp, err := interceptor(context.Background(), "request", info, handler)
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if resp != "no auth required" {
+		t.Errorf("wrong response: got %v, want %v", resp, "no auth required")
+	}
+}
+
+// Test context helper functions that aren't covered by context_test.go
+func TestContextHelpersNilContext(t *testing.T) {
+	if SessionFromContext(nil) != nil {
+		t.Error("SessionFromContext(nil) should return nil")
+	}
+	if LayerFromContext(nil) != 0 {
+		t.Error("LayerFromContext(nil) should return 0")
+	}
+	if AuthKeyIDFromContext(nil) != 0 {
+		t.Error("AuthKeyIDFromContext(nil) should return 0")
+	}
+	if UserIDFromContext(nil) != 0 {
+		t.Error("UserIDFromContext(nil) should return 0")
+	}
+}
+
+func TestContextHelpersWrongType(t *testing.T) {
+	ctx := context.WithValue(context.Background(), contextKeySession, "not a session")
+
+	if SessionFromContext(ctx) != nil {
+		t.Error("SessionFromContext with wrong type should return nil")
+	}
+}
+
+func TestWithContextHelpers(t *testing.T) {
+	session := &session.Session{ID: 123}
+	ctx := context.Background()
+
+	ctx = withSession(ctx, session)
+	ctx = withLayer(ctx, 42)
+	ctx = withAuthKeyID(ctx, 456)
+	ctx = withUserID(ctx, 789)
+
+	if SessionFromContext(ctx) != session {
+		t.Error("withSession/withSessionFromContext round trip failed")
+	}
+	if LayerFromContext(ctx) != 42 {
+		t.Error("withLayer/LayerFromContext round trip failed")
+	}
+	if AuthKeyIDFromContext(ctx) != 456 {
+		t.Error("withAuthKeyID/AuthKeyIDFromContext round trip failed")
+	}
+	if UserIDFromContext(ctx) != 789 {
+		t.Error("withUserID/UserIDFromContext round trip failed")
+	}
+}

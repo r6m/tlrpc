@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"text/template"
 )
 
 // TypeGenerator generates Go types from TL declarations.
@@ -24,6 +25,90 @@ func NewTypeGenerator(namer *Namer, out io.Writer, schema *Schema) *TypeGenerato
 func (g *TypeGenerator) UsesBaseTypes() bool {
 	return g.usesBaseTypes
 }
+
+// templateFuncMap returns template functions for code generation
+func templateFuncMap() template.FuncMap {
+	return template.FuncMap{
+		"hex": func(n uint32) string {
+			return fmt.Sprintf("0x%08x", n)
+		},
+		"quote": func(s string) string {
+			return fmt.Sprintf("%q", s)
+		},
+		"lower": strings.ToLower,
+		"upper": strings.ToUpper,
+	}
+}
+
+// ConstructorTemplateData holds data for constructor template
+type ConstructorTemplateData struct {
+	Name          string
+	Fields        []FieldTemplateData
+	ID            uint32
+	TLName        string
+	HasFlags      bool
+	FlagFields    []FlagFieldTemplateData
+	SerializeTL   string
+	DeserializeTL string
+}
+
+// FieldTemplateData holds data for struct fields
+type FieldTemplateData struct {
+	Name string
+	Type string
+}
+
+// FlagFieldTemplateData holds data for flag fields
+type FlagFieldTemplateData struct {
+	Name string
+	Bit  int
+}
+
+// InterfaceTemplateData holds data for interface template
+type InterfaceTemplateData struct {
+	Name         string
+	BaseName     string
+	Constructors []string
+}
+
+// interfaceTemplate generates a polymorphic interface for union types
+const interfaceTemplate = `type {{.Name}} interface {
+	is{{.BaseName}}Type()
+	ConstructorID() uint32
+	TLName() string
+}
+{{range .Constructors}}
+func (*{{.}}) is{{$.BaseName}}Type() {}
+{{end}}
+`
+
+// constructorTemplate generates a constructor struct with its methods
+const constructorTemplate = `type {{.Name}} struct {
+{{- range .Fields}}
+	{{.Name}} {{.Type}}
+{{- end}}
+}
+
+func (v *{{.Name}}) ConstructorID() uint32 { return {{hex .ID}} }
+func (v *{{.Name}}) Method() string { return "" }
+func (v *{{.Name}}) TLName() string { return {{quote .TLName}} }
+
+{{if .HasFlags}}
+func (v *{{.Name}}) computeFlags() uint32 {
+	var flags uint32
+{{- range .FlagFields}}
+	if v.{{.Name}} {
+		flags |= 1 << {{.Bit}}
+	}
+{{- end}}
+	return flags
+}
+{{end}}
+
+{{.SerializeTL}}
+
+{{.DeserializeTL}}
+`
 
 // GenerateType emits all constructor structs for a type declaration.
 func (g *TypeGenerator) GenerateType(decl *TypeDecl) error {
@@ -46,18 +131,25 @@ func (g *TypeGenerator) GenerateInterface(decl *TypeDecl) error {
 	}
 	baseName := g.namer.TypeName(decl.Name)
 	name := baseName + "Type"
-	_, err := fmt.Fprintf(g.out, "type %s interface {\n\tis%sType()\n\tConstructorID() uint32\n\tTLName() string\n}\n\n", name, baseName)
+
+	var constructors []string
+	for i := range decl.Constructors {
+		ctorName := g.namer.ConstructorName(decl.Constructors[i].Name)
+		constructors = append(constructors, ctorName)
+	}
+
+	data := InterfaceTemplateData{
+		Name:         name,
+		BaseName:     baseName,
+		Constructors: constructors,
+	}
+
+	tmpl, err := template.New("interface").Funcs(templateFuncMap()).Parse(interfaceTemplate)
 	if err != nil {
 		return err
 	}
-	for i := range decl.Constructors {
-		ctorName := g.namer.ConstructorName(decl.Constructors[i].Name)
-		if _, err := fmt.Fprintf(g.out, "func (*%s) is%sType() {}\n", ctorName, baseName); err != nil {
-			return err
-		}
-	}
-	_, err = io.WriteString(g.out, "\n")
-	return err
+
+	return tmpl.Execute(g.out, data)
 }
 
 // isBaseType checks if a constructor represents a base MTProto type
@@ -85,38 +177,93 @@ func (g *TypeGenerator) GenerateConstructor(ctor *Constructor) error {
 	}
 
 	name := g.namer.ConstructorName(ctor.Name)
-	if _, err := fmt.Fprintf(g.out, "type %s struct {\n", name); err != nil {
-		return err
-	}
 
+	// Build field data
+	var fields []FieldTemplateData
 	for _, param := range ctor.Params {
 		if shouldSkipParam(param) {
 			continue
 		}
 		fieldName := g.namer.FieldName(param.Name)
 		fieldType := g.goType(param.Type)
-		if _, err := fmt.Fprintf(g.out, "\t%s %s\n", fieldName, fieldType); err != nil {
-			return err
+		fields = append(fields, FieldTemplateData{
+			Name: fieldName,
+			Type: fieldType,
+		})
+	}
+
+	// Build flag field data
+	flagsParam := findFlagsParam(ctor)
+	var flagFields []FlagFieldTemplateData
+	if flagsParam != nil {
+		for _, param := range ctor.Params {
+			bit := flagBit(param)
+			if bit == nil {
+				continue
+			}
+			fieldName := g.namer.FieldName(param.Name)
+			flagFields = append(flagFields, FlagFieldTemplateData{
+				Name: fieldName,
+				Bit:  *bit,
+			})
 		}
 	}
 
-	if _, err := io.WriteString(g.out, "}\n\n"); err != nil {
+	// Generate serialization methods as strings
+	var serializeTL, deserializeTL string
+	if err := g.generateSerializeTLString(ctor, name, flagsParam != nil, &serializeTL); err != nil {
+		return err
+	}
+	if err := g.generateDeserializeTLString(ctor, name, flagsParam != nil, &deserializeTL); err != nil {
 		return err
 	}
 
-	if _, err := fmt.Fprintf(g.out, "func (v *%s) ConstructorID() uint32 { return 0x%08x }\n", name, ctor.ID); err != nil {
-		return err
+	data := ConstructorTemplateData{
+		Name:          name,
+		Fields:        fields,
+		ID:            ctor.ID,
+		TLName:        ctor.Name,
+		HasFlags:      flagsParam != nil,
+		FlagFields:    flagFields,
+		SerializeTL:   serializeTL,
+		DeserializeTL: deserializeTL,
 	}
-	if _, err := fmt.Fprintf(g.out, "func (v *%s) Method() string { return \"\" }\n", name); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(g.out, "func (v *%s) TLName() string { return %q }\n\n", name, ctor.Name); err != nil {
-		return err
-	}
-	if err := g.generateSerializeMethods(ctor, name); err != nil {
+
+	tmpl, err := template.New("constructor").Funcs(templateFuncMap()).Parse(constructorTemplate)
+	if err != nil {
 		return err
 	}
 
+	return tmpl.Execute(g.out, data)
+}
+
+// generateSerializeTLString generates SerializeTL method as a string
+func (g *TypeGenerator) generateSerializeTLString(ctor *Constructor, name string, hasFlags bool, result *string) error {
+	var buf bytes.Buffer
+	oldOut := g.out
+	g.out = &buf
+	defer func() { g.out = oldOut }()
+
+	if err := g.generateSerializeTL(ctor, name, hasFlags); err != nil {
+		return err
+	}
+
+	*result = buf.String()
+	return nil
+}
+
+// generateDeserializeTLString generates DeserializeTL method as a string
+func (g *TypeGenerator) generateDeserializeTLString(ctor *Constructor, name string, hasFlags bool, result *string) error {
+	var buf bytes.Buffer
+	oldOut := g.out
+	g.out = &buf
+	defer func() { g.out = oldOut }()
+
+	if err := g.generateDeserializeTL(ctor, name, hasFlags); err != nil {
+		return err
+	}
+
+	*result = buf.String()
 	return nil
 }
 

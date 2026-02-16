@@ -34,7 +34,7 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !contains(services, "type AuthServer interface") {
 		t.Fatalf("expected AuthServer interface")
 	}
-	if !contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*AuthSentCode, error)") {
+	if !contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*SentCode, error)") {
 		t.Fatalf("expected SendCode signature")
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"text/template"
 )
 
 // CodecGenerator emits static constructor maps.
@@ -16,6 +17,65 @@ type CodecGenerator struct {
 func NewCodecGenerator(namer *Namer, out io.Writer) *CodecGenerator {
 	return &CodecGenerator{namer: namer, out: out}
 }
+
+// CodecTemplateData holds data for codec template
+type CodecTemplateData struct {
+	BaseConstructors    []BaseConstructorTemplateData
+	GeneratedConstructors []GeneratedConstructorTemplateData
+	MethodConstructors   []MethodConstructorTemplateData
+}
+
+// BaseConstructorTemplateData holds data for base constructor entries
+type BaseConstructorTemplateData struct {
+	ID   uint32
+	Code string
+}
+
+// GeneratedConstructorTemplateData holds data for generated constructor entries
+type GeneratedConstructorTemplateData struct {
+	ID   uint32
+	Name string
+}
+
+// MethodConstructorTemplateData holds data for method constructor entries
+type MethodConstructorTemplateData struct {
+	Name string
+	Type string
+}
+
+// codecTemplate generates static constructor and method maps
+const codecTemplate = `// Static constructor map for efficient decoding
+var staticConstructors = map[uint32]func() tlrpc.TLObject{
+	// Base MTProto types
+{{- range .BaseConstructors}}
+	{{hex .ID}}: {{.Code}},
+{{- end}}
+
+{{- if .GeneratedConstructors}}
+	// Generated types
+{{- range .GeneratedConstructors}}
+	{{hex .ID}}: func() tlrpc.TLObject { return &{{.Name}}{} },
+{{- end}}
+{{- end}}
+}
+
+// GetStaticConstructors returns the static constructor map for codec initialization
+func GetStaticConstructors() map[uint32]func() tlrpc.TLObject {
+	return staticConstructors
+}
+
+// Static method constructor map for RPC request deserialization
+var staticMethods = map[string]func() tlrpc.TLObject{
+{{- range .MethodConstructors}}
+	{{quote .Name}}: func() tlrpc.TLObject { return &{{.Type}}{} },
+{{- end}}
+}
+
+// GetStaticMethods returns the static method constructor map
+func GetStaticMethods() map[string]func() tlrpc.TLObject {
+	return staticMethods
+}
+`
 
 // isBaseConstructor checks if a constructor represents a base MTProto type
 func (g *CodecGenerator) isBaseConstructor(name string) bool {
@@ -44,35 +104,20 @@ func (g *CodecGenerator) Generate(schema *Schema) error {
 
 // GenerateStatic emits a static constructor map instead of registry calls.
 func (g *CodecGenerator) GenerateStatic(schema *Schema) error {
-	if _, err := io.WriteString(g.out, "// Static constructor map for efficient decoding\nvar staticConstructors = map[uint32]func() tlrpc.TLObject{\n"); err != nil {
-		return err
+	// Build base constructors data
+	baseConstructors := []BaseConstructorTemplateData{
+		{ID: 0x3fedd339, Code: "func() tlrpc.TLObject { return &types.True{} }"},
+		{ID: 0xc4b9f9bb, Code: "func() tlrpc.TLObject { return &types.Error{} }"},
+		{ID: 0x56730bcc, Code: "func() tlrpc.TLObject { return &types.Null{} }"},
+		{ID: 0xb5286e24, Code: "func() tlrpc.TLObject { s := types.String(\"\"); return &s }"},
+		{ID: 0x0a1cdbd1, Code: "func() tlrpc.TLObject { return &types.Bytes{} }"},
+		{ID: 0x84c1e679, Code: "func() tlrpc.TLObject { return &types.Int128{} }"},
+		{ID: 0x7bed4774, Code: "func() tlrpc.TLObject { return &types.Int256{} }"},
+		{ID: 0x2210c154, Code: "func() tlrpc.TLObject { d := types.Double(0); return &d }"},
 	}
 
-	// Include base MTProto type constructors
-	if _, err := io.WriteString(g.out, "\t// Base MTProto types\n"); err != nil {
-		return err
-	}
-	baseConstructors := []struct {
-		id   uint32
-		name string
-	}{
-		{0x3fedd339, "func() tlrpc.TLObject { return &types.True{} }"},
-		{0xc4b9f9bb, "func() tlrpc.TLObject { return &types.Error{} }"},
-		{0x56730bcc, "func() tlrpc.TLObject { return &types.Null{} }"},
-		{0xb5286e24, "func() tlrpc.TLObject { s := types.String(\"\"); return &s }"},
-		{0x0a1cdbd1, "func() tlrpc.TLObject { return &types.Bytes{} }"},
-		{0x84c1e679, "func() tlrpc.TLObject { return &types.Int128{} }"},
-		{0x7bed4774, "func() tlrpc.TLObject { return &types.Int256{} }"},
-		{0x2210c154, "func() tlrpc.TLObject { d := types.Double(0); return &d }"},
-	}
-
-	for _, ctor := range baseConstructors {
-		if _, err := fmt.Fprintf(g.out, "\t0x%08x: %s,\n", ctor.id, ctor.name); err != nil {
-			return err
-		}
-	}
-
-	// Add generated constructors (skip base types)
+	// Build generated constructors data
+	var generatedConstructors []GeneratedConstructorTemplateData
 	constructors := make([]Constructor, 0, len(schema.Constructors))
 	for _, ctor := range schema.Constructors {
 		if len(ctor.GenericParams) > 0 || ctor.ResultType.IsTypeVar {
@@ -88,22 +133,16 @@ func (g *CodecGenerator) GenerateStatic(schema *Schema) error {
 		return constructors[i].ID < constructors[j].ID
 	})
 
-	if len(constructors) > 0 {
-		if _, err := io.WriteString(g.out, "\n\t// Generated types\n"); err != nil {
-			return err
-		}
-		for _, ctor := range constructors {
-			name := g.namer.ConstructorName(ctor.Name)
-			if _, err := fmt.Fprintf(g.out, "\t0x%08x: func() tlrpc.TLObject { return &%s{} },\n", ctor.ID, name); err != nil {
-				return err
-			}
-		}
+	for _, ctor := range constructors {
+		name := g.namer.ConstructorName(ctor.Name)
+		generatedConstructors = append(generatedConstructors, GeneratedConstructorTemplateData{
+			ID:   ctor.ID,
+			Name: name,
+		})
 	}
 
-	if _, err := io.WriteString(g.out, "}\n\n// GetStaticConstructors returns the static constructor map for codec initialization\nfunc GetStaticConstructors() map[uint32]func() tlrpc.TLObject {\n\treturn staticConstructors\n}\n\n// Static method constructor map for RPC request deserialization\nvar staticMethods = map[string]func() tlrpc.TLObject{\n"); err != nil {
-		return err
-	}
-
+	// Build method constructors data
+	var methodConstructors []MethodConstructorTemplateData
 	services := groupByService(schema.Functions)
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
@@ -113,13 +152,25 @@ func (g *CodecGenerator) GenerateStatic(schema *Schema) error {
 			}
 			methodName := fn.Name // Use full method name with service prefix
 			requestName := g.namer.RequestName(fn.Name)
-			if _, err := fmt.Fprintf(g.out, "\t%q: func() tlrpc.TLObject { return &%s{} },\n", methodName, requestName); err != nil {
-				return err
-			}
+			methodConstructors = append(methodConstructors, MethodConstructorTemplateData{
+				Name: methodName,
+				Type: requestName,
+			})
 		}
 	}
 
-	if _, err := io.WriteString(g.out, "}\n\n// GetStaticMethods returns the static method constructor map\nfunc GetStaticMethods() map[string]func() tlrpc.TLObject {\n\treturn staticMethods\n}\n\n"); err != nil {
+	data := CodecTemplateData{
+		BaseConstructors:      baseConstructors,
+		GeneratedConstructors: generatedConstructors,
+		MethodConstructors:    methodConstructors,
+	}
+
+	tmpl, err := template.New("codec").Funcs(templateFuncMap()).Parse(codecTemplate)
+	if err != nil {
+		return err
+	}
+
+	if err := tmpl.Execute(g.out, data); err != nil {
 		return err
 	}
 

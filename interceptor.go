@@ -2,6 +2,7 @@ package tlrpc
 
 import (
 	"context"
+	"fmt"
 )
 
 type contextKey string
@@ -90,4 +91,77 @@ func withAuthKeyID(ctx context.Context, id int64) context.Context {
 
 func withUserID(ctx context.Context, id int64) context.Context {
 	return context.WithValue(ctx, contextKeyUserID, id)
+}
+
+// ChainUnaryInterceptors chains multiple unary interceptors together.
+func ChainUnaryInterceptors(interceptors ...UnaryInterceptor) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		// Apply interceptors in reverse order so first interceptor is outermost
+		chainedHandler := handler
+		for i := len(interceptors) - 1; i >= 0; i-- {
+			currentInterceptor := interceptors[i]
+			nextHandler := chainedHandler
+			chainedHandler = func(ctx context.Context, req interface{}) (interface{}, error) {
+				return currentInterceptor(ctx, req, info, nextHandler)
+			}
+		}
+		return chainedHandler(ctx, req)
+	}
+}
+
+// ChainInterceptors chains multiple legacy interceptors together.
+func ChainInterceptors(interceptors ...Interceptor) Interceptor {
+	return func(next Handler) Handler {
+		for i := len(interceptors) - 1; i >= 0; i-- {
+			next = interceptors[i](next)
+		}
+		return next
+	}
+}
+
+// RecoveryInterceptor recovers panics and uses errorFactory to build errors.
+func RecoveryInterceptor(errorFactory func(message string) error) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (resp interface{}, err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				if errorFactory != nil {
+					err = errorFactory(fmt.Sprintf("panic: %v", r))
+					return
+				}
+				err = fmt.Errorf("panic: %v", r)
+			}
+		}()
+		return handler(ctx, req)
+	}
+}
+
+// LoggingInterceptor logs request/response lifecycle.
+func LoggingInterceptor(logger Logger) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		if logger != nil {
+			logger.Info("tlrpc request", "method", info.FullMethod, "type", fmt.Sprintf("%T", req))
+		}
+		resp, err := handler(ctx, req)
+		if logger != nil {
+			if err != nil {
+				logger.Error("tlrpc response", "method", info.FullMethod, "error", err)
+			} else {
+				logger.Info("tlrpc response", "method", info.FullMethod, "type", fmt.Sprintf("%T", resp))
+			}
+		}
+		return resp, err
+	}
+}
+
+// AuthInterceptor checks authorization.
+func AuthInterceptor(authorizer Authorizer) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		if authorizer == nil {
+			return handler(ctx, req)
+		}
+		if err := authorizer.Authorize(ctx, req); err != nil {
+			return nil, err
+		}
+		return handler(ctx, req)
+	}
 }
