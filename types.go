@@ -18,6 +18,7 @@ import (
 type Server struct {
 	transport        Transport
 	authKeys         crypto.AuthKeyManager
+	serverKeys       crypto.ServerKeyManager
 	sessions         session.Manager
 	codec            Codec
 	maxLayer         int
@@ -34,6 +35,7 @@ func NewServer(opts ...ServerOption) *Server {
 	s := &Server{
 		registry:   registry.New(),
 		authKeys:   crypto.NewMemoryAuthKeyManager(),
+		serverKeys: crypto.NewMemoryServerKeyManager(),
 		sessions:   session.NewMemoryManager(),
 		transport:  &transport.TCPTransport{},
 		shutdownCh: make(chan struct{}),
@@ -209,6 +211,15 @@ func WithAuthKeyManager(manager crypto.AuthKeyManager) ServerOption {
 	return func(s *Server) {
 		if manager != nil {
 			s.authKeys = manager
+		}
+	}
+}
+
+// WithServerKeyManager sets the server key manager.
+func WithServerKeyManager(manager crypto.ServerKeyManager) ServerOption {
+	return func(s *Server) {
+		if manager != nil {
+			s.serverKeys = manager
 		}
 	}
 }

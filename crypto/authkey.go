@@ -8,7 +8,7 @@ import (
 )
 
 // AuthKey is a 256-bit shared secret.
-type AuthKey [32]byte
+type AuthKey [256]byte
 
 // KeyID is the first 64 bits of SHA1(auth_key).
 type KeyID uint64

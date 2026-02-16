@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 )
 
 var (
@@ -20,6 +21,18 @@ func ReadInt32(r io.Reader) (int32, error) {
 }
 
 // ReadUint32 reads a uint32 in little-endian.
+func WriteBigInt(w io.Writer, n *big.Int, size int) error {
+	data := n.Bytes()
+	if len(data) < size {
+		padded := make([]byte, size)
+		copy(padded[size-len(data):], data)
+		_, err := w.Write(padded)
+		return err
+	}
+	_, err := w.Write(data[len(data)-size:])
+	return err
+}
+
 func ReadUint32(r io.Reader) (uint32, error) {
 	var buf [4]byte
 	if _, err := io.ReadFull(r, buf[:]); err != nil {

@@ -114,10 +114,8 @@ server.Serve(listener)
 - Session management
 - Codec registry system
 - Service registry and routing
-- Basic MTProto handshake (minimal)
-
-🔄 **In Development:**
-- Complete MTProto handshake implementation
+- Complete MTProto v2 handshake (Diffie-Hellman key exchange)
+- MTProto 2.0 message encryption with proper msg_key and KDF
 - Production session storage backends
 - Comprehensive examples and documentation
 

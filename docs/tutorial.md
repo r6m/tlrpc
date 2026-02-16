@@ -130,6 +130,8 @@ func main() {
     // Create the MTProto server
     server := tlrpc.NewServer(
         tlrpc.WithCodec(codec.New(registry)),
+        // Optional: Use obfuscated transport for additional privacy
+        // tlrpc.WithTransport(tlrpc.NewObfuscatedTransport()),
         // Add interceptors like gRPC
         tlrpc.WithInterceptor(tlrpc.LoggingInterceptor(log.Default())),
     )
@@ -210,7 +212,7 @@ gen.RegisterChannelsServer(server, &ChannelsService{})
 
 ## Production Considerations
 
-- **Full MTProto Handshake**: The default handshake only handles `req_pq`. For production, implement complete DH key exchange.
+- **MTProto v2**: TLRPC implements the complete MTProto v2 protocol including full Diffie-Hellman key exchange.
 - **Session Storage**: Use persistent session storage (Redis, database) instead of memory.
 - **Rate Limiting**: Add interceptors for rate limiting.
 - **Metrics**: Add Prometheus metrics interceptors.

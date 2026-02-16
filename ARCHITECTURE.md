@@ -108,13 +108,14 @@ type Conn interface {
 - `EncryptedMessage`: All RPC calls
 - `Container`: Batched messages
 
-`UnencryptedMessage` is routed through a handshake handler. The default handler is a minimal stub and should be replaced for production MTProto handshakes.
+`UnencryptedMessage` is routed through a handshake handler. The default handler implements the complete MTProto v2 Diffie-Hellman key exchange for production use.
 
 **Features**:
-- Message ID generation (time-based)
+- Message ID generation and validation (time-based, ±30s window)
 - Sequence numbers for ordering
-- Acknowledgment tracking
-- Resend requests
+- Automatic acknowledgment sending (msgs_ack)
+- Container message batching support
+- MTProto 2.0 encryption with proper msg_key and KDF
 
 ### 4. Codec (TL Serialization)
 

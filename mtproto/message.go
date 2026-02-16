@@ -3,7 +3,6 @@ package mtproto
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/sha1"
 	"crypto/sha256"
 	"errors"
 	"io"
@@ -85,7 +84,7 @@ func (m *UnencryptedMessage) Deserialize(data []byte) error {
 
 // Decrypt decrypts the message payload into inner data.
 func (m *EncryptedMessage) Decrypt(key crypto.AuthKey) (*InnerData, error) {
-	aesKey, aesIV := deriveAESKeyIV(key, m.MsgKey)
+	aesKey, aesIV := crypto.ComputeKDF(key[:], m.MsgKey, true) // server receiving from client
 	block := crypto.NewAESIGEDecrypt(aesKey, aesIV)
 	plaintext := make([]byte, len(m.EncryptedData))
 	block.CryptBlocks(plaintext, m.EncryptedData)
@@ -131,7 +130,7 @@ func (m *InnerData) Encrypt(key crypto.AuthKey, authKeyID crypto.KeyID) (*Encryp
 		return nil, err
 	}
 	msgKey := calcMsgKey(key, plaintext)
-	aesKey, aesIV := deriveAESKeyIV(key, msgKey)
+	aesKey, aesIV := crypto.ComputeKDF(key[:], msgKey, false) // server sending to client
 	block := crypto.NewAESIGE(aesKey, aesIV)
 	ciphertext := make([]byte, len(plaintext))
 	block.CryptBlocks(ciphertext, plaintext)
@@ -162,9 +161,33 @@ func (m *InnerData) serialize() ([]byte, error) {
 	if _, err := buf.Write(m.Data); err != nil {
 		return nil, err
 	}
-	padding := (16 - (buf.Len() % 16)) % 16
-	if padding > 0 {
-		pad := make([]byte, padding)
+	// MTProto 2.0 padding: 12-1024 bytes, aligned to 16 bytes for AES
+	currentLen := buf.Len()
+	alignmentPadding := (16 - (currentLen % 16)) % 16
+
+	// Calculate total padding needed (at least 12 bytes, at most 1024 bytes)
+	minPadding := 12
+	maxPadding := 1024
+
+	// We need at least alignmentPadding + minPadding, but not more than maxPadding
+	totalPadding := alignmentPadding
+	if totalPadding < minPadding {
+		// Add enough to reach minPadding, then align to 16 bytes
+		additional := minPadding - totalPadding
+		// Round up to next 16-byte boundary
+		additional = ((additional + 15) / 16) * 16
+		totalPadding += additional
+	}
+
+	// Cap at maxPadding
+	if totalPadding > maxPadding {
+		totalPadding = maxPadding
+		// Re-align to 16 bytes
+		totalPadding = (totalPadding / 16) * 16
+	}
+
+	if totalPadding > 0 {
+		pad := make([]byte, totalPadding)
 		if _, err := rand.Read(pad); err != nil {
 			return nil, err
 		}
@@ -176,20 +199,10 @@ func (m *InnerData) serialize() ([]byte, error) {
 }
 
 func calcMsgKey(key crypto.AuthKey, data []byte) [16]byte {
+	// MTProto 2.0: SHA-256(auth_key[0:32] + message_body), take middle 128 bits (bytes 8:24)
+	h := sha256.Sum256(append(key[:32], data...))
 	var msgKey [16]byte
-	h := sha1.New()
-	_, _ = h.Write(key[:])
-	_, _ = h.Write(data)
-	copy(msgKey[:], h.Sum(nil)[:16])
+	copy(msgKey[:], h[8:24])
 	return msgKey
 }
 
-func deriveAESKeyIV(key crypto.AuthKey, msgKey [16]byte) ([]byte, []byte) {
-	hashKey := sha256.Sum256(append(msgKey[:], key[:]...))
-	hashIV := sha256.Sum256(append(key[:], msgKey[:]...))
-	aesKey := make([]byte, 32)
-	aesIV := make([]byte, 32)
-	copy(aesKey, hashKey[:])
-	copy(aesIV, hashIV[:])
-	return aesKey, aesIV
-}

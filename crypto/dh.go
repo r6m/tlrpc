@@ -104,22 +104,21 @@ func ComputeCheckSHA(newNonce [32]byte, authKey []byte) [20]byte {
 }
 
 func ComputeMsgKey(authKey, data []byte) [16]byte {
-	h := sha256.Sum256(append(authKey, data...))
+	// Use first 32 bytes of auth_key
+	h := sha256.Sum256(append(authKey[:32], data...))
 	var msgKey [16]byte
 	copy(msgKey[:], h[8:24])
 	return msgKey
 }
 
 func ComputeKDF(authKey []byte, msgKey [16]byte, isClient bool) (key, iv []byte) {
-	x := byte(0)
-	if isClient {
-		x = 8
-	} else {
-		x = 0
-	}
+	// MTProto 2.0 AES key/IV derivation
+	// auth_key is 256 bytes, we use first 32 bytes and last 32 bytes
+	authKeyFirst32 := authKey[:32]
+	authKeyLast32 := authKey[len(authKey)-32:]
 
-	h1 := sha256.Sum256(append(msgKey[:], authKey[x:x+36]...))
-	h2 := sha256.Sum256(append(authKey[x+40:x+76], msgKey[:]...))
+	h1 := sha256.Sum256(append(msgKey[:], authKeyFirst32...))
+	h2 := sha256.Sum256(append(authKeyLast32, msgKey[:]...))
 
 	key = make([]byte, 32)
 	iv = make([]byte, 32)
@@ -295,6 +294,57 @@ func BigEndianToBytes(n *big.Int, size int) []byte {
 		return padded
 	}
 	return data[len(data)-size:]
+}
+
+// DeriveTempKeyIV derives temporary AES key and IV for handshake encryption
+// Key = SHA1(new_nonce + server_nonce) + first 12 bytes of SHA1(server_nonce + new_nonce)
+// IV = bytes 12-32 of SHA1(server_nonce + new_nonce) + first 8 bytes of SHA1(new_nonce + new_nonce)
+func DeriveTempKeyIV(newNonce [32]byte, serverNonce [16]byte) ([]byte, []byte) {
+	h1 := sha1.New()
+	h1.Write(newNonce[:])
+	h1.Write(serverNonce[:])
+	hash1 := h1.Sum(nil)
+
+	h2 := sha1.New()
+	h2.Write(serverNonce[:])
+	h2.Write(newNonce[:])
+	hash2 := h2.Sum(nil)
+
+	key := make([]byte, 32)
+	copy(key[:20], hash1)
+	copy(key[20:32], hash2[:12])
+
+	iv := make([]byte, 32)
+	copy(iv[:20], hash2[12:])
+	copy(iv[20:32], hash1[:12])
+
+	return key, iv
+}
+
+// ComputeAuthKeyID computes auth_key_id as the last 8 bytes of SHA1(auth_key)
+func ComputeAuthKeyID(authKey []byte) int64 {
+	h := sha1.New()
+	h.Write(authKey)
+	sum := h.Sum(nil)
+	return int64(binary.LittleEndian.Uint64(sum[len(sum)-8:]))
+}
+
+// ComputeNewNonceHash1 computes new_nonce_hash1 for dh_gen_ok
+// new_nonce_hash1 = SHA1(new_nonce)[0:16] XOR SHA1(server_nonce)[0:16] XOR SHA1(new_nonce)[16:32]
+func ComputeNewNonceHash1(newNonce [32]byte, serverNonce [16]byte) [16]byte {
+	h1 := sha1.New()
+	h1.Write(newNonce[:])
+	hash1 := h1.Sum(nil)
+
+	h2 := sha1.New()
+	h2.Write(serverNonce[:])
+	hash2 := h2.Sum(nil)
+
+	var result [16]byte
+	for i := 0; i < 16; i++ {
+		result[i] = hash1[i] ^ hash2[i] ^ hash1[i+16]
+	}
+	return result
 }
 
 func ReadUint32(r io.Reader) (uint32, error) {

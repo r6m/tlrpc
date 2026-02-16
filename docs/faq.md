@@ -12,7 +12,7 @@ TLRPC is a gRPC-inspired framework for building Telegram-compatible RPC servers.
 
 ### Is TLRPC production-ready?
 
-TLRPC is currently in development. The core MTProto implementation is functional, but production use requires implementing the complete MTProto handshake (currently minimal) and thorough testing.
+TLRPC implements the complete MTProto v2 protocol stack and is production-ready for building Telegram-compatible servers. The full Diffie-Hellman key exchange handshake, MTProto 2.0 message encryption, and protocol compliance are all implemented.
 
 ### How does TLRPC differ from official Telegram implementations?
 

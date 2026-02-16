@@ -136,6 +136,11 @@ func rsaDecrypt(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 	return rsa.DecryptPKCS1v15(rand.Reader, key, data)
 }
 
+// DecryptRSA decrypts data using RSA private key (public function)
+func DecryptRSA(key *rsa.PrivateKey, data []byte) ([]byte, error) {
+	return rsaDecrypt(key, data)
+}
+
 func bytesToBigEndian(data []byte) *big.Int {
 	return new(big.Int).SetBytes(data)
 }

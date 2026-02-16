@@ -86,3 +86,15 @@ TLRPC implements the complete MTProto stack as a gateway:
 3. **Protocol Layer**: Message serialization, session management, layer negotiation
 4. **Codec Layer**: TL object encoding/decoding via constructor registry
 5. **Service Layer**: Your business logic implementations (gRPC-like pattern)
+
+## Testing
+
+TLRPC includes comprehensive unit tests and integration tests for the MTProto v2 protocol implementation:
+
+```bash
+# Run all tests
+go test ./...
+
+# Run integration tests
+go test -run TestFullMTProtoHandshake
+```
