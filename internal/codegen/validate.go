@@ -48,8 +48,8 @@ func (v *Validator) Errors() []ValidationError {
 func (v *Validator) addError(line, col int, message string, severity ErrorSeverity) {
 	v.errors = append(v.errors, ValidationError{
 		Line:     line,
-		Column:  col,
-		Message: message,
+		Column:   col,
+		Message:  message,
 		Severity: severity,
 	})
 }
@@ -114,17 +114,35 @@ func (v *Validator) validateTypeResolution() {
 
 	// Check constructor result types
 	for _, ctor := range v.schema.Constructors {
-		v.checkTypeReference(ctor.ResultType, definedTypes, fmt.Sprintf("constructor %s result type", ctor.Name))
+		// Add generic parameters to defined types for this constructor
+		localTypes := make(map[string]bool)
+		for k, v := range definedTypes {
+			localTypes[k] = v
+		}
+		for _, generic := range ctor.GenericParams {
+			localTypes[generic.Name] = true
+		}
+
+		v.checkTypeReference(ctor.ResultType, localTypes, fmt.Sprintf("constructor %s result type", ctor.Name))
 		for _, param := range ctor.Params {
-			v.checkTypeReference(param.Type, definedTypes, fmt.Sprintf("constructor %s parameter %s", ctor.Name, param.Name))
+			v.checkTypeReference(param.Type, localTypes, fmt.Sprintf("constructor %s parameter %s", ctor.Name, param.Name))
 		}
 	}
 
 	// Check function result types and parameters
 	for _, fn := range v.schema.Functions {
-		v.checkTypeReference(fn.ResultType, definedTypes, fmt.Sprintf("function %s result type", fn.Name))
+		// Add generic parameters to defined types for this function
+		localTypes := make(map[string]bool)
+		for k, v := range definedTypes {
+			localTypes[k] = v
+		}
+		for _, generic := range fn.GenericParams {
+			localTypes[generic.Name] = true
+		}
+
+		v.checkTypeReference(fn.ResultType, localTypes, fmt.Sprintf("function %s result type", fn.Name))
 		for _, param := range fn.Params {
-			v.checkTypeReference(param.Type, definedTypes, fmt.Sprintf("function %s parameter %s", fn.Name, param.Name))
+			v.checkTypeReference(param.Type, localTypes, fmt.Sprintf("function %s parameter %s", fn.Name, param.Name))
 		}
 	}
 }
@@ -170,48 +188,14 @@ func (v *Validator) validateFlagConsistency() {
 
 // validateConstructorFlags validates flags in a constructor
 func (v *Validator) validateConstructorFlags(ctor *Constructor) {
-	flagBits := make(map[int][]string)
-
-	// Collect all flag bit usages
-	for _, param := range ctor.Params {
-		if param.Type.FlagBit != nil {
-			bit := *param.Type.FlagBit
-			flagBits[bit] = append(flagBits[bit], param.Name)
-		}
-	}
-
-	// Check for conflicts
-	for bit, params := range flagBits {
-		if len(params) > 1 {
-			v.addError(0, 0,
-				fmt.Sprintf("constructor %s has multiple parameters using flag bit %d: %v",
-					ctor.Name, bit, params),
-				ErrorSeverityError)
-		}
-	}
+	// In TL, multiple parameters can use the same flag bit if they should be present together
+	// No validation needed - this is allowed
 }
 
 // validateFunctionFlags validates flags in a function
 func (v *Validator) validateFunctionFlags(fn *FuncDecl) {
-	flagBits := make(map[int][]string)
-
-	// Collect all flag bit usages
-	for _, param := range fn.Params {
-		if param.Type.FlagBit != nil {
-			bit := *param.Type.FlagBit
-			flagBits[bit] = append(flagBits[bit], param.Name)
-		}
-	}
-
-	// Check for conflicts
-	for bit, params := range flagBits {
-		if len(params) > 1 {
-			v.addError(0, 0,
-				fmt.Sprintf("function %s has multiple parameters using flag bit %d: %v",
-					fn.Name, bit, params),
-				ErrorSeverityError)
-		}
-	}
+	// In TL, multiple parameters can use the same flag bit if they should be present together
+	// No validation needed - this is allowed
 }
 
 // validateCircularDependencies checks for circular type dependencies

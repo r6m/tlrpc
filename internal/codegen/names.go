@@ -33,6 +33,13 @@ func (n *Namer) MethodName(name string) string {
 	return n.exported(parts[len(parts)-1])
 }
 
+// RequestName returns the Go request struct name (with namespace to avoid conflicts).
+func (n *Namer) RequestName(name string) string {
+	// Replace dots with underscores to avoid conflicts
+	safeName := strings.ReplaceAll(name, ".", "_")
+	return n.exported(safeName) + "Request"
+}
+
 // ServiceName returns the Go service interface name (e.g., auth -> AuthServer).
 func (n *Namer) ServiceName(name string) string {
 	if name == "" {

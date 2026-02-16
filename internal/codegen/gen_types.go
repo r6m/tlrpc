@@ -9,19 +9,29 @@ import (
 
 // TypeGenerator generates Go types from TL declarations.
 type TypeGenerator struct {
-	namer          *Namer
-	out            io.Writer
-	importsWritten bool
+	namer         *Namer
+	out           io.Writer
+	schema        *Schema
+	usesBaseTypes bool
 }
 
 // NewTypeGenerator creates a new type generator.
-func NewTypeGenerator(namer *Namer, out io.Writer) *TypeGenerator {
-	return &TypeGenerator{namer: namer, out: out}
+func NewTypeGenerator(namer *Namer, out io.Writer, schema *Schema) *TypeGenerator {
+	return &TypeGenerator{namer: namer, out: out, schema: schema}
+}
+
+// UsesBaseTypes returns true if this generator references base MTProto types
+func (g *TypeGenerator) UsesBaseTypes() bool {
+	return g.usesBaseTypes
 }
 
 // GenerateType emits all constructor structs for a type declaration.
 func (g *TypeGenerator) GenerateType(decl *TypeDecl) error {
 	for i := range decl.Constructors {
+		if g.isBaseType(&decl.Constructors[i]) {
+			// Skip generating base MTProto types - they're in tlrpc/types
+			continue
+		}
 		if err := g.GenerateConstructor(&decl.Constructors[i]); err != nil {
 			return err
 		}
@@ -50,13 +60,28 @@ func (g *TypeGenerator) GenerateInterface(decl *TypeDecl) error {
 	return err
 }
 
+// isBaseType checks if a constructor represents a base MTProto type
+func (g *TypeGenerator) isBaseType(ctor *Constructor) bool {
+	// Only truly primitive types that don't participate in unions
+	baseTypeNames := map[string]bool{
+		"true":   true, // unit type
+		"false":  true, // unit type (if it exists)
+		"error":  true, // error type
+		"null":   true, // null type
+		"string": true, // primitive string
+		"bytes":  true, // primitive bytes
+		"int128": true, // primitive int
+		"int256": true, // primitive int
+		"double": true, // primitive float
+	}
+
+	return baseTypeNames[ctor.Name]
+}
+
 // GenerateConstructor emits a single constructor struct and its methods.
 func (g *TypeGenerator) GenerateConstructor(ctor *Constructor) error {
 	if len(ctor.GenericParams) > 0 || ctor.ResultType.IsTypeVar {
 		return nil
-	}
-	if err := g.writeImports(); err != nil {
-		return err
 	}
 
 	name := g.namer.ConstructorName(ctor.Name)
@@ -93,15 +118,6 @@ func (g *TypeGenerator) GenerateConstructor(ctor *Constructor) error {
 	}
 
 	return nil
-}
-
-func (g *TypeGenerator) writeImports() error {
-	if g.importsWritten {
-		return nil
-	}
-	g.importsWritten = true
-	_, err := io.WriteString(g.out, "import (\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n")
-	return err
 }
 
 func (g *TypeGenerator) generateSerializeMethods(ctor *Constructor, name string) error {
@@ -375,11 +391,14 @@ func serializeBuiltinCall(t TypeRef, value string) (string, bool) {
 	case "long":
 		return fmt.Sprintf("if err := mtproto.WriteInt64(w, %s); err != nil {\n\treturn err\n}", value), true
 	case "int128":
-		return fmt.Sprintf("if err := mtproto.WriteInt128(w, %s); err != nil {\n\treturn err\n}", value), true
+		// types.Int128 is [16]byte, so convert it
+		return fmt.Sprintf("if err := mtproto.WriteInt128(w, [16]byte(%s)); err != nil {\n\treturn err\n}", value), true
 	case "int256":
-		return fmt.Sprintf("if err := mtproto.WriteInt256(w, %s); err != nil {\n\treturn err\n}", value), true
+		// types.Int256 is [32]byte, so convert it
+		return fmt.Sprintf("if err := mtproto.WriteInt256(w, [32]byte(%s)); err != nil {\n\treturn err\n}", value), true
 	case "double":
-		return fmt.Sprintf("if err := mtproto.WriteDouble(w, %s); err != nil {\n\treturn err\n}", value), true
+		// types.Double is float64, so convert it
+		return fmt.Sprintf("if err := mtproto.WriteDouble(w, float64(%s)); err != nil {\n\treturn err\n}", value), true
 	case "string":
 		return fmt.Sprintf("if err := mtproto.WriteString(w, %s); err != nil {\n\treturn err\n}", value), true
 	case "bytes":
@@ -394,25 +413,29 @@ func serializeBuiltinCall(t TypeRef, value string) (string, bool) {
 }
 
 func deserializeBuiltinCall(t TypeRef) (string, bool) {
+	return deserializeBuiltinCallWithReader(t, "r")
+}
+
+func deserializeBuiltinCallWithReader(t TypeRef, readerName string) (string, bool) {
 	switch t.Name {
 	case "int":
-		return "mtproto.ReadInt32(r)", true
+		return fmt.Sprintf("mtproto.ReadInt32(%s)", readerName), true
 	case "long":
-		return "mtproto.ReadInt64(r)", true
+		return fmt.Sprintf("mtproto.ReadInt64(%s)", readerName), true
 	case "int128":
-		return "mtproto.ReadInt128(r)", true
+		return fmt.Sprintf("func() types.Int128 { v, _ := mtproto.ReadInt128(%s); return types.Int128(v) }()", readerName), true
 	case "int256":
-		return "mtproto.ReadInt256(r)", true
+		return fmt.Sprintf("func() types.Int256 { v, _ := mtproto.ReadInt256(%s); return types.Int256(v) }()", readerName), true
 	case "double":
-		return "mtproto.ReadDouble(r)", true
+		return fmt.Sprintf("func() types.Double { v, _ := mtproto.ReadDouble(%s); return types.Double(v) }()", readerName), true
 	case "string":
-		return "mtproto.ReadString(r)", true
+		return fmt.Sprintf("mtproto.ReadString(%s)", readerName), true
 	case "bytes":
-		return "mtproto.ReadBytes(r)", true
+		return fmt.Sprintf("mtproto.ReadBytes(%s)", readerName), true
 	case "Bool", "bool", "true", "false":
-		return "mtproto.ReadBool(r)", true
+		return fmt.Sprintf("mtproto.ReadBool(%s)", readerName), true
 	case "#":
-		return "mtproto.ReadUint32(r)", true
+		return fmt.Sprintf("mtproto.ReadUint32(%s)", readerName), true
 	default:
 		return "", false
 	}
@@ -438,11 +461,40 @@ func (g *TypeGenerator) goType(t TypeRef) string {
 
 func (g *TypeGenerator) goBaseType(t TypeRef) string {
 	if t.IsVector && t.Generic != nil {
-		return "[]" + g.goBaseType(*t.Generic)
+		return "[]types.Vector[" + g.goBaseType(*t.Generic) + "]"
 	}
 
 	if t.Namespace != "" {
 		return g.namer.TypeName(t.Namespace + "." + t.Name)
+	}
+
+	// Check for base MTProto types that are in the types package
+	switch t.Name {
+	case "true", "false":
+		g.usesBaseTypes = true
+		return "types." + strings.Title(t.Name)
+	case "error", "null":
+		g.usesBaseTypes = true
+		return "types." + strings.Title(t.Name)
+	case "string":
+		return "string"
+	case "bytes":
+		return "[]byte"
+	case "int128":
+		g.usesBaseTypes = true
+		return "types.Int128"
+	case "int256":
+		g.usesBaseTypes = true
+		return "types.Int256"
+	case "double":
+		g.usesBaseTypes = true
+		return "types.Double"
+	case "vector":
+		g.usesBaseTypes = true
+		if t.Generic != nil {
+			return "types.Vector[" + g.goBaseType(*t.Generic) + "]"
+		}
+		return "types.Vector[interface{}]"
 	}
 
 	switch t.Name {
@@ -450,14 +502,6 @@ func (g *TypeGenerator) goBaseType(t TypeRef) string {
 		return "int32"
 	case "long":
 		return "int64"
-	case "int128":
-		return "[16]byte"
-	case "int256":
-		return "[32]byte"
-	case "double":
-		return "float64"
-	case "string":
-		return "string"
 	case "bytes":
 		return "[]byte"
 	case "Bool", "bool", "true", "false":
@@ -465,6 +509,10 @@ func (g *TypeGenerator) goBaseType(t TypeRef) string {
 	case "#":
 		return "uint32"
 	default:
+		// For union types, use the interface name
+		if g.schema.UnionTypes[t.Name] {
+			return g.namer.TypeName(t.Name) + "Type"
+		}
 		return g.namer.TypeName(t.Name)
 	}
 }

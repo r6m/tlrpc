@@ -21,9 +21,6 @@ func NewServiceGenerator(namer *Namer, out io.Writer) *ServiceGenerator {
 // GenerateService emits service interfaces and unimplemented stubs.
 func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 	services := groupByService(funcs)
-	if _, err := io.WriteString(g.out, "import (\n\t\"context\"\n\t\"errors\"\n)\n\n"); err != nil {
-		return err
-	}
 	if _, err := io.WriteString(g.out, "var ErrMethodNotImplemented = errors.New(\"tlrpc: method not implemented\")\n\n"); err != nil {
 		return err
 	}
@@ -39,7 +36,7 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 				continue
 			}
 			method := g.namer.MethodName(fn.Name)
-			reqType := method + "Request"
+			reqType := g.namer.RequestName(fn.Name)
 			respType := g.responseType(fn.ResultType)
 			if _, err := fmt.Fprintf(g.out, "\t%s(ctx context.Context, req *%s) (%s, error)\n", method, reqType, respType); err != nil {
 				return err
@@ -52,12 +49,17 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 		if _, err := fmt.Fprintf(g.out, "type Unimplemented%s struct{}\n\n", name); err != nil {
 			return err
 		}
+
+		// Add the embedded test method (gRPC-style safety check)
+		if _, err := fmt.Fprintf(g.out, "func (Unimplemented%s) testEmbeddedByValue() {}\n\n", name); err != nil {
+			return err
+		}
 		for _, fn := range services[service] {
 			if fn.IsTemplate {
 				continue
 			}
 			method := g.namer.MethodName(fn.Name)
-			reqType := method + "Request"
+			reqType := g.namer.RequestName(fn.Name)
 			respType := g.responseType(fn.ResultType)
 			if _, err := fmt.Fprintf(g.out, "func (Unimplemented%s) %s(context.Context, *%s) (%s, error) {\n\treturn %s, ErrMethodNotImplemented\n}\n\n", name, method, reqType, respType, zeroValue(respType)); err != nil {
 				return err
@@ -68,36 +70,16 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 	return nil
 }
 
-// GenerateRegistration emits registration helpers for services (gRPC-like pattern).
+// GenerateRegistration emits static service descriptors and registration helpers (gRPC-like pattern).
 func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error {
 	services := groupByService(funcs)
-	if _, err := io.WriteString(g.out, "import (\n\t\"context\"\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/registry\"\n)\n\n"); err != nil {
-		return err
-	}
 
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
-		name := g.namer.ServiceName(service)
-		if _, err := fmt.Fprintf(g.out, "// Register%s registers the %s server with the TLRPC server.\n", name, name); err != nil {
+		if err := g.generateServiceDescriptor(service, services[service]); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "func Register%s(s *tlrpc.Server, srv %s) {\n", name, name); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "\ts.RegisterService(tlrpc.ServiceDesc{\n\t\tServiceName: %q,\n\t\tHandlerType: (*%s)(nil),\n\t\tMethods: []tlrpc.MethodDesc{\n", service, name); err != nil {
-			return err
-		}
-		for _, fn := range services[service] {
-			if fn.IsTemplate {
-				continue
-			}
-			method := g.namer.MethodName(fn.Name)
-			reqType := method + "Request"
-			if _, err := fmt.Fprintf(g.out, "\t\t\t{\n\t\t\t\tMethodName: %q,\n\t\t\t\tHandler: func(ctx context.Context, req interface{}) (interface{}, error) {\n\t\t\t\t\treturn srv.%s(ctx, req.(*%s))\n\t\t\t\t},\n\t\t\t},\n", fn.Name, method, reqType); err != nil {
-				return err
-			}
-		}
-		if _, err := io.WriteString(g.out, "\t\t},\n\t})\n}\n\n"); err != nil {
+		if err := g.generateRegistrationFunction(service, services[service]); err != nil {
 			return err
 		}
 	}
@@ -105,11 +87,80 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error {
 	return nil
 }
 
-// GenerateRequests emits request structs for functions.
-func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
-	if _, err := io.WriteString(g.out, "import (\n\t\"fmt\"\n\t\"io\"\n\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n"); err != nil {
+// generateServiceDescriptor emits a static ServiceDesc variable (gRPC-style).
+func (g *ServiceGenerator) generateServiceDescriptor(service string, funcs []FuncDecl) error {
+	name := g.namer.ServiceName(service)
+	descName := name + "_ServiceDesc"
+
+	if _, err := fmt.Fprintf(g.out, "// %s is the static service descriptor for %s (gRPC-like).\nvar %s = tlrpc.ServiceDesc{\n\tServiceName: %q,\n\tHandlerType: (*%s)(nil),\n\tMethods: []tlrpc.MethodDesc{\n", descName, name, descName, service, name); err != nil {
 		return err
 	}
+
+	for _, fn := range funcs {
+		if fn.IsTemplate {
+			continue
+		}
+		method := g.namer.MethodName(fn.Name)
+		handlerName := fmt.Sprintf("_%s_%s_Handler", name, method)
+
+		if _, err := fmt.Fprintf(g.out, "\t\t{\n\t\t\tMethodName: %q,\n\t\t\tHandler: %s,\n\t\t},\n", fn.Name, handlerName); err != nil {
+			return err
+		}
+	}
+
+	if _, err := io.WriteString(g.out, "\t},\n}\n\n"); err != nil {
+		return err
+	}
+
+	// Generate individual handler functions
+	for _, fn := range funcs {
+		if fn.IsTemplate {
+			continue
+		}
+		if err := g.generateHandlerFunction(name, fn); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// generateHandlerFunction emits a static handler function for a method.
+func (g *ServiceGenerator) generateHandlerFunction(serviceName string, fn FuncDecl) error {
+	method := g.namer.MethodName(fn.Name)
+	reqType := g.namer.RequestName(fn.Name)
+	handlerName := fmt.Sprintf("_%s_%s_Handler", serviceName, method)
+
+	if _, err := fmt.Fprintf(g.out, "// %s is the static handler for %s.%s\nfunc %s(srv interface{}, ctx context.Context, req interface{}) (interface{}, error) {\n\treturn srv.(%s).%s(ctx, req.(*%s))\n}\n\n", handlerName, serviceName, method, handlerName, serviceName, method, reqType); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// generateRegistrationFunction emits the simplified registration function.
+func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []FuncDecl) error {
+	name := g.namer.ServiceName(service)
+	descName := name + "_ServiceDesc"
+
+	if _, err := fmt.Fprintf(g.out, "// Register%s registers the %s server with the TLRPC server.\nfunc Register%s(s *tlrpc.Server, srv %s) {\n", name, name, name, name); err != nil {
+		return err
+	}
+
+	// Add the embedded check like gRPC does
+	if _, err := fmt.Fprintf(g.out, "\t// If the following call panics, it indicates Unimplemented%s was\n\t// embedded by pointer and is nil. This will cause panics if an\n\t// unimplemented method is ever invoked, so we test this at initialization\n\t// time to prevent it from happening at runtime later due to I/O.\n\tif t, ok := srv.(interface{ testEmbeddedByValue() }); ok {\n\t\tt.testEmbeddedByValue()\n\t}\n", name); err != nil {
+		return err
+	}
+
+	if _, err := fmt.Fprintf(g.out, "\ts.RegisterService(%s, srv)\n}\n\n", descName); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GenerateRequests emits request structs for functions.
+func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
 	services := groupByService(funcs)
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
@@ -117,8 +168,8 @@ func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
 			if fn.IsTemplate {
 				continue
 			}
-			method := g.namer.MethodName(fn.Name)
-			if _, err := fmt.Fprintf(g.out, "type %sRequest struct {\n", method); err != nil {
+			reqName := g.namer.RequestName(fn.Name)
+			if _, err := fmt.Fprintf(g.out, "type %s struct {\n", reqName); err != nil {
 				return err
 			}
 			for _, param := range fn.Params {
@@ -135,7 +186,7 @@ func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
 				return err
 			}
 
-			if err := g.generateRequestMethods(fn, method); err != nil {
+			if err := g.generateRequestMethods(fn, strings.TrimSuffix(reqName, "Request")); err != nil {
 				return err
 			}
 		}
@@ -143,25 +194,25 @@ func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestMethods(fn FuncDecl, method string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) ConstructorID() uint32 { return 0x%08x }\n", method, fn.ID); err != nil {
+func (g *ServiceGenerator) generateRequestMethods(fn FuncDecl, reqBaseName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) ConstructorID() uint32 { return 0x%08x }\n", reqBaseName, fn.ID); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) Method() string { return %q }\n\n", method, fn.Name); err != nil {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) Method() string { return %q }\n\n", reqBaseName, fn.Name); err != nil {
 		return err
 	}
 
-	if err := g.generateRequestSerialize(fn, method); err != nil {
+	if err := g.generateRequestSerialize(fn, reqBaseName); err != nil {
 		return err
 	}
-	if err := g.generateRequestDeserialize(fn, method); err != nil {
+	if err := g.generateRequestDeserialize(fn, reqBaseName); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestSerialize(fn FuncDecl, method string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) SerializeTL(w io.Writer) error {\n", method); err != nil {
+func (g *ServiceGenerator) generateRequestSerialize(fn FuncDecl, reqBaseName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) SerializeTL(w io.Writer) error {\n", reqBaseName); err != nil {
 		return err
 	}
 	if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
@@ -212,8 +263,8 @@ func (g *ServiceGenerator) writeRequestSerializeValue(t TypeRef, value, indent s
 	return err
 }
 
-func (g *ServiceGenerator) generateRequestDeserialize(fn FuncDecl, method string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) DeserializeTL(rd io.Reader) error {\n", method); err != nil {
+func (g *ServiceGenerator) generateRequestDeserialize(fn FuncDecl, reqBaseName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) DeserializeTL(rd io.Reader) error {\n", reqBaseName); err != nil {
 		return err
 	}
 	if _, err := io.WriteString(g.out, "\tctorID, err := mtproto.ReadUint32(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
@@ -265,7 +316,7 @@ func (g *ServiceGenerator) writeRequestDeserializeField(param Parameter, fieldNa
 }
 
 func (g *ServiceGenerator) writeRequestDeserializeValue(t TypeRef, target string) error {
-	readCall, ok := deserializeBuiltinCall(t)
+	readCall, ok := deserializeBuiltinCallWithReader(t, "rd")
 	if ok {
 		if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := %s\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n", readCall); err != nil {
 			return err
@@ -316,9 +367,8 @@ func (g *ServiceGenerator) goBaseType(t TypeRef) string {
 	if t.IsVector && t.Generic != nil {
 		return "[]" + g.goBaseType(*t.Generic)
 	}
-	if t.Namespace != "" {
-		return g.namer.TypeName(t.Namespace + "." + t.Name)
-	}
+	// For service return types, don't include namespace prefix
+	// This matches how the type generator creates union types
 	switch t.Name {
 	case "int":
 		return "int32"

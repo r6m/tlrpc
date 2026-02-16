@@ -14,7 +14,7 @@ func TestTypeGenerator_SerializeMethods(t *testing.T) {
 	}
 
 	var typesBuf bytes.Buffer
-	gen := NewTypeGenerator(NewNamer(), &typesBuf)
+	gen := NewTypeGenerator(NewNamer(), &typesBuf, schema)
 	for i := range schema.Types {
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {
 			t.Fatalf("generate type: %v", err)

@@ -2,12 +2,13 @@
 package tlrpc
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/r6m/tlrpc/crypto"
-	"github.com/r6m/tlrpc/registry"
 	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
 )
@@ -16,28 +17,36 @@ import (
 
 // Server represents an RPC server
 type Server struct {
-	transport        Transport
-	authKeys         crypto.AuthKeyManager
-	serverKeys       crypto.ServerKeyManager
-	sessions         session.Manager
-	codec            Codec
-	maxLayer         int
-	layers           []int
-	unaryInterceptors []UnaryInterceptor  // New gRPC-like interceptors
+	transport          Transport
+	authKeys           crypto.AuthKeyManager
+	serverKeys         crypto.ServerKeyManager
+	sessions           session.Manager
+	dispatcher         *dispatcher
+	maxLayer           int
+	layers             []int
+	unaryInterceptors  []UnaryInterceptor // New gRPC-like interceptors
 	legacyInterceptors []Interceptor      // Legacy support
-	logger           Logger
-	registry         *registry.Registry
-	shutdownCh       chan struct{}
+	logger             Logger
+	services           map[string]*serviceInfo // for backward compatibility
+	handshakeHandler   HandshakeHandler
+	shutdownCh         chan struct{}
+}
+
+// serviceInfo stores service implementation info
+type serviceInfo struct {
+	desc ServiceDesc
+	impl interface{}
 }
 
 // NewServer creates a new RPC server with the given options
 func NewServer(opts ...ServerOption) *Server {
 	s := &Server{
-		registry:   registry.New(),
+		dispatcher: newDispatcher(),
 		authKeys:   crypto.NewMemoryAuthKeyManager(),
 		serverKeys: crypto.NewMemoryServerKeyManager(),
 		sessions:   session.NewMemoryManager(),
 		transport:  &transport.TCPTransport{},
+		services:   make(map[string]*serviceInfo),
 		shutdownCh: make(chan struct{}),
 	}
 	for _, opt := range opts {
@@ -50,12 +59,17 @@ func NewServer(opts ...ServerOption) *Server {
 // This is called by generated Register*Server functions.
 // Panics on registration errors (gRPC-style).
 func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
-	if s.registry == nil {
-		s.registry = registry.New()
+	if desc.ServiceName == "" {
+		panic("service name is required")
 	}
-	if err := s.registry.Register(desc, impl); err != nil {
-		panic(err)
+	if impl == nil {
+		panic("implementation cannot be nil")
 	}
+	if _, exists := s.services[desc.ServiceName]; exists {
+		panic(fmt.Sprintf("service %s already registered", desc.ServiceName))
+	}
+
+	s.services[desc.ServiceName] = &serviceInfo{desc: desc, impl: impl}
 }
 
 // Serve starts serving on the given listener
@@ -115,10 +129,7 @@ func (s *Server) Stop() error {
 }
 
 // ServiceDesc describes a service for registration.
-type ServiceDesc = registry.ServiceDesc
-
-// MethodDesc describes a method within a service.
-type MethodDesc = registry.MethodDesc
+// (ServiceDesc and MethodDesc are defined above)
 
 // Session represents a user session.
 type Session = session.Session
@@ -133,13 +144,6 @@ type SessionStore interface {
 // TLObject interface for Telegram objects
 type TLObject interface {
 	ConstructorID() uint32
-	Method() string // for RPC types
-}
-
-// Codec handles TL object encoding/decoding.
-type Codec interface {
-	Decode(layer int, data []byte) (TLObject, error)
-	Encode(layer int, obj TLObject) ([]byte, error)
 }
 
 // Transport interface for network transports.
@@ -152,7 +156,113 @@ type Listener = transport.Listener
 type Conn = transport.Conn
 
 // Logger interface for logging.
-type Logger = registry.Logger
+type Logger interface {
+	Info(msg string, args ...interface{})
+	Error(msg string, args ...interface{})
+	Debug(msg string, args ...interface{})
+}
+
+// dispatcher handles internal registration and dispatch of TL objects and methods
+type dispatcher struct {
+	mu           sync.RWMutex
+	constructors map[uint32]func() TLObject
+	methods      map[uint32]func(context.Context, TLObject) (interface{}, error)
+}
+
+// newDispatcher creates a new dispatcher
+func newDispatcher() *dispatcher {
+	return &dispatcher{
+		constructors: make(map[uint32]func() TLObject),
+		methods:      make(map[uint32]func(context.Context, TLObject) (interface{}, error)),
+	}
+}
+
+// RegisterConstructor registers a constructor function for a TL object type
+func (d *dispatcher) RegisterConstructor(id uint32, constructor func() TLObject) {
+	d.mu.Lock()
+	d.constructors[id] = constructor
+	d.mu.Unlock()
+}
+
+// RegisterMethod registers a method handler for RPC calls
+func (d *dispatcher) RegisterMethod(id uint32, handler func(context.Context, TLObject) (interface{}, error)) {
+	d.mu.Lock()
+	d.methods[id] = handler
+	d.mu.Unlock()
+}
+
+// LookupConstructor returns a constructor function for the given ID
+func (d *dispatcher) LookupConstructor(id uint32) (func() TLObject, bool) {
+	d.mu.RLock()
+	constructor, ok := d.constructors[id]
+	d.mu.RUnlock()
+	return constructor, ok
+}
+
+// LookupMethod returns a method handler for the given ID
+func (d *dispatcher) LookupMethod(id uint32) (func(context.Context, TLObject) (interface{}, error), bool) {
+	d.mu.RLock()
+	handler, ok := d.methods[id]
+	d.mu.RUnlock()
+	return handler, ok
+}
+
+// RegisterConstructor registers a constructor function globally
+func RegisterConstructor(id uint32, constructor func() TLObject) {
+	globalDispatcher.RegisterConstructor(id, constructor)
+}
+
+// RegisterMethod registers a method handler globally
+func RegisterMethod(id uint32, handler func(context.Context, TLObject) (interface{}, error)) {
+	globalDispatcher.RegisterMethod(id, handler)
+}
+
+// global dispatcher instance
+var globalDispatcher = newDispatcher()
+
+// ServiceDesc describes a service for registration.
+type ServiceDesc struct {
+	ServiceName string
+	HandlerType interface{}
+	Methods     []MethodDesc
+}
+
+// MethodDesc describes a method within a service.
+type MethodDesc struct {
+	MethodName string
+	Handler    interface{} // Handler function (various signatures supported)
+}
+
+// HandshakeHandler handles unencrypted handshake messages
+type HandshakeHandler interface {
+	HandleUnencrypted(ctx context.Context, msgID int64, data []byte) ([]byte, error)
+}
+
+// UnaryServerInfo provides information about the current RPC call.
+type UnaryServerInfo struct {
+	// FullMethod is the full RPC method string, i.e., /package.service/method.
+	FullMethod string
+}
+
+// UnaryHandler defines the handler invoked by UnaryServerInterceptor to complete the normal
+// execution of a unary RPC.
+type UnaryHandler func(ctx context.Context, req interface{}) (interface{}, error)
+
+// UnaryInterceptor provides a hook to intercept the execution of a unary RPC on the server.
+// The first UnaryInterceptor is called with the context, request, and UnaryServerInfo for the RPC.
+// The interceptor can mutate the context and request, but must call handler to complete the RPC.
+type UnaryInterceptor func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (resp interface{}, err error)
+
+// Authorizer validates a request and returns an error if unauthorized.
+type Authorizer interface {
+	Authorize(ctx context.Context, req interface{}) error
+}
+
+// Handler represents a request handler function.
+type Handler func(ctx context.Context, req interface{}) (interface{}, error)
+
+// Interceptor represents middleware for request/response processing.
+type Interceptor func(next Handler) Handler
 
 // ServerOption represents server configuration options
 type ServerOption func(*Server)
@@ -230,13 +340,6 @@ func WithSessionManager(manager session.Manager) ServerOption {
 		if manager != nil {
 			s.sessions = manager
 		}
-	}
-}
-
-// WithCodec sets the codec for TL object encoding/decoding.
-func WithCodec(codec Codec) ServerOption {
-	return func(s *Server) {
-		s.codec = codec
 	}
 }
 
@@ -349,4 +452,77 @@ func syncMapFromLegacy(data map[string]interface{}) sync.Map {
 		m.Store(k, v)
 	}
 	return m
+}
+
+// ChainUnaryInterceptors chains multiple unary interceptors together.
+func ChainUnaryInterceptors(interceptors ...UnaryInterceptor) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		// Apply interceptors in reverse order so first interceptor is outermost
+		chainedHandler := handler
+		for i := len(interceptors) - 1; i >= 0; i-- {
+			currentInterceptor := interceptors[i]
+			nextHandler := chainedHandler
+			chainedHandler = func(ctx context.Context, req interface{}) (interface{}, error) {
+				return currentInterceptor(ctx, req, info, nextHandler)
+			}
+		}
+		return chainedHandler(ctx, req)
+	}
+}
+
+// ChainInterceptors chains multiple legacy interceptors together.
+func ChainInterceptors(interceptors ...Interceptor) Interceptor {
+	return func(next Handler) Handler {
+		for i := len(interceptors) - 1; i >= 0; i-- {
+			next = interceptors[i](next)
+		}
+		return next
+	}
+}
+
+// RecoveryInterceptor recovers panics and uses errorFactory to build errors.
+func RecoveryInterceptor(errorFactory func(message string) error) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (resp interface{}, err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				if errorFactory != nil {
+					err = errorFactory(fmt.Sprintf("panic: %v", r))
+					return
+				}
+				err = fmt.Errorf("panic: %v", r)
+			}
+		}()
+		return handler(ctx, req)
+	}
+}
+
+// LoggingInterceptor logs request/response lifecycle.
+func LoggingInterceptor(logger Logger) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		if logger != nil {
+			logger.Info("tlrpc request", "method", info.FullMethod, "type", fmt.Sprintf("%T", req))
+		}
+		resp, err := handler(ctx, req)
+		if logger != nil {
+			if err != nil {
+				logger.Error("tlrpc response", "method", info.FullMethod, "error", err)
+			} else {
+				logger.Info("tlrpc response", "method", info.FullMethod, "type", fmt.Sprintf("%T", resp))
+			}
+		}
+		return resp, err
+	}
+}
+
+// AuthInterceptor checks authorization.
+func AuthInterceptor(authorizer Authorizer) UnaryInterceptor {
+	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
+		if authorizer == nil {
+			return handler(ctx, req)
+		}
+		if err := authorizer.Authorize(ctx, req); err != nil {
+			return nil, err
+		}
+		return handler(ctx, req)
+	}
 }

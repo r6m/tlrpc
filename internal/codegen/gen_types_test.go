@@ -15,8 +15,8 @@ func TestTypeGenerator_SimpleSchema(t *testing.T) {
 
 	var typesBuf bytes.Buffer
 	var ifaceBuf bytes.Buffer
-	gen := NewTypeGenerator(NewNamer(), &typesBuf)
-	ifaceGen := NewTypeGenerator(NewNamer(), &ifaceBuf)
+	gen := NewTypeGenerator(NewNamer(), &typesBuf, schema)
+	ifaceGen := NewTypeGenerator(NewNamer(), &ifaceBuf, schema)
 
 	for i := range schema.Types {
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {

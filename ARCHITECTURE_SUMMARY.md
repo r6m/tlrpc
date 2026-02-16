@@ -29,7 +29,7 @@
 │                 │     - Transport (TCP/WebSocket)
 │ MTProto v2     │     - Crypto (AES-IGE, RSA, DH)
 │ Implementation │     - Session management
-│                 │     - TL codec & registry
+│                 │     - TL dispatch
 └─────────────────┘
 ```
 
@@ -49,7 +49,7 @@
 - **Transport**: TCP/WebSocket connections
 - **Crypto**: AES-256-IGE encryption, RSA/DH key exchange
 - **Sessions**: Auth key management, state tracking
-- **Codec**: TL object serialization via constructor registry
+- **Dispatcher**: Automatic TL object dispatch via constructor ID mapping
 
 ## Request Flow
 
@@ -60,15 +60,13 @@ Transport Layer (TCP/WebSocket)
     ↓ (encrypted bytes)
 MTProto Protocol (decrypt)
     ↓ (TL bytes)
-TL Codec (decode object)
-    ↓ (RPC request)
-Service Registry (route to method)
+Dispatcher (route by constructor ID)
     ↓ (with interceptors)
 Your Service Implementation
     ↓ (business logic)
 Response Object
     ↓ (serialize)
-TL Codec (encode)
+Dispatcher (encode)
     ↓ (encrypt)
 MTProto Protocol
     ↓ (send)
@@ -98,8 +96,8 @@ func (s *AuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*
 }
 
 // 4. Register and serve (like gRPC)
-server := tlrpc.NewServer(tlrpc.WithCodec(codec.New(registry)))
-gen.RegisterAuthServer(server, &AuthService{})
+server := tlrpc.NewServer()
+gen.RegisterAuthServer(server, &AuthService{}) // Automatic registration!
 server.Serve(listener)
 ```
 
@@ -112,8 +110,7 @@ server.Serve(listener)
 - Transport layer (TCP/WebSocket)
 - Cryptographic primitives (AES-IGE, RSA, DH)
 - Session management
-- Codec registry system
-- Service registry and routing
+- Automatic service registration and dispatch
 - Complete MTProto v2 handshake (Diffie-Hellman key exchange)
 - MTProto 2.0 message encryption with proper msg_key and KDF
 - Production session storage backends
@@ -128,12 +125,6 @@ type Server struct { /* framework implementation */ }
 // Service registration (gRPC-like)
 func (s *Server) RegisterService(desc ServiceDesc, impl interface{})
 
-// Codec for TL objects
-type Codec interface {
-    Decode(layer int, data []byte) (TLObject, error)
-    Encode(layer int, obj TLObject) ([]byte, error)
-}
-
 // Interceptors (gRPC-like middleware)
 type Interceptor func(next Handler) Handler
 
@@ -147,7 +138,7 @@ type Transport interface {
 ## Concurrency Model
 
 - **Per-Connection Goroutines**: Each client gets dedicated goroutine
-- **Thread-Safe**: Registry, sessions, codec are thread-safe
+- **Thread-Safe**: Service dispatcher, sessions are thread-safe
 - **Concurrent Handlers**: Multiple requests per session can execute concurrently
 - **Ordering**: MTProto message IDs ensure proper ordering
 

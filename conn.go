@@ -1,6 +1,7 @@
 package tlrpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -64,6 +65,18 @@ func serializeEncrypted(msg *mtproto.EncryptedMessage) []byte {
 	copy(data[8:24], msg.MsgKey[:])
 	copy(data[24:], msg.EncryptedData)
 	return data
+}
+
+// encodeTLObject encodes a TL object using its SerializeTL method
+func encodeTLObject(obj TLObject) ([]byte, error) {
+	if obj == nil {
+		return nil, errors.New("tlrpc: nil object")
+	}
+	buf := &bytes.Buffer{}
+	if err := obj.(interface{ SerializeTL(io.Writer) error }).SerializeTL(buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 type netConn struct {

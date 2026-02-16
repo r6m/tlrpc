@@ -81,8 +81,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, "Generating types...")
 	}
 	for i := range schema.Types {
-		gen := codegen.NewTypeGenerator(namer, typesOut)
-		ifaceGen := codegen.NewTypeGenerator(namer, interfacesOut)
+		gen := codegen.NewTypeGenerator(namer, typesOut, schema)
+		ifaceGen := codegen.NewTypeGenerator(namer, interfacesOut, schema)
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {
 			fmt.Fprintf(stderr, "generate types: %v\n", err)
 			return 2

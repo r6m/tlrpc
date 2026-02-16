@@ -14,6 +14,7 @@ type Schema struct {
 	Types        []TypeDecl    // From ---types--- section
 	Functions    []FuncDecl    // From ---functions--- section
 	Constructors []Constructor // All constructors from types
+	UnionTypes   map[string]bool // Types that are unions (have multiple constructors)
 }
 
 // GenericParam represents a generic type parameter like {t:Type}.
@@ -187,12 +188,16 @@ func NewSchema(layer int) *Schema {
 		Types:        []TypeDecl{},
 		Functions:    []FuncDecl{},
 		Constructors: []Constructor{},
+		UnionTypes:   make(map[string]bool),
 	}
 }
 
 // AddType adds a type declaration to the schema.
 func (s *Schema) AddType(typ TypeDecl) {
 	s.Types = append(s.Types, typ)
+	if typ.IsUnion {
+		s.UnionTypes[typ.Name] = true
+	}
 	for _, ctor := range typ.Constructors {
 		s.Constructors = append(s.Constructors, ctor)
 	}

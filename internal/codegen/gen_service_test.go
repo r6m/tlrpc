@@ -34,7 +34,7 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !contains(services, "type AuthServer interface") {
 		t.Fatalf("expected AuthServer interface")
 	}
-	if !contains(services, "SendCode(ctx context.Context, req *SendCodeRequest) (*AuthSentCode, error)") {
+	if !contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*AuthSentCode, error)") {
 		t.Fatalf("expected SendCode signature")
 	}
 
@@ -47,8 +47,8 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	}
 
 	requests := requestsBuf.String()
-	if !contains(requests, "type SendCodeRequest struct") {
-		t.Fatalf("expected SendCodeRequest")
+	if !contains(requests, "type AuthSendCodeRequest struct") {
+		t.Fatalf("expected AuthSendCodeRequest")
 	}
 	if !contains(requests, "PhoneNumber string") {
 		t.Fatalf("expected PhoneNumber field")

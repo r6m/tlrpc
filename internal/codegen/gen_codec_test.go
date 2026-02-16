@@ -20,13 +20,16 @@ func TestCodecGenerator_SimpleSchema(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !contains(output, "func RegisterCodec") {
-		t.Fatalf("expected RegisterCodec helper")
+	if !contains(output, "var staticConstructors") {
+		t.Fatalf("expected static constructor map")
 	}
-	if !contains(output, "RegisterConstructor(0x8f97c628") {
-		t.Fatalf("expected constructor registration for user")
+	if !contains(output, "0x8f97c628: func() tlrpc.TLObject") {
+		t.Fatalf("expected constructor entry for user")
 	}
 	if !contains(output, "RegisterMethod(\"auth.sendCode\"") {
 		t.Fatalf("expected method registration for auth.sendCode")
+	}
+	if !contains(output, "func GetStaticConstructors()") {
+		t.Fatalf("expected GetStaticConstructors function")
 	}
 }

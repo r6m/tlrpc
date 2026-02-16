@@ -25,7 +25,6 @@ import (
     "net"
 
     "github.com/r6m/tlrpc"
-    "github.com/r6m/tlrpc/codec"
     "github.com/r6m/tlrpc/gen" // generated from TL schema
 )
 
@@ -41,16 +40,11 @@ func (s *AuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*
 }
 
 func main() {
-    // Set up codec registry (like gRPC service registration)
-    registry := codec.NewRegistry()
-    gen.RegisterCodec(registry)
-
     // Create server
-    server := tlrpc.NewServer(
-        tlrpc.WithCodec(codec.New(registry)),
-    )
+    server := tlrpc.NewServer()
 
     // Register your service implementation
+    // (All internal registration happens automatically!)
     gen.RegisterAuthServer(server, &AuthService{})
 
     // Start serving
@@ -71,7 +65,7 @@ TLRPC implements the complete MTProto protocol stack as a gateway for Telegram c
 - **Transport Layer**: TCP/WebSocket connections with MTProto message framing
 - **Crypto Layer**: MTProto v2 encryption/decryption with auth key management
 - **Protocol Layer**: Session management, message sequencing, layer negotiation
-- **Codec Layer**: TL object serialization/deserialization via constructor registry
+- **Dispatch Layer**: Automatic TL object dispatch via constructor ID mapping
 - **Service Layer**: Your business logic implementations (gRPC-like RPC pattern)
 
 ## Key Components
@@ -150,7 +144,7 @@ This generates the same pattern as gRPC:
 - **Service interfaces** (e.g., `AuthServer`) - just like gRPC service interfaces
 - **Unimplemented stubs** (e.g., `UnimplementedAuthServer`) - embed these in your implementations
 - **Registration helpers** (e.g., `RegisterAuthServer`) - register your services with the server
-- **Codec registry helper** (e.g., `RegisterCodec`) - registers TL constructors
+- **Static constructor map** (e.g., `GetStaticConstructors()`) - provides efficient TL type lookup
 
 ## Service Implementation Pattern
 
@@ -168,18 +162,15 @@ func (s *MyAuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) 
 }
 ```
 
-## Codec & Registry
+## Automatic Registration
 
-The `Codec` handles TL object encoding/decoding via a constructor registry:
+TLRPC handles all internal registration automatically. When you call `Register*Server()`, the framework:
 
-```go
-registry := codec.NewRegistry()
-gen.RegisterCodec(registry) // Registers all generated constructors
+1. **Automatically registers** constructor functions for all TL types
+2. **Automatically registers** method handlers for all RPC calls
+3. **Directly maps** constructor IDs to handlers for efficient dispatch
 
-server := tlrpc.NewServer(
-    tlrpc.WithCodec(codec.New(registry)),
-)
-```
+No manual codec or registry setup required!
 
 ## Interceptors (gRPC-style Middleware)
 
@@ -242,7 +233,6 @@ TLRPC implements the complete MTProto v2 protocol stack:
 
 - **`transport/`**: TCP/WebSocket transport implementations
 - **`mtproto/`**: MTProto message framing and low-level protocol
-- **`codec/`**: TL object serialization/deserialization
 - **`session/`**: Session management and storage
 - **`crypto/`**: MTProto encryption primitives
-- **`registry/`**: Service registration and method dispatch
+- **Internal dispatcher**: Automatic service registration and method dispatch

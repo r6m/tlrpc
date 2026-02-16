@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"math/big"
 	"time"
@@ -52,9 +53,6 @@ func validateMessageID(msgID int64) error {
 	return nil
 }
 
-type HandshakeHandler interface {
-	HandleUnencrypted(ctx context.Context, msgID int64, data []byte) ([]byte, error)
-}
 
 type DefaultHandshakeHandler struct {
 	authKeys crypto.AuthKeyManager
@@ -426,21 +424,12 @@ func generateNonce() ([16]byte, error) {
 }
 
 func (h *connHandler) handleUnencryptedMessage(msg *mtproto.UnencryptedMessage) error {
-	if h.server.codec == nil {
-		return errors.New("tlrpc: codec is not configured")
-	}
-
 	ctx := h.conn.Context()
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	var handler HandshakeHandler
-	if h.server.codec != nil {
-		if hs, ok := h.server.codec.(HandshakeHandler); ok {
-			handler = hs
-		}
-	}
+	handler := h.server.handshakeHandler
 	if handler == nil {
 		handler = NewDefaultHandshakeHandler(h.server.authKeys, h.server.serverKeys)
 	}
@@ -524,9 +513,6 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		_ = h.server.sessions.Save(sess)
 	}
 
-	if h.server.codec == nil {
-		return errors.New("tlrpc: codec is not configured")
-	}
 	ctx := h.conn.Context()
 	if ctx == nil {
 		ctx = context.Background()
@@ -551,33 +537,57 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		}
 	}
 
-	req, err := h.server.codec.Decode(layerFromSession(sess), inner.Data)
-	if err != nil {
-		return err
+	// Read constructor ID
+	if len(inner.Data) < 4 {
+		return io.ErrUnexpectedEOF
 	}
-	methodName := req.Method()
-	if methodName == "" {
-		return NewNotFoundError("METHOD_NOT_FOUND")
-	}
-	method, ok := h.server.registry.GetMethod(methodName)
+	constructorID := binary.LittleEndian.Uint32(inner.Data[:4])
+
+	// Look up method handler directly by constructor ID
+	methodHandler, ok := h.server.dispatcher.LookupMethod(constructorID)
 	if !ok {
 		return NewNotFoundError("METHOD_NOT_FOUND")
 	}
 
-	handler := method.Handler
+	// Decode the request only after confirming we have a handler
+	constructor, ok := h.server.dispatcher.LookupConstructor(constructorID)
+	if !ok {
+		return NewNotFoundError("UNKNOWN_CONSTRUCTOR")
+	}
+
+	req := constructor()
+	if deser, ok := req.(interface{ DeserializeTL(io.Reader) error }); ok {
+		r := bytes.NewReader(inner.Data)
+		// Skip constructor ID (already read)
+		if _, err := mtproto.ReadUint32(r); err != nil {
+			return err
+		}
+		if err := deser.DeserializeTL(r); err != nil {
+			return err
+		}
+	}
+
 	var resp interface{}
 
 	// Apply new gRPC-like unary interceptors
 	if len(h.server.unaryInterceptors) > 0 {
-		info := &UnaryServerInfo{FullMethod: methodName}
+		info := &UnaryServerInfo{FullMethod: fmt.Sprintf("constructor_%08x", constructorID)}
 		chainedInterceptor := ChainUnaryInterceptors(h.server.unaryInterceptors...)
+		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+			return methodHandler(ctx, req.(TLObject))
+		}
 		resp, err = chainedInterceptor(ctx, req, info, handler)
 	} else {
 		// Fallback to legacy interceptors
 		if len(h.server.legacyInterceptors) > 0 {
+			handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+				return methodHandler(ctx, req.(TLObject))
+			}
 			handler = ChainInterceptors(h.server.legacyInterceptors...)(handler)
+			resp, err = handler(ctx, req)
+		} else {
+			resp, err = methodHandler(ctx, req)
 		}
-		resp, err = handler(ctx, req)
 	}
 
 	// Handle errors by sending MTProto RPC error
@@ -592,7 +602,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if !ok {
 		return h.sendRPCError(inner.MsgID, NewInternalError("response does not implement TLObject"))
 	}
-	respData, err := h.server.codec.Encode(layerFromSession(sess), respObj)
+	respData, err := encodeTLObject(respObj)
 	if err != nil {
 		return h.sendRPCError(inner.MsgID, NewInternalError("failed to encode response"))
 	}
@@ -655,36 +665,55 @@ func (h *connHandler) handleContainerMessage(ctx context.Context, sess *session.
 		ackMsgIDs = append(ackMsgIDs, msgID)
 
 		// Process the individual message
-		req, err := h.server.codec.Decode(layerFromSession(sess), msgData)
-		if err != nil {
-			// For errors in containers, we should still try to process other messages
-			// but for simplicity, we'll return the error for now
-			return err
-		}
-
-		methodName := req.Method()
-		if methodName == "" {
+		if len(msgData) < 4 {
 			continue // Skip invalid messages
 		}
+		constructorID := binary.LittleEndian.Uint32(msgData[:4])
 
-		method, ok := h.server.registry.GetMethod(methodName)
+		// Look up method handler directly by constructor ID
+		methodHandler, ok := h.server.dispatcher.LookupMethod(constructorID)
 		if !ok {
 			continue // Skip unknown methods
 		}
 
-		handler := method.Handler
+		// Decode the request
+		constructor, ok := h.server.dispatcher.LookupConstructor(constructorID)
+		if !ok {
+			continue // Skip unknown constructors
+		}
+
+		req := constructor()
+		if deser, ok := req.(interface{ DeserializeTL(io.Reader) error }); ok {
+			r := bytes.NewReader(msgData)
+			// Skip constructor ID (already read)
+			if _, err := mtproto.ReadUint32(r); err != nil {
+				continue
+			}
+			if err := deser.DeserializeTL(r); err != nil {
+				continue
+			}
+		}
+
 		var resp interface{}
 
 		// Apply interceptors
 		if len(h.server.unaryInterceptors) > 0 {
-			info := &UnaryServerInfo{FullMethod: methodName}
+			info := &UnaryServerInfo{FullMethod: fmt.Sprintf("constructor_%08x", constructorID)}
 			chainedInterceptor := ChainUnaryInterceptors(h.server.unaryInterceptors...)
+			handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+				return methodHandler(ctx, req.(TLObject))
+			}
 			resp, err = chainedInterceptor(ctx, req, info, handler)
 		} else {
 			if len(h.server.legacyInterceptors) > 0 {
+				handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+					return methodHandler(ctx, req.(TLObject))
+				}
 				handler = ChainInterceptors(h.server.legacyInterceptors...)(handler)
+				resp, err = handler(ctx, req)
+			} else {
+				resp, err = methodHandler(ctx, req)
 			}
-			resp, err = handler(ctx, req)
 		}
 
 		if err != nil || resp == nil {
@@ -696,7 +725,7 @@ func (h *connHandler) handleContainerMessage(ctx context.Context, sess *session.
 			continue // Skip invalid responses
 		}
 
-		respData, err := h.server.codec.Encode(layerFromSession(sess), respObj)
+		respData, err := encodeTLObject(respObj)
 		if err != nil {
 			continue // Skip encoding errors
 		}
@@ -810,15 +839,12 @@ func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
 	// Convert error to RPCError
 	rpcErr := FromError(err)
 
-	// Get session info for response
-	sess, _ := h.server.sessions.Get(h.authKeyID)
-
 	// Encode the RPC error as TL object
-	respData, encErr := h.server.codec.Encode(layerFromSession(sess), rpcErr)
+	respData, encErr := encodeTLObject(rpcErr)
 	if encErr != nil {
 		// If encoding fails, send a generic internal error
 		genericErr := NewInternalError("failed to encode error response")
-		respData, _ = h.server.codec.Encode(layerFromSession(sess), genericErr)
+		respData, _ = encodeTLObject(genericErr)
 	}
 
 	// Send the error response

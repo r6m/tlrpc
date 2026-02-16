@@ -8,6 +8,7 @@ This directory contains TL schema files used for testing the parser and validato
 - `with_errors.tl`: Schema with validation errors (duplicate IDs, undefined types)
 - `flags.tl`: Schema testing flag bit consistency
 - `circular.tl`: Schema with circular type dependencies
+- `schema.tl`: Full telegram schema
 
 ## Usage
 

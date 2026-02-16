@@ -64,7 +64,7 @@ This generates:
 - Service interfaces (`UserServer`, `AuthServer`)
 - Unimplemented stubs (`UnimplementedUserServer`, `UnimplementedAuthServer`)
 - Registration helpers (`RegisterUserServer`, `RegisterAuthServer`)
-- Codec registration (`RegisterCodec`)
+- Static constructor map (automatic)
 
 ## Step 5: Implement your services
 
@@ -108,7 +108,7 @@ func (s *AuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*
 
 ## Step 6: Set up the MTProto server
 
-Create the main server with codec and service registration:
+Create the main server and register your services:
 
 ```go
 package main
@@ -118,18 +118,12 @@ import (
     "net"
 
     "github.com/r6m/tlrpc"
-    "github.com/r6m/tlrpc/codec"
     "my-telegram-server/gen"
 )
 
 func main() {
-    // Set up the TL codec registry
-    registry := codec.NewRegistry()
-    gen.RegisterCodec(registry) // Registers all your TL constructors
-
     // Create the MTProto server
     server := tlrpc.NewServer(
-        tlrpc.WithCodec(codec.New(registry)),
         // Optional: Use obfuscated transport for additional privacy
         // tlrpc.WithTransport(tlrpc.NewObfuscatedTransport()),
         // Add interceptors like gRPC
@@ -137,6 +131,7 @@ func main() {
     )
 
     // Register your service implementations (like gRPC service registration)
+    // All internal registration happens automatically!
     gen.RegisterUserServer(server, &UserService{})
     gen.RegisterAuthServer(server, &AuthServer{})
 
@@ -171,7 +166,6 @@ Use interceptors for auth (like gRPC):
 
 ```go
 server := tlrpc.NewServer(
-    tlrpc.WithCodec(codec.New(registry)),
     tlrpc.WithInterceptor(
         tlrpc.ChainInterceptors(
             tlrpc.LoggingInterceptor(log.Default()),

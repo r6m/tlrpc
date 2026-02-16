@@ -23,7 +23,6 @@ import (
     "log"
 
     "github.com/r6m/tlrpc"
-    "github.com/r6m/tlrpc/codec"
     "github.com/r6m/tlrpc/gen"
 )
 
@@ -42,12 +41,11 @@ func (s *MyAuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) 
 }
 
 func main() {
-    registry := codec.NewRegistry()
-    gen.RegisterCodec(registry)
+    // Create the MTProto server
+    server := tlrpc.NewServer()
 
-    server := tlrpc.NewServer(
-        tlrpc.WithCodec(codec.New(registry)),
-    )
+    // Register your service implementation
+    // (All internal registration happens automatically!)
     gen.RegisterAuthServer(server, &MyAuthService{})
 
     lis, _ := net.Listen("tcp", ":443")
@@ -56,11 +54,13 @@ func main() {
 }
 ```
 
+**Zero Configuration**: Unlike other frameworks, TLRPC handles all internal registration automatically. Just register your services - no manual codec setup or registry configuration required.
+
 ## How It Works
 
 **gRPC Analogy:**
-- **gRPC**: `proto` + service definitions → generate types and `Unimplemented*Server` → implement services → register with gRPC server
-- **TLRPC**: `TL schema` + RPC definitions → generate types and `Unimplemented*Server` → implement services → register with TLRPC server
+- **gRPC**: `proto` + service definitions → generate `ServiceDesc` + `Unimplemented*Server` → implement services → register with gRPC server
+- **TLRPC**: `TL schema` + RPC definitions → generate `ServiceDesc` + `Unimplemented*Server` → implement services → register with TLRPC server
 
 **Request Flow:**
 ```
@@ -69,10 +69,10 @@ Telegram Client → MTProto Transport → TLRPC Server → Your Service Implemen
 
 ## Features
 
-- **gRPC-like Development**: Familiar service interface pattern with generated `Unimplemented*Server` stubs
+- **gRPC-like Development**: Familiar service interface pattern with generated `ServiceDesc` and `Unimplemented*Server` stubs
 - **Code Generation**: Auto-generate Go types and service interfaces from TL schemas
 - **MTProto v2 Gateway**: Full MTProto protocol implementation for Android/web clients
-- **Codec Registry**: Constructor-based TL object encoding/decoding
+- **Static Codec Dispatch**: Compile-time generated dispatch maps (no runtime registry like gRPC)
 - **Interceptor Chain**: Middleware support for auth, logging, metrics (like gRPC interceptors)
 - **Type Safety**: Compile-time type safety for all TL types
 - **High Performance**: Efficient serialization and connection handling
@@ -84,7 +84,7 @@ TLRPC implements the complete MTProto stack as a gateway:
 1. **Transport Layer**: TCP/WebSocket connections with MTProto framing
 2. **Crypto Layer**: MTProto encryption/decryption with auth key management
 3. **Protocol Layer**: Message serialization, session management, layer negotiation
-4. **Codec Layer**: TL object encoding/decoding via constructor registry
+4. **Dispatch Layer**: Automatic TL object dispatch via constructor ID mapping
 5. **Service Layer**: Your business logic implementations (gRPC-like pattern)
 
 ## Testing

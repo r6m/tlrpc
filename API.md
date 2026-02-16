@@ -31,7 +31,6 @@ func WithLayers(layers ...int) ServerOption
 func WithInterceptor(i Interceptor) ServerOption
 func WithSessionStore(store SessionStore) ServerOption
 func WithLogger(l Logger) ServerOption
-func WithCodec(codec Codec) ServerOption
 ```
 
 ### Context Functions
@@ -134,16 +133,9 @@ type TLObject interface {
 }
 ```
 
-## Codec Interface
+## Automatic Registration
 
-```go
-type Codec interface {
-    Decode(layer int, data []byte) (TLObject, error)
-    Encode(layer int, obj TLObject) ([]byte, error)
-}
-```
-
-The default workflow uses `codec.Registry` to register constructor IDs for request types.
+TLRPC handles all internal registration automatically. Constructor IDs and method handlers are registered when you call `Register*Server()` functions. No manual codec or registry setup is required.
 
 ## Code Generation
 

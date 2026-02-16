@@ -24,19 +24,14 @@ TLRPC implements the complete MTProto stack as a gateway:
 │  gRPC-like Service Implementations  │
 │  Business Logic                     │
 └─────────────┬───────────────────────┘
-              │ RegisterService()
+              │ Register*Server()
 ┌─────────────▼───────────────────────┐
 │      TLRPC FRAMEWORK                │
 │  ┌─────────────────────────────┐    │
-│  │    Service Registry         │    │
-│  │  - Method routing           │    │
+│  │    Service Dispatcher       │    │
+│  │  - Constructor ID routing   │    │
 │  │  - Interceptor chain        │    │
-│  │  - gRPC-like patterns       │    │
-│  └─────────────────────────────┘    │
-│  ┌─────────────────────────────┐    │
-│  │    Codec (TL)               │    │
-│  │  - Constructor registry     │    │
-│  │  - TL encode/decode         │    │
+│  │  - Automatic registration   │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
 │  │    MTProto Protocol         │    │
@@ -117,25 +112,14 @@ type Conn interface {
 - Container message batching support
 - MTProto 2.0 encryption with proper msg_key and KDF
 
-### 4. Codec (TL Serialization)
+### 4. Service Dispatcher
 
-**Responsibility**: Decode/encode TL objects from bytes
+**Responsibility**: Route constructor IDs to handlers with automatic registration
 
 **Design**:
-- Constructor ID → type mapping via `codec.Registry`
-- Per-layer routing handled by codec implementations
-- Layer version exposed to service via context
-
-```go
-type Codec interface {
-    Decode(layer int, data []byte) (TLObject, error)
-    Encode(layer int, obj TLObject) ([]byte, error)
-}
-```
-
-### 5. Service Registry
-
-**Responsibility**: Route requests to implementations
+- Constructor ID → handler mapping for direct dispatch
+- Automatic registration when services are registered
+- No manual codec or registry setup required
 
 **Registration**:
 ```go
@@ -153,8 +137,8 @@ func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
 ```
 
 **Routing**:
-1. Extract method name from TL object
-2. Find handler in registry
+1. Extract constructor ID from message
+2. Find handler directly by constructor ID
 3. Build interceptor chain
 4. Execute handler
 5. Serialize response
@@ -168,10 +152,9 @@ func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
 1. Telegram client sends MTProto message
 2. Transport receives encrypted bytes
 3. MTProto layer decrypts → plaintext TL bytes
-4. Codec decodes TL object (constructor registry)
-5. Service Registry routes to your handler method
-6. Interceptors execute (auth, logging, metrics - like gRPC interceptors)
-7. Your service implementation executes (gRPC-like RPC method)
+4. Extract constructor ID and route directly to handler
+5. Interceptors execute (auth, logging, metrics - like gRPC interceptors)
+6. Your service implementation executes (gRPC-like RPC method)
 ```
 
 ### Response Path

@@ -2,8 +2,6 @@ package tlrpc
 
 import (
 	"context"
-
-	"github.com/r6m/tlrpc/registry"
 )
 
 type contextKey string
@@ -25,48 +23,6 @@ func OutgoingMD(ctx context.Context) (MD, bool) {
 	return FromOutgoingContext(ctx)
 }
 
-// UnaryServerInfo provides information about the current RPC call.
-type UnaryServerInfo = registry.UnaryServerInfo
-
-// UnaryInterceptor provides a hook to intercept the execution of a unary RPC.
-type UnaryInterceptor = registry.UnaryInterceptor
-
-// UnaryHandler defines the handler invoked by UnaryInterceptor.
-type UnaryHandler = registry.UnaryHandler
-
-// Authorizer validates a request and returns an error if unauthorized.
-type Authorizer = registry.Authorizer
-
-// ChainUnaryInterceptors chains multiple unary interceptors together.
-func ChainUnaryInterceptors(interceptors ...UnaryInterceptor) UnaryInterceptor {
-	return registry.ChainUnaryInterceptors(interceptors...)
-}
-
-// RecoveryInterceptor recovers panics and returns an RPCError.
-func RecoveryInterceptor() UnaryInterceptor {
-	return registry.RecoveryInterceptor(func(message string) error {
-		return NewInternalError(message)
-	})
-}
-
-// LoggingInterceptor logs request/response lifecycle.
-func LoggingInterceptor(logger Logger) UnaryInterceptor {
-	return registry.LoggingInterceptor(logger)
-}
-
-// AuthInterceptor checks authorization.
-func AuthInterceptor(authorizer Authorizer) UnaryInterceptor {
-	return registry.AuthInterceptor(authorizer)
-}
-
-// Legacy Interceptor support for backward compatibility
-type Handler = registry.Handler
-type Interceptor = registry.Interceptor
-
-// ChainInterceptors chains multiple interceptors together (legacy).
-func ChainInterceptors(interceptors ...Interceptor) Interceptor {
-	return registry.ChainInterceptors(interceptors...)
-}
 
 // SessionFromContext returns the session from context.
 func SessionFromContext(ctx context.Context) *Session {
