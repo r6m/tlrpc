@@ -2,22 +2,26 @@
 
 ## Overview
 
-TLRPC is designed as a framework for building Telegram-compatible servers. It abstracts away MTProto complexity while maintaining full protocol compliance.
+TLRPC is a gRPC-inspired framework for building Telegram-compatible RPC servers. It implements the complete MTProto v2 protocol stack while providing a familiar RPC development experience.
+
+**Core Concept**: TLRPC is to MTProto what gRPC is to Protocol Buffers - a code generation and RPC framework for a specific protocol.
 
 ## Core Principles
 
-1. **Framework, Not Server**: TLRPC provides building blocks, not a complete server
-2. **Generated Code First**: All TL types are generated, not hand-written
-3. **Layer Transparency**: Framework handles multi-layer clients automatically
-4. **Zero-Copy Where Possible**: Minimize allocations in hot paths
+1. **gRPC-like Developer Experience**: TL schemas → generated types/services → familiar RPC patterns
+2. **MTProto Protocol Gateway**: Complete MTProto v2 implementation for Telegram clients
+3. **Generated Code First**: All TL types and services are generated, not hand-written
+4. **Layer Transparency**: Framework handles multi-layer Telegram clients automatically
 5. **Pluggable Components**: Transport, session storage, crypto are replaceable
 
 ## Architecture Layers
 
+TLRPC implements the complete MTProto stack as a gateway:
+
 ```
 ┌─────────────────────────────────────┐
 │         USER CODE                   │
-│  Service Implementations            │
+│  gRPC-like Service Implementations  │
 │  Business Logic                     │
 └─────────────┬───────────────────────┘
               │ RegisterService()
@@ -27,32 +31,26 @@ TLRPC is designed as a framework for building Telegram-compatible servers. It ab
 │  │    Service Registry         │    │
 │  │  - Method routing           │    │
 │  │  - Interceptor chain        │    │
+│  │  - gRPC-like patterns       │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
 │  │    Codec (TL)               │    │
 │  │  - Constructor registry     │    │
-│  │  - Encode/decode objects    │    │
+│  │  - TL encode/decode         │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
 │  │    MTProto Protocol         │    │
 │  │  - Message framing          │    │
-│  │  - Acknowledgments          │    │
-│  │  - Resend logic             │    │
+│  │  - Encryption/decryption    │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
 │  │    Session Manager          │    │
 │  │  - Auth key storage         │    │
 │  │  - Session state            │    │
-│  │  - Layer tracking           │    │
-│  └─────────────────────────────┘    │
-│  ┌─────────────────────────────┐    │
-│  │    Crypto Engine            │    │
-│  │  - AES-256-IGE              │    │
-│  │  - Auth key derivation      │    │
 │  └─────────────────────────────┘    │
 │  ┌─────────────────────────────┐    │
 │  │    Transport                │    │
-│  │  - TCP/UDP/WebSocket        │    │
+│  │  - TCP/WebSocket            │    │
 │  └─────────────────────────────┘    │
 └─────────────────────────────────────┘
 ```
@@ -160,29 +158,34 @@ func (s *Server) RegisterService(sd ServiceDesc, ss interface{})
 4. Execute handler
 5. Serialize response
 
-## Data Flow
+## Request Flow (gRPC-like)
+
+**Complete Flow**: Telegram Client → MTProto Transport → TLRPC Server → Your Service → Response
 
 ### Request Path
-
 ```
-1. Transport receives encrypted bytes
-2. Crypto decrypts → plaintext TL bytes
-3. Protocol parses message header
-4. Codec decodes TL object (constructor registry, per-layer if configured)
-5. Registry routes to service handler
-6. Interceptors execute (auth, logging, etc.)
-7. User service implementation executes
+1. Telegram client sends MTProto message
+2. Transport receives encrypted bytes
+3. MTProto layer decrypts → plaintext TL bytes
+4. Codec decodes TL object (constructor registry)
+5. Service Registry routes to your handler method
+6. Interceptors execute (auth, logging, metrics - like gRPC interceptors)
+7. Your service implementation executes (gRPC-like RPC method)
 ```
 
 ### Response Path
+```
+1. Your service returns response object
+2. Codec serializes to TL bytes
+3. MTProto layer encrypts message
+4. Transport sends to client
+```
 
-```
-1. User service returns response object
-2. Registry serializes (using client's layer)
-3. Protocol frames message
-4. Crypto encrypts
-5. Transport sends
-```
+### gRPC Analogy
+- **gRPC**: `Client → Transport → gRPC Server → Your Service Method → Response`
+- **TLRPC**: `Telegram Client → MTProto Transport → TLRPC Server → Your Service Method → Response`
+
+The key difference: TLRPC handles MTProto protocol complexity automatically.
 
 ## Concurrency Model
 

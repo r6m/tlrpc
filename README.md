@@ -1,8 +1,8 @@
 # TLRPC
 
-**Telegram RPC Framework for Go**
+**gRPC-like Framework for Telegram MTProto**
 
-TLRPC is a high-performance framework for building Telegram servers. It handles the complexity of MTProto protocol, multi-layer support, and encryption, allowing you to focus on implementing business logic.
+TLRPC is a gRPC-inspired framework for building Telegram-compatible RPC servers. Just as gRPC generates types and services from Protocol Buffers, TLRPC generates Go types and service interfaces from Telegram's TL schemas, providing a familiar RPC development experience for MTProto applications.
 
 ## Quick Start
 
@@ -20,6 +20,7 @@ package main
 import (
     "context"
     "net"
+    "log"
 
     "github.com/r6m/tlrpc"
     "github.com/r6m/tlrpc/codec"
@@ -31,14 +32,14 @@ type MyAuthService struct {
 }
 
 func (s *MyAuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*gen.AuthSentCode, error) {
-    return &gen.AuthSentCode{ /* ... */ }, nil
+    return &gen.AuthSentCode{
+        PhoneCodeHash: "abc123",
+    }, nil
 }
 
 func main() {
     registry := codec.NewRegistry()
-    registry.RegisterConstructor((&gen.SendCodeRequest{}).ConstructorID(), func() tlrpc.TLObject {
-        return &gen.SendCodeRequest{}
-    })
+    gen.RegisterCodec(registry)
 
     server := tlrpc.NewServer(
         tlrpc.WithCodec(codec.New(registry)),
@@ -46,28 +47,38 @@ func main() {
     gen.RegisterAuthServer(server, &MyAuthService{})
 
     lis, _ := net.Listen("tcp", ":443")
-    _ = server.Serve(lis)
+    log.Println("Server listening on :443")
+    log.Fatal(server.Serve(lis))
 }
 ```
 
-Note: the default handshake handler is a minimal stub (only `req_pq`), so production deployments should provide a full MTProto handshake or a custom handler.
+## How It Works
+
+**gRPC Analogy:**
+- **gRPC**: `proto` + service definitions → generate types and `Unimplemented*Server` → implement services → register with gRPC server
+- **TLRPC**: `TL schema` + RPC definitions → generate types and `Unimplemented*Server` → implement services → register with TLRPC server
+
+**Request Flow:**
+```
+Telegram Client → MTProto Transport → TLRPC Server → Your Service Implementation → Response → Client
+```
 
 ## Features
 
-- **Multi-Layer Support**: Handle clients from different Telegram versions seamlessly
-- **Auto-Generated Code**: Generate Go types and service interfaces from TL schema
-- **Codec Registry**: Constructor-based TL decoding/encoding via codec registry
-- **Pluggable Transports**: TCP, UDP, WebSocket support
-- **Interceptor Chain**: Middleware for logging, auth, metrics
-- **Type Safety**: Full compile-time type safety for all TL types
-- **Performance**: Zero-allocation hot paths, efficient serialization
+- **gRPC-like Development**: Familiar service interface pattern with generated `Unimplemented*Server` stubs
+- **Code Generation**: Auto-generate Go types and service interfaces from TL schemas
+- **MTProto v2 Gateway**: Full MTProto protocol implementation for Android/web clients
+- **Codec Registry**: Constructor-based TL object encoding/decoding
+- **Interceptor Chain**: Middleware support for auth, logging, metrics (like gRPC interceptors)
+- **Type Safety**: Compile-time type safety for all TL types
+- **High Performance**: Efficient serialization and connection handling
 
 ## Architecture
 
-TLRPC follows a layered architecture:
+TLRPC implements the complete MTProto stack as a gateway:
 
-1. **Transport Layer**: Handles raw connections (TCP/UDP/WS)
-2. **Crypto Layer**: MTProto encryption/decryption
-3. **Protocol Layer**: MTProto message framing and session management
-4. **Codec (TL)**: Constructor registry and TL serialization
-5. **Service Layer**: Your business logic implementation
+1. **Transport Layer**: TCP/WebSocket connections with MTProto framing
+2. **Crypto Layer**: MTProto encryption/decryption with auth key management
+3. **Protocol Layer**: Message serialization, session management, layer negotiation
+4. **Codec Layer**: TL object encoding/decoding via constructor registry
+5. **Service Layer**: Your business logic implementations (gRPC-like pattern)

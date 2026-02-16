@@ -1,6 +1,6 @@
 ## Phase 0: Foundation & Tooling
 **Duration**: 2 weeks
-**Goal**: Establish development environment, project structure, and core tooling
+**Goal**: Establish development environment and project structure for gRPC-like MTProto framework
 
 ---
 

@@ -75,6 +75,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	requestsOut := writer.NewFile("requests.go")
 	responsesOut := writer.NewFile("responses.go")
 	constantsOut := writer.NewFile("constants.go")
+	codecOut := writer.NewFile("codec.go")
 
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating types...")
@@ -111,6 +112,15 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	_ = responsesOut
+
+	if *verbose {
+		fmt.Fprintln(stdout, "Generating codec registry...")
+	}
+	codecGen := codegen.NewCodecGenerator(namer, codecOut)
+	if err := codecGen.Generate(schema); err != nil {
+		fmt.Fprintf(stderr, "generate codec: %v\n", err)
+		return 2
+	}
 
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating constants...")

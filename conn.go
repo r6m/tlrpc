@@ -13,8 +13,9 @@ import (
 )
 
 type connHandler struct {
-	server *Server
-	conn   connIO
+	server           *Server
+	conn             connIO
+	handshakeHandler HandshakeHandler
 }
 
 type connIO interface {

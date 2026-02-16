@@ -4,15 +4,19 @@
 
 ### What is TLRPC?
 
-TLRPC is a framework for building Telegram-compatible servers in Go. It handles the complexities of MTProto protocol, multi-layer support, and encryption, allowing you to focus on implementing business logic.
+TLRPC is a gRPC-inspired framework for building Telegram-compatible RPC servers. Just as gRPC generates types and services from Protocol Buffers, TLRPC generates Go types and service interfaces from Telegram's TL schemas.
+
+**gRPC Analogy:**
+- **gRPC**: `.proto` → `protoc` → types/services → implementations
+- **TLRPC**: `.tl` → `tlrpc-gen` → types/services → implementations
 
 ### Is TLRPC production-ready?
 
-TLRPC is currently in alpha. The API may change, and it's not recommended for production use yet.
+TLRPC is currently in development. The core MTProto implementation is functional, but production use requires implementing the complete MTProto handshake (currently minimal) and thorough testing.
 
-### How does TLRPC differ from the official Telegram server implementations?
+### How does TLRPC differ from official Telegram implementations?
 
-TLRPC is a framework that provides building blocks for creating Telegram-compatible servers. It's not a complete server implementation like the official ones.
+TLRPC is a framework for building custom Telegram-compatible servers. It provides the MTProto protocol stack and RPC framework, but you implement the actual Telegram API methods.
 
 ## Technical
 
