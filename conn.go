@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
 	"github.com/r6m/tlrpc/session"
 )
@@ -16,6 +17,7 @@ type connHandler struct {
 	server           *Server
 	conn             connIO
 	handshakeHandler HandshakeHandler
+	authKeyID        crypto.KeyID
 }
 
 type connIO interface {

@@ -191,6 +191,9 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		return err
 	}
 
+	// Store the auth key ID for error responses
+	h.authKeyID = keyID
+
 	sess, err := h.server.sessions.Get(keyID)
 	if err != nil {
 		sess, err = h.server.sessions.Create(keyID)
@@ -223,31 +226,44 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	}
 	methodName := req.Method()
 	if methodName == "" {
-		return ErrMethodNotFound
+		return NewNotFoundError("METHOD_NOT_FOUND")
 	}
 	method, ok := h.server.registry.GetMethod(methodName)
 	if !ok {
-		return ErrMethodNotFound
+		return NewNotFoundError("METHOD_NOT_FOUND")
 	}
 
 	handler := method.Handler
-	if len(h.server.interceptors) > 0 {
-		handler = ChainInterceptors(h.server.interceptors...)(handler)
+	var resp interface{}
+
+	// Apply new gRPC-like unary interceptors
+	if len(h.server.unaryInterceptors) > 0 {
+		info := &UnaryServerInfo{FullMethod: methodName}
+		chainedInterceptor := ChainUnaryInterceptors(h.server.unaryInterceptors...)
+		resp, err = chainedInterceptor(ctx, req, info, handler)
+	} else {
+		// Fallback to legacy interceptors
+		if len(h.server.legacyInterceptors) > 0 {
+			handler = ChainInterceptors(h.server.legacyInterceptors...)(handler)
+		}
+		resp, err = handler(ctx, req)
 	}
-	resp, err := handler(ctx, req)
+
+	// Handle errors by sending MTProto RPC error
 	if err != nil {
-		return err
+		return h.sendRPCError(inner.MsgID, err)
 	}
+
 	if resp == nil {
 		return nil
 	}
 	respObj, ok := resp.(TLObject)
 	if !ok {
-		return errors.New("tlrpc: response does not implement TLObject")
+		return h.sendRPCError(inner.MsgID, NewInternalError("response does not implement TLObject"))
 	}
 	respData, err := h.server.codec.Encode(layerFromSession(sess), respObj)
 	if err != nil {
-		return err
+		return h.sendRPCError(inner.MsgID, NewInternalError("failed to encode response"))
 	}
 
 	innerResp := &mtproto.InnerData{
@@ -261,5 +277,43 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if err != nil {
 		return err
 	}
+	return h.conn.WriteMessage(serializeEncrypted(encResp))
+}
+
+// sendRPCError converts an error to MTProto RPC error format and sends it.
+func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
+	// Convert error to RPCError
+	rpcErr := FromError(err)
+
+	// Get session info for response
+	sess, _ := h.server.sessions.Get(h.authKeyID)
+
+	// Encode the RPC error as TL object
+	respData, encErr := h.server.codec.Encode(layerFromSession(sess), rpcErr)
+	if encErr != nil {
+		// If encoding fails, send a generic internal error
+		genericErr := NewInternalError("failed to encode error response")
+		respData, _ = h.server.codec.Encode(layerFromSession(sess), genericErr)
+	}
+
+	// Send the error response
+	innerResp := &mtproto.InnerData{
+		Salt:      0, // Use 0 for errors
+		SessionID: requestMsgID &^ 3, // Use request msg_id as session_id for errors
+		MsgID:     nextMsgID(),
+		SeqNo:     0, // Errors don't need sequence numbers
+		Data:      respData,
+	}
+
+	authKey, keyErr := h.server.authKeys.Get(h.authKeyID)
+	if keyErr != nil {
+		return keyErr
+	}
+
+	encResp, encErr := innerResp.Encrypt(authKey, h.authKeyID)
+	if encErr != nil {
+		return encErr
+	}
+
 	return h.conn.WriteMessage(serializeEncrypted(encResp))
 }

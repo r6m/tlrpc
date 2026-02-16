@@ -32,6 +32,10 @@ type MyAuthService struct {
 }
 
 func (s *MyAuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*gen.AuthSentCode, error) {
+    if req.PhoneNumber == "" {
+        return nil, tlrpc.NewBadRequestError("PHONE_NUMBER_EMPTY")
+    }
+
     return &gen.AuthSentCode{
         PhoneCodeHash: "abc123",
     }, nil

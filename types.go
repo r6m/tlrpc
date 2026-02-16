@@ -2,7 +2,6 @@
 package tlrpc
 
 import (
-	"errors"
 	"net"
 	"sync"
 	"time"
@@ -13,35 +12,21 @@ import (
 	"github.com/r6m/tlrpc/transport"
 )
 
-// Errors
-var (
-	ErrUnauthorized   = errors.New("tlrpc: unauthorized")
-	ErrInvalidLayer   = errors.New("tlrpc: invalid layer")
-	ErrMethodNotFound = errors.New("tlrpc: method not found")
-)
-
-// RPCError represents an RPC error with code and message
-type RPCError struct {
-	Code    int
-	Message string
-}
-
-func (e *RPCError) Error() string {
-	return e.Message
-}
+// Legacy error variables - moved to error.go
 
 // Server represents an RPC server
 type Server struct {
-	transport    Transport
-	authKeys     crypto.AuthKeyManager
-	sessions     session.Manager
-	codec        Codec
-	maxLayer     int
-	layers       []int
-	interceptors []Interceptor
-	logger       Logger
-	registry     *registry.Registry
-	shutdownCh   chan struct{}
+	transport        Transport
+	authKeys         crypto.AuthKeyManager
+	sessions         session.Manager
+	codec            Codec
+	maxLayer         int
+	layers           []int
+	unaryInterceptors []UnaryInterceptor  // New gRPC-like interceptors
+	legacyInterceptors []Interceptor      // Legacy support
+	logger           Logger
+	registry         *registry.Registry
+	shutdownCh       chan struct{}
 }
 
 // NewServer creates a new RPC server with the given options
@@ -59,7 +44,9 @@ func NewServer(opts ...ServerOption) *Server {
 	return s
 }
 
-// RegisterService registers a service implementation with the server
+// RegisterService registers a service implementation with the server.
+// This is called by generated Register*Server functions.
+// Panics on registration errors (gRPC-style).
 func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 	if s.registry == nil {
 		s.registry = registry.New()
@@ -162,17 +149,6 @@ type Listener = transport.Listener
 // Conn interface for connections.
 type Conn = transport.Conn
 
-// Handler represents a request handler function.
-type Handler = registry.Handler
-
-// Interceptor represents middleware for request/response processing.
-type Interceptor = registry.Interceptor
-
-// ChainInterceptors chains multiple interceptors together.
-func ChainInterceptors(interceptors ...Interceptor) Interceptor {
-	return registry.ChainInterceptors(interceptors...)
-}
-
 // Logger interface for logging.
 type Logger = registry.Logger
 
@@ -200,10 +176,17 @@ func WithLayers(layers ...int) ServerOption {
 	}
 }
 
-// WithInterceptor adds an interceptor to the server
+// WithUnaryInterceptor adds a unary interceptor to the server (gRPC-like).
+func WithUnaryInterceptor(i UnaryInterceptor) ServerOption {
+	return func(s *Server) {
+		s.unaryInterceptors = append(s.unaryInterceptors, i)
+	}
+}
+
+// WithInterceptor adds a legacy interceptor to the server (deprecated, use WithUnaryInterceptor).
 func WithInterceptor(i Interceptor) ServerOption {
 	return func(s *Server) {
-		s.interceptors = append(s.interceptors, i)
+		s.legacyInterceptors = append(s.legacyInterceptors, i)
 	}
 }
 
@@ -243,6 +226,34 @@ func WithSessionManager(manager session.Manager) ServerOption {
 func WithCodec(codec Codec) ServerOption {
 	return func(s *Server) {
 		s.codec = codec
+	}
+}
+
+// WithMaxMessageSize sets the maximum message size in bytes.
+func WithMaxMessageSize(size int) ServerOption {
+	return func(s *Server) {
+		// TODO: implement max message size
+	}
+}
+
+// WithMaxConcurrentStreams sets the maximum number of concurrent streams.
+func WithMaxConcurrentStreams(n int) ServerOption {
+	return func(s *Server) {
+		// TODO: implement concurrent stream limiting
+	}
+}
+
+// WithReadTimeout sets the read timeout for connections.
+func WithReadTimeout(timeout time.Duration) ServerOption {
+	return func(s *Server) {
+		// TODO: implement read timeout
+	}
+}
+
+// WithWriteTimeout sets the write timeout for connections.
+func WithWriteTimeout(timeout time.Duration) ServerOption {
+	return func(s *Server) {
+		// TODO: implement write timeout
 	}
 }
 

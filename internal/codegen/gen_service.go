@@ -68,16 +68,19 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 	return nil
 }
 
-// GenerateRegistration emits registration helpers for services.
+// GenerateRegistration emits registration helpers for services (gRPC-like pattern).
 func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error {
 	services := groupByService(funcs)
-	if _, err := io.WriteString(g.out, "import (\n\t\"context\"\n\t\"github.com/r6m/tlrpc\"\n)\n\n"); err != nil {
+	if _, err := io.WriteString(g.out, "import (\n\t\"context\"\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/registry\"\n)\n\n"); err != nil {
 		return err
 	}
 
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
 		name := g.namer.ServiceName(service)
+		if _, err := fmt.Fprintf(g.out, "// Register%s registers the %s server with the TLRPC server.\n", name, name); err != nil {
+			return err
+		}
 		if _, err := fmt.Fprintf(g.out, "func Register%s(s *tlrpc.Server, srv %s) {\n", name, name); err != nil {
 			return err
 		}

@@ -61,6 +61,8 @@ type Codec struct {
 }
 
 func New(registry *Registry) *Codec {
+	// Register RPCError constructor for error responses
+	registry.RegisterConstructor(0x2144ca19, func() tlrpc.TLObject { return &tlrpc.RPCError{} })
 	return &Codec{registry: registry}
 }
 

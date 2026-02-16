@@ -23,20 +23,20 @@ services/
 
 ### Error Handling
 
-Use consistent error handling patterns:
+Use MTProto-compatible error handling patterns:
 
 ```go
 func (s *UserService) GetUser(ctx context.Context, req *gen.GetUserRequest) (*gen.User, error) {
     if req.UserID <= 0 {
-        return nil, tlrpc.NewRPCError(400, "invalid user ID")
+        return nil, tlrpc.NewBadRequestError("USER_ID_INVALID")
     }
 
     user, err := s.db.GetUser(req.UserID)
     if err != nil {
         if errors.Is(err, sql.ErrNoRows) {
-            return nil, tlrpc.NewRPCError(404, "user not found")
+            return nil, tlrpc.NewNotFoundError("USER_NOT_FOUND")
         }
-        return nil, tlrpc.ErrInternalError
+        return nil, tlrpc.NewInternalError("DATABASE_ERROR")
     }
 
     return user, nil
@@ -91,11 +91,11 @@ Always validate input:
 ```go
 func (s *Service) UpdateProfile(ctx context.Context, req *gen.UpdateProfileRequest) (*gen.User, error) {
     if len(req.FirstName) > 100 {
-        return nil, tlrpc.NewRPCError(400, "first name too long")
+        return nil, tlrpc.NewBadRequestError("FIRST_NAME_TOO_LONG")
     }
 
     if len(req.Bio) > 500 {
-        return nil, tlrpc.NewRPCError(400, "bio too long")
+        return nil, tlrpc.NewBadRequestError("BIO_TOO_LONG")
     }
 
     // ... rest of implementation

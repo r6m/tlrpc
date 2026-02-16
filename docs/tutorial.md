@@ -95,6 +95,10 @@ type AuthService struct {
 }
 
 func (s *AuthService) SendCode(ctx context.Context, req *gen.SendCodeRequest) (*gen.AuthSentCode, error) {
+    if req.PhoneNumber == "" {
+        return nil, tlrpc.NewBadRequestError("PHONE_NUMBER_EMPTY")
+    }
+
     // Send SMS code, etc.
     return &gen.AuthSentCode{
         PhoneCodeHash: "abc123",

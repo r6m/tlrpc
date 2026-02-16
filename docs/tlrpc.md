@@ -211,20 +211,30 @@ func UserIDFromContext(ctx context.Context) int64
 
 ## Error Handling
 
-RPC errors follow Telegram's error format:
+TLRPC uses MTProto-compatible RPC errors that are automatically serialized as TL objects:
 
 ```go
-var (
-    ErrUnauthorized  = errors.New("tlrpc: unauthorized")
-    ErrInvalidLayer  = errors.New("tlrpc: invalid layer")
-    ErrMethodNotFound = errors.New("tlrpc: method not found")
-)
+// Common MTProto errors
+ErrBadRequest   = NewRPCError(400, "BAD_REQUEST")
+ErrUnauthorized = NewRPCError(401, "UNAUTHORIZED")
+ErrForbidden    = NewRPCError(403, "FORBIDDEN")
+ErrNotFound     = NewRPCError(404, "NOT_FOUND")
+ErrFlood        = NewRPCError(420, "FLOOD")
+ErrInternal     = NewRPCError(500, "INTERNAL")
 
-type RPCError struct {
-    Code    int
-    Message string
-}
+// Helper functions
+NewBadRequestError(message string) *RPCError
+NewUnauthorizedError(message string) *RPCError
+NewForbiddenError(message string) *RPCError
+NewNotFoundError(message string) *RPCError
+NewFloodError(message string) *RPCError
+NewInternalError(message string) *RPCError
 ```
+
+When handlers return errors, TLRPC automatically:
+1. Converts them to `RPCError` format
+2. Serializes as TL object (constructor ID: `0x2144ca19`)
+3. Sends encrypted response to client
 
 ## Internal Architecture
 
