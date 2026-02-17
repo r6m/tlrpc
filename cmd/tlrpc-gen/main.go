@@ -75,9 +75,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 	servicesOut := writer.NewFile("services.go")
 	registerOut := writer.NewFile("register.go")
 	requestsOut := writer.NewFile("requests.go")
-	responsesOut := writer.NewFile("responses.go")
 	constantsOut := writer.NewFile("constants.go")
 	codecOut := writer.NewFile("codec.go")
+	baseAliasesOut := writer.NewFile("base_aliases.go")
 
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating types...")
@@ -113,7 +113,6 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "generate requests: %v\n", err)
 		return 2
 	}
-	_ = responsesOut
 
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating codec registry...")
@@ -129,6 +128,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	if err := generator.GenerateConstructorConstants(namer, constantsOut, schema.Constructors); err != nil {
 		fmt.Fprintf(stderr, "generate constants: %v\n", err)
+		return 2
+	}
+	if err := generator.GenerateBaseAliases(baseAliasesOut); err != nil {
+		fmt.Fprintf(stderr, "generate base aliases: %v\n", err)
 		return 2
 	}
 
