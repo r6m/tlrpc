@@ -63,8 +63,8 @@ type FieldTemplateData struct {
 
 // FlagFieldTemplateData holds data for flag fields
 type FlagFieldTemplateData struct {
-	Name string
-	Bit  int
+	Condition string
+	Bit       int
 }
 
 // InterfaceTemplateData holds data for interface template
@@ -79,6 +79,8 @@ const interfaceTemplate = `type {{.Name}} interface {
 	is{{.BaseName}}Type()
 	ConstructorID() uint32
 	TLName() string
+	SerializeTL(io.Writer) error
+	DeserializeTL(io.Reader) error
 }
 {{range .Constructors}}
 func (*{{.}}) is{{$.BaseName}}Type() {}
@@ -100,7 +102,7 @@ func (v *{{.Name}}) TLName() string { return {{quote .TLName}} }
 func (v *{{.Name}}) computeFlags() uint32 {
 	var flags uint32
 {{- range .FlagFields}}
-	if v.{{.Name}} {
+	if {{.Condition}} {
 		flags |= 1 << {{.Bit}}
 	}
 {{- end}}
@@ -170,8 +172,8 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 			}
 			fieldName := g.namer.FieldName(param.Name)
 			flagFields = append(flagFields, FlagFieldTemplateData{
-				Name: fieldName,
-				Bit:  *bit,
+				Condition: flagCondition(param, fieldName),
+				Bit:       *bit,
 			})
 		}
 	}
@@ -214,8 +216,14 @@ func (g *TypeGenerator) GenerateInterface(decl *parser.TypeDecl) error {
 
 	var constructors []string
 	for i := range decl.Constructors {
+		if g.isBaseType(&decl.Constructors[i]) {
+			continue
+		}
 		ctorName := g.namer.ConstructorName(decl.Constructors[i].Name)
 		constructors = append(constructors, ctorName)
+	}
+	if len(constructors) == 0 {
+		return nil
 	}
 
 	data := InterfaceTemplateData{
@@ -236,15 +244,18 @@ func (g *TypeGenerator) GenerateInterface(decl *parser.TypeDecl) error {
 func (g *TypeGenerator) isBaseType(ctor *parser.Constructor) bool {
 	// Only truly primitive types that don't participate in unions
 	baseTypeNames := map[string]bool{
-		"true":   true, // unit type
-		"false":  true, // unit type (if it exists)
-		"error":  true, // error type
-		"null":   true, // null type
-		"string": true, // primitive string
-		"bytes":  true, // primitive bytes
-		"int128": true, // primitive int
-		"int256": true, // primitive int
-		"double": true, // primitive float
+		"boolFalse": true, // bool false constructor
+		"boolTrue":  true, // bool true constructor
+		"true":      true, // unit type
+		"false":     true, // unit type (if it exists)
+		"error":     true, // error type
+		"null":      true, // null type
+		"string":    true, // primitive string
+		"bytes":     true, // primitive bytes
+		"int128":    true, // primitive int
+		"int256":    true, // primitive int
+		"double":    true, // primitive float
+		"vector":    true, // generic vector constructor
 	}
 
 	return baseTypeNames[ctor.Name]
@@ -283,8 +294,8 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 			}
 			fieldName := g.namer.FieldName(param.Name)
 			flagFields = append(flagFields, FlagFieldTemplateData{
-				Name: fieldName,
-				Bit:  *bit,
+				Condition: flagCondition(param, fieldName),
+				Bit:       *bit,
 			})
 		}
 	}
@@ -611,6 +622,13 @@ func flagBit(param parser.Parameter) *int {
 	return param.Type.FlagBit
 }
 
+func flagCondition(param parser.Parameter, fieldName string) string {
+	if isTrueType(param.Type) {
+		return "v." + fieldName
+	}
+	return "v." + fieldName + " != nil"
+}
+
 func serializeBuiltinCall(t parser.TypeRef, value string) (string, bool) {
 	switch t.Name {
 	case "int":
@@ -650,11 +668,11 @@ func deserializeBuiltinCallWithReader(t parser.TypeRef, readerName string) (stri
 	case "long":
 		return fmt.Sprintf("mtproto.ReadInt64(%s)", readerName), true
 	case "int128":
-		return fmt.Sprintf("func() types.Int128 { v, _ := mtproto.ReadInt128(%s); return types.Int128(v) }()", readerName), true
+		return fmt.Sprintf("func() Int128 { v, _ := mtproto.ReadInt128(%s); return Int128(v) }()", readerName), true
 	case "int256":
-		return fmt.Sprintf("func() types.Int256 { v, _ := mtproto.ReadInt256(%s); return types.Int256(v) }()", readerName), true
+		return fmt.Sprintf("func() Int256 { v, _ := mtproto.ReadInt256(%s); return Int256(v) }()", readerName), true
 	case "double":
-		return fmt.Sprintf("func() types.Double { v, _ := mtproto.ReadDouble(%s); return types.Double(v) }()", readerName), true
+		return fmt.Sprintf("func() Double { v, _ := mtproto.ReadDouble(%s); return Double(v) }()", readerName), true
 	case "string":
 		return fmt.Sprintf("mtproto.ReadString(%s)", readerName), true
 	case "bytes":
@@ -688,7 +706,7 @@ func (g *TypeGenerator) goType(t parser.TypeRef) string {
 
 func (g *TypeGenerator) goBaseType(t parser.TypeRef) string {
 	if t.IsVector && t.Generic != nil {
-		return "[]types.Vector[" + g.goBaseType(*t.Generic) + "]"
+		return "[]" + g.goBaseType(*t.Generic)
 	}
 
 	// Check if this is a union type (interface)
@@ -756,29 +774,35 @@ func (g *TypeGenerator) goBaseType(t parser.TypeRef) string {
 	switch t.Name {
 	case "true", "false":
 		g.usesBaseTypes = true
-		return "types." + strings.Title(t.Name)
+		if t.Name == "true" {
+			return "True"
+		}
+		return "BoolFalse"
 	case "error", "null":
 		g.usesBaseTypes = true
-		return "types." + strings.Title(t.Name)
+		if t.Name == "error" {
+			return "Error"
+		}
+		return "Null"
 	case "string":
 		return "string"
 	case "bytes":
 		return "[]byte"
 	case "int128":
 		g.usesBaseTypes = true
-		return "types.Int128"
+		return "Int128"
 	case "int256":
 		g.usesBaseTypes = true
-		return "types.Int256"
+		return "Int256"
 	case "double":
 		g.usesBaseTypes = true
-		return "types.Double"
+		return "Double"
 	case "vector":
 		g.usesBaseTypes = true
 		if t.Generic != nil {
-			return "types.Vector[" + g.goBaseType(*t.Generic) + "]"
+			return "Vector[" + g.goBaseType(*t.Generic) + "]"
 		}
-		return "types.Vector[interface{}]"
+		return "Vector[interface{}]"
 	}
 
 	switch t.Name {
