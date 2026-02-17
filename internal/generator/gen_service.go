@@ -124,9 +124,6 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []parser.FuncDecl) error {
 
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
-		if err := g.generateServiceDescriptor(service, services[service]); err != nil {
-			return err
-		}
 		if err := g.generateRegistrationFunction(service, services[service]); err != nil {
 			return err
 		}
@@ -135,61 +132,9 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []parser.FuncDecl) error {
 	return nil
 }
 
-// generateServiceDescriptor emits a static ServiceDesc variable (gRPC-style).
-func (g *ServiceGenerator) generateServiceDescriptor(service string, funcs []parser.FuncDecl) error {
-	name := g.namer.ServiceName(service)
-	descName := name + "_ServiceDesc"
-
-	if _, err := fmt.Fprintf(g.out, "// %s is the static service descriptor for %s (gRPC-like).\nvar %s = tlrpc.ServiceDesc{\n\tServiceName: %q,\n\tHandlerType: (*%s)(nil),\n\tMethods: []tlrpc.MethodDesc{\n", descName, name, descName, service, name); err != nil {
-		return err
-	}
-
-	for _, fn := range funcs {
-		if fn.IsTemplate {
-			continue
-		}
-		method := g.namer.MethodName(fn.Name)
-		handlerName := fmt.Sprintf("_%s_%s_Handler", name, method)
-
-		if _, err := fmt.Fprintf(g.out, "\t\t{\n\t\t\tMethodName: %q,\n\t\t\tHandler: %s,\n\t\t},\n", fn.Name, handlerName); err != nil {
-			return err
-		}
-	}
-
-	if _, err := io.WriteString(g.out, "\t},\n}\n\n"); err != nil {
-		return err
-	}
-
-	// Generate individual handler functions
-	for _, fn := range funcs {
-		if fn.IsTemplate {
-			continue
-		}
-		if err := g.generateHandlerFunction(name, fn); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// generateHandlerFunction emits a static handler function for a method.
-func (g *ServiceGenerator) generateHandlerFunction(serviceName string, fn parser.FuncDecl) error {
-	method := g.namer.MethodName(fn.Name)
-	reqType := g.namer.RequestName(fn.Name)
-	handlerName := fmt.Sprintf("_%s_%s_Handler", serviceName, method)
-
-	if _, err := fmt.Fprintf(g.out, "// %s is the static handler for %s.%s\nfunc %s(srv interface{}, ctx context.Context, req interface{}) (interface{}, error) {\n\treturn srv.(%s).%s(ctx, req.(*%s))\n}\n\n", handlerName, serviceName, method, handlerName, serviceName, method, reqType); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // generateRegistrationFunction emits the simplified registration function.
 func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []parser.FuncDecl) error {
 	name := g.namer.ServiceName(service)
-	descName := name + "_ServiceDesc"
 
 	if _, err := fmt.Fprintf(g.out, "// Register%s registers the %s server with the TLRPC server.\nfunc Register%s(s *tlrpc.Server, srv %s) {\n", name, name, name, name); err != nil {
 		return err
@@ -200,7 +145,21 @@ func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []
 		return err
 	}
 
-	if _, err := fmt.Fprintf(g.out, "\ts.RegisterService(%s, srv)\n}\n\n", descName); err != nil {
+	for _, fn := range funcs {
+		if fn.IsTemplate {
+			continue
+		}
+		method := g.namer.MethodName(fn.Name)
+		reqType := g.namer.RequestName(fn.Name)
+		if _, err := fmt.Fprintf(g.out, "\ts.RegisterConstructor(0x%08x, func() tlrpc.TLObject { return &%s{} })\n", fn.ID, reqType); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "\ts.RegisterMethod(0x%08x, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {\n\t\treturn srv.%s(ctx, obj.(*%s))\n\t})\n", fn.ID, method, reqType); err != nil {
+			return err
+		}
+	}
+
+	if _, err := io.WriteString(g.out, "}\n\n"); err != nil {
 		return err
 	}
 
@@ -382,10 +341,6 @@ func (g *ServiceGenerator) writeRequestDeserializeValue(t parser.TypeRef, target
 
 func (g *ServiceGenerator) responseType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
-	// Interface types (union types ending with "Type") should not be pointers
-	if strings.HasSuffix(base, "Type") {
-		return base
-	}
 	if shouldPointerReturn(t) {
 		return "*" + base
 	}
@@ -420,67 +375,10 @@ func (g *ServiceGenerator) goBaseType(t parser.TypeRef) string {
 		return "[]" + g.goBaseType(*t.Generic)
 	}
 
-	// Check if this is a union type (interface)
-	// For service return types, we need to check the transformed Go type name
-	goTypeName := g.namer.TypeName(t.Name)
-	if t.Namespace != "" {
-		goTypeName = g.namer.TypeName(t.Namespace + "." + t.Name)
-	}
-
-	unionTypes := map[string]bool{
-		"Bool": true, "InputPeer": true, "InputUser": true, "InputFile": true, "InputMedia": true,
-		"InputChatPhoto": true, "InputGeoPoint": true, "InputPhoto": true, "InputFileLocation": true,
-		"Peer": true, "StorageFileType": true, "User": true, "UserProfilePhoto": true, "UserStatus": true,
-		"Chat": true, "ChatFull": true, "ChatParticipant": true, "ChatParticipants": true, "ChatPhoto": true,
-		"Message": true, "MessageMedia": true, "MessageAction": true, "Dialog": true, "Photo": true,
-		"PhotoSize": true, "GeoPoint": true, "AuthAuthorization": true, "InputNotifyPeer": true,
-		"WallPaper": true, "ReportReason": true, "ContactsContacts": true, "ContactsBlocked": true,
-		"MessagesDialogs": true, "MessagesMessages": true, "MessagesChats": true, "MessagesFilter": true,
-		"Update": true, "UpdatesDifference": true, "Updates": true, "PhotosPhotos": true, "UploadFile": true,
-		"HelpAppUpdate": true, "EncryptedChat": true, "EncryptedFile": true, "InputEncryptedFile": true,
-		"EncryptedMessage": true, "MessagesDhConfig": true, "MessagesSentEncryptedMessage": true,
-		"InputDocument": true, "Document": true, "NotifyPeer": true, "SendMessageAction": true,
-		"InputPrivacyKey": true, "PrivacyKey": true, "InputPrivacyRule": true, "PrivacyRule": true,
-		"DocumentAttribute": true, "MessagesStickers": true, "MessagesAllStickers": true, "WebPage": true,
-		"ExportedChatInvite": true, "ChatInvite": true, "InputStickerSet": true, "MessagesStickerSet": true,
-		"KeyboardButton": true, "ReplyMarkup": true, "MessageEntity": true, "InputChannel": true,
-		"UpdatesChannelDifference": true, "ChannelMessagesFilter": true, "ChannelParticipant": true,
-		"ChannelParticipantsFilter": true, "ChannelsChannelParticipants": true, "MessagesSavedGifs": true,
-		"InputBotInlineMessage": true, "InputBotInlineResult": true, "BotInlineMessage": true,
-		"BotInlineResult": true, "AuthCodeType": true, "AuthSentCodeType": true, "InputBotInlineMessageID": true,
-		"TopPeerCategory": true, "ContactsTopPeers": true, "DraftMessage": true, "MessagesFeaturedStickers": true,
-		"MessagesRecentStickers": true, "MessagesStickerSetInstallResult": true, "StickerSetCovered": true,
-		"InputStickeredMedia": true, "InputGame": true, "RichText": true, "PageBlock": true,
-		"PhoneCallDiscardReason": true, "WebDocument": true, "InputWebFileLocation": true,
-		"PaymentsPaymentResult": true, "InputPaymentCredentials": true, "PhoneCall": true,
-		"PhoneConnection": true, "UploadCdnFile": true, "LangPackString": true, "ChannelAdminLogEventAction": true,
-		"MessagesFavedStickers": true, "RecentMeURL": true, "InputMessage": true, "InputDialogPeer": true,
-		"DialogPeer": true, "MessagesFoundStickerSets": true, "HelpTermsOfServiceUpdate": true,
-		"InputSecureFile": true, "SecureFile": true, "SecurePlainData": true, "SecureValueType": true,
-		"SecureValueError": true, "HelpDeepLinkInfo": true, "PasswordKdfAlgo": true, "SecurePasswordKdfAlgo": true,
-		"InputCheckPasswordSrp": true, "SecureRequiredType": true, "HelpPassportConfig": true, "JSONValue": true,
-		"PageListItem": true, "PageListOrderedItem": true, "HelpUserInfo": true, "InputWallPaper": true,
-		"AccountWallPapers": true, "EmojiKeyword": true, "URLAuthResult": true, "ChannelLocation": true,
-		"PeerLocated": true, "InputTheme": true, "AccountThemes": true, "AuthLoginToken": true, "BaseTheme": true,
-		"MessageUserVote": true, "DialogFilter": true, "StatsGraph": true, "HelpPromoData": true,
-		"HelpCountriesList": true, "GroupCall": true, "InlineQueryPeerType": true, "MessagesExportedChatInvite": true,
-		"BotCommandScope": true, "AccountResetPasswordResult": true, "MessagesAvailableReactions": true,
-		"MessagesTranslatedText": true, "AttachMenuBots": true, "BotMenuButton": true, "AccountSavedRingtones": true,
-		"NotificationSound": true, "AccountSavedRingtone": true, "AttachMenuPeerType": true, "InputInvoice": true,
-		"InputStorePaymentPurpose": true, "EmojiStatus": true, "AccountEmojiStatuses": true, "Reaction": true,
-		"ChatReactions": true, "MessagesReactions": true, "EmailVerifyPurpose": true, "EmailVerification": true,
-		"AccountEmailVerified": true,
-	}
-	if unionTypes[goTypeName] {
-		return goTypeName + "Type"
-	}
-
 	if t.Namespace != "" {
 		return g.namer.TypeName(t.Namespace + "." + t.Name)
 	}
 
-	// For service return types, don't include namespace prefix
-	// This matches how the type generator creates union types
 	switch t.Name {
 	case "int":
 		return "int32"
@@ -501,60 +399,15 @@ func (g *ServiceGenerator) goBaseType(t parser.TypeRef) string {
 	case "#":
 		return "uint32"
 	default:
-		// For union types, use the interface name
-		unionTypes := map[string]bool{
-			"Bool": true, "InputPeer": true, "InputUser": true, "InputFile": true, "InputMedia": true,
-			"InputChatPhoto": true, "InputGeoPoint": true, "InputPhoto": true, "InputFileLocation": true,
-			"Peer": true, "StorageFileType": true, "User": true, "UserProfilePhoto": true, "UserStatus": true,
-			"Chat": true, "ChatFull": true, "ChatParticipant": true, "ChatParticipants": true, "ChatPhoto": true,
-			"Message": true, "MessageMedia": true, "MessageAction": true, "Dialog": true, "Photo": true,
-			"PhotoSize": true, "GeoPoint": true, "AuthAuthorization": true, "InputNotifyPeer": true,
-			"WallPaper": true, "ReportReason": true, "ContactsContacts": true, "ContactsBlocked": true,
-			"MessagesDialogs": true, "MessagesMessages": true, "MessagesChats": true, "MessagesFilter": true,
-			"Update": true, "UpdatesDifference": true, "Updates": true, "PhotosPhotos": true, "UploadFile": true,
-			"HelpAppUpdate": true, "EncryptedChat": true, "EncryptedFile": true, "InputEncryptedFile": true,
-			"EncryptedMessage": true, "MessagesDhConfig": true, "MessagesSentEncryptedMessage": true,
-			"InputDocument": true, "Document": true, "NotifyPeer": true, "SendMessageAction": true,
-			"InputPrivacyKey": true, "PrivacyKey": true, "InputPrivacyRule": true, "PrivacyRule": true,
-			"DocumentAttribute": true, "MessagesStickers": true, "MessagesAllStickers": true, "WebPage": true,
-			"ExportedChatInvite": true, "ChatInvite": true, "InputStickerSet": true, "MessagesStickerSet": true,
-			"KeyboardButton": true, "ReplyMarkup": true, "MessageEntity": true, "InputChannel": true,
-			"UpdatesChannelDifference": true, "ChannelMessagesFilter": true, "ChannelParticipant": true,
-			"ChannelParticipantsFilter": true, "ChannelsChannelParticipants": true, "MessagesSavedGifs": true,
-			"InputBotInlineMessage": true, "InputBotInlineResult": true, "BotInlineMessage": true,
-			"BotInlineResult": true, "AuthCodeType": true, "AuthSentCodeType": true, "InputBotInlineMessageID": true,
-			"TopPeerCategory": true, "ContactsTopPeers": true, "DraftMessage": true, "MessagesFeaturedStickers": true,
-			"MessagesRecentStickers": true, "MessagesStickerSetInstallResult": true, "StickerSetCovered": true,
-			"InputStickeredMedia": true, "InputGame": true, "RichText": true, "PageBlock": true,
-			"PhoneCallDiscardReason": true, "WebDocument": true, "InputWebFileLocation": true,
-			"PaymentsPaymentResult": true, "InputPaymentCredentials": true, "PhoneCall": true,
-			"PhoneConnection": true, "UploadCdnFile": true, "LangPackString": true, "ChannelAdminLogEventAction": true,
-			"MessagesFavedStickers": true, "RecentMeURL": true, "InputMessage": true, "InputDialogPeer": true,
-			"DialogPeer": true, "MessagesFoundStickerSets": true, "HelpTermsOfServiceUpdate": true,
-			"InputSecureFile": true, "SecureFile": true, "SecurePlainData": true, "SecureValueType": true,
-			"SecureValueError": true, "HelpDeepLinkInfo": true, "PasswordKdfAlgo": true, "SecurePasswordKdfAlgo": true,
-			"InputCheckPasswordSrp": true, "SecureRequiredType": true, "HelpPassportConfig": true, "JSONValue": true,
-			"PageListItem": true, "PageListOrderedItem": true, "HelpUserInfo": true, "InputWallPaper": true,
-			"AccountWallPapers": true, "EmojiKeyword": true, "URLAuthResult": true, "ChannelLocation": true,
-			"PeerLocated": true, "InputTheme": true, "AccountThemes": true, "AuthLoginToken": true, "BaseTheme": true,
-			"MessageUserVote": true, "DialogFilter": true, "StatsGraph": true, "HelpPromoData": true,
-			"HelpCountriesList": true, "GroupCall": true, "InlineQueryPeerType": true, "MessagesExportedChatInvite": true,
-			"BotCommandScope": true, "AccountResetPasswordResult": true, "MessagesAvailableReactions": true,
-			"MessagesTranslatedText": true, "AttachMenuBots": true, "BotMenuButton": true, "AccountSavedRingtones": true,
-			"NotificationSound": true, "AccountSavedRingtone": true, "AttachMenuPeerType": true, "InputInvoice": true,
-			"InputStorePaymentPurpose": true, "EmojiStatus": true, "AccountEmojiStatuses": true, "Reaction": true,
-			"ChatReactions": true, "MessagesReactions": true, "EmailVerifyPurpose": true, "EmailVerification": true,
-			"AccountEmailVerified": true,
-		}
-		if unionTypes[t.Name] {
-			return g.namer.TypeName(t.Name) + "Type"
-		}
 		return g.namer.TypeName(t.Name)
 	}
 }
 
 func zeroValue(typ string) string {
 	if strings.HasPrefix(typ, "*") {
+		return "nil"
+	}
+	if strings.HasSuffix(typ, "Type") {
 		return "nil"
 	}
 	switch typ {

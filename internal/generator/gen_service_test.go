@@ -38,7 +38,7 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !strings.Contains(services, "type AuthServer interface") {
 		t.Fatalf("expected AuthServer interface")
 	}
-	if !strings.Contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*SentCode, error)") {
+	if !strings.Contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*AuthSentCode, error)") {
 		t.Fatalf("expected SendCode signature")
 	}
 
@@ -46,8 +46,11 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !strings.Contains(register, "func RegisterAuthServer") {
 		t.Fatalf("expected RegisterAuthServer")
 	}
-	if !strings.Contains(register, "MethodName: \"auth.sendCode\"") {
-		t.Fatalf("expected method name mapping")
+	if !strings.Contains(register, "s.RegisterConstructor(0xa677244f") {
+		t.Fatalf("expected constructor registration")
+	}
+	if !strings.Contains(register, "s.RegisterMethod(0xa677244f") {
+		t.Fatalf("expected method registration")
 	}
 
 	requests := requestsBuf.String()

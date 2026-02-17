@@ -101,14 +101,20 @@ func (w *FileWriter) header(filename string) string {
 	switch filename {
 	case "codec.go":
 		return baseHeader + "import (\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/types\"\n)\n\n"
-	case "services.go", "register.go":
-		return baseHeader + "import (\n\t\"context\"\n\t\"errors\"\n\t\"github.com/r6m/tlrpc\"\n)\n\n"
-	case "types.go", "interfaces.go":
-		return baseHeader + "import (\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/types\"\n)\n\n"
+	case "services.go":
+		return baseHeader + "import (\n\t\"context\"\n\t\"errors\"\n)\n\n"
+	case "register.go":
+		return baseHeader + "import (\n\t\"context\"\n\t\"github.com/r6m/tlrpc\"\n)\n\n"
+	case "types.go":
+		return baseHeader + "import (\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n"
+	case "interfaces.go":
+		return baseHeader + "import (\n\t\"io\"\n)\n\n"
 	case "requests.go":
-		return baseHeader + "import (\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n\t\"github.com/r6m/tlrpc/types\"\n\t\"io\"\n)\n\n"
+		return baseHeader + "import (\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n"
 	case "constants.go":
 		return baseHeader + "// Constructor ID constants\n\n"
+	case "base_aliases.go":
+		return baseHeader + "import (\n\ttltypes \"github.com/r6m/tlrpc/types\"\n)\n\n"
 	default:
 		return baseHeader + "import (\n\t\"context\"\n\t\"errors\"\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n\t\"github.com/r6m/tlrpc/types\"\n)\n\n"
 	}
