@@ -190,14 +190,42 @@ func (v *Validator) validateFlagConsistency() {
 
 // validateConstructorFlags validates flags in a constructor
 func (v *Validator) validateConstructorFlags(ctor *Constructor) {
-	// In TL, multiple parameters can use the same flag bit if they should be present together
-	// No validation needed - this is allowed
+	v.validateFlagBits("constructor "+ctor.Name, ctor.Params)
 }
 
 // validateFunctionFlags validates flags in a function
 func (v *Validator) validateFunctionFlags(fn *FuncDecl) {
-	// In TL, multiple parameters can use the same flag bit if they should be present together
-	// No validation needed - this is allowed
+	v.validateFlagBits("function "+fn.Name, fn.Params)
+}
+
+func (v *Validator) validateFlagBits(scope string, params []Parameter) {
+	bits := make(map[int]string)
+	hasFlagsParam := false
+	for _, param := range params {
+		if strings.HasPrefix(param.Name, "flags") && param.Type.Name == "#" {
+			hasFlagsParam = true
+			break
+		}
+	}
+
+	for _, param := range params {
+		if param.FlagBit == nil {
+			continue
+		}
+		if !hasFlagsParam {
+			v.addError(0, 0,
+				fmt.Sprintf("%s has conditional field %q but no flags:# parameter", scope, param.Name),
+				ErrorSeverityError)
+			continue
+		}
+		if previous, exists := bits[*param.FlagBit]; exists {
+			v.addError(0, 0,
+				fmt.Sprintf("%s has multiple parameters using flag bit %d: %s, %s", scope, *param.FlagBit, previous, param.Name),
+				ErrorSeverityError)
+			continue
+		}
+		bits[*param.FlagBit] = param.Name
+	}
 }
 
 // validateCircularDependencies checks for circular type dependencies

@@ -40,13 +40,15 @@ func (s *sessionAdapter) Get(authKeyID crypto.KeyID) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Session{
+	sess := &Session{
 		ID:        legacy.ID,
 		AuthKeyID: authKeyID,
 		Layer:     legacy.Layer,
 		UserID:    legacy.UserID,
-		Data:      syncMapFromLegacy(legacy.Data),
-	}, nil
+		Data:      sync.Map{},
+	}
+	syncMapFromLegacy(&sess.Data, legacy.Data)
+	return sess, nil
 }
 
 func (s *sessionAdapter) Create(authKeyID crypto.KeyID) (*Session, error) {
@@ -91,10 +93,8 @@ func legacySessionFrom(sess *Session) *LegacySession {
 	return legacy
 }
 
-func syncMapFromLegacy(data map[string]interface{}) sync.Map {
-	var m sync.Map
+func syncMapFromLegacy(m *sync.Map, data map[string]interface{}) {
 	for k, v := range data {
 		m.Store(k, v)
 	}
-	return m
 }

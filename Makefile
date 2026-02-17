@@ -1,4 +1,4 @@
-.PHONY: all build test clean generate lint deps
+.PHONY: all build test clean generate lint deps check-type-domains
 
 # Variables
 GO := go
@@ -51,6 +51,10 @@ generate-examples:
 # Linting
 lint:
 	golangci-lint run ./...
+	$(MAKE) check-type-domains
+
+check-type-domains:
+	./scripts/check_type_domains.sh
 
 fmt:
 	$(GO) fmt ./...

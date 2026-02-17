@@ -44,8 +44,10 @@ type ServiceDesc struct {
 
 // MethodDesc describes a method within a service.
 type MethodDesc struct {
-	MethodName string
-	Handler    interface{} // Handler function (various signatures supported)
+	MethodName    string
+	ConstructorID uint32          // TL constructor ID for the request method.
+	NewRequest    func() TLObject // Constructs an empty request object for decoding.
+	Handler       interface{}     // Handler function (various signatures supported)
 }
 
 // HandshakeHandler handles unencrypted handshake messages

@@ -2,6 +2,7 @@ package tlrpc
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
+	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 	"github.com/r6m/tlrpc/session"
 )
 
@@ -254,72 +256,23 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		ctx = withUserID(ctx, sess.UserID)
 	}
 
-	// Check if this is a container message
-	if len(inner.Data) >= 4 {
-		constructorID := binary.LittleEndian.Uint32(inner.Data[:4])
-		if constructorID == 0x73f1f8dc { // msg_container
-			return h.handleContainerMessage(ctx, sess, authKey, keyID, inner)
-		}
-		// Check for resend/state requests
-		if constructorID == 0x04deb57d || constructorID == 0x7da458c8 { // msgs_state_req or msg_resend_req
-			// For now, just acknowledge these requests without full resend logic
-			return h.sendAcknowledgment(authKey, keyID, inner.MsgID)
-		}
-	}
-
-	// Read constructor ID
-	if len(inner.Data) < 4 {
-		return io.ErrUnexpectedEOF
-	}
-	constructorID := binary.LittleEndian.Uint32(inner.Data[:4])
-
-	// Look up method handler directly by constructor ID
-	methodHandler, ok := h.server.dispatcher.LookupMethod(constructorID)
-	if !ok {
-		return NewNotFoundError("METHOD_NOT_FOUND")
-	}
-
-	// Decode the request only after confirming we have a handler
-	constructor, ok := h.server.dispatcher.LookupConstructor(constructorID)
-	if !ok {
-		return NewNotFoundError("UNKNOWN_CONSTRUCTOR")
-	}
-
-	req := constructor()
-	if deser, ok := req.(interface{ DeserializeTL(io.Reader) error }); ok {
-		r := bytes.NewReader(inner.Data)
-		// Skip constructor ID (already read)
-		if _, err := mtproto.ReadUint32(r); err != nil {
-			return err
-		}
-		if err := deser.DeserializeTL(r); err != nil {
-			return err
-		}
-	}
-
-	var resp interface{}
-
-	// Apply new gRPC-like unary interceptors
-	if len(h.server.unaryInterceptors) > 0 {
-		info := &UnaryServerInfo{FullMethod: fmt.Sprintf("constructor_%08x", constructorID)}
-		chainedInterceptor := ChainUnaryInterceptors(h.server.unaryInterceptors...)
-		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-			return methodHandler(ctx, req.(TLObject))
-		}
-		resp, err = chainedInterceptor(ctx, req, info, handler)
-	}
-
-	// Handle errors by sending MTProto RPC error
+	reqObj, _, err := decodeTLObject(h.server.dispatcher, inner.Data)
 	if err != nil {
 		return h.sendRPCError(inner.MsgID, err)
 	}
-
-	if resp == nil {
-		return nil
+	ackIDs := []int64{inner.MsgID}
+	if container, ok := reqObj.(*mtprototl.MsgContainer); ok {
+		for _, msg := range container.Messages {
+			ackIDs = append(ackIDs, msg.MsgID)
+		}
 	}
-	respObj, ok := resp.(TLObject)
-	if !ok {
-		return h.sendRPCError(inner.MsgID, NewInternalError("response does not implement TLObject"))
+
+	respObj, err := h.dispatchDecodedObject(ctx, reqObj)
+	if err != nil {
+		return h.sendRPCError(inner.MsgID, err)
+	}
+	if respObj == nil {
+		return h.sendAcknowledgment(authKey, keyID, ackIDs...)
 	}
 	respData, err := encodeTLObject(respObj)
 	if err != nil {
@@ -341,169 +294,116 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		return err
 	}
 
-	// Send acknowledgment for the received message
-	return h.sendAcknowledgment(authKey, keyID, inner.MsgID)
+	// Send acknowledgment for the received message(s).
+	return h.sendAcknowledgment(authKey, keyID, ackIDs...)
 }
 
-// handleContainerMessage processes a container of batched messages
-func (h *connHandler) handleContainerMessage(ctx context.Context, sess *session.Session, authKey crypto.AuthKey, keyID crypto.KeyID, containerInner *mtproto.InnerData) error {
-	r := bytes.NewReader(containerInner.Data[4:]) // Skip constructor
+func (h *connHandler) dispatchDecodedObject(ctx context.Context, req TLObject) (TLObject, error) {
+	switch obj := req.(type) {
+	case *mtprototl.MsgContainer:
+		return h.dispatchContainer(ctx, obj)
+	case *mtprototl.MsgsStateReq, *mtprototl.MsgResendReq, *mtprototl.MsgsAck:
+		return nil, nil
+	case *mtprototl.GzipPacked:
+		gr, err := gzip.NewReader(bytes.NewReader(obj.PackedData))
+		if err != nil {
+			return nil, err
+		}
+		defer gr.Close()
+		unpacked, err := io.ReadAll(gr)
+		if err != nil {
+			return nil, err
+		}
+		inner, _, err := decodeTLObject(h.server.dispatcher, unpacked)
+		if err != nil {
+			return nil, err
+		}
+		return h.dispatchDecodedObject(ctx, inner)
+	case *mtprototl.RPCResult:
+		if len(obj.ResultRaw) == 0 {
+			return nil, nil
+		}
+		inner, _, err := decodeTLObject(h.server.dispatcher, obj.ResultRaw)
+		if err != nil {
+			return nil, err
+		}
+		return h.dispatchDecodedObject(ctx, inner)
+	default:
+		return h.invokeMethod(ctx, req)
+	}
+}
 
-	// Read vector header
-	vectorLen, err := mtproto.ReadUint32(r)
+func (h *connHandler) invokeMethod(ctx context.Context, req TLObject) (TLObject, error) {
+	constructorID := req.ConstructorID()
+	methodHandler, ok := h.server.dispatcher.LookupMethod(constructorID)
+	if !ok {
+		return nil, NewNotFoundError("METHOD_NOT_FOUND")
+	}
+
+	var (
+		resp interface{}
+		err  error
+	)
+	if len(h.server.unaryInterceptors) > 0 {
+		info := &UnaryServerInfo{FullMethod: fmt.Sprintf("constructor_%08x", constructorID)}
+		chainedInterceptor := ChainUnaryInterceptors(h.server.unaryInterceptors...)
+		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+			return methodHandler(ctx, req.(TLObject))
+		}
+		resp, err = chainedInterceptor(ctx, req, info, handler)
+	} else {
+		resp, err = methodHandler(ctx, req)
+	}
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	type containerResponse struct {
-		msgID int64
-		seqNo int32
-		data  []byte
+	if resp == nil {
+		return nil, nil
 	}
+	respObj, ok := resp.(TLObject)
+	if !ok {
+		return nil, NewInternalError("response does not implement TLObject")
+	}
+	return respObj, nil
+}
 
-	var responses []containerResponse
-	var ackMsgIDs []int64
-
-	// Process each message in the container
-	for i := uint32(0); i < vectorLen; i++ {
-		// Read message fields
-		msgID, err := mtproto.ReadInt64(r)
+func (h *connHandler) dispatchContainer(ctx context.Context, container *mtprototl.MsgContainer) (TLObject, error) {
+	var responses []mtprototl.Message
+	for _, msg := range container.Messages {
+		if len(msg.BodyRaw) < 4 {
+			continue
+		}
+		obj, _, err := decodeTLObject(h.server.dispatcher, msg.BodyRaw)
 		if err != nil {
-			return err
+			continue
 		}
-		seqNo, err := mtproto.ReadInt32(r)
+		respObj, err := h.dispatchDecodedObject(ctx, obj)
+		if err != nil || respObj == nil {
+			continue
+		}
+		respBytes, err := encodeTLObject(respObj)
 		if err != nil {
-			return err
+			continue
 		}
-		msgData, err := mtproto.ReadBytes(r)
-		if err != nil {
-			return err
-		}
-
-		// Collect message ID for acknowledgment
-		ackMsgIDs = append(ackMsgIDs, msgID)
-
-		// Process the individual message
-		if len(msgData) < 4 {
-			continue // Skip invalid messages
-		}
-		constructorID := binary.LittleEndian.Uint32(msgData[:4])
-
-		// Look up method handler directly by constructor ID
-		methodHandler, ok := h.server.dispatcher.LookupMethod(constructorID)
-		if !ok {
-			continue // Skip unknown methods
-		}
-
-		// Decode the request
-		constructor, ok := h.server.dispatcher.LookupConstructor(constructorID)
-		if !ok {
-			continue // Skip unknown constructors
-		}
-
-		req := constructor()
-		if deser, ok := req.(interface{ DeserializeTL(io.Reader) error }); ok {
-			r := bytes.NewReader(msgData)
-			// Skip constructor ID (already read)
-			if _, err := mtproto.ReadUint32(r); err != nil {
-				continue
-			}
-			if err := deser.DeserializeTL(r); err != nil {
-				continue
-			}
-		}
-
-		var resp interface{}
-
-		// Apply interceptors
-		if len(h.server.unaryInterceptors) > 0 {
-			info := &UnaryServerInfo{FullMethod: fmt.Sprintf("constructor_%08x", constructorID)}
-			chainedInterceptor := ChainUnaryInterceptors(h.server.unaryInterceptors...)
-			handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-				return methodHandler(ctx, req.(TLObject))
-			}
-			resp, err = chainedInterceptor(ctx, req, info, handler)
-		}
-
-		if err != nil || resp == nil {
-			continue // Skip failed messages or messages without responses
-		}
-
-		respObj, ok := resp.(TLObject)
-		if !ok {
-			continue // Skip invalid responses
-		}
-
-		respData, err := encodeTLObject(respObj)
-		if err != nil {
-			continue // Skip encoding errors
-		}
-
-		responses = append(responses, containerResponse{
-			msgID: msgID,
-			seqNo: seqNo,
-			data:  respData,
+		responses = append(responses, mtprototl.Message{
+			MsgID:   nextMsgID(),
+			SeqNo:   msg.SeqNo,
+			BodyRaw: respBytes,
 		})
 	}
 
-	// Send responses
-	if len(responses) == 1 {
-		// Single response - send as regular message
-		innerResp := &mtproto.InnerData{
-			Salt:      containerInner.Salt,
-			SessionID: containerInner.SessionID,
-			MsgID:     nextMsgID(),
-			SeqNo:     responses[0].seqNo,
-			Data:      responses[0].data,
-		}
-		encResp, err := innerResp.Encrypt(authKey, keyID)
+	switch len(responses) {
+	case 0:
+		return nil, nil
+	case 1:
+		respObj, _, err := decodeTLObject(h.server.dispatcher, responses[0].BodyRaw)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return h.conn.WriteMessage(serializeEncrypted(encResp))
-	} else if len(responses) > 1 {
-		// Multiple responses - send as container
-		containerBuf := &bytes.Buffer{}
-
-		// Write container constructor
-		if err := mtproto.WriteUint32(containerBuf, 0x73f1f8dc); err != nil {
-			return err
-		}
-
-		// Write vector header
-		if err := mtproto.WriteVectorHeader(containerBuf, len(responses)); err != nil {
-			return err
-		}
-
-		// Write each response
-		for _, resp := range responses {
-			if err := mtproto.WriteInt64(containerBuf, nextMsgID()); err != nil {
-				return err
-			}
-			if err := mtproto.WriteInt32(containerBuf, resp.seqNo); err != nil {
-				return err
-			}
-			if err := mtproto.WriteBytes(containerBuf, resp.data); err != nil {
-				return err
-			}
-		}
-
-		innerResp := &mtproto.InnerData{
-			Salt:      containerInner.Salt,
-			SessionID: containerInner.SessionID,
-			MsgID:     nextMsgID(),
-			SeqNo:     nextSeqNo(sess),
-			Data:      containerBuf.Bytes(),
-		}
-		encResp, err := innerResp.Encrypt(authKey, keyID)
-		if err != nil {
-			return err
-		}
-		return h.conn.WriteMessage(serializeEncrypted(encResp))
+		return respObj, nil
+	default:
+		return &mtprototl.MsgContainer{Messages: responses}, nil
 	}
-
-	// Send acknowledgments for all processed messages
-	return h.sendAcknowledgment(authKey, keyID, ackMsgIDs...)
 }
 
 // sendAcknowledgment sends an acknowledgment for received message IDs
@@ -512,19 +412,10 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 		return nil
 	}
 
-	ackBuf := &bytes.Buffer{}
-	if err := mtproto.WriteUint32(ackBuf, 0x62d6b459); err != nil { // msgs_ack
+	ack := &mtprototl.MsgsAck{MsgIDs: msgIDs}
+	ackData, err := encodeTLObject(ack)
+	if err != nil {
 		return err
-	}
-
-	if err := mtproto.WriteVectorHeader(ackBuf, len(msgIDs)); err != nil {
-		return err
-	}
-
-	for _, msgID := range msgIDs {
-		if err := mtproto.WriteInt64(ackBuf, msgID); err != nil {
-			return err
-		}
 	}
 
 	innerAck := &mtproto.InnerData{
@@ -532,7 +423,7 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 		SessionID: 0, // Use 0 for acks
 		MsgID:     nextMsgID(),
 		SeqNo:     0, // Acks don't need sequence numbers
-		Data:      ackBuf.Bytes(),
+		Data:      ackData,
 	}
 
 	encAck, err := innerAck.Encrypt(authKey, keyID)
@@ -545,15 +436,21 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 
 // sendRPCError converts an error to MTProto RPC error format and sends it.
 func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
-	// Convert error to RPCError
+	// Convert error to MTProto rpc_error
 	rpcErr := FromError(err)
+	mtErr := &mtprototl.RPCError{
+		ErrorCode:    rpcErr.ErrorCode,
+		ErrorMessage: rpcErr.ErrorMessage,
+	}
 
-	// Encode the RPC error as TL object
-	respData, encErr := encodeTLObject(rpcErr)
+	respData, encErr := encodeTLObject(mtErr)
 	if encErr != nil {
 		// If encoding fails, send a generic internal error
-		genericErr := NewInternalError("failed to encode error response")
-		respData, _ = encodeTLObject(genericErr)
+		fallback := &mtprototl.RPCError{
+			ErrorCode:    int32(Internal),
+			ErrorMessage: "failed to encode error response",
+		}
+		respData, _ = encodeTLObject(fallback)
 	}
 
 	// Send the error response
