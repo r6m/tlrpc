@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"fmt"
 	"io"
 	"sort"
 	"text/template"
@@ -23,9 +22,9 @@ func NewCodecGenerator(namer *naming.Namer, out io.Writer) *CodecGenerator {
 
 // CodecTemplateData holds data for codec template
 type CodecTemplateData struct {
-	BaseConstructors    []BaseConstructorTemplateData
+	BaseConstructors      []BaseConstructorTemplateData
 	GeneratedConstructors []GeneratedConstructorTemplateData
-	MethodConstructors   []MethodConstructorTemplateData
+	MethodConstructors    []MethodConstructorTemplateData
 }
 
 // BaseConstructorTemplateData holds data for base constructor entries
@@ -121,6 +120,23 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 
 	// Build generated constructors data
 	var generatedConstructors []GeneratedConstructorTemplateData
+	emittedTypeByCtor := make(map[string]string)
+	for _, decl := range schema.Types {
+		if len(decl.Constructors) == 1 {
+			only := decl.Constructors[0]
+			if g.isBaseConstructor(only.Name) {
+				continue
+			}
+			emittedTypeByCtor[only.Name] = g.namer.TypeName(decl.Name)
+			continue
+		}
+		for _, ctor := range decl.Constructors {
+			if g.isBaseConstructor(ctor.Name) {
+				continue
+			}
+			emittedTypeByCtor[ctor.Name] = g.namer.ConstructorName(ctor.Name)
+		}
+	}
 	constructors := make([]parser.Constructor, 0, len(schema.Constructors))
 	for _, ctor := range schema.Constructors {
 		if len(ctor.GenericParams) > 0 || ctor.ResultType.IsTypeVar {
@@ -137,7 +153,10 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 	})
 
 	for _, ctor := range constructors {
-		name := g.namer.ConstructorName(ctor.Name)
+		name, ok := emittedTypeByCtor[ctor.Name]
+		if !ok {
+			continue
+		}
 		generatedConstructors = append(generatedConstructors, GeneratedConstructorTemplateData{
 			ID:   ctor.ID,
 			Name: name,
@@ -174,39 +193,6 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 	}
 
 	if err := tmpl.Execute(g.out, data); err != nil {
-		return err
-	}
-
-	// Generate method registration for RPC methods (still needed for service dispatch)
-	if err := g.generateMethodRegistration(schema); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// generateMethodRegistration emits method registration for RPC calls.
-func (g *CodecGenerator) generateMethodRegistration(schema *parser.Schema) error {
-	if _, err := io.WriteString(g.out, "// Method registration for RPC dispatch\nfunc RegisterMethods(reg *codec.Registry) {\n\tif reg == nil {\n\t\treturn\n\t}\n"); err != nil {
-		return err
-	}
-
-	services := groupByService(schema.Functions)
-	serviceNames := sortedKeys(services)
-	for _, service := range serviceNames {
-		for _, fn := range services[service] {
-			if fn.IsTemplate {
-				continue
-			}
-			methodName := fn.Name // Use full method name with service prefix
-			requestName := g.namer.RequestName(fn.Name)
-			if _, err := fmt.Fprintf(g.out, "\treg.RegisterMethod(%q, func() tlrpc.TLObject { return &%s{} })\n", methodName, requestName); err != nil {
-				return err
-			}
-		}
-	}
-
-	if _, err := io.WriteString(g.out, "}\n"); err != nil {
 		return err
 	}
 
