@@ -90,7 +90,7 @@ func TestIntegration_CircularSchema(t *testing.T) {
 }
 
 func TestIntegration_RealSchema(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schema.tl"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schema-217.tl"))
 	require.NoError(t, err)
 
 	parser := parser.NewParser(string(data))
