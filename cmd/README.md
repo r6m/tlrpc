@@ -11,9 +11,11 @@ This directory contains command-line utilities for working with TLRPC.
 
 ```bash
 # Generate code from schema
-go run ./cmd/tlrpc-gen -schema=path/to/schema.tl -output=generated/
+go run ./cmd/tlrpc-gen --schema=path/to/schema.tl --out=generated/
 
 ```
+
+Generated API code is not committed at repo root as `/gen`. Generate into your project directory (or examples/testdata) so `go test ./...` for this module does not depend on stale generated artifacts.
 
 ## Installation
 
