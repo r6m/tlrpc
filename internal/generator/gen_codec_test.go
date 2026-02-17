@@ -1,35 +1,39 @@
-package codegen
+package generator
 
 import (
 	"bytes"
+	"strings"
 	"testing"
+
+	"github.com/r6m/tlrpc/internal/naming"
+	"github.com/r6m/tlrpc/internal/parser"
 )
 
 func TestCodecGenerator_SimpleSchema(t *testing.T) {
 	data := readTestSchema(t, "simple.tl")
-	parser := NewParser(string(data))
+	parser := parser.NewParser(string(data))
 	schema, err := parser.Parse()
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
 
 	var buf bytes.Buffer
-	gen := NewCodecGenerator(NewNamer(), &buf)
+	gen := NewCodecGenerator(naming.NewNamer(), &buf)
 	if err := gen.Generate(schema); err != nil {
 		t.Fatalf("generate codec: %v", err)
 	}
 
 	output := buf.String()
-	if !contains(output, "var staticConstructors") {
+	if !strings.Contains(output, "var staticConstructors") {
 		t.Fatalf("expected static constructor map")
 	}
-	if !contains(output, "0x8f97c628: func() tlrpc.TLObject") {
+	if !strings.Contains(output, "0x8f97c628: func() tlrpc.TLObject") {
 		t.Fatalf("expected constructor entry for user")
 	}
-	if !contains(output, "RegisterMethod(\"auth.sendCode\"") {
+	if !strings.Contains(output, "RegisterMethod(\"auth.sendCode\"") {
 		t.Fatalf("expected method registration for auth.sendCode")
 	}
-	if !contains(output, "func GetStaticConstructors()") {
+	if !strings.Contains(output, "func GetStaticConstructors()") {
 		t.Fatalf("expected GetStaticConstructors function")
 	}
 }

@@ -1,13 +1,17 @@
-package codegen
+package generator
 
 import (
 	"bytes"
+	"strings"
 	"testing"
+
+	"github.com/r6m/tlrpc/internal/naming"
+	"github.com/r6m/tlrpc/internal/parser"
 )
 
 func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	data := readTestSchema(t, "simple.tl")
-	parser := NewParser(string(data))
+	parser := parser.NewParser(string(data))
 	schema, err := parser.Parse()
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -16,9 +20,9 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	var servicesBuf bytes.Buffer
 	var registerBuf bytes.Buffer
 	var requestsBuf bytes.Buffer
-	gen := NewServiceGenerator(NewNamer(), &servicesBuf)
-	reg := NewServiceGenerator(NewNamer(), &registerBuf)
-	req := NewServiceGenerator(NewNamer(), &requestsBuf)
+	gen := NewServiceGenerator(naming.NewNamer(), &servicesBuf)
+	reg := NewServiceGenerator(naming.NewNamer(), &registerBuf)
+	req := NewServiceGenerator(naming.NewNamer(), &requestsBuf)
 
 	if err := gen.GenerateService(schema.Functions); err != nil {
 		t.Fatalf("generate service: %v", err)
@@ -31,29 +35,29 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	}
 
 	services := servicesBuf.String()
-	if !contains(services, "type AuthServer interface") {
+	if !strings.Contains(services, "type AuthServer interface") {
 		t.Fatalf("expected AuthServer interface")
 	}
-	if !contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*SentCode, error)") {
+	if !strings.Contains(services, "SendCode(ctx context.Context, req *AuthSendCodeRequest) (*SentCode, error)") {
 		t.Fatalf("expected SendCode signature")
 	}
 
 	register := registerBuf.String()
-	if !contains(register, "func RegisterAuthServer") {
+	if !strings.Contains(register, "func RegisterAuthServer") {
 		t.Fatalf("expected RegisterAuthServer")
 	}
-	if !contains(register, "MethodName: \"auth.sendCode\"") {
+	if !strings.Contains(register, "MethodName: \"auth.sendCode\"") {
 		t.Fatalf("expected method name mapping")
 	}
 
 	requests := requestsBuf.String()
-	if !contains(requests, "type AuthSendCodeRequest struct") {
+	if !strings.Contains(requests, "type AuthSendCodeRequest struct") {
 		t.Fatalf("expected AuthSendCodeRequest")
 	}
-	if !contains(requests, "PhoneNumber string") {
+	if !strings.Contains(requests, "PhoneNumber string") {
 		t.Fatalf("expected PhoneNumber field")
 	}
-	if !contains(requests, "APIID int32") {
+	if !strings.Contains(requests, "APIID int32") {
 		t.Fatalf("expected APIID field")
 	}
 }

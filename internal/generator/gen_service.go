@@ -1,4 +1,4 @@
-package codegen
+package generator
 
 import (
 	"fmt"
@@ -6,16 +6,19 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/r6m/tlrpc/internal/naming"
+	"github.com/r6m/tlrpc/internal/parser"
 )
 
 // ServiceGenerator generates service interfaces and registrations.
 type ServiceGenerator struct {
-	namer *Namer
+	namer *naming.Namer
 	out   io.Writer
 }
 
 // NewServiceGenerator creates a new service generator.
-func NewServiceGenerator(namer *Namer, out io.Writer) *ServiceGenerator {
+func NewServiceGenerator(namer *naming.Namer, out io.Writer) *ServiceGenerator {
 	return &ServiceGenerator{namer: namer, out: out}
 }
 
@@ -60,7 +63,7 @@ func (Unimplemented{{$.Name}}) {{.Name}}(context.Context, *{{.ReqType}}) ({{.Res
 `
 
 // GenerateService emits service interfaces and unimplemented stubs.
-func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
+func (g *ServiceGenerator) GenerateService(funcs []parser.FuncDecl) error {
 	services := groupByService(funcs)
 	if _, err := io.WriteString(g.out, "var ErrMethodNotImplemented = errors.New(\"tlrpc: method not implemented\")\n\n"); err != nil {
 		return err
@@ -116,7 +119,7 @@ func (g *ServiceGenerator) GenerateService(funcs []FuncDecl) error {
 }
 
 // GenerateRegistration emits static service descriptors and registration helpers (gRPC-like pattern).
-func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error {
+func (g *ServiceGenerator) GenerateRegistration(funcs []parser.FuncDecl) error {
 	services := groupByService(funcs)
 
 	serviceNames := sortedKeys(services)
@@ -133,7 +136,7 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []FuncDecl) error {
 }
 
 // generateServiceDescriptor emits a static ServiceDesc variable (gRPC-style).
-func (g *ServiceGenerator) generateServiceDescriptor(service string, funcs []FuncDecl) error {
+func (g *ServiceGenerator) generateServiceDescriptor(service string, funcs []parser.FuncDecl) error {
 	name := g.namer.ServiceName(service)
 	descName := name + "_ServiceDesc"
 
@@ -171,7 +174,7 @@ func (g *ServiceGenerator) generateServiceDescriptor(service string, funcs []Fun
 }
 
 // generateHandlerFunction emits a static handler function for a method.
-func (g *ServiceGenerator) generateHandlerFunction(serviceName string, fn FuncDecl) error {
+func (g *ServiceGenerator) generateHandlerFunction(serviceName string, fn parser.FuncDecl) error {
 	method := g.namer.MethodName(fn.Name)
 	reqType := g.namer.RequestName(fn.Name)
 	handlerName := fmt.Sprintf("_%s_%s_Handler", serviceName, method)
@@ -184,7 +187,7 @@ func (g *ServiceGenerator) generateHandlerFunction(serviceName string, fn FuncDe
 }
 
 // generateRegistrationFunction emits the simplified registration function.
-func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []FuncDecl) error {
+func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []parser.FuncDecl) error {
 	name := g.namer.ServiceName(service)
 	descName := name + "_ServiceDesc"
 
@@ -205,7 +208,7 @@ func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []
 }
 
 // GenerateRequests emits request structs for functions.
-func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
+func (g *ServiceGenerator) GenerateRequests(funcs []parser.FuncDecl) error {
 	services := groupByService(funcs)
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
@@ -239,7 +242,7 @@ func (g *ServiceGenerator) GenerateRequests(funcs []FuncDecl) error {
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestMethods(fn FuncDecl, reqBaseName string) error {
+func (g *ServiceGenerator) generateRequestMethods(fn parser.FuncDecl, reqBaseName string) error {
 	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) ConstructorID() uint32 { return 0x%08x }\n", reqBaseName, fn.ID); err != nil {
 		return err
 	}
@@ -256,7 +259,7 @@ func (g *ServiceGenerator) generateRequestMethods(fn FuncDecl, reqBaseName strin
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestSerialize(fn FuncDecl, reqBaseName string) error {
+func (g *ServiceGenerator) generateRequestSerialize(fn parser.FuncDecl, reqBaseName string) error {
 	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) SerializeTL(w io.Writer) error {\n", reqBaseName); err != nil {
 		return err
 	}
@@ -278,7 +281,7 @@ func (g *ServiceGenerator) generateRequestSerialize(fn FuncDecl, reqBaseName str
 	return nil
 }
 
-func (g *ServiceGenerator) writeRequestSerializeField(param Parameter, fieldName string) error {
+func (g *ServiceGenerator) writeRequestSerializeField(param parser.Parameter, fieldName string) error {
 	typeRef := param.Type
 	if typeRef.IsVector && typeRef.Generic != nil {
 		if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteVectorHeader(w, len(r.%s)); err != nil {\n\t\treturn err\n\t}\n", fieldName); err != nil {
@@ -298,7 +301,7 @@ func (g *ServiceGenerator) writeRequestSerializeField(param Parameter, fieldName
 	return g.writeRequestSerializeValue(typeRef, "r."+fieldName, "\t")
 }
 
-func (g *ServiceGenerator) writeRequestSerializeValue(t TypeRef, value, indent string) error {
+func (g *ServiceGenerator) writeRequestSerializeValue(t parser.TypeRef, value, indent string) error {
 	writeCall, ok := serializeBuiltinCall(t, value)
 	if ok {
 		_, err := fmt.Fprintf(g.out, "%s%s\n", indent, writeCall)
@@ -308,7 +311,7 @@ func (g *ServiceGenerator) writeRequestSerializeValue(t TypeRef, value, indent s
 	return err
 }
 
-func (g *ServiceGenerator) generateRequestDeserialize(fn FuncDecl, reqBaseName string) error {
+func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBaseName string) error {
 	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) DeserializeTL(rd io.Reader) error {\n", reqBaseName); err != nil {
 		return err
 	}
@@ -333,7 +336,7 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn FuncDecl, reqBaseName s
 	return nil
 }
 
-func (g *ServiceGenerator) writeRequestDeserializeField(param Parameter, fieldName string) error {
+func (g *ServiceGenerator) writeRequestDeserializeField(param parser.Parameter, fieldName string) error {
 	typeRef := param.Type
 	if typeRef.IsVector && typeRef.Generic != nil {
 		elementType := g.goBaseType(*typeRef.Generic)
@@ -360,7 +363,7 @@ func (g *ServiceGenerator) writeRequestDeserializeField(param Parameter, fieldNa
 	return g.writeRequestDeserializeValue(typeRef, "r."+fieldName)
 }
 
-func (g *ServiceGenerator) writeRequestDeserializeValue(t TypeRef, target string) error {
+func (g *ServiceGenerator) writeRequestDeserializeValue(t parser.TypeRef, target string) error {
 	readCall, ok := deserializeBuiltinCallWithReader(t, "rd")
 	if ok {
 		if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := %s\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n", readCall); err != nil {
@@ -377,15 +380,19 @@ func (g *ServiceGenerator) writeRequestDeserializeValue(t TypeRef, target string
 	return nil
 }
 
-func (g *ServiceGenerator) responseType(t TypeRef) string {
+func (g *ServiceGenerator) responseType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
+	// Interface types (union types ending with "Type") should not be pointers
+	if strings.HasSuffix(base, "Type") {
+		return base
+	}
 	if shouldPointerReturn(t) {
 		return "*" + base
 	}
 	return base
 }
 
-func shouldPointerReturn(t TypeRef) bool {
+func shouldPointerReturn(t parser.TypeRef) bool {
 	if t.IsVector {
 		return false
 	}
@@ -400,7 +407,7 @@ func shouldPointerReturn(t TypeRef) bool {
 	}
 }
 
-func (g *ServiceGenerator) goType(t TypeRef) string {
+func (g *ServiceGenerator) goType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
 	if t.Optional && !isTrueType(t) {
 		return "*" + base
@@ -408,10 +415,70 @@ func (g *ServiceGenerator) goType(t TypeRef) string {
 	return base
 }
 
-func (g *ServiceGenerator) goBaseType(t TypeRef) string {
+func (g *ServiceGenerator) goBaseType(t parser.TypeRef) string {
 	if t.IsVector && t.Generic != nil {
 		return "[]" + g.goBaseType(*t.Generic)
 	}
+
+	// Check if this is a union type (interface)
+	// For service return types, we need to check the transformed Go type name
+	goTypeName := g.namer.TypeName(t.Name)
+	if t.Namespace != "" {
+		goTypeName = g.namer.TypeName(t.Namespace + "." + t.Name)
+	}
+
+	unionTypes := map[string]bool{
+		"Bool": true, "InputPeer": true, "InputUser": true, "InputFile": true, "InputMedia": true,
+		"InputChatPhoto": true, "InputGeoPoint": true, "InputPhoto": true, "InputFileLocation": true,
+		"Peer": true, "StorageFileType": true, "User": true, "UserProfilePhoto": true, "UserStatus": true,
+		"Chat": true, "ChatFull": true, "ChatParticipant": true, "ChatParticipants": true, "ChatPhoto": true,
+		"Message": true, "MessageMedia": true, "MessageAction": true, "Dialog": true, "Photo": true,
+		"PhotoSize": true, "GeoPoint": true, "AuthAuthorization": true, "InputNotifyPeer": true,
+		"WallPaper": true, "ReportReason": true, "ContactsContacts": true, "ContactsBlocked": true,
+		"MessagesDialogs": true, "MessagesMessages": true, "MessagesChats": true, "MessagesFilter": true,
+		"Update": true, "UpdatesDifference": true, "Updates": true, "PhotosPhotos": true, "UploadFile": true,
+		"HelpAppUpdate": true, "EncryptedChat": true, "EncryptedFile": true, "InputEncryptedFile": true,
+		"EncryptedMessage": true, "MessagesDhConfig": true, "MessagesSentEncryptedMessage": true,
+		"InputDocument": true, "Document": true, "NotifyPeer": true, "SendMessageAction": true,
+		"InputPrivacyKey": true, "PrivacyKey": true, "InputPrivacyRule": true, "PrivacyRule": true,
+		"DocumentAttribute": true, "MessagesStickers": true, "MessagesAllStickers": true, "WebPage": true,
+		"ExportedChatInvite": true, "ChatInvite": true, "InputStickerSet": true, "MessagesStickerSet": true,
+		"KeyboardButton": true, "ReplyMarkup": true, "MessageEntity": true, "InputChannel": true,
+		"UpdatesChannelDifference": true, "ChannelMessagesFilter": true, "ChannelParticipant": true,
+		"ChannelParticipantsFilter": true, "ChannelsChannelParticipants": true, "MessagesSavedGifs": true,
+		"InputBotInlineMessage": true, "InputBotInlineResult": true, "BotInlineMessage": true,
+		"BotInlineResult": true, "AuthCodeType": true, "AuthSentCodeType": true, "InputBotInlineMessageID": true,
+		"TopPeerCategory": true, "ContactsTopPeers": true, "DraftMessage": true, "MessagesFeaturedStickers": true,
+		"MessagesRecentStickers": true, "MessagesStickerSetInstallResult": true, "StickerSetCovered": true,
+		"InputStickeredMedia": true, "InputGame": true, "RichText": true, "PageBlock": true,
+		"PhoneCallDiscardReason": true, "WebDocument": true, "InputWebFileLocation": true,
+		"PaymentsPaymentResult": true, "InputPaymentCredentials": true, "PhoneCall": true,
+		"PhoneConnection": true, "UploadCdnFile": true, "LangPackString": true, "ChannelAdminLogEventAction": true,
+		"MessagesFavedStickers": true, "RecentMeURL": true, "InputMessage": true, "InputDialogPeer": true,
+		"DialogPeer": true, "MessagesFoundStickerSets": true, "HelpTermsOfServiceUpdate": true,
+		"InputSecureFile": true, "SecureFile": true, "SecurePlainData": true, "SecureValueType": true,
+		"SecureValueError": true, "HelpDeepLinkInfo": true, "PasswordKdfAlgo": true, "SecurePasswordKdfAlgo": true,
+		"InputCheckPasswordSrp": true, "SecureRequiredType": true, "HelpPassportConfig": true, "JSONValue": true,
+		"PageListItem": true, "PageListOrderedItem": true, "HelpUserInfo": true, "InputWallPaper": true,
+		"AccountWallPapers": true, "EmojiKeyword": true, "URLAuthResult": true, "ChannelLocation": true,
+		"PeerLocated": true, "InputTheme": true, "AccountThemes": true, "AuthLoginToken": true, "BaseTheme": true,
+		"MessageUserVote": true, "DialogFilter": true, "StatsGraph": true, "HelpPromoData": true,
+		"HelpCountriesList": true, "GroupCall": true, "InlineQueryPeerType": true, "MessagesExportedChatInvite": true,
+		"BotCommandScope": true, "AccountResetPasswordResult": true, "MessagesAvailableReactions": true,
+		"MessagesTranslatedText": true, "AttachMenuBots": true, "BotMenuButton": true, "AccountSavedRingtones": true,
+		"NotificationSound": true, "AccountSavedRingtone": true, "AttachMenuPeerType": true, "InputInvoice": true,
+		"InputStorePaymentPurpose": true, "EmojiStatus": true, "AccountEmojiStatuses": true, "Reaction": true,
+		"ChatReactions": true, "MessagesReactions": true, "EmailVerifyPurpose": true, "EmailVerification": true,
+		"AccountEmailVerified": true,
+	}
+	if unionTypes[goTypeName] {
+		return goTypeName + "Type"
+	}
+
+	if t.Namespace != "" {
+		return g.namer.TypeName(t.Namespace + "." + t.Name)
+	}
+
 	// For service return types, don't include namespace prefix
 	// This matches how the type generator creates union types
 	switch t.Name {
@@ -434,6 +501,54 @@ func (g *ServiceGenerator) goBaseType(t TypeRef) string {
 	case "#":
 		return "uint32"
 	default:
+		// For union types, use the interface name
+		unionTypes := map[string]bool{
+			"Bool": true, "InputPeer": true, "InputUser": true, "InputFile": true, "InputMedia": true,
+			"InputChatPhoto": true, "InputGeoPoint": true, "InputPhoto": true, "InputFileLocation": true,
+			"Peer": true, "StorageFileType": true, "User": true, "UserProfilePhoto": true, "UserStatus": true,
+			"Chat": true, "ChatFull": true, "ChatParticipant": true, "ChatParticipants": true, "ChatPhoto": true,
+			"Message": true, "MessageMedia": true, "MessageAction": true, "Dialog": true, "Photo": true,
+			"PhotoSize": true, "GeoPoint": true, "AuthAuthorization": true, "InputNotifyPeer": true,
+			"WallPaper": true, "ReportReason": true, "ContactsContacts": true, "ContactsBlocked": true,
+			"MessagesDialogs": true, "MessagesMessages": true, "MessagesChats": true, "MessagesFilter": true,
+			"Update": true, "UpdatesDifference": true, "Updates": true, "PhotosPhotos": true, "UploadFile": true,
+			"HelpAppUpdate": true, "EncryptedChat": true, "EncryptedFile": true, "InputEncryptedFile": true,
+			"EncryptedMessage": true, "MessagesDhConfig": true, "MessagesSentEncryptedMessage": true,
+			"InputDocument": true, "Document": true, "NotifyPeer": true, "SendMessageAction": true,
+			"InputPrivacyKey": true, "PrivacyKey": true, "InputPrivacyRule": true, "PrivacyRule": true,
+			"DocumentAttribute": true, "MessagesStickers": true, "MessagesAllStickers": true, "WebPage": true,
+			"ExportedChatInvite": true, "ChatInvite": true, "InputStickerSet": true, "MessagesStickerSet": true,
+			"KeyboardButton": true, "ReplyMarkup": true, "MessageEntity": true, "InputChannel": true,
+			"UpdatesChannelDifference": true, "ChannelMessagesFilter": true, "ChannelParticipant": true,
+			"ChannelParticipantsFilter": true, "ChannelsChannelParticipants": true, "MessagesSavedGifs": true,
+			"InputBotInlineMessage": true, "InputBotInlineResult": true, "BotInlineMessage": true,
+			"BotInlineResult": true, "AuthCodeType": true, "AuthSentCodeType": true, "InputBotInlineMessageID": true,
+			"TopPeerCategory": true, "ContactsTopPeers": true, "DraftMessage": true, "MessagesFeaturedStickers": true,
+			"MessagesRecentStickers": true, "MessagesStickerSetInstallResult": true, "StickerSetCovered": true,
+			"InputStickeredMedia": true, "InputGame": true, "RichText": true, "PageBlock": true,
+			"PhoneCallDiscardReason": true, "WebDocument": true, "InputWebFileLocation": true,
+			"PaymentsPaymentResult": true, "InputPaymentCredentials": true, "PhoneCall": true,
+			"PhoneConnection": true, "UploadCdnFile": true, "LangPackString": true, "ChannelAdminLogEventAction": true,
+			"MessagesFavedStickers": true, "RecentMeURL": true, "InputMessage": true, "InputDialogPeer": true,
+			"DialogPeer": true, "MessagesFoundStickerSets": true, "HelpTermsOfServiceUpdate": true,
+			"InputSecureFile": true, "SecureFile": true, "SecurePlainData": true, "SecureValueType": true,
+			"SecureValueError": true, "HelpDeepLinkInfo": true, "PasswordKdfAlgo": true, "SecurePasswordKdfAlgo": true,
+			"InputCheckPasswordSrp": true, "SecureRequiredType": true, "HelpPassportConfig": true, "JSONValue": true,
+			"PageListItem": true, "PageListOrderedItem": true, "HelpUserInfo": true, "InputWallPaper": true,
+			"AccountWallPapers": true, "EmojiKeyword": true, "URLAuthResult": true, "ChannelLocation": true,
+			"PeerLocated": true, "InputTheme": true, "AccountThemes": true, "AuthLoginToken": true, "BaseTheme": true,
+			"MessageUserVote": true, "DialogFilter": true, "StatsGraph": true, "HelpPromoData": true,
+			"HelpCountriesList": true, "GroupCall": true, "InlineQueryPeerType": true, "MessagesExportedChatInvite": true,
+			"BotCommandScope": true, "AccountResetPasswordResult": true, "MessagesAvailableReactions": true,
+			"MessagesTranslatedText": true, "AttachMenuBots": true, "BotMenuButton": true, "AccountSavedRingtones": true,
+			"NotificationSound": true, "AccountSavedRingtone": true, "AttachMenuPeerType": true, "InputInvoice": true,
+			"InputStorePaymentPurpose": true, "EmojiStatus": true, "AccountEmojiStatuses": true, "Reaction": true,
+			"ChatReactions": true, "MessagesReactions": true, "EmailVerifyPurpose": true, "EmailVerification": true,
+			"AccountEmailVerified": true,
+		}
+		if unionTypes[t.Name] {
+			return g.namer.TypeName(t.Name) + "Type"
+		}
 		return g.namer.TypeName(t.Name)
 	}
 }
@@ -457,8 +572,8 @@ func zeroValue(typ string) string {
 	}
 }
 
-func groupByService(funcs []FuncDecl) map[string][]FuncDecl {
-	services := make(map[string][]FuncDecl)
+func groupByService(funcs []parser.FuncDecl) map[string][]parser.FuncDecl {
+	services := make(map[string][]parser.FuncDecl)
 	for _, fn := range funcs {
 		parts := strings.Split(fn.Name, ".")
 		service := ""
@@ -477,7 +592,7 @@ func groupByService(funcs []FuncDecl) map[string][]FuncDecl {
 	return services
 }
 
-func sortedKeys(m map[string][]FuncDecl) []string {
+func sortedKeys(m map[string][]parser.FuncDecl) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)

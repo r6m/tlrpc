@@ -124,12 +124,16 @@ type SessionStore interface {
 }
 ```
 
-## TLObject Interface
+## TLObject & TLMethod Interface
 
 ```go
-type TLObject interface {
+type TLObject interface { 
     ConstructorID() uint32
-    Method() string // for RPC types
+}
+
+type TLMethod interface {
+    TLObject
+    MethodName() string
 }
 ```
 
@@ -203,8 +207,6 @@ func (s *AuthService) SignIn(ctx context.Context, req *gen.SignInRequest) (*gen.
 func main() {
     // Create server
     server := tlrpc.NewServer(
-        tlrpc.WithLayers(195, 196, 197, 198, 199, 200, 201, 202,
-                         203, 204, 205, 206, 207, 208, 209, 210),
         tlrpc.WithInterceptor(loggingInterceptor),
     )
 

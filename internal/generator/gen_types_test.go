@@ -1,13 +1,17 @@
-package codegen
+package generator
 
 import (
 	"bytes"
+	"strings"
 	"testing"
+
+	"github.com/r6m/tlrpc/internal/naming"
+	"github.com/r6m/tlrpc/internal/parser"
 )
 
 func TestTypeGenerator_SimpleSchema(t *testing.T) {
 	data := readTestSchema(t, "simple.tl")
-	parser := NewParser(string(data))
+	parser := parser.NewParser(string(data))
 	schema, err := parser.Parse()
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -15,8 +19,8 @@ func TestTypeGenerator_SimpleSchema(t *testing.T) {
 
 	var typesBuf bytes.Buffer
 	var ifaceBuf bytes.Buffer
-	gen := NewTypeGenerator(NewNamer(), &typesBuf, schema)
-	ifaceGen := NewTypeGenerator(NewNamer(), &ifaceBuf, schema)
+	gen := NewTypeGenerator(naming.NewNamer(), &typesBuf, schema)
+	ifaceGen := NewTypeGenerator(naming.NewNamer(), &ifaceBuf, schema)
 
 	for i := range schema.Types {
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {
@@ -28,24 +32,24 @@ func TestTypeGenerator_SimpleSchema(t *testing.T) {
 	}
 
 	content := typesBuf.String()
-	if !contains(content, "type User struct") {
+	if !strings.Contains(content, "type User struct") {
 		t.Fatalf("expected User struct in output")
 	}
-	if !contains(content, "FirstName *string") {
+	if !strings.Contains(content, "FirstName *string") {
 		t.Fatalf("expected FirstName pointer in output")
 	}
-	if !contains(content, "ConstructorID() uint32") {
+	if !strings.Contains(content, "ConstructorID() uint32") {
 		t.Fatalf("expected ConstructorID method in output")
 	}
 
 	iface := ifaceBuf.String()
-	if !contains(iface, "type UserType interface") {
+	if !strings.Contains(iface, "type UserType interface") {
 		t.Fatalf("expected UserType interface in output")
 	}
-	if !contains(iface, "func (*User) isUserType()") {
+	if !strings.Contains(iface, "func (*User) isUserType()") {
 		t.Fatalf("expected User isUserType method in output")
 	}
-	if !contains(iface, "func (*UserEmpty) isUserType()") {
+	if !strings.Contains(iface, "func (*UserEmpty) isUserType()") {
 		t.Fatalf("expected UserEmpty isUserType method in output")
 	}
 }

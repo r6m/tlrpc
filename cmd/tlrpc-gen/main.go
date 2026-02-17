@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/r6m/tlrpc/internal/codegen"
+	"github.com/r6m/tlrpc/internal/generator"
+	"github.com/r6m/tlrpc/internal/naming"
+	"github.com/r6m/tlrpc/internal/parser"
 )
 
 func main() {
@@ -41,20 +43,20 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 3
 	}
 
-	parser := codegen.NewParser(string(data))
+	p := parser.NewParser(string(data))
 	layer := parseLayer(*layers)
-	var schema *codegen.Schema
+	var schema *parser.Schema
 	if layer > 0 {
-		schema, err = parser.ParseWithLayer(layer)
+		schema, err = p.ParseWithLayer(layer)
 	} else {
-		schema, err = parser.Parse()
+		schema, err = p.Parse()
 	}
 	if err != nil {
 		fmt.Fprintf(stderr, "%v\n", err)
 		return 1
 	}
 
-	validator := codegen.NewValidator(schema)
+	validator := parser.NewValidator(schema)
 	if err := validator.Validate(); err != nil {
 		fmt.Fprintf(stderr, "%v\n", err)
 		return 1
@@ -65,8 +67,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "Found %d constructors, %d functions\n", len(schema.Constructors), len(schema.Functions))
 	}
 
-	writer := codegen.NewFileWriter(*outDir, *pkgName, filepath.Base(*schemaPath), schema.Layer)
-	namer := codegen.NewNamer()
+	writer := generator.NewFileWriter(*outDir, *pkgName, filepath.Base(*schemaPath), schema.Layer)
+	namer := naming.NewNamer()
 
 	typesOut := writer.NewFile("types.go")
 	interfacesOut := writer.NewFile("interfaces.go")
@@ -81,8 +83,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, "Generating types...")
 	}
 	for i := range schema.Types {
-		gen := codegen.NewTypeGenerator(namer, typesOut, schema)
-		ifaceGen := codegen.NewTypeGenerator(namer, interfacesOut, schema)
+		gen := generator.NewTypeGenerator(namer, typesOut, schema)
+		ifaceGen := generator.NewTypeGenerator(namer, interfacesOut, schema)
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {
 			fmt.Fprintf(stderr, "generate types: %v\n", err)
 			return 2
@@ -96,17 +98,17 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating services...")
 	}
-	serviceGen := codegen.NewServiceGenerator(namer, servicesOut)
+	serviceGen := generator.NewServiceGenerator(namer, servicesOut)
 	if err := serviceGen.GenerateService(schema.Functions); err != nil {
 		fmt.Fprintf(stderr, "generate services: %v\n", err)
 		return 2
 	}
-	regGen := codegen.NewServiceGenerator(namer, registerOut)
+	regGen := generator.NewServiceGenerator(namer, registerOut)
 	if err := regGen.GenerateRegistration(schema.Functions); err != nil {
 		fmt.Fprintf(stderr, "generate registration: %v\n", err)
 		return 2
 	}
-	reqGen := codegen.NewServiceGenerator(namer, requestsOut)
+	reqGen := generator.NewServiceGenerator(namer, requestsOut)
 	if err := reqGen.GenerateRequests(schema.Functions); err != nil {
 		fmt.Fprintf(stderr, "generate requests: %v\n", err)
 		return 2
@@ -116,7 +118,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating codec registry...")
 	}
-	codecGen := codegen.NewCodecGenerator(namer, codecOut)
+	codecGen := generator.NewCodecGenerator(namer, codecOut)
 	if err := codecGen.Generate(schema); err != nil {
 		fmt.Fprintf(stderr, "generate codec: %v\n", err)
 		return 2
@@ -125,7 +127,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating constants...")
 	}
-	if err := codegen.GenerateConstructorConstants(namer, constantsOut, schema.Constructors); err != nil {
+	if err := generator.GenerateConstructorConstants(namer, constantsOut, schema.Constructors); err != nil {
 		fmt.Fprintf(stderr, "generate constants: %v\n", err)
 		return 2
 	}

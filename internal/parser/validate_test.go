@@ -1,9 +1,10 @@
-package codegen
+package parser
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/r6m/tlrpc/internal/naming"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -324,18 +325,18 @@ func TestSplitNamespace(t *testing.T) {
 }
 
 func TestIsBuiltinType(t *testing.T) {
-	assert.True(t, IsBuiltinType("int"))
-	assert.True(t, IsBuiltinType("string"))
-	assert.True(t, IsBuiltinType("Bool"))
-	assert.True(t, IsBuiltinType("#"))
+	assert.True(t, naming.IsBuiltinType("int"))
+	assert.True(t, naming.IsBuiltinType("string"))
+	assert.True(t, naming.IsBuiltinType("Bool"))
+	assert.True(t, naming.IsBuiltinType("#"))
 
-	assert.False(t, IsBuiltinType("User"))
-	assert.False(t, IsBuiltinType("Message"))
-	assert.False(t, IsBuiltinType(""))
+	assert.False(t, naming.IsBuiltinType("User"))
+	assert.False(t, naming.IsBuiltinType("Message"))
+	assert.False(t, naming.IsBuiltinType(""))
 }
 
 func TestGetBuiltinTypes(t *testing.T) {
-	builtins := GetBuiltinTypes()
+	builtins := naming.GetBuiltinTypes()
 	assert.Contains(t, builtins, "int")
 	assert.Contains(t, builtins, "string")
 	assert.Contains(t, builtins, "Bool")

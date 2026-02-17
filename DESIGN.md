@@ -1,5 +1,7 @@
 # TLRPC Design Philosophy
 
+TLRPC handles MTProto protocol framing, encryption, acknowledgements, container/compression unwrapping, and wrapper-method forwarding internally. User code only implements API-layer RPC methods generated from the TL schema `---functions---` section. Telegram update semantics are implemented as a framework subsystem: updates may be returned inline in RPC responses or pushed asynchronously to online sessions, and clients recover missed updates via `updates.getState/getDifference` APIs. Sessions are keyed by `AuthKeyID`; one user may have multiple active sessions across devices.
+
 ## Goals
 
 1. **Simplicity**: Using TLRPC should feel like using gRPC or net/rpc

@@ -1,4 +1,4 @@
-package codegen
+package generator
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/r6m/tlrpc/internal/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,12 +15,12 @@ func TestIntegration_SimpleSchema(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "simple.tl"))
 	require.NoError(t, err)
 
-	parser := NewParser(string(data))
-	schema, err := parser.Parse()
+	p := parser.NewParser(string(data))
+	schema, err := p.Parse()
 	require.NoError(t, err)
 
-	validator := NewValidator(schema)
-	err = validator.Validate()
+	v := parser.NewValidator(schema)
+	err = v.Validate()
 	assert.NoError(t, err)
 
 	// Check that we parsed the expected elements
@@ -32,15 +33,15 @@ func TestIntegration_SchemaWithErrors(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "with_errors.tl"))
 	require.NoError(t, err)
 
-	parser := NewParser(string(data))
-	schema, err := parser.Parse()
+	p := parser.NewParser(string(data))
+	schema, err := p.Parse()
 	require.NoError(t, err)
 
-	validator := NewValidator(schema)
-	err = validator.Validate()
+	v := parser.NewValidator(schema)
+	err = v.Validate()
 	assert.Error(t, err)
 
-	errors := validator.Errors()
+	errors := v.Errors()
 	assert.True(t, len(errors) > 0, "Should have validation errors")
 }
 
@@ -48,15 +49,15 @@ func TestIntegration_FlagsSchema(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "flags.tl"))
 	require.NoError(t, err)
 
-	parser := NewParser(string(data))
-	schema, err := parser.Parse()
+	p := parser.NewParser(string(data))
+	schema, err := p.Parse()
 	require.NoError(t, err)
 
-	validator := NewValidator(schema)
-	err = validator.Validate()
+	v := parser.NewValidator(schema)
+	err = v.Validate()
 	assert.Error(t, err, "Should have flag consistency errors")
 
-	errors := validator.Errors()
+	errors := v.Errors()
 	flagErrors := 0
 	for _, e := range errors {
 		if strings.Contains(e.Message, "multiple parameters using flag bit") {
@@ -70,15 +71,15 @@ func TestIntegration_CircularSchema(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schemas", "circular.tl"))
 	require.NoError(t, err)
 
-	parser := NewParser(string(data))
-	schema, err := parser.Parse()
+	p := parser.NewParser(string(data))
+	schema, err := p.Parse()
 	require.NoError(t, err)
 
-	validator := NewValidator(schema)
-	err = validator.Validate()
+	v := parser.NewValidator(schema)
+	err = v.Validate()
 	assert.Error(t, err, "Should have circular dependency errors")
 
-	errors := validator.Errors()
+	errors := v.Errors()
 	circularErrors := 0
 	for _, e := range errors {
 		if strings.Contains(e.Message, "circular type dependency") {
@@ -92,7 +93,7 @@ func TestIntegration_RealSchema(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schema.tl"))
 	require.NoError(t, err)
 
-	parser := NewParser(string(data))
+	parser := parser.NewParser(string(data))
 	schema, err := parser.Parse()
 	require.NoError(t, err)
 

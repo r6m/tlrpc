@@ -1,4 +1,4 @@
-package codegen
+package naming
 
 // Built-in types in TL schema
 var builtinTypes = map[string]bool{

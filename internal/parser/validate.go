@@ -1,9 +1,11 @@
-package codegen
+package parser
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/r6m/tlrpc/internal/naming"
 )
 
 // Validator validates parsed TL schemas
@@ -103,7 +105,7 @@ func (v *Validator) validateTypeResolution() {
 	definedTypes := make(map[string]bool)
 
 	// Add built-in types
-	for typ := range builtinTypes {
+	for _, typ := range naming.GetBuiltinTypes() {
 		definedTypes[typ] = true
 	}
 
@@ -152,7 +154,7 @@ func (v *Validator) checkTypeReference(typeRef TypeRef, definedTypes map[string]
 	// For conditional types, check the actual type
 	if typeRef.FlagBit != nil {
 		typeName := typeRef.FullName()
-		if !definedTypes[typeName] && !IsBuiltinType(typeName) {
+		if !definedTypes[typeName] && !naming.IsBuiltinType(typeName) {
 			v.addError(0, 0,
 				fmt.Sprintf("undefined type %s in %s", typeName, context),
 				ErrorSeverityError)
@@ -163,7 +165,7 @@ func (v *Validator) checkTypeReference(typeRef TypeRef, definedTypes map[string]
 	typeName := typeRef.FullName()
 
 	// Check main type
-	if !definedTypes[typeName] && !IsBuiltinType(typeName) {
+	if !definedTypes[typeName] && !naming.IsBuiltinType(typeName) {
 		v.addError(0, 0,
 			fmt.Sprintf("undefined type %s in %s", typeName, context),
 			ErrorSeverityError)
@@ -229,7 +231,7 @@ func (v *Validator) collectDependencies(typeRef TypeRef, deps map[string][]strin
 	typeName := typeRef.FullName()
 
 	// Skip built-in types and vectors
-	if IsBuiltinType(typeName) || typeRef.IsVector {
+	if naming.IsBuiltinType(typeName) || typeRef.IsVector {
 		return
 	}
 

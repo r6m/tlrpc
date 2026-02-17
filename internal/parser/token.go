@@ -1,5 +1,5 @@
 // Package codegen provides TL schema parsing and code generation.
-package codegen
+package parser
 
 import "fmt"
 

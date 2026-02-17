@@ -1,20 +1,23 @@
-package codegen
+package generator
 
 import (
 	"fmt"
 	"io"
 	"sort"
 	"text/template"
+
+	"github.com/r6m/tlrpc/internal/naming"
+	"github.com/r6m/tlrpc/internal/parser"
 )
 
 // CodecGenerator emits static constructor maps.
 type CodecGenerator struct {
-	namer *Namer
+	namer *naming.Namer
 	out   io.Writer
 }
 
 // NewCodecGenerator creates a new CodecGenerator.
-func NewCodecGenerator(namer *Namer, out io.Writer) *CodecGenerator {
+func NewCodecGenerator(namer *naming.Namer, out io.Writer) *CodecGenerator {
 	return &CodecGenerator{namer: namer, out: out}
 }
 
@@ -98,12 +101,12 @@ func (g *CodecGenerator) isBaseConstructor(name string) bool {
 }
 
 // Generate emits a static constructor map for the schema.
-func (g *CodecGenerator) Generate(schema *Schema) error {
+func (g *CodecGenerator) Generate(schema *parser.Schema) error {
 	return g.GenerateStatic(schema)
 }
 
 // GenerateStatic emits a static constructor map instead of registry calls.
-func (g *CodecGenerator) GenerateStatic(schema *Schema) error {
+func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 	// Build base constructors data
 	baseConstructors := []BaseConstructorTemplateData{
 		{ID: 0x3fedd339, Code: "func() tlrpc.TLObject { return &types.True{} }"},
@@ -118,7 +121,7 @@ func (g *CodecGenerator) GenerateStatic(schema *Schema) error {
 
 	// Build generated constructors data
 	var generatedConstructors []GeneratedConstructorTemplateData
-	constructors := make([]Constructor, 0, len(schema.Constructors))
+	constructors := make([]parser.Constructor, 0, len(schema.Constructors))
 	for _, ctor := range schema.Constructors {
 		if len(ctor.GenericParams) > 0 || ctor.ResultType.IsTypeVar {
 			continue
@@ -183,7 +186,7 @@ func (g *CodecGenerator) GenerateStatic(schema *Schema) error {
 }
 
 // generateMethodRegistration emits method registration for RPC calls.
-func (g *CodecGenerator) generateMethodRegistration(schema *Schema) error {
+func (g *CodecGenerator) generateMethodRegistration(schema *parser.Schema) error {
 	if _, err := io.WriteString(g.out, "// Method registration for RPC dispatch\nfunc RegisterMethods(reg *codec.Registry) {\n\tif reg == nil {\n\t\treturn\n\t}\n"); err != nil {
 		return err
 	}

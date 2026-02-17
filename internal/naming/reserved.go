@@ -1,4 +1,4 @@
-package codegen
+package naming
 
 // goKeywords lists reserved Go language keywords.
 var goKeywords = map[string]bool{
