@@ -31,8 +31,15 @@ Implemented codecs:
 ## Usage
 
 ```go
-srv := tlrpc.NewServer(tlrpc.WithTransport(&transport.TCPTransport{}))
-// or: &transport.WebSocketTransport{}
+srv := tlrpc.NewServer()
+tcp := &transport.TCPTransport{}
+ws := &transport.WebSocketTransport{}
+
+tcpLis, _ := tcp.Listen(":9000")
+wsLis, _ := ws.Listen(":9001")
+
+go srv.ServeTransport(tcpLis)
+go srv.ServeTransport(wsLis)
 ```
 
 The `Conn` interface represents MTProto packets (not WebSocket frames or raw TCP reads).

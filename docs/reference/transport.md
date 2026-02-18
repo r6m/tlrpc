@@ -53,3 +53,17 @@ These are negotiated per-connection by inspecting the initial bytes (or, when ob
 - WebSocket transport (`transport.WebSocketTransport`)
 
 Use `Server.ServeTransport` with any `transport.Listener` to accept MTProto connections.
+
+Example with multiple carriers:
+
+```go
+srv := tlrpc.NewServer()
+tcp := &transport.TCPTransport{}
+ws := &transport.WebSocketTransport{}
+
+tcpLis, _ := tcp.Listen(":9000")
+wsLis, _ := ws.Listen(":9001")
+
+go srv.ServeTransport(tcpLis)
+go srv.ServeTransport(wsLis)
+```

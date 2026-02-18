@@ -12,10 +12,11 @@ func (s *Server) ServeTransport(lis transport.Listener) error
 func (s *Server) Stop() error
 ```
 
+`ServeTransport` can be called multiple times with different listeners to serve multiple carrier transports (for example, TCP and WebSocket on different ports).
+
 ## Server Options
 
 ```go
-func WithTransport(t Transport) ServerOption
 func WithMaxLayer(layer int) ServerOption
 func WithLayers(layers ...int) ServerOption
 func WithUnaryInterceptor(i UnaryInterceptor) ServerOption
