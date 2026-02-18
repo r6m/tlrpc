@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -13,6 +14,8 @@ import (
 // WebSocketTransport implements MTProto messages over WebSocket.
 type WebSocketTransport struct {
 	Upgrader websocket.Upgrader
+	Protocol Protocol
+	Secret   []byte
 }
 
 // Listen starts a WebSocket listener.
@@ -36,15 +39,24 @@ func (t *WebSocketTransport) Listen(addr string) (Listener, error) {
 	}
 
 	wsListener.server = &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !hasSubprotocol(r.Header.Get("Sec-WebSocket-Protocol"), "binary") {
+			http.Error(w, "missing Sec-WebSocket-Protocol: binary", http.StatusBadRequest)
+			return
+		}
 		conn, err := wsListener.upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}
 		ws := newWSConn(conn)
+		mt := newWSMTProtoConn(ws, NegotiatorConfig{
+			AllowObfuscation:   true,
+			RequireObfuscation: true,
+			Secret:             t.Secret,
+		}, false)
 		select {
-		case wsListener.conns <- ws:
+		case wsListener.conns <- mt:
 		case <-wsListener.ctx.Done():
-			_ = ws.Close()
+			_ = mt.Close()
 		}
 	})}
 
@@ -68,7 +80,17 @@ func (t *WebSocketTransport) Dial(addr string) (Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newWSConn(conn), nil
+	ws := newWSConn(conn)
+	protocol := t.Protocol
+	if protocol == ProtocolUnknown {
+		protocol = ProtocolPaddedIntermediate
+	}
+	return newWSMTProtoConn(ws, NegotiatorConfig{
+		AllowObfuscation:   true,
+		RequireObfuscation: true,
+		Secret:             t.Secret,
+		Protocol:           protocol,
+	}, true), nil
 }
 
 type wsListener struct {
@@ -115,23 +137,6 @@ func newWSConn(conn *websocket.Conn) *wsConn {
 	return &wsConn{conn: conn, ctx: ctx, cancel: cancel}
 }
 
-// ReadMessage reads a complete WebSocket binary message.
-func (c *wsConn) ReadMessage() ([]byte, error) {
-	msgType, data, err := c.conn.ReadMessage()
-	if err != nil {
-		return nil, err
-	}
-	if msgType != websocket.BinaryMessage {
-		return nil, errors.New("transport: websocket non-binary message")
-	}
-	return data, nil
-}
-
-// WriteMessage writes a complete WebSocket binary message.
-func (c *wsConn) WriteMessage(payload []byte) error {
-	return c.conn.WriteMessage(websocket.BinaryMessage, payload)
-}
-
 // Close closes the connection.
 func (c *wsConn) Close() error {
 	c.cancel()
@@ -168,4 +173,13 @@ func ensureSubprotocol(list []string, value string) []string {
 		}
 	}
 	return append(list, value)
+}
+
+func hasSubprotocol(headerValue, subprotocol string) bool {
+	for _, item := range strings.Split(headerValue, ",") {
+		if strings.TrimSpace(item) == subprotocol {
+			return true
+		}
+	}
+	return false
 }
