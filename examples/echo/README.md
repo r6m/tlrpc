@@ -15,3 +15,4 @@ go run ./examples/echo
 ```
 
 The server listens on `:9000` using the TCP transport.
+The WebSocket transport listens on `:9001` and requires `Sec-WebSocket-Protocol: binary`.

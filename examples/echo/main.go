@@ -18,20 +18,31 @@ func (s *echoServer) Echo(ctx context.Context, req *echo.EchoEchoRequest) (*echo
 }
 
 func main() {
-	t := &transport.TCPTransport{}
-	w := &transport.WebSocketTransport{}
-	srv := tlrpc.NewServer(
-		tlrpc.WithTransport(t),
-		tlrpc.WithTransport(w),
-	)
+	tcp := &transport.TCPTransport{}
+	ws := &transport.WebSocketTransport{}
+	srv := tlrpc.NewServer()
 	echo.RegisterEchoServer(srv, &echoServer{})
 
-	lis, err := t.Listen(":9000")
+	tcpLis, err := tcp.Listen(":9000")
 	if err != nil {
-		log.Fatalf("listen: %v", err)
+		log.Fatalf("tcp listen: %v", err)
 	}
-	log.Printf("echo server listening on %s", lis.Addr())
-	if err := srv.ServeTransport(lis); err != nil {
+	defer tcpLis.Close()
+
+	wsLis, err := ws.Listen(":9001")
+	if err != nil {
+		log.Fatalf("ws listen: %v", err)
+	}
+	defer wsLis.Close()
+
+	errCh := make(chan error, 2)
+	go func() { errCh <- srv.ServeTransport(tcpLis) }()
+	go func() { errCh <- srv.ServeTransport(wsLis) }()
+
+	log.Printf("echo TCP listening on %s", tcpLis.Addr())
+	log.Printf("echo WS listening on %s", wsLis.Addr())
+
+	if err := <-errCh; err != nil {
 		log.Fatalf("serve: %v", err)
 	}
 }
