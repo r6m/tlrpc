@@ -1,4 +1,4 @@
-.PHONY: all build test clean generate lint deps check-type-domains
+.PHONY: all build test clean generate lint deps check-type-domains check-no-legacy
 
 # Variables
 GO := go
@@ -53,12 +53,16 @@ lint:
 	golangci-lint run ./...
 	$(MAKE) check-type-domains
 	$(MAKE) check-no-withtransport
+	$(MAKE) check-no-legacy
 
 check-type-domains:
 	./scripts/check_type_domains.sh
 
 check-no-withtransport:
 	./scripts/check_no_withtransport.sh
+
+check-no-legacy:
+	./scripts/check_no_legacy.sh
 
 fmt:
 	$(GO) fmt ./...
