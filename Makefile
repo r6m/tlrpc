@@ -46,15 +46,19 @@ generate-test:
 	$(GO) run ./cmd/tlrpc-gen --schema=testdata/layer222.tl --out=internal/testdata/gen
 
 generate-examples:
-	$(GO) run ./cmd/tlrpc-gen --schema=examples/echo/echo.tl --out=examples/echo/gen
+	$(GO) run ./cmd/tlrpc-gen --schema=examples/echo/schema.tl --out=examples/echo/gen
 
 # Linting
 lint:
 	golangci-lint run ./...
 	$(MAKE) check-type-domains
+	$(MAKE) check-no-withtransport
 
 check-type-domains:
 	./scripts/check_type_domains.sh
+
+check-no-withtransport:
+	./scripts/check_no_withtransport.sh
 
 fmt:
 	$(GO) fmt ./...
@@ -67,8 +71,8 @@ clean:
 
 # Development
 run-example: build
-	./bin/tlrpc-gen --schema=examples/echo/echo.tl --out=examples/echo/gen
-	$(GO) run ./examples/echo/server.go
+	./bin/tlrpc-gen --schema=examples/echo/schema.tl --out=examples/echo/gen
+	$(GO) run ./examples/echo
 
 # CI
 ci: deps lint test build
