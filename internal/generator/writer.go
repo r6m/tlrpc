@@ -102,7 +102,7 @@ func (w *FileWriter) header(filename string) string {
 	case "codec.go":
 		return baseHeader + "import (\n\t\"github.com/r6m/tlrpc\"\n\t\"github.com/r6m/tlrpc/types\"\n)\n\n"
 	case "services.go":
-		return baseHeader + "import (\n\t\"context\"\n\t\"errors\"\n)\n\n"
+		return baseHeader + "import (\n\t\"context\"\n\n\t\"github.com/r6m/tlrpc\")\n\n"
 	case "register.go":
 		return baseHeader + "import (\n\t\"context\"\n\t\"github.com/r6m/tlrpc\"\n)\n\n"
 	case "types.go":

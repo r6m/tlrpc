@@ -58,7 +58,7 @@ type Unimplemented{{.Name}} struct{}
 func (Unimplemented{{.Name}}) testEmbeddedByValue() {}
 {{range .StubMethods}}
 func (Unimplemented{{$.Name}}) {{.Name}}(context.Context, *{{.ReqType}}) ({{.RespType}}, error) {
-	return {{.ZeroValue}}, ErrMethodNotImplemented
+	return {{.ZeroValue}}, tlrpc.ErrUnimplemented
 }
 {{end}}
 `
@@ -66,9 +66,6 @@ func (Unimplemented{{$.Name}}) {{.Name}}(context.Context, *{{.ReqType}}) ({{.Res
 // GenerateService emits service interfaces and unimplemented stubs.
 func (g *ServiceGenerator) GenerateService(funcs []parser.FuncDecl) error {
 	services := groupByService(funcs)
-	if _, err := io.WriteString(g.out, "var ErrMethodNotImplemented = errors.New(\"tlrpc: method not implemented\")\n\n"); err != nil {
-		return err
-	}
 
 	serviceNames := sortedKeys(services)
 	tmpl, err := template.New("service").Funcs(templateFuncMap()).Parse(serviceInterfaceTemplate)
