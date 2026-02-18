@@ -1,4 +1,4 @@
-.PHONY: all build test clean generate lint deps check-type-domains check-no-legacy
+.PHONY: all build test clean generate lint deps check-type-domains check-no-legacy check-no-semantics-creep
 
 # Variables
 GO := go
@@ -54,6 +54,7 @@ lint:
 	$(MAKE) check-type-domains
 	$(MAKE) check-no-withtransport
 	$(MAKE) check-no-legacy
+	$(MAKE) check-no-semantics-creep
 
 check-type-domains:
 	./scripts/check_type_domains.sh
@@ -63,6 +64,9 @@ check-no-withtransport:
 
 check-no-legacy:
 	./scripts/check_no_legacy.sh
+
+check-no-semantics-creep:
+	./scripts/check_no_semantics_creep.sh
 
 fmt:
 	$(GO) fmt ./...

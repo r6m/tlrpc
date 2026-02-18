@@ -1,6 +1,6 @@
 # Official Client Compatibility
 
-This project targets framework-level compatibility with official Telegram clients:
+This project targets framework-level compatibility with official Telegram clients. It is intentionally not a full Telegram backend.
 
 - MTProto transports over TCP: abridged, intermediate, padded intermediate, full.
 - MTProto over WebSocket with `Sec-WebSocket-Protocol: binary` and obfuscated2.
@@ -24,6 +24,18 @@ Automated coverage now includes full handshake integration in `compat/handshake_
   - wrong `server_salt` -> `bad_server_salt`
   - malformed encrypted payload fails without server crash
 
+## Minimal Boot Surface
+
+The compatibility harness only exposes a tiny API surface required to exercise wrappers and routing:
+
+- `help.getConfig`
+- `help.getNearestDc` (optional)
+- `updates.getState`
+- `updates.getDifference`
+- `auth.sendCode` / `auth.signIn` and `users.getUsers` are stubs for session/user_id plumbing
+
+Anything beyond this surface is intentionally not implemented.
+
 ## Compatibility Harness
 
 Use `cmd/compat-server` for real-client probing:
@@ -38,6 +50,8 @@ Behavior:
 - Logs constructor ID, method name, TL name, layer, user ID, auth key ID.
 - Implements minimal startup surface for `help`, `updates`, `users`, `auth`.
 - Returns MTProto `rpc_error` for unimplemented methods (does not crash the connection).
+
+This is a compatibility harness only. It is not production-ready and should not be used as a real Telegram server.
 
 ## Notes
 

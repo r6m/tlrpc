@@ -1,15 +1,23 @@
+version: "2"
 run:
-  timeout: 5m
   tests: true
-
 linters:
-  disable-all: true
+  default: none
   enable:
-    - govet
-    - staticcheck
     - errcheck
+    - govet
     - ineffassign
-    - gosimple
-
-issues:
-  exclude-use-default: false
+    - staticcheck
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
