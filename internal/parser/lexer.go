@@ -291,6 +291,18 @@ func isAllHexDigits(s string) bool {
 	return true
 }
 
+func isAllDigits(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if !unicode.IsDigit(rune(s[i])) {
+			return false
+		}
+	}
+	return true
+}
+
 // Position returns the current position information.
 func (l *Lexer) Position() (line, col int) {
 	return l.line, l.col

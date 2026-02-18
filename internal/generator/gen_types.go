@@ -474,7 +474,12 @@ func (g *TypeGenerator) writeSerializeField(param parser.Parameter, fieldName, i
 func (g *TypeGenerator) writeSerializeValue(t parser.TypeRef, value, indent string) error {
 	if t.Optional && !isTrueType(t) {
 		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic}
-		return g.writeSerializeValue(base, "*"+value, indent)
+		if needsOptionalPointer(t, g.goBaseType(base), g.schema) {
+			if _, ok := serializeBuiltinCall(base, value); ok {
+				return g.writeSerializeValue(base, "*"+value, indent)
+			}
+			return g.writeSerializeValue(base, value, indent)
+		}
 	}
 	writeCall, ok := serializeBuiltinCall(t, value)
 	if ok {
@@ -497,9 +502,16 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 			return err
 		}
 	}
+	usesFlags := hasFlags && hasFlaggedParams(ctor.Params)
 	if hasFlags {
-		if _, err := io.WriteString(g.out, "\tflags, err := mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
-			return err
+		if usesFlags {
+			if _, err := io.WriteString(g.out, "\tflags, err := mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+				return err
+			}
+		} else {
+			if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+				return err
+			}
 		}
 	}
 	for _, param := range ctor.Params {
@@ -542,22 +554,28 @@ func (g *TypeGenerator) writeDeserializeField(param parser.Parameter, fieldName,
 	typeRef := param.Type
 	if typeRef.IsVector && typeRef.Generic != nil {
 		elementType := g.goBaseType(*typeRef.Generic)
-		if _, err := fmt.Fprintf(g.out, "%svar items []%s\n", indent, elementType); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%sif err := mtproto.ReadVector(r, func() error {\n", indent); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s\tvar items []%s\n", indent, elementType); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\tvar item %s\n", indent, elementType); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.ReadVector(r, func() error {\n", indent); err != nil {
 			return err
 		}
-		if err := g.writeDeserializeValue(*typeRef.Generic, "item", indent+"\t"); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s\t\tvar item %s\n", indent, elementType); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\titems = append(items, item)\n%s\treturn nil\n%s}); err != nil {\n%s\treturn err\n%s}\n", indent, indent, indent, indent, indent); err != nil {
+		if err := g.writeDeserializeValue(*typeRef.Generic, "item", indent+"\t\t"); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%sv.%s = items\n", indent, fieldName); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s\t\titems = append(items, item)\n%s\t\treturn nil\n%s\t}); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tv.%s = items\n", indent, fieldName); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
 			return err
 		}
 		return nil
@@ -566,7 +584,7 @@ func (g *TypeGenerator) writeDeserializeField(param parser.Parameter, fieldName,
 }
 
 func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent string) error {
-	if t.Optional && !isTrueType(t) {
+	if t.Optional && !isTrueType(t) && needsOptionalPointer(t, g.goBaseType(t), g.schema) {
 		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic}
 		if readCall, ok := deserializeBuiltinCall(base); ok {
 			if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := %s\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, readCall, indent, indent, indent); err != nil {
@@ -622,6 +640,15 @@ func flagBit(param parser.Parameter) *int {
 	return param.Type.FlagBit
 }
 
+func hasFlaggedParams(params []parser.Parameter) bool {
+	for _, param := range params {
+		if flagBit(param) != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func flagCondition(param parser.Parameter, fieldName string) string {
 	if isTrueType(param.Type) {
 		return "v." + fieldName
@@ -668,11 +695,11 @@ func deserializeBuiltinCallWithReader(t parser.TypeRef, readerName string) (stri
 	case "long":
 		return fmt.Sprintf("mtproto.ReadInt64(%s)", readerName), true
 	case "int128":
-		return fmt.Sprintf("func() Int128 { v, _ := mtproto.ReadInt128(%s); return Int128(v) }()", readerName), true
+		return fmt.Sprintf("func() (Int128, error) { v, err := mtproto.ReadInt128(%s); return Int128(v), err }()", readerName), true
 	case "int256":
-		return fmt.Sprintf("func() Int256 { v, _ := mtproto.ReadInt256(%s); return Int256(v) }()", readerName), true
+		return fmt.Sprintf("func() (Int256, error) { v, err := mtproto.ReadInt256(%s); return Int256(v), err }()", readerName), true
 	case "double":
-		return fmt.Sprintf("func() Double { v, _ := mtproto.ReadDouble(%s); return Double(v) }()", readerName), true
+		return fmt.Sprintf("func() (Double, error) { v, err := mtproto.ReadDouble(%s); return Double(v), err }()", readerName), true
 	case "string":
 		return fmt.Sprintf("mtproto.ReadString(%s)", readerName), true
 	case "bytes":
@@ -698,7 +725,7 @@ func shouldSkipParam(param parser.Parameter) bool {
 
 func (g *TypeGenerator) goType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
-	if t.Optional && !isTrueType(t) {
+	if t.Optional && !isTrueType(t) && !isUnionType(g.schema, t) && !strings.HasPrefix(base, "[]") {
 		return "*" + base
 	}
 	return base
@@ -709,61 +736,8 @@ func (g *TypeGenerator) goBaseType(t parser.TypeRef) string {
 		return "[]" + g.goBaseType(*t.Generic)
 	}
 
-	// Check if this is a union type (interface)
-	typeName := t.Name
-	if t.Namespace != "" {
-		typeName = t.Namespace + "." + t.Name
-	}
-
-	unionTypes := map[string]bool{
-		"Bool": true, "InputPeer": true, "InputUser": true, "InputFile": true, "InputMedia": true,
-		"InputChatPhoto": true, "InputGeoPoint": true, "InputPhoto": true, "InputFileLocation": true,
-		"Peer": true, "StorageFileType": true, "User": true, "UserProfilePhoto": true, "UserStatus": true,
-		"Chat": true, "ChatFull": true, "ChatParticipant": true, "ChatParticipants": true, "ChatPhoto": true,
-		"Message": true, "MessageMedia": true, "MessageAction": true, "Dialog": true, "Photo": true,
-		"PhotoSize": true, "GeoPoint": true, "AuthAuthorization": true, "InputNotifyPeer": true,
-		"WallPaper": true, "ReportReason": true, "ContactsContacts": true, "ContactsBlocked": true,
-		"MessagesDialogs": true, "MessagesMessages": true, "MessagesChats": true, "MessagesFilter": true,
-		"Update": true, "UpdatesDifference": true, "Updates": true, "PhotosPhotos": true, "UploadFile": true,
-		"HelpAppUpdate": true, "EncryptedChat": true, "EncryptedFile": true, "InputEncryptedFile": true,
-		"EncryptedMessage": true, "MessagesDhConfig": true, "MessagesSentEncryptedMessage": true,
-		"InputDocument": true, "Document": true, "NotifyPeer": true, "SendMessageAction": true,
-		"InputPrivacyKey": true, "PrivacyKey": true, "InputPrivacyRule": true, "PrivacyRule": true,
-		"DocumentAttribute": true, "MessagesStickers": true, "MessagesAllStickers": true, "WebPage": true,
-		"ExportedChatInvite": true, "ChatInvite": true, "InputStickerSet": true, "MessagesStickerSet": true,
-		"KeyboardButton": true, "ReplyMarkup": true, "MessageEntity": true, "InputChannel": true,
-		"UpdatesChannelDifference": true, "ChannelMessagesFilter": true, "ChannelParticipant": true,
-		"ChannelParticipantsFilter": true, "ChannelsChannelParticipants": true, "MessagesSavedGifs": true,
-		"InputBotInlineMessage": true, "InputBotInlineResult": true, "BotInlineMessage": true,
-		"BotInlineResult": true, "AuthCodeType": true, "AuthSentCodeType": true, "InputBotInlineMessageID": true,
-		"TopPeerCategory": true, "ContactsTopPeers": true, "DraftMessage": true, "MessagesFeaturedStickers": true,
-		"MessagesRecentStickers": true, "MessagesStickerSetInstallResult": true, "StickerSetCovered": true,
-		"InputStickeredMedia": true, "InputGame": true, "RichText": true, "PageBlock": true,
-		"PhoneCallDiscardReason": true, "WebDocument": true, "InputWebFileLocation": true,
-		"PaymentsPaymentResult": true, "InputPaymentCredentials": true, "PhoneCall": true,
-		"PhoneConnection": true, "UploadCdnFile": true, "LangPackString": true, "ChannelAdminLogEventAction": true,
-		"MessagesFavedStickers": true, "RecentMeURL": true, "InputMessage": true, "InputDialogPeer": true,
-		"DialogPeer": true, "MessagesFoundStickerSets": true, "HelpTermsOfServiceUpdate": true,
-		"InputSecureFile": true, "SecureFile": true, "SecurePlainData": true, "SecureValueType": true,
-		"SecureValueError": true, "HelpDeepLinkInfo": true, "PasswordKdfAlgo": true, "SecurePasswordKdfAlgo": true,
-		"InputCheckPasswordSrp": true, "SecureRequiredType": true, "HelpPassportConfig": true, "JSONValue": true,
-		"PageListItem": true, "PageListOrderedItem": true, "HelpUserInfo": true, "InputWallPaper": true,
-		"AccountWallPapers": true, "EmojiKeyword": true, "URLAuthResult": true, "ChannelLocation": true,
-		"PeerLocated": true, "InputTheme": true, "AccountThemes": true, "AuthLoginToken": true, "BaseTheme": true,
-		"MessageUserVote": true, "DialogFilter": true, "StatsGraph": true, "HelpPromoData": true,
-		"HelpCountriesList": true, "GroupCall": true, "InlineQueryPeerType": true, "MessagesExportedChatInvite": true,
-		"BotCommandScope": true, "AccountResetPasswordResult": true, "MessagesAvailableReactions": true,
-		"MessagesTranslatedText": true, "AttachMenuBots": true, "BotMenuButton": true, "AccountSavedRingtones": true,
-		"NotificationSound": true, "AccountSavedRingtone": true, "AttachMenuPeerType": true, "InputInvoice": true,
-		"InputStorePaymentPurpose": true, "EmojiStatus": true, "AccountEmojiStatuses": true, "Reaction": true,
-		"ChatReactions": true, "MessagesReactions": true, "EmailVerifyPurpose": true, "EmailVerification": true,
-		"AccountEmailVerified": true,
-	}
-	if unionTypes[typeName] || unionTypes[t.Name] {
-		if t.Namespace != "" {
-			return g.namer.TypeName(t.Namespace+"."+t.Name) + "Type"
-		}
-		return g.namer.TypeName(t.Name) + "Type"
+	if isUnionType(g.schema, t) {
+		return unionInterfaceName(g.namer, t)
 	}
 
 	if t.Namespace != "" {
@@ -773,11 +747,7 @@ func (g *TypeGenerator) goBaseType(t parser.TypeRef) string {
 	// Check for base MTProto types that are in the types package
 	switch t.Name {
 	case "true", "false":
-		g.usesBaseTypes = true
-		if t.Name == "true" {
-			return "True"
-		}
-		return "BoolFalse"
+		return "bool"
 	case "error", "null":
 		g.usesBaseTypes = true
 		if t.Name == "error" {
@@ -817,55 +787,6 @@ func (g *TypeGenerator) goBaseType(t parser.TypeRef) string {
 	case "#":
 		return "uint32"
 	default:
-		// For union types, use the interface name
-		// Check known union types that should use interface names
-		unionTypes := map[string]bool{
-			"Bool": true, "InputPeer": true, "InputUser": true, "InputFile": true, "InputMedia": true,
-			"InputChatPhoto": true, "InputGeoPoint": true, "InputPhoto": true, "InputFileLocation": true,
-			"Peer": true, "StorageFileType": true, "User": true, "UserProfilePhoto": true, "UserStatus": true,
-			"Chat": true, "ChatFull": true, "ChatParticipant": true, "ChatParticipants": true, "ChatPhoto": true,
-			"Message": true, "MessageMedia": true, "MessageAction": true, "Dialog": true, "Photo": true,
-			"PhotoSize": true, "GeoPoint": true, "AuthAuthorization": true, "InputNotifyPeer": true,
-			"WallPaper": true, "ReportReason": true, "ContactsContacts": true, "ContactsBlocked": true,
-			"MessagesDialogs": true, "MessagesMessages": true, "MessagesChats": true, "MessagesFilter": true,
-			"Update": true, "UpdatesDifference": true, "Updates": true, "PhotosPhotos": true, "UploadFile": true,
-			"HelpAppUpdate": true, "EncryptedChat": true, "EncryptedFile": true, "InputEncryptedFile": true,
-			"EncryptedMessage": true, "MessagesDhConfig": true, "MessagesSentEncryptedMessage": true,
-			"InputDocument": true, "Document": true, "NotifyPeer": true, "SendMessageAction": true,
-			"InputPrivacyKey": true, "PrivacyKey": true, "InputPrivacyRule": true, "PrivacyRule": true,
-			"DocumentAttribute": true, "MessagesStickers": true, "MessagesAllStickers": true, "WebPage": true,
-			"ExportedChatInvite": true, "ChatInvite": true, "InputStickerSet": true, "MessagesStickerSet": true,
-			"KeyboardButton": true, "ReplyMarkup": true, "MessageEntity": true, "InputChannel": true,
-			"UpdatesChannelDifference": true, "ChannelMessagesFilter": true, "ChannelParticipant": true,
-			"ChannelParticipantsFilter": true, "ChannelsChannelParticipants": true, "MessagesSavedGifs": true,
-			"InputBotInlineMessage": true, "InputBotInlineResult": true, "BotInlineMessage": true,
-			"BotInlineResult": true, "AuthCodeType": true, "AuthSentCodeType": true, "InputBotInlineMessageID": true,
-			"TopPeerCategory": true, "ContactsTopPeers": true, "DraftMessage": true, "MessagesFeaturedStickers": true,
-			"MessagesRecentStickers": true, "MessagesStickerSetInstallResult": true, "StickerSetCovered": true,
-			"InputStickeredMedia": true, "InputGame": true, "RichText": true, "PageBlock": true,
-			"PhoneCallDiscardReason": true, "WebDocument": true, "InputWebFileLocation": true,
-			"PaymentsPaymentResult": true, "InputPaymentCredentials": true, "PhoneCall": true,
-			"PhoneConnection": true, "UploadCdnFile": true, "LangPackString": true, "ChannelAdminLogEventAction": true,
-			"MessagesFavedStickers": true, "RecentMeURL": true, "InputMessage": true, "InputDialogPeer": true,
-			"DialogPeer": true, "MessagesFoundStickerSets": true, "HelpTermsOfServiceUpdate": true,
-			"InputSecureFile": true, "SecureFile": true, "SecurePlainData": true, "SecureValueType": true,
-			"SecureValueError": true, "HelpDeepLinkInfo": true, "PasswordKdfAlgo": true, "SecurePasswordKdfAlgo": true,
-			"InputCheckPasswordSrp": true, "SecureRequiredType": true, "HelpPassportConfig": true, "JSONValue": true,
-			"PageListItem": true, "PageListOrderedItem": true, "HelpUserInfo": true, "InputWallPaper": true,
-			"AccountWallPapers": true, "EmojiKeyword": true, "URLAuthResult": true, "ChannelLocation": true,
-			"PeerLocated": true, "InputTheme": true, "AccountThemes": true, "AuthLoginToken": true, "BaseTheme": true,
-			"MessageUserVote": true, "DialogFilter": true, "StatsGraph": true, "HelpPromoData": true,
-			"HelpCountriesList": true, "GroupCall": true, "InlineQueryPeerType": true, "MessagesExportedChatInvite": true,
-			"BotCommandScope": true, "AccountResetPasswordResult": true, "MessagesAvailableReactions": true,
-			"MessagesTranslatedText": true, "AttachMenuBots": true, "BotMenuButton": true, "AccountSavedRingtones": true,
-			"NotificationSound": true, "AccountSavedRingtone": true, "AttachMenuPeerType": true, "InputInvoice": true,
-			"InputStorePaymentPurpose": true, "EmojiStatus": true, "AccountEmojiStatuses": true, "Reaction": true,
-			"ChatReactions": true, "MessagesReactions": true, "EmailVerifyPurpose": true, "EmailVerification": true,
-			"AccountEmailVerified": true,
-		}
-		if unionTypes[t.Name] {
-			return g.namer.TypeName(t.Name) + "Type"
-		}
 		return g.namer.TypeName(t.Name)
 	}
 }

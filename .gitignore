@@ -2,7 +2,7 @@
 /coverage.out
 /coverage.html
 /internal/testdata/gen/
-/examples/echo/gen/
+/examples/gen/
 /gen/
 *.test
 *.out

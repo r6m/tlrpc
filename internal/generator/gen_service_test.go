@@ -20,9 +20,9 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	var servicesBuf bytes.Buffer
 	var registerBuf bytes.Buffer
 	var requestsBuf bytes.Buffer
-	gen := NewServiceGenerator(naming.NewNamer(), &servicesBuf)
-	reg := NewServiceGenerator(naming.NewNamer(), &registerBuf)
-	req := NewServiceGenerator(naming.NewNamer(), &requestsBuf)
+	gen := NewServiceGenerator(naming.NewNamer(), schema, &servicesBuf)
+	reg := NewServiceGenerator(naming.NewNamer(), schema, &registerBuf)
+	req := NewServiceGenerator(naming.NewNamer(), schema, &requestsBuf)
 
 	if err := gen.GenerateService(schema.Functions); err != nil {
 		t.Fatalf("generate service: %v", err)

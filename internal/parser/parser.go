@@ -531,9 +531,17 @@ func (p *Parser) parseConditionalTypeRef() (TypeRef, error) {
 		return TypeRef{}, p.errorf("expected flag bit number, got %s", p.cur.Type)
 	}
 
-	flagBit, err := p.parseHexID()
+	if p.cur.Type != TokenNumber && p.cur.Type != TokenIdent {
+		return TypeRef{}, p.errorf("expected flag bit number, got %s", p.cur.Type)
+	}
+	literal := p.cur.Literal
+	p.nextToken()
+	if literal == "" || strings.HasPrefix(literal, "0x") || !isAllDigits(literal) {
+		return TypeRef{}, p.errorf("expected decimal flag bit number, got %s", literal)
+	}
+	flagBitValue, err := strconv.Atoi(literal)
 	if err != nil {
-		return TypeRef{}, err
+		return TypeRef{}, p.errorf("invalid flag bit number %s: %v", literal, err)
 	}
 
 	p.expect(TokenQuestion) // "?"
@@ -546,7 +554,7 @@ func (p *Parser) parseConditionalTypeRef() (TypeRef, error) {
 
 	// Mark as optional and store flag bit
 	actualType.Optional = true
-	actualType.FlagBit = &[]int{int(flagBit)}[0] // Convert to *int
+	actualType.FlagBit = &[]int{flagBitValue}[0] // Convert to *int
 
 	return actualType, nil
 }

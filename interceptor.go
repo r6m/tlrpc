@@ -24,7 +24,6 @@ func OutgoingMD(ctx context.Context) (MD, bool) {
 	return FromOutgoingContext(ctx)
 }
 
-
 // SessionFromContext returns the session from context.
 func SessionFromContext(ctx context.Context) *Session {
 	if ctx == nil {

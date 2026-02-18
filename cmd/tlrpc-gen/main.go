@@ -71,7 +71,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 	namer := naming.NewNamer()
 
 	typesOut := writer.NewFile("types.go")
-	interfacesOut := writer.NewFile("interfaces.go")
+	var interfacesOut io.Writer
+	if hasUnionTypes(schema) {
+		interfacesOut = writer.NewFile("interfaces.go")
+	}
 	servicesOut := writer.NewFile("services.go")
 	registerOut := writer.NewFile("register.go")
 	requestsOut := writer.NewFile("requests.go")
@@ -84,31 +87,33 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	for i := range schema.Types {
 		gen := generator.NewTypeGenerator(namer, typesOut, schema)
-		ifaceGen := generator.NewTypeGenerator(namer, interfacesOut, schema)
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {
 			fmt.Fprintf(stderr, "generate types: %v\n", err)
 			return 2
 		}
-		if err := ifaceGen.GenerateInterface(&schema.Types[i]); err != nil {
-			fmt.Fprintf(stderr, "generate interfaces: %v\n", err)
-			return 2
+		if interfacesOut != nil {
+			ifaceGen := generator.NewTypeGenerator(namer, interfacesOut, schema)
+			if err := ifaceGen.GenerateInterface(&schema.Types[i]); err != nil {
+				fmt.Fprintf(stderr, "generate interfaces: %v\n", err)
+				return 2
+			}
 		}
 	}
 
 	if *verbose {
 		fmt.Fprintln(stdout, "Generating services...")
 	}
-	serviceGen := generator.NewServiceGenerator(namer, servicesOut)
+	serviceGen := generator.NewServiceGenerator(namer, schema, servicesOut)
 	if err := serviceGen.GenerateService(schema.Functions); err != nil {
 		fmt.Fprintf(stderr, "generate services: %v\n", err)
 		return 2
 	}
-	regGen := generator.NewServiceGenerator(namer, registerOut)
+	regGen := generator.NewServiceGenerator(namer, schema, registerOut)
 	if err := regGen.GenerateRegistration(schema.Functions); err != nil {
 		fmt.Fprintf(stderr, "generate registration: %v\n", err)
 		return 2
 	}
-	reqGen := generator.NewServiceGenerator(namer, requestsOut)
+	reqGen := generator.NewServiceGenerator(namer, schema, requestsOut)
 	if err := reqGen.GenerateRequests(schema.Functions); err != nil {
 		fmt.Fprintf(stderr, "generate requests: %v\n", err)
 		return 2
@@ -170,4 +175,13 @@ func parseLayer(raw string) int {
 		return 0
 	}
 	return value
+}
+
+func hasUnionTypes(schema *parser.Schema) bool {
+	for i := range schema.Types {
+		if schema.Types[i].IsUnion || len(schema.Types[i].Constructors) > 1 {
+			return true
+		}
+	}
+	return false
 }

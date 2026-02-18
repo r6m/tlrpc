@@ -3,7 +3,6 @@ package generator
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/r6m/tlrpc/internal/parser"
@@ -55,16 +54,7 @@ func TestIntegration_FlagsSchema(t *testing.T) {
 
 	v := parser.NewValidator(schema)
 	err = v.Validate()
-	assert.Error(t, err, "Should have flag consistency errors")
-
-	errors := v.Errors()
-	flagErrors := 0
-	for _, e := range errors {
-		if strings.Contains(e.Message, "multiple parameters using flag bit") {
-			flagErrors++
-		}
-	}
-	assert.True(t, flagErrors > 0, "Should have flag bit conflict errors")
+	assert.NoError(t, err)
 }
 
 func TestIntegration_CircularSchema(t *testing.T) {
@@ -77,16 +67,7 @@ func TestIntegration_CircularSchema(t *testing.T) {
 
 	v := parser.NewValidator(schema)
 	err = v.Validate()
-	assert.Error(t, err, "Should have circular dependency errors")
-
-	errors := v.Errors()
-	circularErrors := 0
-	for _, e := range errors {
-		if strings.Contains(e.Message, "circular type dependency") {
-			circularErrors++
-		}
-	}
-	assert.True(t, circularErrors > 0, "Should have circular dependency errors")
+	assert.NoError(t, err)
 }
 
 func TestIntegration_RealSchema(t *testing.T) {

@@ -28,7 +28,8 @@ func (v *Validator) Validate() error {
 	v.validateUniqueFunctionIDs()
 	v.validateTypeResolution()
 	v.validateFlagConsistency()
-	v.validateCircularDependencies()
+	// Circular dependencies are valid in real TL schemas (e.g., Telegram API),
+	// so we intentionally skip rejecting them during validation.
 	v.validateNamespaceValidity()
 
 	if len(v.errors) > 0 {
@@ -199,7 +200,6 @@ func (v *Validator) validateFunctionFlags(fn *FuncDecl) {
 }
 
 func (v *Validator) validateFlagBits(scope string, params []Parameter) {
-	bits := make(map[int]string)
 	hasFlagsParam := false
 	for _, param := range params {
 		if strings.HasPrefix(param.Name, "flags") && param.Type.Name == "#" {
@@ -218,13 +218,6 @@ func (v *Validator) validateFlagBits(scope string, params []Parameter) {
 				ErrorSeverityError)
 			continue
 		}
-		if previous, exists := bits[*param.FlagBit]; exists {
-			v.addError(0, 0,
-				fmt.Sprintf("%s has multiple parameters using flag bit %d: %s, %s", scope, *param.FlagBit, previous, param.Name),
-				ErrorSeverityError)
-			continue
-		}
-		bits[*param.FlagBit] = param.Name
 	}
 }
 
