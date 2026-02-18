@@ -230,7 +230,7 @@ func (s *Server) Serve(lis net.Listener) error {
 		}
 		h := &connHandler{
 			server: s,
-			conn:   newNetConn(conn),
+			conn:   transport.NewMTProtoConn(conn, transport.NegotiatorConfig{AllowObfuscation: true}),
 		}
 		go func() {
 			_ = h.run()

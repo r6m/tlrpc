@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"net"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 
 // mockConnIO implements connIO interface for testing
 type mockConnIO struct {
-	messages [][]byte
+	messages  [][]byte
 	readIndex int
 	context   context.Context
 	closed    bool
@@ -175,107 +174,6 @@ func TestEncodeTLObject(t *testing.T) {
 	// Verify constructor ID is encoded
 	if len(data) >= 4 && binary.LittleEndian.Uint32(data[:4]) != obj.constructorID {
 		t.Error("constructor ID not encoded correctly")
-	}
-}
-
-func TestReadFrame(t *testing.T) {
-	// Test valid frame
-	payload := []byte{0xAA, 0xBB, 0xCC, 0xDD}
-	frameLen := uint32(4 + len(payload)) // total frame length
-	frameData := make([]byte, frameLen)
-	binary.LittleEndian.PutUint32(frameData[:4], frameLen)
-	copy(frameData[4:], payload)
-
-	reader := bytes.NewReader(frameData)
-	result, err := readFrame(reader)
-	if err != nil {
-		t.Errorf("readFrame returned error: %v", err)
-	}
-
-	if !bytes.Equal(result, payload) {
-		t.Error("readFrame returned wrong payload")
-	}
-}
-
-func TestReadFrameInvalidLength(t *testing.T) {
-	// Test frame with length < 4
-	reader := bytes.NewReader([]byte{0x00, 0x00})
-	_, err := readFrame(reader)
-	if err == nil {
-		t.Error("readFrame should return error for invalid length")
-	}
-}
-
-func TestWriteFrame(t *testing.T) {
-	payload := []byte{0xAA, 0xBB, 0xCC, 0xDD}
-	var buf bytes.Buffer
-
-	err := writeFrame(&buf, payload)
-	if err != nil {
-		t.Errorf("writeFrame returned error: %v", err)
-	}
-
-	frameData := buf.Bytes()
-	expectedLen := 4 + len(payload) // length prefix + payload
-
-	if len(frameData) != expectedLen {
-		t.Errorf("wrong frame length: got %d, want %d", len(frameData), expectedLen)
-	}
-
-	// Check length prefix (total frame length)
-	frameLen := binary.LittleEndian.Uint32(frameData[:4])
-	expectedFrameLen := uint32(4 + len(payload))
-	if frameLen != expectedFrameLen {
-		t.Errorf("wrong length prefix: got %d, want %d", frameLen, expectedFrameLen)
-	}
-
-	// Check payload
-	if !bytes.Equal(frameData[4:], payload) {
-		t.Error("payload not written correctly")
-	}
-}
-
-func TestNewNetConn(t *testing.T) {
-	// Create a mock net.Conn (we'll use a pipe for testing)
-	server, client := net.Pipe()
-	defer server.Close()
-	defer client.Close()
-
-	conn := newNetConn(client)
-
-	if conn == nil {
-		t.Fatal("newNetConn returned nil")
-	}
-
-	if conn.conn != client {
-		t.Error("netConn.conn not set correctly")
-	}
-
-	if conn.ctx == nil {
-		t.Error("netConn.ctx not set")
-	}
-
-	if conn.cancel == nil {
-		t.Error("netConn.cancel not set")
-	}
-}
-
-func TestNetConnMethods(t *testing.T) {
-	server, client := net.Pipe()
-	defer server.Close()
-
-	conn := newNetConn(client)
-
-	// Test Context
-	ctx := conn.Context()
-	if ctx == nil {
-		t.Error("Context() returned nil")
-	}
-
-	// Test Close
-	err := conn.Close()
-	if err != nil {
-		t.Errorf("Close() returned error: %v", err)
 	}
 }
 
