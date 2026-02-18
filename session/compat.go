@@ -75,8 +75,7 @@ func (s *sessionAdapter) Delete(authKeyID crypto.KeyID) error {
 	return s.store.Delete(int64(authKeyID))
 }
 
-func (s *sessionAdapter) GC(maxAge time.Duration) {
-}
+func (s *sessionAdapter) GC(_ time.Duration) {}
 
 func legacySessionFrom(sess *Session) *LegacySession {
 	legacy := &LegacySession{

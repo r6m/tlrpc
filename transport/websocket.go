@@ -27,7 +27,7 @@ func (t *WebSocketTransport) Listen(addr string) (Listener, error) {
 
 	upgrader := t.Upgrader
 	if upgrader.CheckOrigin == nil {
-		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+		upgrader.CheckOrigin = func(_ *http.Request) bool { return true }
 	}
 	upgrader.Subprotocols = ensureSubprotocol(upgrader.Subprotocols, "binary")
 

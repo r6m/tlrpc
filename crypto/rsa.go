@@ -9,7 +9,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"math/big"
 	"os"
 )
 
@@ -128,10 +127,6 @@ func SavePEMPrivateKey(path string, key *ServerKey) error {
 	return os.WriteFile(path, pem.EncodeToMemory(block), 0600)
 }
 
-func rsaEncrypt(key *rsa.PublicKey, data []byte) ([]byte, error) {
-	return rsa.EncryptPKCS1v15(rand.Reader, key, data)
-}
-
 func rsaDecrypt(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 	return rsa.DecryptPKCS1v15(rand.Reader, key, data)
 }
@@ -139,18 +134,4 @@ func rsaDecrypt(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 // DecryptRSA decrypts data using RSA private key (public function)
 func DecryptRSA(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 	return rsaDecrypt(key, data)
-}
-
-func bytesToBigEndian(data []byte) *big.Int {
-	return new(big.Int).SetBytes(data)
-}
-
-func bigEndianToBytes(n *big.Int, size int) []byte {
-	data := n.Bytes()
-	if len(data) < size {
-		padded := make([]byte, size)
-		copy(padded[size-len(data):], data)
-		return padded
-	}
-	return data[len(data)-size:]
 }

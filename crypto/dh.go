@@ -111,7 +111,7 @@ func ComputeMsgKey(authKey, data []byte) [16]byte {
 	return msgKey
 }
 
-func ComputeKDF(authKey []byte, msgKey [16]byte, isClient bool) (key, iv []byte) {
+func ComputeKDF(authKey []byte, msgKey [16]byte, _ bool) (key, iv []byte) {
 	// MTProto 2.0 AES key/IV derivation
 	// auth_key is 256 bytes, we use first 32 bytes and last 32 bytes
 	authKeyFirst32 := authKey[:32]

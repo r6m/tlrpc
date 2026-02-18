@@ -63,7 +63,7 @@ func TestMemoryAuthKeyManager(t *testing.T) {
 	}
 }
 
-func TestMemoryAuthKeyManagerConcurrent(t *testing.T) {
+func TestMemoryAuthKeyManagerConcurrent(_ *testing.T) {
 	manager := NewMemoryAuthKeyManager()
 	var wg sync.WaitGroup
 

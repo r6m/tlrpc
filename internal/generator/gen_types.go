@@ -358,54 +358,6 @@ func (g *TypeGenerator) generateDeserializeTLString(ctor *parser.Constructor, na
 	return nil
 }
 
-func (g *TypeGenerator) generateSerializeMethods(ctor *parser.Constructor, name string) error {
-	flagsParam := findFlagsParam(ctor)
-	if flagsParam != nil {
-		if err := g.generateFlagsHelper(ctor, name); err != nil {
-			return err
-		}
-	}
-	if err := g.generateSerializeTL(ctor, name, flagsParam != nil); err != nil {
-		return err
-	}
-	if err := g.generateDeserializeTL(ctor, name, flagsParam != nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TypeGenerator) generateFlagsHelper(ctor *parser.Constructor, name string) error {
-	if _, err := fmt.Fprintf(g.out, "func (v *%s) computeFlags() uint32 {\n\tvar flags uint32\n", name); err != nil {
-		return err
-	}
-	for _, param := range ctor.Params {
-		bit := flagBit(param)
-		if bit == nil {
-			continue
-		}
-		fieldName := g.namer.FieldName(param.Name)
-		if isTrueType(param.Type) {
-			if _, err := fmt.Fprintf(g.out, "\tif v.%s {\n\t\tflags |= 1 << %d\n\t}\n", fieldName, *bit); err != nil {
-				return err
-			}
-			continue
-		}
-		if param.Type.Optional {
-			if _, err := fmt.Fprintf(g.out, "\tif v.%s != nil {\n\t\tflags |= 1 << %d\n\t}\n", fieldName, *bit); err != nil {
-				return err
-			}
-			continue
-		}
-		if _, err := fmt.Fprintf(g.out, "\tif v.%s != nil {\n\t\tflags |= 1 << %d\n\t}\n", fieldName, *bit); err != nil {
-			return err
-		}
-	}
-	if _, err := io.WriteString(g.out, "\treturn flags\n}\n\n"); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name string, hasFlags bool) error {
 	if _, err := fmt.Fprintf(g.out, "func (v *%s) SerializeTL(w io.Writer) error {\n", name); err != nil {
 		return err

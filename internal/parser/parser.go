@@ -573,11 +573,6 @@ func (p *Parser) expect(tokenType TokenType) bool {
 	return false
 }
 
-// expectPeek checks if peek token matches expected type.
-func (p *Parser) expectPeek(tokenType TokenType) bool {
-	return p.peek.Type == tokenType
-}
-
 // skipNewlines skips consecutive newlines.
 func (p *Parser) skipNewlines() {
 	for p.cur.Type == TokenNewLine {

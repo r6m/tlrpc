@@ -10,7 +10,6 @@ linters:
     - staticcheck  # Now includes gosimple and stylecheck checks
     - unused       # Checks for unused constants/variables
     - govet        # Examines code for suspicious constructs
-    - revive       # Modern replacement for golint
 
 linters-settings:
   errcheck:

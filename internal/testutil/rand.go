@@ -15,21 +15,21 @@ func RandBytes(t testing.TB, n int) []byte {
 	return b
 }
 
-// RandInt64 generates a random int64 between 0 and max (inclusive).
-func RandInt64(t testing.TB, max int64) int64 {
+// RandInt64 generates a random int64 between 0 and maxVal (inclusive).
+func RandInt64(t testing.TB, maxVal int64) int64 {
 	t.Helper()
-	if max <= 0 {
+	if maxVal <= 0 {
 		return 0
 	}
-	n, err := rand.Int(rand.Reader, big.NewInt(max+1))
+	n, err := rand.Int(rand.Reader, big.NewInt(maxVal+1))
 	Must(err)
 	return n.Int64()
 }
 
-// RandInt generates a random int between 0 and max (inclusive).
-func RandInt(t testing.TB, max int) int {
+// RandInt generates a random int between 0 and maxVal (inclusive).
+func RandInt(t testing.TB, maxVal int) int {
 	t.Helper()
-	return int(RandInt64(t, int64(max)))
+	return int(RandInt64(t, int64(maxVal)))
 }
 
 // RandBool generates a random boolean value.

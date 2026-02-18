@@ -13,7 +13,7 @@ type echoServer struct {
 	echo.UnimplementedEchoServer
 }
 
-func (s *echoServer) Echo(ctx context.Context, req *echo.EchoEchoRequest) (*echo.EchoResponse, error) {
+func (s *echoServer) Echo(_ context.Context, req *echo.EchoEchoRequest) (*echo.EchoResponse, error) {
 	return &echo.EchoResponse{Message: req.Message}, nil
 }
 

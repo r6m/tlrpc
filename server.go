@@ -18,7 +18,6 @@ import (
 
 // Server represents an RPC server
 type Server struct {
-	transport         Transport
 	authKeys          crypto.AuthKeyManager
 	serverKeys        crypto.ServerKeyManager
 	sessions          session.Manager

@@ -222,26 +222,6 @@ func (l *Lexer) readComment() Token {
 	return Token{Type: TokenComment, Literal: literal, Line: l.line, Column: col}
 }
 
-// readNumber reads a number token (decimal or hex).
-func (l *Lexer) readNumber() Token {
-	start := l.pos
-
-	// Read sequence of hex digits (TL allows bare hex like "a677244f")
-	for l.pos < len(l.input) {
-		ch := l.input[l.pos]
-		if !isHexDigit(ch) {
-			break
-		}
-		l.pos++
-	}
-
-	literal := l.input[start:l.pos]
-	col := l.col
-	l.col += len(literal)
-
-	return Token{Type: TokenNumber, Literal: literal, Line: l.line, Column: col}
-}
-
 // readIdent reads an identifier token.
 func (l *Lexer) readIdent() Token {
 	start := l.pos

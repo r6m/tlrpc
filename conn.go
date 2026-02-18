@@ -18,11 +18,10 @@ import (
 )
 
 type connHandler struct {
-	server           *Server
-	conn             connIO
-	handshakeHandler HandshakeHandler
-	authKeyID        crypto.KeyID
-	disableUpdates   bool
+	server         *Server
+	conn           connIO
+	authKeyID      crypto.KeyID
+	disableUpdates bool
 }
 
 type connIO interface {
