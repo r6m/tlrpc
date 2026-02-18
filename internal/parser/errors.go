@@ -5,7 +5,7 @@ import "fmt"
 // ParseError represents a parsing error with position information.
 type ParseError struct {
 	Line    int
-	Column int
+	Column  int
 	Message string
 	Token   Token // The token that caused the error
 }
@@ -37,8 +37,8 @@ func (s ErrorSeverity) String() string {
 // ValidationError represents a validation error.
 type ValidationError struct {
 	Line     int
-	Column  int
-	Message string
+	Column   int
+	Message  string
 	Severity ErrorSeverity
 }
 
@@ -69,7 +69,7 @@ func (e MultiError) Error() string {
 // NewParseError creates a new parse error.
 func NewParseError(line, col int, message string, token Token) *ParseError {
 	return &ParseError{
-		Line:     line,
+		Line:    line,
 		Column:  col,
 		Message: message,
 		Token:   token,
@@ -80,8 +80,8 @@ func NewParseError(line, col int, message string, token Token) *ParseError {
 func NewValidationError(line, col int, message string, severity ErrorSeverity) *ValidationError {
 	return &ValidationError{
 		Line:     line,
-		Column:  col,
-		Message: message,
+		Column:   col,
+		Message:  message,
 		Severity: severity,
 	}
 }

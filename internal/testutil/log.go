@@ -11,10 +11,10 @@ import (
 
 // LogCapture captures log output for testing purposes.
 type LogCapture struct {
-	mu      sync.Mutex
-	buf     *bytes.Buffer
-	oldOut  io.Writer
-	logger  *log.Logger
+	mu     sync.Mutex
+	buf    *bytes.Buffer
+	oldOut io.Writer
+	logger *log.Logger
 }
 
 // NewLogCapture creates a new log capture that redirects log output.

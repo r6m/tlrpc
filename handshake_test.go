@@ -9,7 +9,7 @@ import (
 
 func TestValidateMessageID(t *testing.T) {
 	// Test valid message ID - MTProto uses Unix timestamp in seconds for the high 32 bits
-	now := time.Now().Unix() // Unix timestamp in seconds
+	now := time.Now().Unix()          // Unix timestamp in seconds
 	validMsgID := int64(now<<32) &^ 3 // Put timestamp in high 32 bits, clear bottom 2 bits
 
 	err := validateMessageID(validMsgID)
@@ -25,14 +25,14 @@ func TestValidateMessageID(t *testing.T) {
 	}
 
 	// Test message ID too old
-	oldTimestamp := (time.Now().Add(-31 * time.Second).UnixNano() / 1000000) << 32
+	oldTimestamp := (time.Now().Add(-31*time.Second).UnixNano() / 1000000) << 32
 	err = validateMessageID(oldTimestamp)
 	if err == nil {
 		t.Error("validateMessageID should reject too old message ID")
 	}
 
 	// Test message ID too new
-	newTimestamp := (time.Now().Add(31 * time.Second).UnixNano() / 1000000) << 32
+	newTimestamp := (time.Now().Add(31*time.Second).UnixNano() / 1000000) << 32
 	err = validateMessageID(newTimestamp)
 	if err == nil {
 		t.Error("validateMessageID should reject too new message ID")
@@ -102,9 +102,9 @@ func TestTempDHStateStorage(t *testing.T) {
 	// Test basic map operations
 	key := [32]byte{1, 2, 3}
 	state := &TempDHState{
-		Nonce:    [16]byte{1},
+		Nonce:       [16]byte{1},
 		ServerNonce: [16]byte{2},
-		NewNonce: key,
+		NewNonce:    key,
 	}
 
 	tempDHStates[key] = state

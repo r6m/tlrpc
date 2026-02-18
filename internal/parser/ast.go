@@ -10,10 +10,10 @@ type Position struct {
 
 // Schema is the root node of a TL schema AST.
 type Schema struct {
-	Layer        int           // Detected or provided layer version
-	Types        []TypeDecl    // From ---types--- section
-	Functions    []FuncDecl    // From ---functions--- section
-	Constructors []Constructor // All constructors from types
+	Layer        int             // Detected or provided layer version
+	Types        []TypeDecl      // From ---types--- section
+	Functions    []FuncDecl      // From ---functions--- section
+	Constructors []Constructor   // All constructors from types
 	UnionTypes   map[string]bool // Types that are unions (have multiple constructors)
 }
 

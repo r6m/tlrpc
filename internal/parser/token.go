@@ -8,32 +8,32 @@ type TokenType int
 
 // Token types for TL schema parsing.
 const (
-	TokenEOF TokenType = iota
-	TokenIdent      // user, messages.sendMessage
-	TokenNumber     // 123, 0x520c3870
-	TokenColon      // :
-	TokenSemi       // ;
-	TokenEquals     // =
-	TokenLParen     // (
-	TokenRParen     // )
-	TokenLBrace     // {
-	TokenRBrace     // }
-	TokenLBracket   // [
-	TokenRBracket   // ]
-	TokenLess       // <
-	TokenGreater    // >
-	TokenQuestion   // ?
-	TokenHash       // #
-	TokenBang       // !
-	TokenPercent    // %
-	TokenDot        // .
-	TokenComma      // ,
-	TokenUnderscore // _
-	TokenNewLine     // \n
-	TokenComment    // // comment
-	TokenTypes      // ---types---
-	TokenFunctions  // ---functions---
-	TokenHashBracket // # [ for vector count syntax
+	TokenEOF         TokenType = iota
+	TokenIdent                 // user, messages.sendMessage
+	TokenNumber                // 123, 0x520c3870
+	TokenColon                 // :
+	TokenSemi                  // ;
+	TokenEquals                // =
+	TokenLParen                // (
+	TokenRParen                // )
+	TokenLBrace                // {
+	TokenRBrace                // }
+	TokenLBracket              // [
+	TokenRBracket              // ]
+	TokenLess                  // <
+	TokenGreater               // >
+	TokenQuestion              // ?
+	TokenHash                  // #
+	TokenBang                  // !
+	TokenPercent               // %
+	TokenDot                   // .
+	TokenComma                 // ,
+	TokenUnderscore            // _
+	TokenNewLine               // \n
+	TokenComment               // // comment
+	TokenTypes                 // ---types---
+	TokenFunctions             // ---functions---
+	TokenHashBracket           // # [ for vector count syntax
 )
 
 // String returns a string representation of the token type.
@@ -101,7 +101,7 @@ type Token struct {
 	Type    TokenType
 	Literal string
 	Line    int
-	Column int
+	Column  int
 }
 
 // String returns a string representation of the token.

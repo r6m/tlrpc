@@ -205,4 +205,3 @@ func calcMsgKey(key crypto.AuthKey, data []byte) [16]byte {
 	copy(msgKey[:], h[8:24])
 	return msgKey
 }
-

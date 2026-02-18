@@ -21,12 +21,12 @@ var (
 
 // TempDHState stores temporary DH state between req_DH_params and set_client_DH_params
 type TempDHState struct {
-	Nonce        [16]byte
-	ServerNonce  [16]byte
-	NewNonce     [32]byte
-	DHParams     *crypto.DHParams
-	TempKey      []byte
-	TempIV       []byte
+	Nonce       [16]byte
+	ServerNonce [16]byte
+	NewNonce    [32]byte
+	DHParams    *crypto.DHParams
+	TempKey     []byte
+	TempIV      []byte
 }
 
 var tempDHStates = make(map[[32]byte]*TempDHState) // keyed by new_nonce
@@ -40,7 +40,7 @@ func validateMessageID(msgID int64) error {
 
 	// Check if message ID is within reasonable time bounds (±30 seconds)
 	now := time.Now().Unix() // Unix timestamp in seconds
-	msgTime := msgID >> 32 // extract timestamp from high 32 bits
+	msgTime := msgID >> 32   // extract timestamp from high 32 bits
 
 	timeDiff := now - msgTime
 	if timeDiff < -30 || timeDiff > 30 { // ±30 seconds
@@ -50,9 +50,8 @@ func validateMessageID(msgID int64) error {
 	return nil
 }
 
-
 type DefaultHandshakeHandler struct {
-	authKeys crypto.AuthKeyManager
+	authKeys   crypto.AuthKeyManager
 	serverKeys crypto.ServerKeyManager
 }
 
