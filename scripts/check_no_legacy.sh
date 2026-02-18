@@ -21,6 +21,7 @@ fi
 if rg -n "tlrpc\\.Register(Constructor|Method)\\b|globalDispatcher" \
   --glob '!dispatcher.go' \
   --glob '!dispatcher_test.go' \
+  --glob '!scripts/check_no_legacy.sh' \
   --glob '!**/*_test.go' \
   .; then
   echo "legacy check failed: removed global registry APIs are not allowed" >&2
@@ -31,6 +32,7 @@ fi
 if rg -n "mtprotocodec|ReadPacket\\(|WritePacket\\(|ProtocolTag\\(" \
   --glob '!transport/**' \
   --glob '!docs/**' \
+  --glob '!scripts/check_no_legacy.sh' \
   --glob '!**/*_test.go' \
   .; then
   echo "legacy check failed: custom framing should live only in transport" >&2

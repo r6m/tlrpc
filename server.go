@@ -30,6 +30,7 @@ type Server struct {
 	services          map[string]*serviceInfo // for backward compatibility
 	handshakeHandler  HandshakeHandler
 	shutdownCh        chan struct{}
+	updateHub         *updateHub
 }
 
 // serviceInfo stores service implementation info
@@ -47,6 +48,7 @@ func NewServer(opts ...ServerOption) *Server {
 		sessions:   session.NewMemoryManager(),
 		services:   make(map[string]*serviceInfo),
 		shutdownCh: make(chan struct{}),
+		updateHub:  newUpdateHub(),
 	}
 	s.registerDefaultConstructors()
 	for _, opt := range opts {
@@ -68,9 +70,16 @@ func (s *Server) registerDefaultConstructors() {
 	s.RegisterConstructor(mtprototl.GzipPackedID, func() TLObject { return &mtprototl.GzipPacked{} })
 	s.RegisterConstructor(mtprototl.RPCResultID, func() TLObject { return &mtprototl.RPCResult{} })
 	s.RegisterConstructor(mtprototl.RPCErrorID, func() TLObject { return &mtprototl.RPCError{} })
+	s.RegisterConstructor(mtprototl.BadMsgNotificationID, func() TLObject { return &mtprototl.BadMsgNotification{} })
+	s.RegisterConstructor(mtprototl.BadServerSaltID, func() TLObject { return &mtprototl.BadServerSalt{} })
 	s.RegisterConstructor(mtprototl.MsgResendReqID, func() TLObject { return &mtprototl.MsgResendReq{} })
 	s.RegisterConstructor(mtprototl.MsgsStateReqID, func() TLObject { return &mtprototl.MsgsStateReq{} })
 	s.RegisterConstructor(mtprototl.MsgsStateInfoID, func() TLObject { return &mtprototl.MsgsStateInfo{} })
+	s.RegisterConstructor(mtprototl.InvokeAfterMsgID, func() TLObject { return &mtprototl.InvokeAfterMsg{} })
+	s.RegisterConstructor(mtprototl.InvokeAfterMsgsID, func() TLObject { return &mtprototl.InvokeAfterMsgs{} })
+	s.RegisterConstructor(mtprototl.InitConnectionID, func() TLObject { return &mtprototl.InitConnection{} })
+	s.RegisterConstructor(mtprototl.InvokeWithLayerID, func() TLObject { return &mtprototl.InvokeWithLayer{} })
+	s.RegisterConstructor(mtprototl.InvokeWithoutUpdatesID, func() TLObject { return &mtprototl.InvokeWithoutUpdates{} })
 }
 
 // RegisterConstructor registers a TL constructor in the server dispatcher.

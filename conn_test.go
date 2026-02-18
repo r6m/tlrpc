@@ -17,6 +17,7 @@ import (
 // mockConnIO implements connIO interface for testing
 type mockConnIO struct {
 	messages  [][]byte
+	writes    [][]byte
 	readIndex int
 	context   context.Context
 	closed    bool
@@ -42,6 +43,7 @@ func (m *mockConnIO) WriteMessage(data []byte) error {
 	if m.closed {
 		return errors.New("connection closed")
 	}
+	m.writes = append(m.writes, append([]byte(nil), data...))
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package mtprotocodec
 
 import (
-	"crypto/rand"
 	"encoding/binary"
 	"io"
 )
@@ -40,14 +39,8 @@ func (p *PaddedIntermediate) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
 }
 
 func (p *PaddedIntermediate) WritePacket(w io.Writer, payload []byte) error {
-	var padByte [1]byte
-	if _, err := rand.Read(padByte[:]); err != nil {
-		return err
-	}
-	padding := int(padByte[0] & 0x0f)
-	if padding > 0 {
-		payload = append(payload, make([]byte, padding)...)
-	}
+	// Keep packet boundaries deterministic at framework level.
+	// Stream obfuscation/noise should come from obfuscated2.
 	length := uint32(len(payload))
 	var header [4]byte
 	binary.LittleEndian.PutUint32(header[:], length)

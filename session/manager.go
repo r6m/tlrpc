@@ -52,6 +52,7 @@ func (m *MemoryManager) Create(authKeyID crypto.KeyID) (*Session, error) {
 	session := &Session{
 		ID:           newSessionID(),
 		AuthKeyID:    authKeyID,
+		ServerSalt:   newSessionID(),
 		CreatedAt:    time.Now().UTC(),
 		LastActivity: time.Now().UTC(),
 		RecentMsgIDs: NewLRUCache(m.capacity),

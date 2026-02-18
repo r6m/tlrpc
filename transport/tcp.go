@@ -76,13 +76,13 @@ func newClientTCPConn(conn net.Conn, transport *TCPTransport) Conn {
 }
 
 func transportAllowObfuscation(t *TCPTransport) bool {
+	if t == nil {
+		return true
+	}
 	if t.RequireObfuscation {
 		return true
 	}
-	if t.AllowObfuscation {
-		return true
-	}
-	return true
+	return t.AllowObfuscation
 }
 
 func transportRequireObfuscation(t *TCPTransport) bool {

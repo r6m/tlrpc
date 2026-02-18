@@ -41,11 +41,12 @@ func (s *sessionAdapter) Get(authKeyID crypto.KeyID) (*Session, error) {
 		return nil, err
 	}
 	sess := &Session{
-		ID:        legacy.ID,
-		AuthKeyID: authKeyID,
-		Layer:     legacy.Layer,
-		UserID:    legacy.UserID,
-		Data:      sync.Map{},
+		ID:         legacy.ID,
+		AuthKeyID:  authKeyID,
+		Layer:      legacy.Layer,
+		UserID:     legacy.UserID,
+		ServerSalt: legacy.ID,
+		Data:       sync.Map{},
 	}
 	syncMapFromLegacy(&sess.Data, legacy.Data)
 	return sess, nil
@@ -53,10 +54,11 @@ func (s *sessionAdapter) Get(authKeyID crypto.KeyID) (*Session, error) {
 
 func (s *sessionAdapter) Create(authKeyID crypto.KeyID) (*Session, error) {
 	sess := &Session{
-		ID:        time.Now().UnixNano(),
-		AuthKeyID: authKeyID,
-		Layer:     0,
-		UserID:    0,
+		ID:         time.Now().UnixNano(),
+		AuthKeyID:  authKeyID,
+		Layer:      0,
+		UserID:     0,
+		ServerSalt: time.Now().UnixNano(),
 	}
 	legacy := legacySessionFrom(sess)
 	if err := s.store.Save(legacy); err != nil {

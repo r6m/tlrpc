@@ -9,12 +9,15 @@ import (
 
 // Session represents a client session.
 type Session struct {
-	ID           int64
-	AuthKeyID    crypto.KeyID
-	Layer        int
-	UserID       int64
-	CreatedAt    time.Time
-	LastActivity time.Time
+	ID              int64
+	AuthKeyID       crypto.KeyID
+	Layer           int
+	UserID          int64
+	ServerSalt      int64
+	SessionID       int64
+	LastClientMsgID int64
+	CreatedAt       time.Time
+	LastActivity    time.Time
 
 	// Sequence numbers for message ordering.
 	SeqNo int32

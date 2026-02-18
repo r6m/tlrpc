@@ -2,6 +2,8 @@ package generator
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -51,5 +53,49 @@ func TestTypeGenerator_SimpleSchema(t *testing.T) {
 	}
 	if !strings.Contains(iface, "func (*UserEmpty) isUserType()") {
 		t.Fatalf("expected UserEmpty isUserType method in output")
+	}
+}
+
+func TestTypeGenerator_DoesNotGenerateMTProtoEnvelopeTypes(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "schema-217.tl"))
+	if err != nil {
+		t.Fatalf("read schema: %v", err)
+	}
+	p := parser.NewParser(string(data))
+	schema, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var aliases bytes.Buffer
+	if err := GenerateBaseAliases(&aliases); err != nil {
+		t.Fatalf("generate aliases: %v", err)
+	}
+
+	var typesBuf bytes.Buffer
+	var ifaceBuf bytes.Buffer
+	gen := NewTypeGenerator(naming.NewNamer(), &typesBuf, schema)
+	ifaceGen := NewTypeGenerator(naming.NewNamer(), &ifaceBuf, schema)
+	for i := range schema.Types {
+		if err := gen.GenerateType(&schema.Types[i]); err != nil {
+			t.Fatalf("generate type: %v", err)
+		}
+		if err := ifaceGen.GenerateInterface(&schema.Types[i]); err != nil {
+			t.Fatalf("generate interface: %v", err)
+		}
+	}
+	all := aliases.String() + "\n" + typesBuf.String() + "\n" + ifaceBuf.String()
+
+	if !strings.Contains(all, "type String = tltypes.String") {
+		t.Fatalf("expected built-in alias import usage")
+	}
+	if strings.Contains(all, "type MsgContainer struct") {
+		t.Fatalf("unexpected MTProto envelope type generated: MsgContainer")
+	}
+	if strings.Contains(all, "type MsgsAck struct") {
+		t.Fatalf("unexpected MTProto envelope type generated: MsgsAck")
+	}
+	if strings.Contains(all, "type RPCResult struct") {
+		t.Fatalf("unexpected MTProto envelope type generated: RPCResult")
 	}
 }
