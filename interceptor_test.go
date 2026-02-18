@@ -326,17 +326,18 @@ func TestAuthInterceptorNilAuthorizer(t *testing.T) {
 
 // Test context helper functions that aren't covered by context_test.go
 func TestContextHelpersNilContext(t *testing.T) {
-	if SessionFromContext(nil) != nil {
-		t.Error("SessionFromContext(nil) should return nil")
+	ctx := context.Background()
+	if SessionFromContext(ctx) != nil {
+		t.Error("SessionFromContext should return nil for empty context")
 	}
-	if LayerFromContext(nil) != 0 {
-		t.Error("LayerFromContext(nil) should return 0")
+	if LayerFromContext(ctx) != 0 {
+		t.Error("LayerFromContext should return 0 for empty context")
 	}
-	if AuthKeyIDFromContext(nil) != 0 {
-		t.Error("AuthKeyIDFromContext(nil) should return 0")
+	if AuthKeyIDFromContext(ctx) != 0 {
+		t.Error("AuthKeyIDFromContext should return 0 for empty context")
 	}
-	if UserIDFromContext(nil) != 0 {
-		t.Error("UserIDFromContext(nil) should return 0")
+	if UserIDFromContext(ctx) != 0 {
+		t.Error("UserIDFromContext should return 0 for empty context")
 	}
 }
 

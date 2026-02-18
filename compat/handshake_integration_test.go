@@ -131,7 +131,7 @@ func TestMTProtoHandshakeAcrossTCPTransports(t *testing.T) {
 			runServer(t, srv, lis)
 
 			cli := dialClientTCP(t, lis.Addr().String(), tc.codec, serverKey)
-			defer cli.Close()
+			defer func() { _ = cli.Close() }()
 
 			if _, err := cli.Handshake(context.Background()); err != nil {
 				t.Fatalf("handshake: %v", err)
@@ -165,7 +165,7 @@ func TestMTProtoHandshakeWebSocketObfuscated2Padded(t *testing.T) {
 	addr := lis.Addr().(*net.TCPAddr)
 
 	cli := dialClientWS(t, fmt.Sprintf("ws://%s:%d", addr.IP.String(), addr.Port), serverKey)
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		t.Fatalf("handshake: %v", err)
@@ -196,7 +196,7 @@ func TestHandshakeNegativeWrongMsgIDGetsBadMsgNotification(t *testing.T) {
 	runServer(t, srv, lis)
 
 	cli := dialClientTCP(t, lis.Addr().String(), client.CodecIntermediate, serverKey)
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		t.Fatalf("handshake: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestHandshakeNegativeWrongSaltGetsBadServerSalt(t *testing.T) {
 	runServer(t, srv, lis)
 
 	cli := dialClientTCP(t, lis.Addr().String(), client.CodecIntermediate, serverKey)
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		t.Fatalf("handshake: %v", err)
 	}
@@ -302,7 +302,7 @@ func TestHandshakeNegativeInvalidEncryptedDataFailsCleanly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// auth_key_id + msg_key + non-block-size encrypted payload -> decrypt must fail cleanly.
 	raw := make([]byte, 8+16+7)
@@ -319,5 +319,5 @@ func TestHandshakeNegativeInvalidEncryptedDataFailsCleanly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer conn2.Close()
+	defer func() { _ = conn2.Close() }()
 }

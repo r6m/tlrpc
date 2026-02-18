@@ -27,8 +27,8 @@ func TempFile(t testing.TB) *os.File {
 	f, err := os.CreateTemp("", "tlrpc-test-*")
 	Must(err)
 	t.Cleanup(func() {
-		f.Close()
-		os.Remove(f.Name())
+		_ = f.Close()
+		_ = os.Remove(f.Name())
 	})
 	return f
 }
@@ -40,7 +40,7 @@ func TempDir(t testing.TB) string {
 	dir, err := os.MkdirTemp("", "tlrpc-test-*")
 	Must(err)
 	t.Cleanup(func() {
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 	})
 	return dir
 }

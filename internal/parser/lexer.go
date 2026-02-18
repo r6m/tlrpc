@@ -196,9 +196,10 @@ func (l *Lexer) readSectionMarker() Token {
 	col := l.col
 	l.col += len(literal)
 
-	if literal == "---types---" {
+	switch literal {
+	case "---types---":
 		return Token{Type: TokenTypes, Literal: literal, Line: l.line, Column: col}
-	} else if literal == "---functions---" {
+	case "---functions---":
 		return Token{Type: TokenFunctions, Literal: literal, Line: l.line, Column: col}
 	}
 

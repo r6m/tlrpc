@@ -114,7 +114,7 @@ func (c *Client) decodeRPCResult(result *mtprototl.RPCResult) (tlrpc.TLObject, e
 		if err != nil {
 			return nil, err
 		}
-		defer gr.Close()
+		defer func() { _ = gr.Close() }()
 		unpacked, err := io.ReadAll(gr)
 		if err != nil {
 			return nil, err

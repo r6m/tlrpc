@@ -274,7 +274,7 @@ func (h *connHandler) dispatchDecodedObject(ctx context.Context, req TLObject, r
 		if err != nil {
 			return nil, err
 		}
-		defer gr.Close()
+		defer func() { _ = gr.Close() }()
 		unpacked, err := io.ReadAll(gr)
 		if err != nil {
 			return nil, err

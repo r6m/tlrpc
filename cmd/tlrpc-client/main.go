@@ -161,7 +161,7 @@ func runPingConfig(args []string) {
 	if err != nil {
 		exitErr(err)
 	}
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		exitErr(err)
@@ -193,7 +193,7 @@ func runInvoke(args []string) {
 	if err != nil {
 		exitErr(err)
 	}
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		exitErr(err)
@@ -235,7 +235,7 @@ func runAuthSendCode(args []string) {
 	if err != nil {
 		exitErr(err)
 	}
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		exitErr(err)
@@ -276,7 +276,7 @@ func runAuthSignIn(args []string) {
 	if err != nil {
 		exitErr(err)
 	}
-	defer cli.Close()
+	defer func() { _ = cli.Close() }()
 
 	if _, err := cli.Handshake(context.Background()); err != nil {
 		exitErr(err)
@@ -385,7 +385,7 @@ type authSentCodeLite struct {
 }
 
 func (a *authSentCodeLite) DeserializeTL(r io.Reader) error {
-	a.AuthSentCode.Type_ = &gen.AuthSentCodeTypeApp{}
+	a.Type_ = &gen.AuthSentCodeTypeApp{}
 	return a.AuthSentCode.DeserializeTL(r)
 }
 
@@ -394,6 +394,6 @@ type authAuthorizationLite struct {
 }
 
 func (a *authAuthorizationLite) DeserializeTL(r io.Reader) error {
-	a.AuthAuthorization.User = &gen.UserEmpty{}
+	a.User = &gen.UserEmpty{}
 	return a.AuthAuthorization.DeserializeTL(r)
 }

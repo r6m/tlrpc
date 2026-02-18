@@ -20,7 +20,7 @@ func TestScenarioBootTCPAndWS(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := newScenarioClient(t, srv.tcpAddr, srv.wsURL, tc.ws)
-			defer cli.Close()
+			defer func() { _ = cli.Close() }()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()

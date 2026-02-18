@@ -1,6 +1,7 @@
 package tlrpc
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func TestDefaultHandshakeHandlerUnsupportedMessage(t *testing.T) {
 	data[2] = 0xFF
 	data[3] = 0xFF
 
-	_, err := handler.HandleUnencrypted(nil, 0, data)
+	_, err := handler.HandleUnencrypted(context.TODO(), 0, data)
 	if err != ErrUnsupportedMessage {
 		t.Errorf("expected ErrUnsupportedMessage, got: %v", err)
 	}
@@ -85,7 +86,7 @@ func TestDefaultHandshakeHandlerInvalidData(t *testing.T) {
 	)
 
 	// Test with data too short
-	_, err := handler.HandleUnencrypted(nil, 0, []byte{0x00})
+	_, err := handler.HandleUnencrypted(context.TODO(), 0, []byte{0x00})
 	if err != ErrInvalidHandshake {
 		t.Errorf("expected ErrInvalidHandshake for short data, got: %v", err)
 	}

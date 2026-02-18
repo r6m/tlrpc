@@ -20,7 +20,7 @@ func TestScenarioUpdatesBaselineAndPushTCPAndWS(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := newScenarioClient(t, srv.tcpAddr, srv.wsURL, tc.ws)
-			defer cli.Close()
+			defer func() { _ = cli.Close() }()
 
 			userID := handshakeAndLogin(t, cli, 217)
 
@@ -105,7 +105,7 @@ func TestScenarioReconnectGetDifferenceTCPAndWS(t *testing.T) {
 			}
 
 			cli = newScenarioClient(t, srv.tcpAddr, srv.wsURL, tc.ws)
-			defer cli.Close()
+			defer func() { _ = cli.Close() }()
 			_ = handshakeAndLogin(t, cli, 217)
 
 			diffReq := &gen.UpdatesGetDifferenceRequest{Pts: state.Pts, Date: state.Date, Qts: state.Qts}
@@ -145,7 +145,7 @@ func TestScenarioInvokeWithoutUpdatesTCPAndWS(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := newScenarioClient(t, srv.tcpAddr, srv.wsURL, tc.ws)
-			defer cli.Close()
+			defer func() { _ = cli.Close() }()
 
 			userID := handshakeAndLogin(t, cli, 217)
 
@@ -175,7 +175,7 @@ func TestScenarioInvokeWithoutUpdatesTCPAndWS(t *testing.T) {
 			_ = cli.Close()
 
 			cli = newScenarioClient(t, srv.tcpAddr, srv.wsURL, tc.ws)
-			defer cli.Close()
+			defer func() { _ = cli.Close() }()
 			_ = handshakeAndLogin(t, cli, 217)
 
 			diffReq := &gen.UpdatesGetDifferenceRequest{Pts: state.Pts, Date: state.Date, Qts: state.Qts}

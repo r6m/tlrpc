@@ -39,7 +39,7 @@ func TestMust2(t *testing.T) {
 
 func TestTempFile(t *testing.T) {
 	f := testutil.TempFile(t)
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// File should exist
 	if _, err := os.Stat(f.Name()); os.IsNotExist(err) {

@@ -36,15 +36,16 @@ func (p *Parser) ParseWithLayer(layer int) (*Schema, error) {
 	schema := NewSchema(layer)
 
 	for p.cur.Type != TokenEOF {
-		if p.cur.Type == TokenTypes {
+		switch p.cur.Type {
+		case TokenTypes:
 			if err := p.parseTypesSection(schema); err != nil {
 				return nil, err
 			}
-		} else if p.cur.Type == TokenFunctions {
+		case TokenFunctions:
 			if err := p.parseFunctionsSection(schema); err != nil {
 				return nil, err
 			}
-		} else {
+		default:
 			// Assume it's types section if we haven't seen ---functions--- yet
 			if err := p.parseTypesSectionWithoutMarker(schema); err != nil {
 				return nil, err
@@ -378,9 +379,7 @@ func (p *Parser) parseHexID() (uint32, error) {
 	}
 
 	// Remove 0x prefix if present
-	if strings.HasPrefix(literal, "0x") {
-		literal = literal[2:]
-	}
+	literal = strings.TrimPrefix(literal, "0x")
 
 	// Parse as hex
 	value, err := strconv.ParseUint(literal, 16, 32)

@@ -9,8 +9,8 @@ import (
 
 func TestMTProtoConnAbridged(t *testing.T) {
 	server, client := net.Pipe()
-	defer server.Close()
-	defer client.Close()
+	defer func() { _ = server.Close() }()
+	defer func() { _ = client.Close() }()
 
 	srv := NewMTProtoConn(server, NegotiatorConfig{})
 	cli := NewClientMTProtoConn(client, NegotiatorConfig{Protocol: ProtocolAbridged})

@@ -77,7 +77,9 @@ func TestIntermediateQuickAck(t *testing.T) {
 	codec := &Intermediate{AllowQuickAckTokens: true}
 	buf := &bytes.Buffer{}
 	var token uint32 = 0x1234
-	binary.Write(buf, binary.LittleEndian, token|0x80000000)
+	if err := binary.Write(buf, binary.LittleEndian, token|0x80000000); err != nil {
+		t.Fatalf("write: %v", err)
+	}
 	_, got, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
 	if err != ErrQuickAck || got == nil || *got != token {
 		t.Fatalf("expected quick ack token")

@@ -1,23 +1,20 @@
-version: "2"
+version: "2"  # Required for v2
+
 run:
-  tests: true
+  timeout: 5m
+
 linters:
-  default: none
+  default: none  # Replaces 'disable-all: true'
   enable:
-    - errcheck
-    - govet
-    - ineffassign
-    - staticcheck
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
-formatters:
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+    - errcheck     # Checks for unchecked errors
+    - staticcheck  # Now includes gosimple and stylecheck checks
+    - unused       # Checks for unused constants/variables
+    - govet        # Examines code for suspicious constructs
+    - revive       # Modern replacement for golint
+
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - fmt.Fprintf
+      - fmt.Fprint
+      - fmt.Fprintln

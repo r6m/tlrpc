@@ -27,13 +27,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("tcp listen: %v", err)
 	}
-	defer tcpLis.Close()
+	defer func() { _ = tcpLis.Close() }()
 
 	wsLis, err := ws.Listen(":9001")
 	if err != nil {
 		log.Fatalf("ws listen: %v", err)
 	}
-	defer wsLis.Close()
+	defer func() { _ = wsLis.Close() }()
 
 	errCh := make(chan error, 2)
 	go func() { errCh <- srv.ServeTransport(tcpLis) }()

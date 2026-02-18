@@ -198,9 +198,7 @@ func (s *Schema) AddType(typ TypeDecl) {
 	if typ.IsUnion {
 		s.UnionTypes[typ.Name] = true
 	}
-	for _, ctor := range typ.Constructors {
-		s.Constructors = append(s.Constructors, ctor)
-	}
+	s.Constructors = append(s.Constructors, typ.Constructors...)
 }
 
 // AddFunction adds a function declaration to the schema.

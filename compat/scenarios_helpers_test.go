@@ -248,7 +248,7 @@ type authSentCodeLite struct {
 }
 
 func (a *authSentCodeLite) DeserializeTL(r io.Reader) error {
-	a.AuthSentCode.Type_ = &gen.AuthSentCodeTypeApp{}
+	a.Type_ = &gen.AuthSentCodeTypeApp{}
 	return a.AuthSentCode.DeserializeTL(r)
 }
 
@@ -257,7 +257,7 @@ type authAuthorizationLite struct {
 }
 
 func (a *authAuthorizationLite) DeserializeTL(r io.Reader) error {
-	a.AuthAuthorization.User = &gen.UserEmpty{}
+	a.User = &gen.UserEmpty{}
 	return a.AuthAuthorization.DeserializeTL(r)
 }
 

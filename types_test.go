@@ -12,16 +12,12 @@ func TestTypeAliases(t *testing.T) {
 	// Test that type aliases work correctly
 
 	// Session type alias
-	var sess *Session = &session.Session{}
-	if sess == nil {
-		t.Error("Session type alias not working")
-	}
+	sess := &session.Session{}
+	_ = sess
 
 	// Transport type alias
 	var tr Transport = &transport.TCPTransport{}
-	if tr == nil {
-		t.Error("Transport type alias not working")
-	}
+	_ = tr
 
 	// Listener type alias - interface, can't instantiate directly
 	// Conn type alias - interface, can't instantiate directly
@@ -147,7 +143,7 @@ func TestHandshakeHandlerInterface(t *testing.T) {
 	handler := &mockHandshakeHandlerForTypes{}
 
 	var h HandshakeHandler = handler
-	resp, err := h.HandleUnencrypted(nil, 123, []byte("request"))
+	resp, err := h.HandleUnencrypted(context.TODO(), 123, []byte("request"))
 
 	if err != nil {
 		t.Errorf("HandleUnencrypted returned error: %v", err)
@@ -172,14 +168,14 @@ func (m *mockAuthorizerForTypes) Authorize(ctx context.Context, req interface{})
 func TestAuthorizerInterface(t *testing.T) {
 	// Test allowing authorizer
 	allowAuth := &mockAuthorizerForTypes{allow: true}
-	err := allowAuth.Authorize(nil, "request")
+	err := allowAuth.Authorize(context.TODO(), "request")
 	if err != nil {
 		t.Errorf("allowing authorizer returned error: %v", err)
 	}
 
 	// Test denying authorizer
 	denyAuth := &mockAuthorizerForTypes{allow: false}
-	err = denyAuth.Authorize(nil, "request")
+	err = denyAuth.Authorize(context.TODO(), "request")
 	if err == nil {
 		t.Error("denying authorizer should return error")
 	}

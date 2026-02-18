@@ -32,14 +32,14 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 3
 	}
 	if *schemaPath == "" {
-		fmt.Fprintln(stderr, "--schema is required")
+		_, _ = fmt.Fprintln(stderr, "--schema is required")
 		fs.Usage()
 		return 3
 	}
 
 	data, err := os.ReadFile(*schemaPath)
 	if err != nil {
-		fmt.Fprintf(stderr, "read schema: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "read schema: %v\n", err)
 		return 3
 	}
 
@@ -52,19 +52,19 @@ func run(args []string, stdout, stderr io.Writer) int {
 		schema, err = p.Parse()
 	}
 	if err != nil {
-		fmt.Fprintf(stderr, "%v\n", err)
+		_, _ = fmt.Fprintf(stderr, "%v\n", err)
 		return 1
 	}
 
 	validator := parser.NewValidator(schema)
 	if err := validator.Validate(); err != nil {
-		fmt.Fprintf(stderr, "%v\n", err)
+		_, _ = fmt.Fprintf(stderr, "%v\n", err)
 		return 1
 	}
 
 	if *verbose {
-		fmt.Fprintf(stdout, "Parsing schema: %s...\n", *schemaPath)
-		fmt.Fprintf(stdout, "Found %d constructors, %d functions\n", len(schema.Constructors), len(schema.Functions))
+		_, _ = fmt.Fprintf(stdout, "Parsing schema: %s...\n", *schemaPath)
+		_, _ = fmt.Fprintf(stdout, "Found %d constructors, %d functions\n", len(schema.Constructors), len(schema.Functions))
 	}
 
 	writer := generator.NewFileWriter(*outDir, *pkgName, filepath.Base(*schemaPath), schema.Layer)
@@ -83,80 +83,80 @@ func run(args []string, stdout, stderr io.Writer) int {
 	baseAliasesOut := writer.NewFile("base_aliases.go")
 
 	if *verbose {
-		fmt.Fprintln(stdout, "Generating types...")
+		_, _ = fmt.Fprintln(stdout, "Generating types...")
 	}
 	for i := range schema.Types {
 		gen := generator.NewTypeGenerator(namer, typesOut, schema)
 		if err := gen.GenerateType(&schema.Types[i]); err != nil {
-			fmt.Fprintf(stderr, "generate types: %v\n", err)
+			_, _ = fmt.Fprintf(stderr, "generate types: %v\n", err)
 			return 2
 		}
 		if interfacesOut != nil {
 			ifaceGen := generator.NewTypeGenerator(namer, interfacesOut, schema)
 			if err := ifaceGen.GenerateInterface(&schema.Types[i]); err != nil {
-				fmt.Fprintf(stderr, "generate interfaces: %v\n", err)
+				_, _ = fmt.Fprintf(stderr, "generate interfaces: %v\n", err)
 				return 2
 			}
 		}
 	}
 
 	if *verbose {
-		fmt.Fprintln(stdout, "Generating services...")
+		_, _ = fmt.Fprintln(stdout, "Generating services...")
 	}
 	serviceGen := generator.NewServiceGenerator(namer, schema, servicesOut)
 	if err := serviceGen.GenerateService(schema.Functions); err != nil {
-		fmt.Fprintf(stderr, "generate services: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "generate services: %v\n", err)
 		return 2
 	}
 	regGen := generator.NewServiceGenerator(namer, schema, registerOut)
 	if err := regGen.GenerateRegistration(schema.Functions); err != nil {
-		fmt.Fprintf(stderr, "generate registration: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "generate registration: %v\n", err)
 		return 2
 	}
 	reqGen := generator.NewServiceGenerator(namer, schema, requestsOut)
 	if err := reqGen.GenerateRequests(schema.Functions); err != nil {
-		fmt.Fprintf(stderr, "generate requests: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "generate requests: %v\n", err)
 		return 2
 	}
 
 	if *verbose {
-		fmt.Fprintln(stdout, "Generating codec registry...")
+		_, _ = fmt.Fprintln(stdout, "Generating codec registry...")
 	}
 	codecGen := generator.NewCodecGenerator(namer, codecOut)
 	if err := codecGen.Generate(schema); err != nil {
-		fmt.Fprintf(stderr, "generate codec: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "generate codec: %v\n", err)
 		return 2
 	}
 
 	if *verbose {
-		fmt.Fprintln(stdout, "Generating constants...")
+		_, _ = fmt.Fprintln(stdout, "Generating constants...")
 	}
 	if err := generator.GenerateConstructorConstants(namer, constantsOut, schema.Constructors); err != nil {
-		fmt.Fprintf(stderr, "generate constants: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "generate constants: %v\n", err)
 		return 2
 	}
 	if err := generator.GenerateBaseAliases(baseAliasesOut); err != nil {
-		fmt.Fprintf(stderr, "generate base aliases: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "generate base aliases: %v\n", err)
 		return 2
 	}
 
 	if *verbose {
-		fmt.Fprintf(stdout, "Writing files to %s...\n", *outDir)
+		_, _ = fmt.Fprintf(stdout, "Writing files to %s...\n", *outDir)
 	}
 	if err := writer.WriteAll(); err != nil {
-		fmt.Fprintf(stderr, "write files: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "write files: %v\n", err)
 		return 3
 	}
 	if *verbose {
-		fmt.Fprintln(stdout, "Formatting with gofmt...")
+		_, _ = fmt.Fprintln(stdout, "Formatting with gofmt...")
 	}
 	if err := writer.Format(); err != nil {
-		fmt.Fprintf(stderr, "format: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "format: %v\n", err)
 		return 3
 	}
 
 	if *verbose {
-		fmt.Fprintf(stdout, "Done. Generated %d files in %s\n", len(writer.Files()), *outDir)
+		_, _ = fmt.Fprintf(stdout, "Done. Generated %d files in %s\n", len(writer.Files()), *outDir)
 	}
 
 	return 0

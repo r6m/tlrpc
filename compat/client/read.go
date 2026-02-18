@@ -16,10 +16,14 @@ func (c *Client) ReadOne(ctx context.Context) (tlrpc.TLObject, error) {
 		return nil, errors.New("compat client: missing connection")
 	}
 	if deadline, ok := ctx.Deadline(); ok {
-		_ = c.conn.SetDeadline(deadline)
-		defer c.conn.SetDeadline(time.Time{})
+		if err := c.conn.SetDeadline(deadline); err != nil {
+			return nil, err
+		}
+		defer func() { _ = c.conn.SetDeadline(time.Time{}) }()
 	} else {
-		_ = c.conn.SetDeadline(time.Time{})
+		if err := c.conn.SetDeadline(time.Time{}); err != nil {
+			return nil, err
+		}
 	}
 
 	for {
