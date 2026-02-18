@@ -22,6 +22,7 @@ type connHandler struct {
 	conn             connIO
 	handshakeHandler HandshakeHandler
 	authKeyID        crypto.KeyID
+	disableUpdates   bool
 }
 
 type connIO interface {
@@ -200,14 +201,6 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if sess != nil {
 		ctx = withLayer(ctx, sess.Layer)
 		ctx = withUserID(ctx, sess.UserID)
-		if sess.UserID != 0 && h.server.updateHub != nil {
-			h.server.updateHub.bind(sess.UserID, updateBinding{
-				conn:      h.conn,
-				keyID:     keyID,
-				sessionID: sess.SessionID,
-				salt:      sess.ServerSalt,
-			})
-		}
 	}
 
 	reqObj, _, err := decodeTLObject(h.server.dispatcher, inner.Data)
@@ -225,7 +218,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if err != nil {
 		return h.sendRPCError(inner.MsgID, err)
 	}
-	if sess != nil && sess.UserID != 0 && h.server.updateHub != nil {
+	if sess != nil && sess.UserID != 0 && h.server.updateHub != nil && !h.disableUpdates {
 		h.server.updateHub.bind(sess.UserID, updateBinding{
 			conn:      h.conn,
 			keyID:     keyID,
@@ -309,6 +302,10 @@ func (h *connHandler) dispatchDecodedObject(ctx context.Context, req TLObject, r
 	case *mtprototl.InvokeAfterMsgs:
 		return h.dispatchWrappedQuery(ctx, obj.QueryRaw, requestMsgID)
 	case *mtprototl.InvokeWithoutUpdates:
+		h.disableUpdates = true
+		if h.server.updateHub != nil {
+			h.server.updateHub.unbind(h.conn)
+		}
 		return h.dispatchWrappedQuery(ctx, obj.QueryRaw, requestMsgID)
 	default:
 		return h.invokeMethod(ctx, req)

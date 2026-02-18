@@ -21,7 +21,9 @@ type MTProtoConn struct {
 	w          io.Writer
 	ctx        context.Context
 	cancel     context.CancelFunc
-	mu         sync.Mutex
+	negMu      sync.Mutex
+	readMu     sync.Mutex
+	writeMu    sync.Mutex
 	isClient   bool
 }
 
@@ -46,6 +48,8 @@ func NewClientMTProtoConn(conn net.Conn, config NegotiatorConfig) *MTProtoConn {
 }
 
 func (c *MTProtoConn) ensureNegotiated() error {
+	c.negMu.Lock()
+	defer c.negMu.Unlock()
 	if c.codec != nil {
 		return nil
 	}
@@ -74,8 +78,8 @@ func (c *MTProtoConn) ensureNegotiated() error {
 
 // ReadMessage reads a single MTProto transport packet.
 func (c *MTProtoConn) ReadMessage() ([]byte, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.readMu.Lock()
+	defer c.readMu.Unlock()
 
 	if err := c.ensureNegotiated(); err != nil {
 		return nil, err
@@ -94,8 +98,8 @@ func (c *MTProtoConn) ReadMessage() ([]byte, error) {
 
 // WriteMessage writes a single MTProto transport packet.
 func (c *MTProtoConn) WriteMessage(payload []byte) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
 
 	if err := c.ensureNegotiated(); err != nil {
 		return err

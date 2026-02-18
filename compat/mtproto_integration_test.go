@@ -1,19 +1,16 @@
 package compat
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
 	"testing"
-	"time"
 
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/compat/client"
 	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
-	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
 )
@@ -73,27 +70,6 @@ func (r *pingResp) DeserializeTL(rd io.Reader) error {
 	return err
 }
 
-func serializeTL(t *testing.T, fn func(io.Writer) error) []byte {
-	t.Helper()
-	buf := &bytes.Buffer{}
-	if err := fn(buf); err != nil {
-		t.Fatalf("serialize TL: %v", err)
-	}
-	return buf.Bytes()
-}
-
-func nextClientMsgID() int64 {
-	return int64(time.Now().Unix()<<32) &^ 3
-}
-
-func serializeEncrypted(msg *mtproto.EncryptedMessage) []byte {
-	data := make([]byte, 8+16+len(msg.EncryptedData))
-	binary.LittleEndian.PutUint64(data[:8], uint64(msg.AuthKeyID))
-	copy(data[8:24], msg.MsgKey[:])
-	copy(data[24:], msg.EncryptedData)
-	return data
-}
-
 type testHarness struct {
 	server   *tlrpc.Server
 	authKeys crypto.AuthKeyManager
@@ -148,68 +124,6 @@ func newHarness(t *testing.T) *testHarness {
 	}
 }
 
-func (h *testHarness) makePacket(t *testing.T, body []byte) []byte {
-	t.Helper()
-	inner := &mtproto.InnerData{
-		Salt:      h.salt,
-		SessionID: h.session,
-		MsgID:     nextClientMsgID(),
-		SeqNo:     1,
-		Data:      body,
-	}
-	enc, err := inner.Encrypt(h.key, h.keyID)
-	if err != nil {
-		t.Fatalf("encrypt: %v", err)
-	}
-	return serializeEncrypted(enc)
-}
-
-func (h *testHarness) readRPCResult(t *testing.T, conn transport.Conn) *mtprototl.RPCResult {
-	t.Helper()
-	for i := 0; i < 3; i++ {
-		packet, err := conn.ReadMessage()
-		if err != nil {
-			t.Fatalf("read message: %v", err)
-		}
-		keyID := crypto.KeyID(binary.LittleEndian.Uint64(packet[:8]))
-		var msgKey [16]byte
-		copy(msgKey[:], packet[8:24])
-		dec, err := (&mtproto.EncryptedMessage{
-			AuthKeyID:     keyID,
-			MsgKey:        msgKey,
-			EncryptedData: packet[24:],
-		}).Decrypt(h.key)
-		if err != nil {
-			t.Fatalf("decrypt response: %v", err)
-		}
-		ctor := binary.LittleEndian.Uint32(dec.Data[:4])
-		if ctor == mtprototl.MsgsAckID {
-			continue
-		}
-		if ctor != mtprototl.RPCResultID {
-			t.Fatalf("unexpected constructor: 0x%08x", ctor)
-		}
-		result := &mtprototl.RPCResult{}
-		if err := result.DeserializeTL(bytes.NewReader(dec.Data)); err != nil {
-			t.Fatalf("decode rpc_result: %v", err)
-		}
-		return result
-	}
-	t.Fatal("rpc_result not received")
-	return nil
-}
-
-func runServer(t *testing.T, srv *tlrpc.Server, lis transport.Listener) {
-	t.Helper()
-	t.Cleanup(func() {
-		_ = srv.Stop()
-		_ = lis.Close()
-	})
-	go func() {
-		_ = srv.ServeTransport(lis)
-	}()
-}
-
 func TestTCPTransportsEncryptedRPC(t *testing.T) {
 	for _, proto := range []transport.Protocol{
 		transport.ProtocolAbridged,
@@ -232,18 +146,15 @@ func TestTCPTransportsEncryptedRPC(t *testing.T) {
 			}
 			t.Cleanup(func() { _ = cli.Close() })
 
-			reqBody := serializeTL(t, func(w io.Writer) error {
-				return (&pingReq{Value: 10}).SerializeTL(w)
-			})
-			if err := cli.WriteMessage(h.makePacket(t, reqBody)); err != nil {
-				t.Fatalf("write encrypted packet: %v", err)
+			c := client.New(cli, client.WithConstructors(map[uint32]func() tlrpc.TLObject{
+				pingRespID: func() tlrpc.TLObject { return &pingResp{} },
+			}))
+			c.SetSession(h.keyID, h.key, h.salt, h.session)
+			respObj, err := c.Invoke(context.Background(), &pingReq{Value: 10})
+			if err != nil {
+				t.Fatalf("invoke: %v", err)
 			}
-
-			result := h.readRPCResult(t, cli)
-			resp := &pingResp{}
-			if err := resp.DeserializeTL(bytes.NewReader(result.ResultRaw)); err != nil {
-				t.Fatalf("decode result object: %v", err)
-			}
+			resp := respObj.(*pingResp)
 			if resp.Value != 11 {
 				t.Fatalf("unexpected response value: %d", resp.Value)
 			}
@@ -269,18 +180,15 @@ func TestWebSocketObfuscatedPaddedIntermediate(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = cli.Close() })
 
-	reqBody := serializeTL(t, func(w io.Writer) error {
-		return (&pingReq{Value: 22}).SerializeTL(w)
-	})
-	if err := cli.WriteMessage(h.makePacket(t, reqBody)); err != nil {
-		t.Fatalf("write encrypted packet: %v", err)
+	c := client.New(cli, client.WithConstructors(map[uint32]func() tlrpc.TLObject{
+		pingRespID: func() tlrpc.TLObject { return &pingResp{} },
+	}))
+	c.SetSession(h.keyID, h.key, h.salt, h.session)
+	respObj, err := c.Invoke(context.Background(), &pingReq{Value: 22})
+	if err != nil {
+		t.Fatalf("invoke: %v", err)
 	}
-
-	result := h.readRPCResult(t, cli)
-	resp := &pingResp{}
-	if err := resp.DeserializeTL(bytes.NewReader(result.ResultRaw)); err != nil {
-		t.Fatalf("decode result object: %v", err)
-	}
+	resp := respObj.(*pingResp)
 	if resp.Value != 23 {
 		t.Fatalf("unexpected response value: %d", resp.Value)
 	}
@@ -315,37 +223,23 @@ func TestWrappedInvokeWithLayerInitConnection(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = cli.Close() })
 
-	inner := serializeTL(t, func(w io.Writer) error {
-		return (&pingReq{Value: 7}).SerializeTL(w)
-	})
-	initReq := serializeTL(t, func(w io.Writer) error {
-		return (&mtprototl.InitConnection{
-			Flags:          0,
-			APIID:          1000,
-			DeviceModel:    "test-device",
-			SystemVersion:  "1.0",
-			AppVersion:     "1.0",
-			SystemLangCode: "en",
-			LangPack:       "",
-			LangCode:       "en",
-			QueryRaw:       inner,
-		}).SerializeTL(w)
-	})
-	wrapped := serializeTL(t, func(w io.Writer) error {
-		return (&mtprototl.InvokeWithLayer{
-			Layer:    150,
-			QueryRaw: initReq,
-		}).SerializeTL(w)
-	})
-
-	if err := cli.WriteMessage(h.makePacket(t, wrapped)); err != nil {
-		t.Fatalf("write wrapped packet: %v", err)
+	c := client.New(cli, client.WithConstructors(map[uint32]func() tlrpc.TLObject{
+		pingRespID: func() tlrpc.TLObject { return &pingResp{} },
+	}))
+	c.SetSession(h.keyID, h.key, h.salt, h.session)
+	respObj, err := c.InvokeWrapped(context.Background(), 150, client.InitParams{
+		APIID:          1000,
+		DeviceModel:    "test-device",
+		SystemVersion:  "1.0",
+		AppVersion:     "1.0",
+		SystemLangCode: "en",
+		LangPack:       "",
+		LangCode:       "en",
+	}, &pingReq{Value: 7}, false)
+	if err != nil {
+		t.Fatalf("invoke wrapped: %v", err)
 	}
-	result := h.readRPCResult(t, cli)
-	resp := &pingResp{}
-	if err := resp.DeserializeTL(bytes.NewReader(result.ResultRaw)); err != nil {
-		t.Fatalf("decode result object: %v", err)
-	}
+	resp := respObj.(*pingResp)
 	if resp.Value != 8 {
 		t.Fatalf("unexpected response value: %d", resp.Value)
 	}

@@ -245,10 +245,10 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 	if err := mtproto.WriteUint32(serverDHInner, 0xb5890dba); err != nil { // server_DH_inner_data
 		return nil, err
 	}
-	if err := mtproto.WriteUint32(serverDHInner, 0); err != nil { // nonce (placeholder)
+	if err := mtproto.WriteInt128(serverDHInner, nonce); err != nil {
 		return nil, err
 	}
-	if err := mtproto.WriteUint32(serverDHInner, 0); err != nil { // server_nonce (placeholder)
+	if err := mtproto.WriteInt128(serverDHInner, serverNonce); err != nil {
 		return nil, err
 	}
 	if err := mtproto.WriteUint32(serverDHInner, 3); err != nil { // g
@@ -265,9 +265,6 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 	}
 
 	serverDHData := serverDHInner.Bytes()
-	// Set nonce and server_nonce in the data
-	copy(serverDHData[4:20], nonce[:])
-	copy(serverDHData[20:36], serverNonce[:])
 	if rem := len(serverDHData) % 16; rem != 0 {
 		serverDHData = append(serverDHData, make([]byte, 16-rem)...)
 	}

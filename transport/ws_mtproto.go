@@ -19,7 +19,9 @@ type wsMTProtoConn struct {
 	codec      mtprotocodec.Codec
 	r          io.Reader
 	w          io.Writer
-	mu         sync.Mutex
+	negMu      sync.Mutex
+	readMu     sync.Mutex
+	writeMu    sync.Mutex
 	isClient   bool
 }
 
@@ -35,6 +37,8 @@ func newWSMTProtoConn(base *wsConn, config NegotiatorConfig, isClient bool) *wsM
 }
 
 func (c *wsMTProtoConn) ensureNegotiated() error {
+	c.negMu.Lock()
+	defer c.negMu.Unlock()
 	if c.codec != nil {
 		return nil
 	}
@@ -62,8 +66,8 @@ func (c *wsMTProtoConn) ensureNegotiated() error {
 }
 
 func (c *wsMTProtoConn) ReadMessage() ([]byte, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.readMu.Lock()
+	defer c.readMu.Unlock()
 
 	if err := c.ensureNegotiated(); err != nil {
 		return nil, err
@@ -81,8 +85,8 @@ func (c *wsMTProtoConn) ReadMessage() ([]byte, error) {
 }
 
 func (c *wsMTProtoConn) WriteMessage(payload []byte) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
 
 	if err := c.ensureNegotiated(); err != nil {
 		return err

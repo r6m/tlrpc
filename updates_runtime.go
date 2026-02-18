@@ -32,6 +32,27 @@ func (h *updateHub) bind(userID int64, binding updateBinding) {
 	h.mu.Unlock()
 }
 
+func (h *updateHub) unbind(conn connIO) {
+	if conn == nil {
+		return
+	}
+	h.mu.Lock()
+	for userID, bindings := range h.byUser {
+		filtered := bindings[:0]
+		for _, binding := range bindings {
+			if binding.conn != conn {
+				filtered = append(filtered, binding)
+			}
+		}
+		if len(filtered) == 0 {
+			delete(h.byUser, userID)
+			continue
+		}
+		h.byUser[userID] = filtered
+	}
+	h.mu.Unlock()
+}
+
 func (h *updateHub) publish(userID int64, update TLObject, authKeys crypto.AuthKeyManager) error {
 	updateData, err := encodeTLObject(update)
 	if err != nil {

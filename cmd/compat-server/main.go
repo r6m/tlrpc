@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/examples/gen"
+	"github.com/r6m/tlrpc/internal/compatkeys"
 	"github.com/r6m/tlrpc/transport"
 )
 
@@ -194,10 +196,18 @@ func main() {
 		log.Fatalf("invalid tcp port: %v", err)
 	}
 
+	serverKeys := crypto.NewMemoryServerKeyManager()
+	if compatKey, err := compatkeys.ServerKey(); err == nil {
+		serverKeys.AddKey(compatKey)
+	} else {
+		log.Printf("WARN compat server key load failed: %v", err)
+	}
+
 	srv := tlrpc.NewServer(
 		tlrpc.WithMaxLayer(maxLayer),
 		tlrpc.WithLogger(stdLogger{}),
 		tlrpc.WithUnaryInterceptor(traceInterceptor(trace)),
+		tlrpc.WithServerKeyManager(serverKeys),
 	)
 	gen.RegisterHelpServer(srv, &helpService{dcIP: host, tcpPort: int32(portNum)})
 	gen.RegisterUsersServer(srv, &usersService{})
