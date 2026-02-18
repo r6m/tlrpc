@@ -28,17 +28,6 @@ func (m *mockLogger) Debug(msg string, args ...interface{}) {
 	m.debugMsgs = append(m.debugMsgs, msg)
 }
 
-// mockTransport implements Transport interface for testing
-type mockTransport struct{}
-
-func (m *mockTransport) Listen(addr string) (Listener, error) {
-	return nil, nil
-}
-
-func (m *mockTransport) Dial(addr string) (Conn, error) {
-	return nil, nil
-}
-
 func TestNewServer(t *testing.T) {
 	s := NewServer()
 
@@ -59,9 +48,6 @@ func TestNewServer(t *testing.T) {
 	if s.sessions == nil {
 		t.Error("sessions not initialized")
 	}
-	if s.transport == nil {
-		t.Error("transport not initialized")
-	}
 	if s.services == nil {
 		t.Error("services map not initialized")
 	}
@@ -71,15 +57,8 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestServerOptions(t *testing.T) {
-	// Test WithTransport
-	mockTrans := &mockTransport{}
-	s := NewServer(WithTransport(mockTrans))
-	if s.transport == nil {
-		t.Error("WithTransport option not applied")
-	}
-
 	// Test WithMaxLayer
-	s = NewServer(WithMaxLayer(42))
+	s := NewServer(WithMaxLayer(42))
 	if s.maxLayer != 42 {
 		t.Error("WithMaxLayer option not applied")
 	}

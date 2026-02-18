@@ -45,7 +45,6 @@ func NewServer(opts ...ServerOption) *Server {
 		authKeys:   crypto.NewMemoryAuthKeyManager(),
 		serverKeys: crypto.NewMemoryServerKeyManager(),
 		sessions:   session.NewMemoryManager(),
-		transport:  &transport.TCPTransport{},
 		services:   make(map[string]*serviceInfo),
 		shutdownCh: make(chan struct{}),
 	}
@@ -273,13 +272,6 @@ func (s *Server) Stop() error {
 
 // ServerOption represents server configuration options
 type ServerOption func(*Server)
-
-// WithTransport sets the transport for the server
-func WithTransport(t Transport) ServerOption {
-	return func(s *Server) {
-		s.transport = t
-	}
-}
 
 // WithMaxLayer sets the maximum supported layer version
 func WithMaxLayer(layer int) ServerOption {
