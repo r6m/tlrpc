@@ -268,6 +268,9 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 	// Set nonce and server_nonce in the data
 	copy(serverDHData[4:20], nonce[:])
 	copy(serverDHData[20:36], serverNonce[:])
+	if rem := len(serverDHData) % 16; rem != 0 {
+		serverDHData = append(serverDHData, make([]byte, 16-rem)...)
+	}
 
 	// Encrypt with AES using key derived from new_nonce + server_nonce
 	tempKey, tempIV := crypto.DeriveTempKeyIV(newNonce, serverNonce)
@@ -319,6 +322,9 @@ func (h *DefaultHandshakeHandler) handleReqSetClientDHParams(data []byte) ([]byt
 	encryptedData, err := mtproto.ReadBytes(r)
 	if err != nil {
 		return nil, err
+	}
+	if len(encryptedData)%16 != 0 {
+		return nil, ErrInvalidHandshake
 	}
 
 	// Find the temp DH state (we don't have new_nonce yet, so we need to try all)

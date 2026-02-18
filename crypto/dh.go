@@ -342,7 +342,11 @@ func ComputeNewNonceHash1(newNonce [32]byte, serverNonce [16]byte) [16]byte {
 
 	var result [16]byte
 	for i := 0; i < 16; i++ {
-		result[i] = hash1[i] ^ hash2[i] ^ hash1[i+16]
+		var tail byte
+		if i+16 < len(hash1) {
+			tail = hash1[i+16]
+		}
+		result[i] = hash1[i] ^ hash2[i] ^ tail
 	}
 	return result
 }

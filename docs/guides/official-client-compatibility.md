@@ -8,6 +8,22 @@ This project targets framework-level compatibility with official Telegram client
 - Wrapper unwrapping (`invokeWithLayer`, `initConnection`, `invokeAfter*`, `invokeWithoutUpdates`) before API dispatch.
 - `rpc_result` response envelopes with matching `req_msg_id`.
 
+Automated coverage now includes full handshake integration in `compat/handshake_integration_test.go`:
+
+- `req_pq_multi -> req_DH_params -> set_client_DH_params -> dh_gen_ok`
+- transport matrix:
+  - TCP abridged
+  - TCP intermediate
+  - TCP padded intermediate
+  - TCP full
+  - WebSocket obfuscated2 + padded intermediate
+- post-handshake encrypted wrapped request:
+  - `invokeWithLayer(initConnection(query=help.getConfig))`
+- negative protocol checks:
+  - non-monotonic `msg_id` -> `bad_msg_notification`
+  - wrong `server_salt` -> `bad_server_salt`
+  - malformed encrypted payload fails without server crash
+
 ## Compatibility Harness
 
 Use `cmd/compat-server` for real-client probing:
