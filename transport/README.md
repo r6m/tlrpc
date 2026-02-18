@@ -1,47 +1,38 @@
 # Transport Layer
 
-This package provides the transport layer abstraction for TLRPC, handling raw byte streams and connection management.
+The transport package provides the **carrier transports** (TCP/WebSocket) and the **MTProto transport protocol codecs** (Abridged/Intermediate/Padded Intermediate/Full). Carrier transports expose a byte stream; MTProto transport protocols define how MTProto packets are framed within that stream.
 
 ## Overview
 
-The transport layer is responsible for:
-- Establishing and managing network connections
-- Reading and writing raw message bytes
-- Abstracting different transport protocols (TCP, WebSocket, etc.)
+Responsibilities:
+- Establish network connections (TCP/WebSocket)
+- Negotiate MTProto transport protocol
+- Apply MTProto obfuscation (obfuscated2 AES-CTR)
+- Read/write MTProto packets with correct framing
 
-## Interfaces
+## MTProto Transport Protocols
 
-### Transport
-```go
-type Transport interface {
-    Listen(addr string) (Listener, error)
-    Dial(addr string) (Conn, error)
-}
-```
+Implemented codecs:
+- Abridged
+- Intermediate
+- Padded Intermediate
+- Full
 
-### Listener
-```go
-type Listener interface {
-    Accept() (Conn, error)
-    Close() error
-}
-```
+## Obfuscation
 
-### Conn
-```go
-type Conn interface {
-    ReadMessage() ([]byte, error)
-    WriteMessage([]byte) error
-    Close() error
-}
-```
+`obfuscated2` is supported. It is optional for TCP and required for WebSocket. The obfuscation header embeds the protocol tag used for negotiation.
 
-## Implementations
+## WebSocket Requirements
 
-- `tcp`: Standard TCP transport with optional TLS
-- `websocket`: WebSocket transport for web clients
-- `obfuscated`: Telegram's obfuscated transport protocol
+- `Sec-WebSocket-Protocol: binary` is required
+- WebSocket frames are treated as a duplex byte stream (frame boundaries are ignored)
+- MTProto framing is done by the MTProto transport codec
 
 ## Usage
 
-Transport implementations are pluggable and can be swapped based on deployment requirements.
+```go
+srv := tlrpc.NewServer(tlrpc.WithTransport(&transport.TCPTransport{}))
+// or: &transport.WebSocketTransport{}
+```
+
+The `Conn` interface represents MTProto packets (not WebSocket frames or raw TCP reads).
