@@ -37,7 +37,7 @@ func (s *helpService) GetConfig(context.Context, *gen.HelpGetConfigRequest) (*ge
 		Date:                    now,
 		Expires:                 now + 86400,
 		ThisDc:                  1,
-		DcOptions:               []gen.DcOption{{ID: 1, IPAddress: s.dcIP, Port: s.tcpPort}},
+		DcOptions:               []*gen.DcOption{{ID: 1, IPAddress: s.dcIP, Port: s.tcpPort}},
 		DcTxtDomainName:         "localhost",
 		ChatSizeMax:             200,
 		MegagroupSizeMax:        200000,
@@ -75,12 +75,12 @@ func (s *helpService) GetNearestDc(context.Context, *gen.HelpGetNearestDcRequest
 	}, nil
 }
 
-func (s *helpService) GetAppConfig(context.Context, *gen.HelpGetAppConfigRequest) (*gen.HelpAppConfigType, error) {
+func (s *helpService) GetAppConfig(context.Context, *gen.HelpGetAppConfigRequest) (gen.HelpAppConfigType, error) {
 	cfg := gen.HelpAppConfigType(&gen.HelpAppConfig{
 		Hash:   0,
 		Config: &gen.JSONNull{},
 	})
-	return &cfg, nil
+	return cfg, nil
 }
 
 type updatesService struct {
@@ -97,12 +97,12 @@ func (s *updatesService) GetState(context.Context, *gen.UpdatesGetStateRequest) 
 	}, nil
 }
 
-func (s *updatesService) GetDifference(context.Context, *gen.UpdatesGetDifferenceRequest) (*gen.UpdatesDifferenceType, error) {
+func (s *updatesService) GetDifference(context.Context, *gen.UpdatesGetDifferenceRequest) (gen.UpdatesDifferenceType, error) {
 	diff := gen.UpdatesDifferenceType(&gen.UpdatesDifferenceEmpty{
 		Date: int32(time.Now().Unix()),
 		Seq:  1,
 	})
-	return &diff, nil
+	return diff, nil
 }
 
 type usersService struct {
@@ -122,17 +122,17 @@ type authService struct {
 	gen.UnimplementedAuthServer
 }
 
-func (s *authService) SendCode(context.Context, *gen.AuthSendCodeRequest) (*gen.AuthSentCodeType, error) {
+func (s *authService) SendCode(context.Context, *gen.AuthSendCodeRequest) (gen.AuthSentCodeType, error) {
 	timeout := int32(60)
 	sent := gen.AuthSentCodeType(&gen.AuthSentCode{
 		Type_:         &gen.AuthSentCodeTypeApp{Length: 5},
 		PhoneCodeHash: "compat-phone-code-hash",
 		Timeout:       &timeout,
 	})
-	return &sent, nil
+	return sent, nil
 }
 
-func (s *authService) SignIn(ctx context.Context, req *gen.AuthSignInRequest) (*gen.AuthAuthorizationType, error) {
+func (s *authService) SignIn(ctx context.Context, req *gen.AuthSignInRequest) (gen.AuthAuthorizationType, error) {
 	_ = req
 	userID := int64(1)
 	if sess := tlrpc.SessionFromContext(ctx); sess != nil {
@@ -141,7 +141,7 @@ func (s *authService) SignIn(ctx context.Context, req *gen.AuthSignInRequest) (*
 	auth := gen.AuthAuthorizationType(&gen.AuthAuthorization{
 		User: &gen.UserEmpty{ID: userID},
 	})
-	return &auth, nil
+	return auth, nil
 }
 
 func traceInterceptor(trace bool) tlrpc.UnaryInterceptor {

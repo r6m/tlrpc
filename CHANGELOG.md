@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Code generator now emits unified/sum types as interfaces (no pointer-to-interface). RPC methods return the interface directly for sum types, and pointers only for concrete struct results. Vectors of concrete types now use slices of pointers.
+
 ## [0.1.0] - 2026-02-18
 
 ### Added

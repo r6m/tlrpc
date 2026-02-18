@@ -375,7 +375,12 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 func (g *ServiceGenerator) writeRequestDeserializeField(param parser.Parameter, fieldName, indent string) error {
 	typeRef := param.Type
 	if typeRef.IsVector && typeRef.Generic != nil {
-		elementType := g.goBaseType(*typeRef.Generic)
+		elementBase := g.goBaseTypeNonVector(*typeRef.Generic)
+		elementType := elementBase
+		elementPtr := shouldUsePointerForType(g.schema, *typeRef.Generic)
+		if elementPtr {
+			elementType = "*" + elementBase
+		}
 		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
 			return err
 		}
@@ -385,8 +390,14 @@ func (g *ServiceGenerator) writeRequestDeserializeField(param parser.Parameter, 
 		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.ReadVector(rd, func() error {\n", indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\t\tvar item %s\n", indent, elementType); err != nil {
-			return err
+		if elementPtr {
+			if _, err := fmt.Fprintf(g.out, "%s\t\titem := &%s{}\n", indent, elementBase); err != nil {
+				return err
+			}
+		} else {
+			if _, err := fmt.Fprintf(g.out, "%s\t\tvar item %s\n", indent, elementType); err != nil {
+				return err
+			}
 		}
 		if err := g.writeRequestDeserializeValue(*typeRef.Generic, "item", indent+"\t\t"); err != nil {
 			return err
@@ -428,25 +439,14 @@ func (g *ServiceGenerator) writeRequestDeserializeValue(t parser.TypeRef, target
 
 func (g *ServiceGenerator) responseType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
-	if shouldPointerReturn(t) {
+	if g.shouldPointerReturn(t) {
 		return "*" + base
 	}
 	return base
 }
 
-func shouldPointerReturn(t parser.TypeRef) bool {
-	if t.IsVector {
-		return false
-	}
-	if t.Namespace != "" {
-		return true
-	}
-	switch t.Name {
-	case "int", "long", "int128", "int256", "double", "string", "bytes", "Bool", "bool", "true", "false", "#":
-		return false
-	default:
-		return true
-	}
+func (g *ServiceGenerator) shouldPointerReturn(t parser.TypeRef) bool {
+	return shouldUsePointerForType(g.schema, t)
 }
 
 func (g *ServiceGenerator) goType(t parser.TypeRef) string {
@@ -495,7 +495,22 @@ func (g *ServiceGenerator) writeRequestDeserializeOptionalPointer(t parser.TypeR
 
 func (g *ServiceGenerator) goBaseType(t parser.TypeRef) string {
 	if t.IsVector && t.Generic != nil {
-		return "[]" + g.goBaseType(*t.Generic)
+		elementBase := g.goBaseTypeNonVector(*t.Generic)
+		if shouldUsePointerForType(g.schema, *t.Generic) {
+			return "[]*" + elementBase
+		}
+		return "[]" + elementBase
+	}
+	return g.goBaseTypeNonVector(t)
+}
+
+func (g *ServiceGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
+	if t.IsVector && t.Generic != nil {
+		elementBase := g.goBaseTypeNonVector(*t.Generic)
+		if shouldUsePointerForType(g.schema, *t.Generic) {
+			return "[]*" + elementBase
+		}
+		return "[]" + elementBase
 	}
 
 	if isUnionType(g.schema, t) {

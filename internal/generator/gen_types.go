@@ -505,7 +505,12 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 func (g *TypeGenerator) writeDeserializeField(param parser.Parameter, fieldName, indent string) error {
 	typeRef := param.Type
 	if typeRef.IsVector && typeRef.Generic != nil {
-		elementType := g.goBaseType(*typeRef.Generic)
+		elementBase := g.goBaseTypeNonVector(*typeRef.Generic)
+		elementType := elementBase
+		elementPtr := shouldUsePointerForType(g.schema, *typeRef.Generic)
+		if elementPtr {
+			elementType = "*" + elementBase
+		}
 		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
 			return err
 		}
@@ -515,8 +520,14 @@ func (g *TypeGenerator) writeDeserializeField(param parser.Parameter, fieldName,
 		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.ReadVector(r, func() error {\n", indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\t\tvar item %s\n", indent, elementType); err != nil {
-			return err
+		if elementPtr {
+			if _, err := fmt.Fprintf(g.out, "%s\t\titem := &%s{}\n", indent, elementBase); err != nil {
+				return err
+			}
+		} else {
+			if _, err := fmt.Fprintf(g.out, "%s\t\tvar item %s\n", indent, elementType); err != nil {
+				return err
+			}
 		}
 		if err := g.writeDeserializeValue(*typeRef.Generic, "item", indent+"\t\t"); err != nil {
 			return err
@@ -685,7 +696,22 @@ func (g *TypeGenerator) goType(t parser.TypeRef) string {
 
 func (g *TypeGenerator) goBaseType(t parser.TypeRef) string {
 	if t.IsVector && t.Generic != nil {
-		return "[]" + g.goBaseType(*t.Generic)
+		elementBase := g.goBaseTypeNonVector(*t.Generic)
+		if shouldUsePointerForType(g.schema, *t.Generic) {
+			return "[]*" + elementBase
+		}
+		return "[]" + elementBase
+	}
+	return g.goBaseTypeNonVector(t)
+}
+
+func (g *TypeGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
+	if t.IsVector && t.Generic != nil {
+		elementBase := g.goBaseTypeNonVector(*t.Generic)
+		if shouldUsePointerForType(g.schema, *t.Generic) {
+			return "[]*" + elementBase
+		}
+		return "[]" + elementBase
 	}
 
 	if isUnionType(g.schema, t) {

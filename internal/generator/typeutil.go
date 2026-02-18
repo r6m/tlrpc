@@ -49,3 +49,25 @@ func needsOptionalPointer(t parser.TypeRef, base string, schema *parser.Schema) 
 	}
 	return true
 }
+
+func isBuiltinTLType(name string) bool {
+	switch name {
+	case "int", "long", "int128", "int256", "double", "string", "bytes", "Bool", "bool", "true", "false", "#", "error", "null", "vector":
+		return true
+	default:
+		return false
+	}
+}
+
+func shouldUsePointerForType(schema *parser.Schema, t parser.TypeRef) bool {
+	if t.IsVector {
+		return false
+	}
+	if isUnionType(schema, t) {
+		return false
+	}
+	if isBuiltinTLType(t.Name) {
+		return false
+	}
+	return true
+}

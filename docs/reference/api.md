@@ -90,6 +90,8 @@ Generated request structs implement:
 - `SerializeTL(io.Writer) error`
 - `DeserializeTL(io.Reader) error`
 
+Unified/sum TL types are emitted as Go interfaces. RPC methods return the interface directly for sum types (no pointer-to-interface). Concrete results are returned as pointers to structs.
+
 ## Context Helpers
 
 ```go

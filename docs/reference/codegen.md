@@ -22,5 +22,6 @@ Service model:
 - Generated requests expose `Method() string`.
 - Generated registration descriptors provide constructor ID and request constructors used by runtime dispatch.
 - Built-in TL primitives are referenced via aliases instead of re-generated shadow types.
+- Unified/sum TL types are generated as Go interfaces and are returned as the interface (not a pointer). Concrete results are returned as pointers to structs.
 
 If you change schema/signatures, regenerate and recompile consumers.
