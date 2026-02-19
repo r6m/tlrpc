@@ -349,11 +349,7 @@ func (h *connHandler) invokeMethod(ctx context.Context, req TLObject) (TLObject,
 	if resp == nil {
 		return nil, nil
 	}
-	respObj, ok := resp.(TLObject)
-	if !ok {
-		return nil, NewInternalError("response does not implement TLObject")
-	}
-	return respObj, nil
+	return normalizeResponse(resp)
 }
 
 func (h *connHandler) dispatchContainer(ctx context.Context, container *mtprototl.MsgContainer, requestMsgID int64) (TLObject, error) {
