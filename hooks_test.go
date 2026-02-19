@@ -93,3 +93,32 @@ func TestBindingFromContext(t *testing.T) {
 		t.Fatalf("unexpected binding")
 	}
 }
+
+func TestSessionUnboundWithoutBind(t *testing.T) {
+	var called []Binding
+	var mu sync.Mutex
+
+	srv := NewServer(
+		WithOnSessionUnbound(func(b Binding) {
+			mu.Lock()
+			called = append(called, b)
+			mu.Unlock()
+		}),
+	)
+
+	h := &connHandler{
+		server: srv,
+		conn:   &testConn{ctx: context.Background()},
+	}
+
+	h.onUnbound()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(called) != 1 {
+		t.Fatalf("expected unbound hook to fire once, got %d", len(called))
+	}
+	if called[0].AuthKeyID != 0 || called[0].SessionID != 0 || called[0].UserID != 0 {
+		t.Fatalf("expected empty binding, got %+v", called[0])
+	}
+}
