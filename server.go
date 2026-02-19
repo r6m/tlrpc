@@ -30,6 +30,8 @@ type Server struct {
 	handshakeHandler  HandshakeHandler
 	shutdownCh        chan struct{}
 	updateHub         *updateHub
+	onSessionBound    OnSessionBoundHook
+	onSessionUnbound  OnSessionUnboundHook
 }
 
 // serviceInfo stores service implementation info
@@ -355,6 +357,20 @@ func WithSessionManager(manager session.Manager) ServerOption {
 		if manager != nil {
 			s.sessions = manager
 		}
+	}
+}
+
+// WithOnSessionBound registers a hook called when a session is bound to a connection.
+func WithOnSessionBound(fn OnSessionBoundHook) ServerOption {
+	return func(s *Server) {
+		s.onSessionBound = fn
+	}
+}
+
+// WithOnSessionUnbound registers a hook called when a connection is unbound/closed.
+func WithOnSessionUnbound(fn OnSessionUnboundHook) ServerOption {
+	return func(s *Server) {
+		s.onSessionUnbound = fn
 	}
 }
 
