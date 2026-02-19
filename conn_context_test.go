@@ -20,6 +20,7 @@ func (f *fakeConn) LocalAddr() net.Addr          { return nil }
 func (f *fakeConn) RemoteAddr() net.Addr         { return nil }
 func (f *fakeConn) SetDeadline(time.Time) error  { return nil }
 func (f *fakeConn) Context() context.Context     { return f.ctx }
+func (f *fakeConn) Send(TLObject) error          { return nil }
 
 var _ transport.Conn = (*fakeConn)(nil)
 

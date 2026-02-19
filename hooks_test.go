@@ -22,6 +22,7 @@ func (t *testConn) LocalAddr() net.Addr          { return nil }
 func (t *testConn) RemoteAddr() net.Addr         { return nil }
 func (t *testConn) SetDeadline(time.Time) error  { return nil }
 func (t *testConn) Context() context.Context     { return t.ctx }
+func (t *testConn) Send(TLObject) error          { return nil }
 
 func TestSessionHooks(t *testing.T) {
 	var bound []Binding
@@ -58,7 +59,7 @@ func TestSessionHooks(t *testing.T) {
 	h.state.binding = binding
 	h.state.onceBound.Do(func() {
 		if h.server.onSessionBound != nil {
-			h.server.onSessionBound(binding, h.conn.(Conn))
+			h.server.onSessionBound(binding, newServerConn(h.server, h.conn.(TransportConn), &h.state))
 		}
 	})
 
