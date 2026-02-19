@@ -446,6 +446,9 @@ func (g *ServiceGenerator) responseType(t parser.TypeRef) string {
 }
 
 func (g *ServiceGenerator) shouldPointerReturn(t parser.TypeRef) bool {
+	if isUnionType(g.schema, t) {
+		return false
+	}
 	return shouldUsePointerForType(g.schema, t)
 }
 
