@@ -25,8 +25,14 @@ type Transport = transport.Transport
 // Listener interface for accepting connections.
 type Listener = transport.Listener
 
-// Conn interface for connections.
-type Conn = transport.Conn
+// TransportConn aliases transport.Conn for low-level access.
+type TransportConn = transport.Conn
+
+// Conn interface for connections exposed to handlers.
+type Conn interface {
+	transport.Conn
+	Send(TLObject) error
+}
 
 // Logger interface for logging.
 type Logger interface {

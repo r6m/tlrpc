@@ -15,6 +15,7 @@ import (
 	"github.com/r6m/tlrpc/mtproto"
 	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 	"github.com/r6m/tlrpc/session"
+	"github.com/r6m/tlrpc/transport"
 )
 
 type connHandler struct {
@@ -23,6 +24,13 @@ type connHandler struct {
 	state          connHandlerState
 	disableUpdates bool
 }
+
+type serverMsgIDKind int
+
+const (
+	serverMsgIDResponse serverMsgIDKind = iota
+	serverMsgIDPush
+)
 
 type connIO interface {
 	ReadMessage() ([]byte, error)
@@ -75,6 +83,24 @@ func (h *connHandler) nextSeqNo(contentRelated bool) int32 {
 	return h.state.seqNos.Next(contentRelated)
 }
 
+func (h *connHandler) nextServerMsgID(kind serverMsgIDKind) int64 {
+	base := h.nextMsgID() &^ 3
+	switch kind {
+	case serverMsgIDPush:
+		return base | 3
+	default:
+		return base | 1
+	}
+}
+
+func serverMsgID(base int64, kind serverMsgIDKind) int64 {
+	base &= ^int64(3)
+	if kind == serverMsgIDPush {
+		return base | 3
+	}
+	return base | 1
+}
+
 func serializeEncrypted(msg *mtproto.EncryptedMessage) []byte {
 	data := make([]byte, 8+16+len(msg.EncryptedData))
 	binary.LittleEndian.PutUint64(data[:8], uint64(msg.AuthKeyID))
@@ -113,7 +139,7 @@ func (h *connHandler) handleUnencryptedMessage(msg *mtproto.UnencryptedMessage) 
 
 	respMsg := &mtproto.UnencryptedMessage{
 		AuthKeyID: [8]byte{},
-		MsgID:     h.nextMsgID(),
+		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		Data:      respData,
 	}
 
@@ -180,6 +206,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 			sess.ServerSalt = time.Now().UTC().UnixNano()
 		}
 		sess.Touch()
+		h.state.session = sess
 	}
 	if sess == nil {
 		return NewInternalError("missing session")
@@ -210,8 +237,10 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	}
 	ctx = withSession(ctx, sess)
 	ctx = withAuthKeyID(ctx, int64(keyID))
-	if conn, ok := h.conn.(Conn); ok {
-		ctx = withConn(ctx, conn)
+	if h.server != nil {
+		if sc, ok := h.conn.(transport.Conn); ok {
+			ctx = withConn(ctx, newServerConn(h.server, sc, &h.state))
+		}
 	}
 	if sess != nil {
 		ctx = withLayer(ctx, sess.Layer)
@@ -244,8 +273,8 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		h.state.binding = binding
 		h.state.onceBound.Do(func() {
 			if h.server.onSessionBound != nil {
-				if conn, ok := h.conn.(Conn); ok {
-					h.server.onSessionBound(binding, conn)
+				if sc, ok := h.conn.(transport.Conn); ok {
+					h.server.onSessionBound(binding, newServerConn(h.server, sc, &h.state))
 				}
 			}
 		})
@@ -285,7 +314,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	innerResp := &mtproto.InnerData{
 		Salt:      sess.ServerSalt,
 		SessionID: sess.SessionID,
-		MsgID:     h.nextMsgID(),
+		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(true),
 		Data:      respData,
 	}
@@ -413,7 +442,7 @@ func (h *connHandler) dispatchContainer(ctx context.Context, container *mtprotot
 			continue
 		}
 		responses = append(responses, mtprototl.Message{
-			MsgID:   h.nextMsgID(),
+			MsgID:   h.nextServerMsgID(serverMsgIDResponse),
 			SeqNo:   h.nextSeqNo(true),
 			BodyRaw: respBytes,
 		})
@@ -521,7 +550,7 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 	innerAck := &mtproto.InnerData{
 		Salt:      0, // Use 0 for acks
 		SessionID: 0, // Use 0 for acks
-		MsgID:     h.nextMsgID(),
+		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(false),
 		Data:      ackData,
 	}
@@ -546,7 +575,7 @@ func (h *connHandler) sendBadMsgNotification(authKey crypto.AuthKey, keyID crypt
 	inner := &mtproto.InnerData{
 		Salt:      0,
 		SessionID: 0,
-		MsgID:     h.nextMsgID(),
+		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(false),
 		Data:      body,
 	}
@@ -570,7 +599,7 @@ func (h *connHandler) sendBadServerSalt(authKey crypto.AuthKey, keyID crypto.Key
 	inner := &mtproto.InnerData{
 		Salt:      0,
 		SessionID: 0,
-		MsgID:     h.nextMsgID(),
+		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(false),
 		Data:      body,
 	}
@@ -612,7 +641,7 @@ func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
 	innerResp := &mtproto.InnerData{
 		Salt:      0,
 		SessionID: 0,
-		MsgID:     h.nextMsgID(),
+		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(true),
 		Data:      respData,
 	}
