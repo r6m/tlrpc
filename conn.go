@@ -20,7 +20,7 @@ import (
 type connHandler struct {
 	server         *Server
 	conn           connIO
-	authKeyID      crypto.KeyID
+	state          connHandlerState
 	disableUpdates bool
 }
 
@@ -32,6 +32,7 @@ type connIO interface {
 }
 
 func (h *connHandler) run() error {
+	defer h.onUnbound()
 	for {
 		payload, err := h.conn.ReadMessage()
 		if err != nil {
@@ -41,6 +42,16 @@ func (h *connHandler) run() error {
 			return err
 		}
 	}
+}
+
+func (h *connHandler) onUnbound() {
+	if h.server == nil || h.server.onSessionUnbound == nil {
+		return
+	}
+	if h.state.binding.AuthKeyID == 0 && h.state.binding.SessionID == 0 && h.state.binding.UserID == 0 && h.state.binding.Layer == 0 {
+		return
+	}
+	h.server.onSessionUnbound(h.state.binding)
 }
 
 func layerFromSession(sess *session.Session) int {
@@ -153,7 +164,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	}
 
 	// Store the auth key ID for error responses
-	h.authKeyID = keyID
+	h.state.authKeyID = keyID
 
 	sess, err := h.server.sessions.Get(keyID)
 	if err != nil {
@@ -220,13 +231,30 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if err != nil {
 		return h.sendRPCError(inner.MsgID, err)
 	}
-	if sess != nil && sess.UserID != 0 && h.server.updateHub != nil && !h.disableUpdates {
-		h.server.updateHub.bind(sess.UserID, updateBinding{
-			conn:      h.conn,
-			keyID:     keyID,
-			sessionID: sess.SessionID,
-			salt:      sess.ServerSalt,
+	if sess != nil && sess.UserID != 0 {
+		binding := Binding{
+			AuthKeyID:  int64(keyID),
+			SessionID:  sess.SessionID,
+			ServerSalt: sess.ServerSalt,
+			UserID:     sess.UserID,
+			Layer:      sess.Layer,
+		}
+		h.state.binding = binding
+		h.state.onceBound.Do(func() {
+			if h.server.onSessionBound != nil {
+				if conn, ok := h.conn.(Conn); ok {
+					h.server.onSessionBound(binding, conn)
+				}
+			}
 		})
+		if h.server.updateHub != nil && !h.disableUpdates {
+			h.server.updateHub.bind(sess.UserID, updateBinding{
+				conn:      h.conn,
+				keyID:     keyID,
+				sessionID: sess.SessionID,
+				salt:      sess.ServerSalt,
+			})
+		}
 	}
 	if respObj == nil {
 		return h.sendAcknowledgment(authKey, keyID, ackIDs...)
@@ -579,12 +607,12 @@ func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
 		Data:      respData,
 	}
 
-	authKey, keyErr := h.server.authKeys.Get(h.authKeyID)
+	authKey, keyErr := h.server.authKeys.Get(h.state.authKeyID)
 	if keyErr != nil {
 		return keyErr
 	}
 
-	encResp, encErr := innerResp.Encrypt(authKey, h.authKeyID)
+	encResp, encErr := innerResp.Encrypt(authKey, h.state.authKeyID)
 	if encErr != nil {
 		return encErr
 	}
