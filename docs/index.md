@@ -24,3 +24,4 @@ Start here for architecture, API reference, and implementation guides.
 - [Best Practices](./guides/best-practices.md)
 - [FAQ](./guides/faq.md)
 - [Official Client Compatibility](./guides/official-client-compatibility.md)
+- [Compat Test Harness](./guides/compat-harness.md)
