@@ -197,6 +197,9 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	}
 	ctx = withSession(ctx, sess)
 	ctx = withAuthKeyID(ctx, int64(keyID))
+	if conn, ok := h.conn.(Conn); ok {
+		ctx = withConn(ctx, conn)
+	}
 	if sess != nil {
 		ctx = withLayer(ctx, sess.Layer)
 		ctx = withUserID(ctx, sess.UserID)
