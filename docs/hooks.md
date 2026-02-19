@@ -57,3 +57,18 @@ OnSessionUnbound(binding):
 ```
 
 These examples are intentionally schematic. Application code controls data formats, retries, and consistency.
+
+## Local Push (No Routing)
+
+Handlers can send a server-initiated TL object on the active connection:
+
+```go
+func (s *MyService) Notify(ctx context.Context, _ *gen.SomeRequest) (gen.UpdatesType, error) {
+	if conn, ok := tlrpc.ConnFromContext(ctx); ok {
+		_ = conn.Send(&gen.UpdateUserStatus{UserID: 1, Status: &gen.UserStatusOnline{Expires: 123}})
+	}
+	return &gen.UpdatesTooLong{}, nil
+}
+```
+
+`Conn.Send` only writes to the current connection. `tlrpc` does not manage which users should receive updates or any fanout. External routing/presence systems remain application concerns.
