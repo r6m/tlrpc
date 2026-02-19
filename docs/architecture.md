@@ -26,6 +26,9 @@ This document describes the request lifecycle and where extensions should hook i
 - Response objects are TL-encoded (`encodeTLObject`) and wrapped in `rpc_result`.
 - `mtproto.InnerData` is encrypted and written to the connection.
 - Acks are sent for received message IDs.
+6) **Server-initiated send**
+- `Conn.Send(TLObject)` builds an encrypted message with server msg_id/seq_no rules.
+- Intended for local pushes on the active connection only (no routing).
 
 ## Hook Points
 
@@ -43,7 +46,7 @@ This document describes the request lifecycle and where extensions should hook i
 - **Goal:** allow apps to publish presence / routing events externally (Redis/NATS) without core dependencies.
 
 ### Local Push Path
-- **Where:** a helper that encrypts and writes TL objects to the current connection using the active auth key and session binding.
+- **Where:** `Conn.Send(TLObject)` on the active connection.
 - **Scope:** local only (current connection), no fanout or distributed routing.
 
 ## Existing Protocol Helpers
