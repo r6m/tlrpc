@@ -56,10 +56,7 @@ func (h *connHandler) onUnbound() {
 	if h.server == nil || h.server.onSessionUnbound == nil {
 		return
 	}
-	if h.state.binding.AuthKeyID == 0 && h.state.binding.SessionID == 0 && h.state.binding.UserID == 0 && h.state.binding.Layer == 0 {
-		return
-	}
-	h.server.onSessionUnbound(h.state.binding)
+	h.server.onSessionUnbound(h.currentBinding())
 }
 
 func layerFromSession(sess *session.Session) int {
@@ -67,6 +64,22 @@ func layerFromSession(sess *session.Session) int {
 		return 0
 	}
 	return sess.Layer
+}
+
+func (h *connHandler) currentBinding() Binding {
+	if h.state.binding.AuthKeyID != 0 || h.state.binding.SessionID != 0 || h.state.binding.UserID != 0 || h.state.binding.Layer != 0 {
+		return h.state.binding
+	}
+	binding := Binding{
+		AuthKeyID: int64(h.state.authKeyID),
+	}
+	if h.state.session != nil {
+		binding.SessionID = h.state.session.SessionID
+		binding.ServerSalt = h.state.session.ServerSalt
+		binding.UserID = h.state.session.UserID
+		binding.Layer = h.state.session.Layer
+	}
+	return binding
 }
 
 func (h *connHandler) nextMsgID() int64 {
