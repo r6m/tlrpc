@@ -1,0 +1,15 @@
+type TestServer interface {
+	GetPeer(ctx context.Context, req *TestGetPeerRequest) (InputPeerType, error)
+	GetPeers(ctx context.Context, req *TestGetPeersRequest) ([]InputPeerType, error)
+}
+
+type UnimplementedTestServer struct{}
+
+func (UnimplementedTestServer) testEmbeddedByValue() {}
+
+func (UnimplementedTestServer) GetPeer(context.Context, *TestGetPeerRequest) (InputPeerType, error) {
+	return nil, tlrpc.ErrUnimplemented
+}
+func (UnimplementedTestServer) GetPeers(context.Context, *TestGetPeersRequest) ([]InputPeerType, error) {
+	return nil, tlrpc.ErrUnimplemented
+}
