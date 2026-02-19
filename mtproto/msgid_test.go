@@ -1,6 +1,9 @@
 package mtproto
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestMsgIDGeneratorMonotonic(t *testing.T) {
 	gen := NewMsgIDGenerator()
@@ -27,5 +30,24 @@ func TestMsgIDGeneratorServerBits(t *testing.T) {
 	}
 	if push <= resp {
 		t.Fatalf("push msg_id not monotonic: resp=%d push=%d", resp, push)
+	}
+}
+
+func TestMsgIDGeneratorMonotonicWhenTimeBackwards(t *testing.T) {
+	gen := NewMsgIDGenerator()
+	times := []int64{10_000_000_000, 9_000_000_000, 8_000_000_000}
+	idx := 0
+	gen.now = func() time.Time {
+		t := time.Unix(0, times[idx])
+		if idx < len(times)-1 {
+			idx++
+		}
+		return t
+	}
+
+	first := gen.nextServerMsgID(msgIDResponse)
+	second := gen.nextServerMsgID(msgIDResponse)
+	if second <= first {
+		t.Fatalf("msg_id not monotonic when time goes backwards: %d then %d", first, second)
 	}
 }
