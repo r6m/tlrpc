@@ -22,6 +22,7 @@ var staticConstructors = map[uint32]func() tlrpc.TLObject{
 	0x2210c154: func() tlrpc.TLObject { d := types.Double(0); return &d },
 	// Generated types
 	0x9f57e1e8: func() tlrpc.TLObject { return &EchoResponse{} },
+	0x2c1c9a11: func() tlrpc.TLObject { return &EchoUpdate{} },
 }
 
 // GetStaticConstructors returns the static constructor map for codec initialization

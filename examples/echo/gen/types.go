@@ -46,3 +46,39 @@ func (v *EchoResponse) DeserializeTL(r io.Reader) error {
 	}
 	return nil
 }
+
+type EchoUpdate struct {
+	Message string
+}
+
+func (v *EchoUpdate) ConstructorID() uint32 { return 0x2c1c9a11 }
+func (v *EchoUpdate) Method() string        { return "" }
+func (v *EchoUpdate) TLName() string        { return "echo.update" }
+
+func (v *EchoUpdate) SerializeTL(w io.Writer) error {
+	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+		return err
+	}
+	if err := mtproto.WriteString(w, v.Message); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *EchoUpdate) DeserializeTL(r io.Reader) error {
+	ctorID, err := mtproto.ReadUint32(r)
+	if err != nil {
+		return err
+	}
+	if ctorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
+	}
+	{
+		value, err := mtproto.ReadString(r)
+		if err != nil {
+			return err
+		}
+		v.Message = value
+	}
+	return nil
+}

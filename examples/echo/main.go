@@ -13,14 +13,24 @@ type echoServer struct {
 	echo.UnimplementedEchoServer
 }
 
-func (s *echoServer) Echo(_ context.Context, req *echo.EchoEchoRequest) (*echo.EchoResponse, error) {
+func (s *echoServer) Echo(ctx context.Context, req *echo.EchoEchoRequest) (*echo.EchoResponse, error) {
+	if conn, ok := tlrpc.ConnFromContext(ctx); ok {
+		_ = conn.Send(&echo.EchoUpdate{Message: "server push: " + req.Message})
+	}
 	return &echo.EchoResponse{Message: req.Message}, nil
 }
 
 func main() {
 	tcp := &transport.TCPTransport{}
 	ws := &transport.WebSocketTransport{}
-	srv := tlrpc.NewServer()
+	srv := tlrpc.NewServer(
+		tlrpc.WithOnSessionBound(func(binding tlrpc.Binding, _ tlrpc.Conn) {
+			log.Printf("session bound: auth_key_id=%d user_id=%d", binding.AuthKeyID, binding.UserID)
+		}),
+		tlrpc.WithOnSessionUnbound(func(binding tlrpc.Binding) {
+			log.Printf("session unbound: auth_key_id=%d user_id=%d", binding.AuthKeyID, binding.UserID)
+		}),
+	)
 	echo.RegisterEchoServer(srv, &echoServer{})
 
 	tcpLis, err := tcp.Listen(":9000")
