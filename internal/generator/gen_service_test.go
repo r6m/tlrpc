@@ -63,4 +63,7 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !strings.Contains(requests, "APIID int32") {
 		t.Fatalf("expected APIID field")
 	}
+	if !strings.Contains(requests, "func (r *AuthSendCodeRequest) TLName() string") {
+		t.Fatalf("expected TLName method on request")
+	}
 }

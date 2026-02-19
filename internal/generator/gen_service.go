@@ -206,6 +206,9 @@ func (g *ServiceGenerator) generateRequestMethods(fn parser.FuncDecl, reqBaseNam
 	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) Method() string { return %q }\n\n", reqBaseName, fn.Name); err != nil {
 		return err
 	}
+	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) TLName() string { return %q }\n\n", reqBaseName, fn.Name); err != nil {
+		return err
+	}
 	if hasFlagsParam(fn.Params) {
 		if err := g.generateRequestComputeFlags(fn, reqBaseName); err != nil {
 			return err
