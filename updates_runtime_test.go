@@ -31,6 +31,8 @@ func TestServerPublishSendsEncryptedUpdate(t *testing.T) {
 		keyID:     keyID,
 		sessionID: 100,
 		salt:      200,
+		msgIDs:    mtproto.NewMsgIDGenerator(),
+		seqNos:    mtproto.NewSeqNoGenerator(0),
 	})
 
 	update := &mockTLObjectForConn{constructorID: 0x7f000001}
@@ -85,7 +87,7 @@ func TestHandleEncryptedAckAfterPublishedUpdate(t *testing.T) {
 		t.Fatalf("save session: %v", err)
 	}
 
-	ackBody, err := encodeTLObject(&mtprototl.MsgsAck{MsgIDs: []int64{nextMsgID()}})
+	ackBody, err := encodeTLObject(&mtprototl.MsgsAck{MsgIDs: []int64{mtproto.NewMsgIDGenerator().Next()}})
 	if err != nil {
 		t.Fatalf("encode ack body: %v", err)
 	}

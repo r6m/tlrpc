@@ -12,6 +12,8 @@ type updateBinding struct {
 	keyID     crypto.KeyID
 	sessionID int64
 	salt      int64
+	msgIDs    *mtproto.MsgIDGenerator
+	seqNos    *mtproto.SeqNoGenerator
 }
 
 type updateHub struct {
@@ -67,11 +69,14 @@ func (h *updateHub) publish(userID int64, update TLObject, authKeys crypto.AuthK
 		if err != nil {
 			continue
 		}
+		if binding.msgIDs == nil || binding.seqNos == nil {
+			continue
+		}
 		inner := &mtproto.InnerData{
 			Salt:      binding.salt,
 			SessionID: binding.sessionID,
-			MsgID:     nextMsgID(),
-			SeqNo:     0,
+			MsgID:     binding.msgIDs.Next(),
+			SeqNo:     binding.seqNos.Next(true),
 			Data:      updateData,
 		}
 		enc, err := inner.Encrypt(authKey, binding.keyID)

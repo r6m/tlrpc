@@ -61,16 +61,18 @@ func layerFromSession(sess *session.Session) int {
 	return sess.Layer
 }
 
-func nextMsgID() int64 {
-	return time.Now().UnixNano() &^ 3
+func (h *connHandler) nextMsgID() int64 {
+	if h.state.msgIDs == nil {
+		h.state.msgIDs = mtproto.NewMsgIDGenerator()
+	}
+	return h.state.msgIDs.Next()
 }
 
-func nextSeqNo(sess *Session) int32 {
-	if sess == nil {
-		return 0
+func (h *connHandler) nextSeqNo(contentRelated bool) int32 {
+	if h.state.seqNos == nil {
+		h.state.seqNos = mtproto.NewSeqNoGenerator(0)
 	}
-	sess.SeqNo++
-	return sess.SeqNo
+	return h.state.seqNos.Next(contentRelated)
 }
 
 func serializeEncrypted(msg *mtproto.EncryptedMessage) []byte {
@@ -111,7 +113,7 @@ func (h *connHandler) handleUnencryptedMessage(msg *mtproto.UnencryptedMessage) 
 
 	respMsg := &mtproto.UnencryptedMessage{
 		AuthKeyID: [8]byte{},
-		MsgID:     nextMsgID(),
+		MsgID:     h.nextMsgID(),
 		Data:      respData,
 	}
 
@@ -248,11 +250,19 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 			}
 		})
 		if h.server.updateHub != nil && !h.disableUpdates {
+			if h.state.msgIDs == nil {
+				h.state.msgIDs = mtproto.NewMsgIDGenerator()
+			}
+			if h.state.seqNos == nil {
+				h.state.seqNos = mtproto.NewSeqNoGenerator(0)
+			}
 			h.server.updateHub.bind(sess.UserID, updateBinding{
 				conn:      h.conn,
 				keyID:     keyID,
 				sessionID: sess.SessionID,
 				salt:      sess.ServerSalt,
+				msgIDs:    h.state.msgIDs,
+				seqNos:    h.state.seqNos,
 			})
 		}
 	}
@@ -275,8 +285,8 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	innerResp := &mtproto.InnerData{
 		Salt:      sess.ServerSalt,
 		SessionID: sess.SessionID,
-		MsgID:     nextMsgID(),
-		SeqNo:     nextSeqNo(sess),
+		MsgID:     h.nextMsgID(),
+		SeqNo:     h.nextSeqNo(true),
 		Data:      respData,
 	}
 	encResp, err := innerResp.Encrypt(authKey, keyID)
@@ -403,8 +413,8 @@ func (h *connHandler) dispatchContainer(ctx context.Context, container *mtprotot
 			continue
 		}
 		responses = append(responses, mtprototl.Message{
-			MsgID:   nextMsgID(),
-			SeqNo:   msg.SeqNo,
+			MsgID:   h.nextMsgID(),
+			SeqNo:   h.nextSeqNo(true),
 			BodyRaw: respBytes,
 		})
 	}
@@ -511,8 +521,8 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 	innerAck := &mtproto.InnerData{
 		Salt:      0, // Use 0 for acks
 		SessionID: 0, // Use 0 for acks
-		MsgID:     nextMsgID(),
-		SeqNo:     0, // Acks don't need sequence numbers
+		MsgID:     h.nextMsgID(),
+		SeqNo:     h.nextSeqNo(false),
 		Data:      ackData,
 	}
 
@@ -536,8 +546,8 @@ func (h *connHandler) sendBadMsgNotification(authKey crypto.AuthKey, keyID crypt
 	inner := &mtproto.InnerData{
 		Salt:      0,
 		SessionID: 0,
-		MsgID:     nextMsgID(),
-		SeqNo:     0,
+		MsgID:     h.nextMsgID(),
+		SeqNo:     h.nextSeqNo(false),
 		Data:      body,
 	}
 	encResp, err := inner.Encrypt(authKey, keyID)
@@ -560,8 +570,8 @@ func (h *connHandler) sendBadServerSalt(authKey crypto.AuthKey, keyID crypto.Key
 	inner := &mtproto.InnerData{
 		Salt:      0,
 		SessionID: 0,
-		MsgID:     nextMsgID(),
-		SeqNo:     0,
+		MsgID:     h.nextMsgID(),
+		SeqNo:     h.nextSeqNo(false),
 		Data:      body,
 	}
 	encResp, err := inner.Encrypt(authKey, keyID)
@@ -602,8 +612,8 @@ func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
 	innerResp := &mtproto.InnerData{
 		Salt:      0,
 		SessionID: 0,
-		MsgID:     nextMsgID(),
-		SeqNo:     0,
+		MsgID:     h.nextMsgID(),
+		SeqNo:     h.nextSeqNo(true),
 		Data:      respData,
 	}
 

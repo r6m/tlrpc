@@ -48,7 +48,7 @@ This document describes the request lifecycle and where extensions should hook i
 
 ## Existing Protocol Helpers
 
-- `nextMsgID` and `nextSeqNo` in `conn.go` drive server-sent message IDs and sequence numbers.
+- `mtproto.MsgIDGenerator` and `mtproto.SeqNoGenerator` drive server-sent message IDs and sequence numbers.
 - MTProto envelope encoding/decoding is under `mtproto/` and `mtproto/tl/`.
 
 ## Extension Design Goals

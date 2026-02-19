@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"testing"
-	"time"
 
 	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
@@ -82,41 +81,6 @@ func TestLayerFromSession(t *testing.T) {
 	sess := &session.Session{Layer: 42}
 	if layerFromSession(sess) != 42 {
 		t.Errorf("layerFromSession returned wrong layer: got %d, want %d", layerFromSession(sess), 42)
-	}
-}
-
-func TestNextMsgID(t *testing.T) {
-	id1 := nextMsgID()
-	time.Sleep(time.Millisecond) // Ensure different timestamp
-	id2 := nextMsgID()
-
-	if id1 == id2 {
-		t.Error("nextMsgID should return different IDs")
-	}
-
-	// MTProto message IDs should have bottom 2 bits as 0
-	if id1&3 != 0 {
-		t.Errorf("message ID should have bottom 2 bits as 0: %x", id1)
-	}
-	if id2&3 != 0 {
-		t.Errorf("message ID should have bottom 2 bits as 0: %x", id2)
-	}
-}
-
-func TestNextSeqNo(t *testing.T) {
-	// Test with nil session
-	if nextSeqNo(nil) != 0 {
-		t.Error("nextSeqNo(nil) should return 0")
-	}
-
-	// Test with valid session
-	sess := &Session{SeqNo: 5}
-	seqNo := nextSeqNo(sess)
-	if seqNo != 6 {
-		t.Errorf("nextSeqNo returned wrong sequence number: got %d, want %d", seqNo, 6)
-	}
-	if sess.SeqNo != 6 {
-		t.Errorf("session sequence number not incremented: got %d, want %d", sess.SeqNo, 6)
 	}
 }
 
@@ -220,8 +184,6 @@ func TestConnExportedFunctions(t *testing.T) {
 	// and other integration tests. Here we just ensure they exist
 	// and don't panic on basic calls.
 
-	// nextMsgID is tested above
-	// nextSeqNo is tested above
 	// encodeTLObject is tested above
 	// etc.
 }
