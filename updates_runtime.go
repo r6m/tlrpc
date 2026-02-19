@@ -75,7 +75,7 @@ func (h *updateHub) publish(userID int64, update TLObject, authKeys crypto.AuthK
 		inner := &mtproto.InnerData{
 			Salt:      binding.salt,
 			SessionID: binding.sessionID,
-			MsgID:     binding.msgIDs.Next(),
+			MsgID:     serverMsgID(binding.msgIDs.Next(), serverMsgIDPush),
 			SeqNo:     binding.seqNos.Next(true),
 			Data:      updateData,
 		}

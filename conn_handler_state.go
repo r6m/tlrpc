@@ -5,6 +5,7 @@ import (
 
 	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
+	"github.com/r6m/tlrpc/session"
 )
 
 type connHandlerState struct {
@@ -13,4 +14,5 @@ type connHandlerState struct {
 	authKeyID crypto.KeyID
 	msgIDs    *mtproto.MsgIDGenerator
 	seqNos    *mtproto.SeqNoGenerator
+	session   *session.Session
 }
