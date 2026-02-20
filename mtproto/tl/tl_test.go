@@ -100,6 +100,59 @@ func TestGzipPackedRoundTrip(t *testing.T) {
 	}
 }
 
+func TestGetFutureSaltsRoundTrip(t *testing.T) {
+	in := &GetFutureSaltsRequest{Num: 32}
+	buf := &bytes.Buffer{}
+	if err := in.SerializeTL(buf); err != nil {
+		t.Fatalf("serialize: %v", err)
+	}
+	if got := bytesToUint32(buf.Bytes()[:4]); got != GetFutureSaltsID {
+		t.Fatalf("constructor id: got %08x want %08x", got, GetFutureSaltsID)
+	}
+	out := &GetFutureSaltsRequest{}
+	if err := out.DeserializeTL(bytes.NewReader(buf.Bytes())); err != nil {
+		t.Fatalf("deserialize: %v", err)
+	}
+	if out.Num != 32 {
+		t.Fatalf("num: got %d want %d", out.Num, 32)
+	}
+}
+
+func TestFutureSaltsRoundTripUsesBareVector(t *testing.T) {
+	in := &FutureSalts{
+		ReqMsgID: 77,
+		Now:      1234,
+		Salts: []FutureSalt{
+			{ValidSince: 1, ValidUntil: 2, Salt: 3},
+		},
+	}
+	buf := &bytes.Buffer{}
+	if err := in.SerializeTL(buf); err != nil {
+		t.Fatalf("serialize: %v", err)
+	}
+	raw := buf.Bytes()
+	if got := bytesToUint32(raw[:4]); got != FutureSaltsID {
+		t.Fatalf("constructor id: got %08x want %08x", got, FutureSaltsID)
+	}
+
+	// salts is encoded as bare vector length (no vector constructor ID).
+	// Offset: constructor(4) + req_msg_id(8) + now(4) = 16
+	if got := bytesToUint32(raw[16:20]); got != 1 {
+		t.Fatalf("salts length: got %d want 1", got)
+	}
+
+	out := &FutureSalts{}
+	if err := out.DeserializeTL(bytes.NewReader(raw)); err != nil {
+		t.Fatalf("deserialize: %v", err)
+	}
+	if out.ReqMsgID != 77 || out.Now != 1234 {
+		t.Fatalf("header mismatch: %+v", out)
+	}
+	if len(out.Salts) != 1 || out.Salts[0].Salt != 3 {
+		t.Fatalf("unexpected salts: %+v", out.Salts)
+	}
+}
+
 func bytesToUint32(b []byte) uint32 {
 	v, _ := mtproto.ReadUint32(bytes.NewReader(b))
 	return v

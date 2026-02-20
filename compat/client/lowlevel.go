@@ -31,7 +31,7 @@ func (c *Client) EncryptMessageWithSalt(salt int64, msgID int64, seqNo int32, pa
 		SeqNo:     seqNo,
 		Data:      payload,
 	}
-	enc, err := inner.Encrypt(c.authKey, c.authKeyID)
+	enc, err := inner.EncryptFromClient(c.authKey, c.authKeyID)
 	if err != nil {
 		return nil, err
 	}

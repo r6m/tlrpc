@@ -199,8 +199,11 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if err != nil {
 		return ErrUnauthorized
 	}
-	inner, err := enc.Decrypt(authKey)
+	inner, err := enc.DecryptFromClient(authKey)
 	if err != nil {
+		if h.server.logger != nil {
+			h.server.logger.Error("decrypt failed", "error", err)
+		}
 		return err
 	}
 
@@ -216,7 +219,15 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	}
 	if sess != nil {
 		if sess.ServerSalt == 0 {
-			sess.ServerSalt = time.Now().UTC().UnixNano()
+			if salt, ok := initialServerSalts.Load(keyID); ok {
+				if v, ok := salt.(int64); ok {
+					sess.ServerSalt = v
+				}
+				initialServerSalts.Delete(keyID)
+			}
+			if sess.ServerSalt == 0 {
+				sess.ServerSalt = time.Now().UTC().UnixNano()
+			}
 		}
 		sess.Touch()
 		h.state.session = sess
@@ -242,6 +253,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		}
 		sess.LastClientMsgID = inner.MsgID
 		_ = h.server.sessions.Save(sess)
+
 	}
 
 	ctx := h.conn.Context()
@@ -310,6 +322,15 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	}
 	if respObj == nil {
 		return h.sendAcknowledgment(authKey, keyID, ackIDs...)
+	}
+	if sess != nil && sess.SessionID != 0 {
+		if _, sent := sess.Data.Load("mt.new_session_created_sent"); !sent {
+			if err := h.sendNewSessionCreated(authKey, keyID, sess, inner.MsgID); err != nil {
+				return err
+			}
+			sess.Data.Store("mt.new_session_created_sent", true)
+			_ = h.server.sessions.Save(sess)
+		}
 	}
 	resultData, err := encodeTLObject(respObj)
 	if err != nil {
@@ -389,6 +410,8 @@ func (h *connHandler) dispatchDecodedObject(ctx context.Context, req TLObject, r
 			h.server.updateHub.unbind(h.conn)
 		}
 		return h.dispatchWrappedQuery(ctx, obj.QueryRaw, requestMsgID)
+	case *mtprototl.GetFutureSaltsRequest:
+		return h.handleGetFutureSalts(ctx, obj, requestMsgID), nil
 	default:
 		return h.invokeMethod(ctx, req)
 	}
@@ -548,11 +571,83 @@ func (h *connHandler) resolveLayer(requested int) (int, error) {
 	return requested, nil
 }
 
+func (h *connHandler) handleGetFutureSalts(ctx context.Context, req *mtprototl.GetFutureSaltsRequest, requestMsgID int64) TLObject {
+	count := int(req.Num)
+	if count <= 0 {
+		count = 1
+	}
+	if count > 64 {
+		count = 64
+	}
+
+	now := int32(time.Now().Unix())
+	baseSalt := int64(0)
+	if sess := SessionFromContext(ctx); sess != nil {
+		baseSalt = sess.ServerSalt
+	}
+	if baseSalt == 0 && h.state.session != nil {
+		baseSalt = h.state.session.ServerSalt
+	}
+	if baseSalt == 0 {
+		baseSalt = time.Now().UTC().UnixNano()
+	}
+
+	salts := make([]mtprototl.FutureSalt, 0, count)
+	for i := 0; i < count; i++ {
+		start := now + int32(i*1800)
+		salts = append(salts, mtprototl.FutureSalt{
+			ValidSince: start,
+			ValidUntil: start + 1800,
+			Salt:       baseSalt + int64(i+1)*0x1000,
+		})
+	}
+
+	return &mtprototl.FutureSalts{
+		ReqMsgID: requestMsgID,
+		Now:      now,
+		Salts:    salts,
+	}
+}
+
+func (h *connHandler) currentSaltSession() (int64, int64) {
+	if h.state.session == nil {
+		return 0, 0
+	}
+	return h.state.session.ServerSalt, h.state.session.SessionID
+}
+
+func (h *connHandler) sendNewSessionCreated(authKey crypto.AuthKey, keyID crypto.KeyID, sess *session.Session, firstMsgID int64) error {
+	if sess == nil {
+		return nil
+	}
+	body, err := encodeTLObject(&mtprototl.NewSessionCreated{
+		FirstMsgID: firstMsgID,
+		UniqueID:   time.Now().UTC().UnixNano(),
+		ServerSalt: sess.ServerSalt,
+	})
+	if err != nil {
+		return err
+	}
+	inner := &mtproto.InnerData{
+		Salt:      sess.ServerSalt,
+		SessionID: sess.SessionID,
+		MsgID:     h.nextServerMsgID(serverMsgIDPush),
+		SeqNo:     h.nextSeqNo(true),
+		Data:      body,
+	}
+	encResp, err := inner.Encrypt(authKey, keyID)
+	if err != nil {
+		return err
+	}
+	return h.conn.WriteMessage(serializeEncrypted(encResp))
+}
+
 // sendAcknowledgment sends an acknowledgment for received message IDs
 func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.KeyID, msgIDs ...int64) error {
 	if len(msgIDs) == 0 {
 		return nil
 	}
+	salt, sessionID := h.currentSaltSession()
 
 	ack := &mtprototl.MsgsAck{MsgIDs: msgIDs}
 	ackData, err := encodeTLObject(ack)
@@ -561,8 +656,8 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 	}
 
 	innerAck := &mtproto.InnerData{
-		Salt:      0, // Use 0 for acks
-		SessionID: 0, // Use 0 for acks
+		Salt:      salt,
+		SessionID: sessionID,
 		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(false),
 		Data:      ackData,
@@ -577,6 +672,7 @@ func (h *connHandler) sendAcknowledgment(authKey crypto.AuthKey, keyID crypto.Ke
 }
 
 func (h *connHandler) sendBadMsgNotification(authKey crypto.AuthKey, keyID crypto.KeyID, badMsgID int64, badMsgSeq int32, code int32) error {
+	salt, sessionID := h.currentSaltSession()
 	body, err := encodeTLObject(&mtprototl.BadMsgNotification{
 		BadMsgID:  badMsgID,
 		BadMsgSeq: badMsgSeq,
@@ -586,8 +682,8 @@ func (h *connHandler) sendBadMsgNotification(authKey crypto.AuthKey, keyID crypt
 		return err
 	}
 	inner := &mtproto.InnerData{
-		Salt:      0,
-		SessionID: 0,
+		Salt:      salt,
+		SessionID: sessionID,
 		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(false),
 		Data:      body,
@@ -600,6 +696,7 @@ func (h *connHandler) sendBadMsgNotification(authKey crypto.AuthKey, keyID crypt
 }
 
 func (h *connHandler) sendBadServerSalt(authKey crypto.AuthKey, keyID crypto.KeyID, badMsgID int64, badMsgSeq int32, newSalt int64) error {
+	salt, sessionID := h.currentSaltSession()
 	body, err := encodeTLObject(&mtprototl.BadServerSalt{
 		BadMsgID:  badMsgID,
 		BadMsgSeq: badMsgSeq,
@@ -610,8 +707,8 @@ func (h *connHandler) sendBadServerSalt(authKey crypto.AuthKey, keyID crypto.Key
 		return err
 	}
 	inner := &mtproto.InnerData{
-		Salt:      0,
-		SessionID: 0,
+		Salt:      salt,
+		SessionID: sessionID,
 		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(false),
 		Data:      body,
@@ -651,9 +748,10 @@ func (h *connHandler) sendRPCError(requestMsgID int64, err error) error {
 	}
 
 	// Send the error response
+	salt, sessionID := h.currentSaltSession()
 	innerResp := &mtproto.InnerData{
-		Salt:      0,
-		SessionID: 0,
+		Salt:      salt,
+		SessionID: sessionID,
 		MsgID:     h.nextServerMsgID(serverMsgIDResponse),
 		SeqNo:     h.nextSeqNo(true),
 		Data:      respData,

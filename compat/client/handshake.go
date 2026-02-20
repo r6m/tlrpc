@@ -83,20 +83,46 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 		if _, err := mtproto.ReadBytes(r); err != nil {
 			return nil, fmt.Errorf("read resPQ pq: %w", err)
 		}
-		// Current handshake encoder writes a legacy marker before vector.
-		if _, err := mtproto.ReadUint64(r); err != nil {
-			return nil, fmt.Errorf("read resPQ fingerprint marker: %w", err)
-		}
 		var fingerprints []int64
-		if err := mtproto.ReadVector(r, func() error {
-			fp, err := mtproto.ReadInt64(r)
+		next, err := mtproto.ReadUint32(r)
+		if err != nil {
+			return nil, fmt.Errorf("read resPQ fingerprints prefix: %w", err)
+		}
+		if next == mtproto.VectorConstructorID {
+			n, err := mtproto.ReadInt32(r)
 			if err != nil {
-				return err
+				return nil, fmt.Errorf("read resPQ fingerprints count: %w", err)
 			}
-			fingerprints = append(fingerprints, fp)
-			return nil
-		}); err != nil {
-			return nil, err
+			if n < 0 {
+				return nil, errors.New("compat client: negative fingerprints count")
+			}
+			for i := 0; i < int(n); i++ {
+				fp, err := mtproto.ReadInt64(r)
+				if err != nil {
+					return nil, fmt.Errorf("read resPQ fingerprint[%d]: %w", i, err)
+				}
+				fingerprints = append(fingerprints, fp)
+			}
+		} else {
+			// Legacy compat path: marker uint64(1), then Vector<long>.
+			hi, err := mtproto.ReadUint32(r)
+			if err != nil {
+				return nil, fmt.Errorf("read resPQ legacy marker: %w", err)
+			}
+			marker := uint64(next) | (uint64(hi) << 32)
+			if marker != 1 {
+				return nil, fmt.Errorf("compat client: unexpected resPQ marker/vector prefix: %08x", next)
+			}
+			if err := mtproto.ReadVector(r, func() error {
+				fp, err := mtproto.ReadInt64(r)
+				if err != nil {
+					return err
+				}
+				fingerprints = append(fingerprints, fp)
+				return nil
+			}); err != nil {
+				return nil, err
+			}
 		}
 		if len(fingerprints) == 0 {
 			return nil, errors.New("compat client: resPQ returned no fingerprints")
@@ -196,8 +222,8 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read server_DH_params encrypted_answer: %w", err)
 		}
-		if len(encryptedAnswer) < 560 {
-			return nil, fmt.Errorf("encrypted_answer too short: %d", len(encryptedAnswer))
+		if len(encryptedAnswer) == 0 || len(encryptedAnswer)%16 != 0 {
+			return nil, fmt.Errorf("invalid encrypted_answer length: %d", len(encryptedAnswer))
 		}
 	}
 
@@ -209,13 +235,9 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 	var gVal uint32
 	var gA *big.Int
 	{
-		r := bytes.NewReader(serverDHPlain)
-		ctor, err := mtproto.ReadUint32(r)
+		r, err := parseServerDHInnerData(serverDHPlain)
 		if err != nil {
-			return nil, fmt.Errorf("read server_DH_inner_data ctor: %w", err)
-		}
-		if ctor != serverDHInnerData {
-			return nil, errors.New("compat client: unexpected server_DH_inner_data ctor")
+			return nil, err
 		}
 		gotNonce, err := mtproto.ReadInt128(r)
 		if err != nil {
@@ -235,14 +257,16 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read server_DH_inner_data g: %w", err)
 		}
-		dhPrime, err = crypto.ReadBigInt(r, 256)
+		dhPrimeBytes, err := mtproto.ReadBytes(r)
 		if err != nil {
 			return nil, fmt.Errorf("read server_DH_inner_data dh_prime: %w", err)
 		}
-		gA, err = crypto.ReadBigInt(r, 256)
+		dhPrime = new(big.Int).SetBytes(dhPrimeBytes)
+		gABytes, err := mtproto.ReadBytes(r)
 		if err != nil {
 			return nil, fmt.Errorf("read server_DH_inner_data g_a: %w", err)
 		}
+		gA = new(big.Int).SetBytes(gABytes)
 	}
 
 	// Compute g_b and auth_key with server range checks.
@@ -276,6 +300,9 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 			return err
 		}
 		if err := mtproto.WriteInt128(w, serverNonce); err != nil {
+			return err
+		}
+		if err := mtproto.WriteInt64(w, 0); err != nil { // retry_id
 			return err
 		}
 		return mtproto.WriteBytes(w, gb.Bytes())
@@ -338,7 +365,7 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read dh_gen_ok new_nonce_hash1: %w", err)
 		}
-		wantHash := crypto.ComputeNewNonceHash1(newNonce, serverNonce)
+		wantHash := crypto.ComputeNewNonceHash1Auth(newNonce, authKeyBytes)
 		if gotHash != wantHash {
 			return nil, errors.New("compat client: new_nonce_hash1 mismatch")
 		}
@@ -359,6 +386,23 @@ func randInt64() int64 {
 	var buf [8]byte
 	_, _ = io.ReadFull(rand.Reader, buf[:])
 	return int64(binary.LittleEndian.Uint64(buf[:]))
+}
+
+func parseServerDHInnerData(data []byte) (*bytes.Reader, error) {
+	rd := bytes.NewReader(data)
+	ctor, err := mtproto.ReadUint32(rd)
+	if err == nil && ctor == serverDHInnerData {
+		return rd, nil
+	}
+	// MTProto 2.0: exchange answer may be prefixed by SHA1 hash.
+	if len(data) > 24 {
+		rd = bytes.NewReader(data[20:])
+		ctor, err = mtproto.ReadUint32(rd)
+		if err == nil && ctor == serverDHInnerData {
+			return rd, nil
+		}
+	}
+	return nil, errors.New("compat client: unexpected server_DH_inner_data ctor")
 }
 
 func padTo256(n *big.Int) []byte {

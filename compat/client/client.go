@@ -90,6 +90,9 @@ func (c *Client) registerDefaultConstructors() {
 	c.constructors[mtprototl.GzipPackedID] = func() tlrpc.TLObject { return &mtprototl.GzipPacked{} }
 	c.constructors[mtprototl.RPCResultID] = func() tlrpc.TLObject { return &mtprototl.RPCResult{} }
 	c.constructors[mtprototl.RPCErrorID] = func() tlrpc.TLObject { return &mtprototl.RPCError{} }
+	c.constructors[mtprototl.NewSessionCreatedID] = func() tlrpc.TLObject { return &mtprototl.NewSessionCreated{} }
+	c.constructors[mtprototl.GetFutureSaltsID] = func() tlrpc.TLObject { return &mtprototl.GetFutureSaltsRequest{} }
+	c.constructors[mtprototl.FutureSaltsID] = func() tlrpc.TLObject { return &mtprototl.FutureSalts{} }
 	c.constructors[mtprototl.BadMsgNotificationID] = func() tlrpc.TLObject { return &mtprototl.BadMsgNotification{} }
 	c.constructors[mtprototl.BadServerSaltID] = func() tlrpc.TLObject { return &mtprototl.BadServerSalt{} }
 	c.constructors[mtprototl.InvokeWithLayerID] = func() tlrpc.TLObject { return &mtprototl.InvokeWithLayer{} }
@@ -199,7 +202,7 @@ func (c *Client) invokeRaw(ctx context.Context, payload []byte) (tlrpc.TLObject,
 			SeqNo:     seq,
 			Data:      payload,
 		}
-		enc, err := inner.Encrypt(c.authKey, c.authKeyID)
+		enc, err := inner.EncryptFromClient(c.authKey, c.authKeyID)
 		if err != nil {
 			return nil, err
 		}

@@ -61,6 +61,8 @@ func (c *Client) handleDecoded(obj tlrpc.TLObject, reqMsgID int64) (tlrpc.TLObje
 	switch val := obj.(type) {
 	case *mtprototl.MsgsAck:
 		return nil, false, nil
+	case *mtprototl.NewSessionCreated:
+		return nil, false, nil
 	case *mtprototl.MsgContainer:
 		for _, msg := range val.Messages {
 			if len(msg.BodyRaw) < 4 {

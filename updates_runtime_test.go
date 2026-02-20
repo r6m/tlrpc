@@ -98,7 +98,7 @@ func TestHandleEncryptedAckAfterPublishedUpdate(t *testing.T) {
 		SeqNo:     1,
 		Data:      ackBody,
 	}
-	enc, err := inner.Encrypt(key, keyID)
+	enc, err := inner.EncryptFromClient(key, keyID)
 	if err != nil {
 		t.Fatalf("encrypt ack packet: %v", err)
 	}

@@ -45,6 +45,8 @@ func (c *Client) ReadOne(ctx context.Context) (tlrpc.TLObject, error) {
 		switch val := obj.(type) {
 		case *mtprototl.MsgsAck:
 			continue
+		case *mtprototl.NewSessionCreated:
+			continue
 		case *mtprototl.MsgContainer:
 			for _, msg := range val.Messages {
 				if len(msg.BodyRaw) < 4 {
@@ -55,6 +57,9 @@ func (c *Client) ReadOne(ctx context.Context) (tlrpc.TLObject, error) {
 					continue
 				}
 				if _, ok := item.(*mtprototl.MsgsAck); ok {
+					continue
+				}
+				if _, ok := item.(*mtprototl.NewSessionCreated); ok {
 					continue
 				}
 				if _, ok := item.(*mtprototl.RPCResult); ok {
