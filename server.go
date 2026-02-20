@@ -32,6 +32,7 @@ type Server struct {
 	updateHub         *updateHub
 	onSessionBound    OnSessionBoundHook
 	onSessionUnbound  OnSessionUnboundHook
+	gotdTestHooks     any
 }
 
 // serviceInfo stores service implementation info

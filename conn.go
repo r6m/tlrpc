@@ -235,6 +235,11 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 	if sess == nil {
 		return NewInternalError("missing session")
 	}
+	if forcedSalt, force := h.server.maybeForceBadServerSalt(sess, inner.MsgID, inner.SeqNo); force {
+		sess.ServerSalt = forcedSalt
+		_ = h.server.sessions.Save(sess)
+		return h.sendBadServerSalt(authKey, keyID, inner.MsgID, inner.SeqNo, forcedSalt)
+	}
 
 	if err := validateMessageID(inner.MsgID); err != nil {
 		return h.sendBadMsgNotification(authKey, keyID, inner.MsgID, inner.SeqNo, 16)

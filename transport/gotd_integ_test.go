@@ -287,6 +287,83 @@ func TestGotdWrappedFlow(t *testing.T) {
 	}
 }
 
+func TestGotdBadServerSaltRecovery(t *testing.T) {
+	log := &testLogger{t: t}
+	hooks := &tlrpc.GotdTestHooks{}
+	hooks.ForceBadServerSaltOnce.Store(true)
+	helpSvc := &gotdHelpService{}
+
+	compatKey, err := compatkeys.ServerKey()
+	if err != nil {
+		t.Fatalf("load compat key: %v", err)
+	}
+	serverKeys := crypto.NewMemoryServerKeyManager()
+	serverKeys.AddKey(compatKey)
+
+	srv := tlrpc.NewServer(
+		tlrpc.WithAuthKeyManager(crypto.NewMemoryAuthKeyManager()),
+		tlrpc.WithSessionManager(tlrpcsession.NewMemoryManager()),
+		tlrpc.WithServerKeyManager(serverKeys),
+		tlrpc.WithMaxLayer(217),
+		tlrpc.WithUnaryInterceptor(tlrpc.LoggingInterceptor(log)),
+		tlrpc.WithLogger(log),
+		tlrpc.WithGotdTestHooks(hooks),
+	)
+	gen.RegisterHelpServer(srv, helpSvc)
+
+	lis, err := (&transport.TCPTransport{AllowObfuscation: true}).Listen("127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	go func() { _ = srv.ServeTransport(lis) }()
+	t.Cleanup(func() {
+		_ = srv.Stop()
+		_ = lis.Close()
+	})
+
+	addr := lis.Addr().(*net.TCPAddr)
+	dcList := dcs.List{Options: []tg.DCOption{{
+		ID:           1,
+		IPAddress:    addr.IP.String(),
+		Port:         int(addr.Port),
+		ThisPortOnly: true,
+	}}}
+	client := telegram.NewClient(1, "test", telegram.Options{
+		DCList: dcList,
+		PublicKeys: []telegram.PublicKey{
+			{RSA: &compatKey.Key.PublicKey},
+		},
+		Resolver: dcs.Plain(dcs.PlainOptions{
+			Protocol:     gotdtransport.Intermediate,
+			NoObfuscated: true,
+		}),
+		SessionStorage:  &tdsession.StorageMemory{},
+		DC:              1,
+		ExchangeTimeout: 10 * time.Second,
+		DialTimeout:     5 * time.Second,
+		Logger:          zap.NewExample(),
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := client.Run(ctx, func(ctx context.Context) error {
+		_, err := client.API().HelpGetConfig(ctx)
+		return err
+	}); err != nil {
+		t.Fatalf("help.getConfig with bad_server_salt recovery failed: %s", errorChain(err))
+	}
+
+	if got := hooks.EncryptedRequestCount.Load(); got < 2 {
+		t.Fatalf("expected retry after bad_server_salt, encrypted requests=%d", got)
+	}
+	if hooks.ForceBadServerSaltOnce.Load() {
+		t.Fatalf("expected bad_server_salt hook to be consumed")
+	}
+	if slices.Contains(log.MissingConstructors(), "0xedab447b") {
+		t.Fatalf("bad_server_salt must be handled by gotd, missing=%v", log.MissingConstructors())
+	}
+}
+
 type testLogger struct {
 	t *testing.T
 
