@@ -32,6 +32,12 @@ func (p *PaddedIntermediate) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
 	if _, err := io.ReadFull(r, payload); err != nil {
 		return nil, nil, err
 	}
+	// In padded intermediate, payload may include 0-3 random bytes.
+	// MTProto messages themselves are 4-byte aligned, so strip n%4 tail bytes.
+	pad := len(payload) % 4
+	if pad > 0 {
+		payload = payload[:len(payload)-pad]
+	}
 	if err := readTransportError(payload); err != nil {
 		return nil, nil, err
 	}

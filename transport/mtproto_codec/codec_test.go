@@ -57,6 +57,30 @@ func TestPaddedIntermediateCodecRoundTrip(t *testing.T) {
 	}
 }
 
+func TestPaddedIntermediateCodecStripsPadding(t *testing.T) {
+	codec := &PaddedIntermediate{}
+	payload := bytes.Repeat([]byte{0x55}, 12)
+
+	buf := &bytes.Buffer{}
+	if err := binary.Write(buf, binary.LittleEndian, uint32(len(payload)+1)); err != nil {
+		t.Fatalf("write header: %v", err)
+	}
+	if _, err := buf.Write(payload); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
+	if err := buf.WriteByte(0x99); err != nil {
+		t.Fatalf("write pad: %v", err)
+	}
+
+	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if !bytes.Equal(got, payload) {
+		t.Fatalf("payload mismatch after strip")
+	}
+}
+
 func TestFullCodecRoundTrip(t *testing.T) {
 	codec := &Full{}
 	payload := bytes.Repeat([]byte{0x44}, 16)

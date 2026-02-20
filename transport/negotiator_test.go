@@ -40,9 +40,15 @@ func TestNegotiateAbridgedTag(t *testing.T) {
 func TestNegotiateIntermediateTag(t *testing.T) {
 	payload := []byte{0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17}
 	buf := bytes.NewBuffer(nil)
-	binary.Write(buf, binary.LittleEndian, uint32(0xEEEEEEEE))
-	binary.Write(buf, binary.LittleEndian, uint32(len(payload)))
-	buf.Write(payload)
+	if err := binary.Write(buf, binary.LittleEndian, uint32(0xEEEEEEEE)); err != nil {
+		t.Fatalf("write tag: %v", err)
+	}
+	if err := binary.Write(buf, binary.LittleEndian, uint32(len(payload))); err != nil {
+		t.Fatalf("write length: %v", err)
+	}
+	if _, err := buf.Write(payload); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
 
 	r := bufio.NewReader(bytes.NewReader(buf.Bytes()))
 	w := bufio.NewWriter(bytes.NewBuffer(nil))
@@ -68,9 +74,15 @@ func TestNegotiateIntermediateTag(t *testing.T) {
 func TestNegotiatePaddedIntermediateTag(t *testing.T) {
 	payload := []byte{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22}
 	buf := bytes.NewBuffer(nil)
-	binary.Write(buf, binary.LittleEndian, uint32(0xDDDDDDDD))
-	binary.Write(buf, binary.LittleEndian, uint32(len(payload)))
-	buf.Write(payload)
+	if err := binary.Write(buf, binary.LittleEndian, uint32(0xDDDDDDDD)); err != nil {
+		t.Fatalf("write tag: %v", err)
+	}
+	if err := binary.Write(buf, binary.LittleEndian, uint32(len(payload))); err != nil {
+		t.Fatalf("write length: %v", err)
+	}
+	if _, err := buf.Write(payload); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
 
 	r := bufio.NewReader(bytes.NewReader(buf.Bytes()))
 	w := bufio.NewWriter(bytes.NewBuffer(nil))
