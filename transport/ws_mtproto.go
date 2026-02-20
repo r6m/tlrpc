@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"reflect"
 	"sync"
 	"time"
 
@@ -110,3 +111,17 @@ func (c *wsMTProtoConn) LocalAddr() net.Addr           { return c.base.LocalAddr
 func (c *wsMTProtoConn) RemoteAddr() net.Addr          { return c.base.RemoteAddr() }
 func (c *wsMTProtoConn) SetDeadline(t time.Time) error { return c.base.SetDeadline(t) }
 func (c *wsMTProtoConn) Context() context.Context      { return c.base.Context() }
+
+func (c *wsMTProtoConn) TransportMode() string {
+	if c.codec == nil {
+		return ""
+	}
+	t := reflect.TypeOf(c.codec)
+	if t == nil {
+		return ""
+	}
+	if t.Kind() == reflect.Ptr {
+		return t.Elem().Name()
+	}
+	return t.Name()
+}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"reflect"
 	"sync"
 	"time"
 
@@ -137,6 +138,20 @@ func (c *MTProtoConn) SetDeadline(t time.Time) error {
 
 func (c *MTProtoConn) Context() context.Context {
 	return c.ctx
+}
+
+func (c *MTProtoConn) TransportMode() string {
+	if c.codec == nil {
+		return ""
+	}
+	t := reflect.TypeOf(c.codec)
+	if t == nil {
+		return ""
+	}
+	if t.Kind() == reflect.Ptr {
+		return t.Elem().Name()
+	}
+	return t.Name()
 }
 
 type bufferedReadWriter struct {

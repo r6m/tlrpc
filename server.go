@@ -18,21 +18,22 @@ import (
 
 // Server represents an RPC server
 type Server struct {
-	authKeys          crypto.AuthKeyManager
-	serverKeys        crypto.ServerKeyManager
-	sessions          session.Manager
-	dispatcher        *dispatcher
-	maxLayer          int
-	layers            []int
-	unaryInterceptors []UnaryInterceptor // New gRPC-like interceptors
-	logger            Logger
-	services          map[string]*serviceInfo // for backward compatibility
-	handshakeHandler  HandshakeHandler
-	shutdownCh        chan struct{}
-	updateHub         *updateHub
-	onSessionBound    OnSessionBoundHook
-	onSessionUnbound  OnSessionUnboundHook
-	gotdTestHooks     any
+	authKeys                  crypto.AuthKeyManager
+	serverKeys                crypto.ServerKeyManager
+	sessions                  session.Manager
+	dispatcher                *dispatcher
+	maxLayer                  int
+	layers                    []int
+	unaryInterceptors         []UnaryInterceptor // New gRPC-like interceptors
+	logger                    Logger
+	services                  map[string]*serviceInfo // for backward compatibility
+	handshakeHandler          HandshakeHandler
+	shutdownCh                chan struct{}
+	updateHub                 *updateHub
+	onSessionBound            OnSessionBoundHook
+	onSessionUnbound          OnSessionUnboundHook
+	gotdTestHooks             any
+	unknownConstructorHandler UnknownConstructorHandler
 }
 
 // serviceInfo stores service implementation info
@@ -375,6 +376,13 @@ func WithOnSessionBound(fn OnSessionBoundHook) ServerOption {
 func WithOnSessionUnbound(fn OnSessionUnboundHook) ServerOption {
 	return func(s *Server) {
 		s.onSessionUnbound = fn
+	}
+}
+
+// WithUnknownConstructorHandler registers a callback for unknown constructor IDs.
+func WithUnknownConstructorHandler(fn UnknownConstructorHandler) ServerOption {
+	return func(s *Server) {
+		s.unknownConstructorHandler = fn
 	}
 }
 

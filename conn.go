@@ -139,6 +139,7 @@ func (h *connHandler) handleUnencryptedMessage(msg *mtproto.UnencryptedMessage) 
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	ctx = withUnknownConstructorPhase(withTransportMode(ctx, h.transportMode()), "handshake")
 
 	handler := h.server.handshakeHandler
 	if handler == nil {
@@ -147,6 +148,16 @@ func (h *connHandler) handleUnencryptedMessage(msg *mtproto.UnencryptedMessage) 
 
 	respData, err := handler.HandleUnencrypted(ctx, msg.MsgID, msg.Data)
 	if err != nil {
+		if errors.Is(err, ErrInvalidHandshake) && len(msg.Data) >= 4 {
+			ctor := mtprotoReadUint32Bytes(msg.Data[:4])
+			switch ctor {
+			case 0xbe7e8ef1, // req_pq_multi
+				0xd712e4be, // req_DH_params
+				0xf5045f1f: // set_client_DH_params
+			default:
+				h.server.reportUnknownConstructor(ctx, ctor, msg.Data)
+			}
+		}
 		return err
 	}
 
@@ -277,7 +288,7 @@ func (h *connHandler) handleEncryptedMessage(payload []byte, keyID crypto.KeyID)
 		ctx = withUserID(ctx, sess.UserID)
 	}
 
-	reqObj, _, err := decodeTLObject(h.server.dispatcher, inner.Data)
+	reqObj, _, err := h.decodeTLObject(ctx, inner.Data, "encrypted")
 	if err != nil {
 		return h.sendRPCError(inner.MsgID, err)
 	}
@@ -387,7 +398,7 @@ func (h *connHandler) dispatchDecodedObject(ctx context.Context, req TLObject, r
 		if err != nil {
 			return nil, err
 		}
-		inner, _, err := decodeTLObject(h.server.dispatcher, unpacked)
+		inner, _, err := h.decodeTLObject(ctx, unpacked, "encrypted")
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +407,7 @@ func (h *connHandler) dispatchDecodedObject(ctx context.Context, req TLObject, r
 		if len(obj.ResultRaw) == 0 {
 			return nil, nil
 		}
-		inner, _, err := decodeTLObject(h.server.dispatcher, obj.ResultRaw)
+		inner, _, err := h.decodeTLObject(ctx, obj.ResultRaw, "encrypted")
 		if err != nil {
 			return nil, err
 		}
@@ -470,7 +481,7 @@ func (h *connHandler) dispatchContainer(ctx context.Context, container *mtprotot
 		if len(msg.BodyRaw) < 4 {
 			continue
 		}
-		obj, _, err := decodeTLObject(h.server.dispatcher, msg.BodyRaw)
+		obj, _, err := h.decodeTLObject(ctx, msg.BodyRaw, "encrypted")
 		if err != nil {
 			continue
 		}
@@ -493,7 +504,7 @@ func (h *connHandler) dispatchContainer(ctx context.Context, container *mtprotot
 	case 0:
 		return nil, nil
 	case 1:
-		respObj, _, err := decodeTLObject(h.server.dispatcher, responses[0].BodyRaw)
+		respObj, _, err := h.decodeTLObject(ctx, responses[0].BodyRaw, "encrypted")
 		if err != nil {
 			return nil, err
 		}
@@ -507,11 +518,30 @@ func (h *connHandler) dispatchWrappedQuery(ctx context.Context, queryRaw []byte,
 	if len(queryRaw) < 4 {
 		return nil, io.ErrUnexpectedEOF
 	}
-	inner, _, err := decodeTLObject(h.server.dispatcher, queryRaw)
+	inner, _, err := h.decodeTLObject(ctx, queryRaw, "encrypted")
 	if err != nil {
 		return nil, err
 	}
 	return h.dispatchDecodedObject(ctx, inner, requestMsgID)
+}
+
+func (h *connHandler) decodeTLObject(ctx context.Context, data []byte, phase string) (TLObject, *bytes.Reader, error) {
+	ctx = withUnknownConstructorPhase(withTransportMode(ctx, h.transportMode()), phase)
+	obj, r, err := decodeTLObject(h.server.dispatcher, data)
+	if err == nil {
+		return obj, r, nil
+	}
+	if isUnknownConstructorError(err) && len(data) >= 4 {
+		h.server.reportUnknownConstructor(ctx, mtprotoReadUint32Bytes(data[:4]), data)
+	}
+	return nil, nil, err
+}
+
+func (h *connHandler) transportMode() string {
+	if provider, ok := h.conn.(interface{ TransportMode() string }); ok {
+		return provider.TransportMode()
+	}
+	return ""
 }
 
 func (h *connHandler) dispatchInvokeWithLayer(ctx context.Context, req *mtprototl.InvokeWithLayer, requestMsgID int64) (TLObject, error) {

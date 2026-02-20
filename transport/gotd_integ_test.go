@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -85,6 +86,7 @@ func runGotdHandshakeCase(t *testing.T, protocol dcs.Protocol) error {
 		tlrpc.WithSessionManager(sessions),
 		tlrpc.WithServerKeyManager(serverKeys),
 		tlrpc.WithMaxLayer(217),
+		tlrpc.WithUnknownConstructorHandler(gotdUnknownCtorFatalf(t)),
 		tlrpc.WithUnaryInterceptor(tlrpc.LoggingInterceptor(log)),
 		tlrpc.WithLogger(log),
 	)
@@ -160,6 +162,23 @@ func errorChain(err error) string {
 	return strings.Join(parts, " | ")
 }
 
+func gotdUnknownCtorFatalf(t *testing.T) tlrpc.UnknownConstructorHandler {
+	t.Helper()
+	return func(ctx context.Context, ctor uint32, payload []byte) {
+		if len(payload) > 32 {
+			payload = payload[:32]
+		}
+		t.Fatalf("unknown constructor 0x%08x phase=%s layer=%d auth_key_id=%d transport=%s payload_prefix=%s",
+			ctor,
+			tlrpc.UnknownConstructorPhaseFromContext(ctx),
+			tlrpc.LayerFromContext(ctx),
+			tlrpc.AuthKeyIDFromContext(ctx),
+			tlrpc.TransportModeFromContext(ctx),
+			hex.EncodeToString(payload),
+		)
+	}
+}
+
 type gotdHelpService struct {
 	gen.UnimplementedHelpServer
 
@@ -205,6 +224,7 @@ func TestGotdWrappedFlow(t *testing.T) {
 		tlrpc.WithSessionManager(tlrpcsession.NewMemoryManager()),
 		tlrpc.WithServerKeyManager(serverKeys),
 		tlrpc.WithMaxLayer(217),
+		tlrpc.WithUnknownConstructorHandler(gotdUnknownCtorFatalf(t)),
 		tlrpc.WithUnaryInterceptor(tlrpc.LoggingInterceptor(log)),
 		tlrpc.WithLogger(log),
 	)
@@ -305,6 +325,7 @@ func TestGotdBadServerSaltRecovery(t *testing.T) {
 		tlrpc.WithSessionManager(tlrpcsession.NewMemoryManager()),
 		tlrpc.WithServerKeyManager(serverKeys),
 		tlrpc.WithMaxLayer(217),
+		tlrpc.WithUnknownConstructorHandler(gotdUnknownCtorFatalf(t)),
 		tlrpc.WithUnaryInterceptor(tlrpc.LoggingInterceptor(log)),
 		tlrpc.WithLogger(log),
 		tlrpc.WithGotdTestHooks(hooks),
