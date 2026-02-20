@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha1"
 	"encoding/binary"
 	"errors"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/r6m/tlrpc/crypto"
@@ -30,6 +32,13 @@ type TempDHState struct {
 }
 
 var tempDHStates = make(map[[32]byte]*TempDHState) // keyed by new_nonce
+var initialServerSalts sync.Map                    // key: crypto.KeyID, value: int64
+
+func computeServerSalt(newNonce [32]byte, serverNonce [16]byte) int64 {
+	newPart := binary.LittleEndian.Uint64(newNonce[:8])
+	serverPart := binary.LittleEndian.Uint64(serverNonce[:8])
+	return int64(newPart ^ serverPart)
+}
 
 // validateMessageID checks if a message ID is valid according to MTProto rules
 func validateMessageID(msgID int64) error {
@@ -121,9 +130,6 @@ func (h *DefaultHandshakeHandler) handleReqPQ(data []byte) ([]byte, error) {
 	if err := mtproto.WriteBytes(resp, pq); err != nil {
 		return nil, err
 	}
-	if err := mtproto.WriteUint64(resp, 1); err != nil {
-		return nil, err
-	}
 	if err := mtproto.WriteVectorHeader(resp, len(serverKeys)); err != nil {
 		return nil, err
 	}
@@ -179,14 +185,10 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 		return nil, err
 	}
 
-	// Parse p_q_inner_data
-	dr := bytes.NewReader(decryptedData)
-	pqInnerConstructor, err := mtproto.ReadUint32(dr)
+	// Parse p_q_inner_data / p_q_inner_data_dc / p_q_inner_data_temp_dc
+	dr, pqInnerConstructor, err := parsePQInnerData(decryptedData)
 	if err != nil {
 		return nil, err
-	}
-	if pqInnerConstructor != 0x83c95aec { // p_q_inner_data
-		return nil, ErrInvalidHandshake
 	}
 
 	pqInner, err := mtproto.ReadBytes(dr)
@@ -213,24 +215,35 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
+	if pqInnerConstructor == 0xa9f55f95 {
+		if _, err := mtproto.ReadInt32(dr); err != nil { // dc
+			return nil, err
+		}
+	}
+	if pqInnerConstructor == 0x56fddf88 {
+		if _, err := mtproto.ReadInt32(dr); err != nil { // dc
+			return nil, err
+		}
+		if _, err := mtproto.ReadInt32(dr); err != nil { // expires_in
+			return nil, err
+		}
+	}
 
 	// Verify nonce, server_nonce, p, q match
 	if innerNonce != nonce || innerServerNonce != serverNonce {
 		return nil, ErrInvalidHandshake
 	}
-	if !bytes.Equal(p, pInner) || !bytes.Equal(q, qInner) {
-		return nil, ErrInvalidHandshake
-	}
-
-	// Reconstruct pq from p and q to verify
+	// Reconstruct pq from p and q to verify (compare as big ints to ignore leading zeros).
 	pBig := new(big.Int).SetBytes(pInner)
 	qBig := new(big.Int).SetBytes(qInner)
-	pqReconstructed := new(big.Int).Mul(pBig, qBig)
-	pqReconstructedBytes := pqReconstructed.Bytes()
-	if !bytes.Equal(pqInner, pqReconstructedBytes) {
+	pBigReq := new(big.Int).SetBytes(p)
+	qBigReq := new(big.Int).SetBytes(q)
+	if pBig.Cmp(pBigReq) != 0 || qBig.Cmp(qBigReq) != 0 {
 		return nil, ErrInvalidHandshake
 	}
-	if !bytes.Equal(p, pInner) || !bytes.Equal(q, qInner) {
+	pqReconstructed := new(big.Int).Mul(pBig, qBig)
+	pqInnerBig := new(big.Int).SetBytes(pqInner)
+	if pqReconstructed.Cmp(pqInnerBig) != 0 {
 		return nil, ErrInvalidHandshake
 	}
 
@@ -254,17 +267,19 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 	if err := mtproto.WriteUint32(serverDHInner, 3); err != nil { // g
 		return nil, err
 	}
-	if err := mtproto.WriteBigInt(serverDHInner, dhParams.P, 256); err != nil { // dh_prime
+	if err := mtproto.WriteBytes(serverDHInner, dhParams.P.Bytes()); err != nil { // dh_prime
 		return nil, err
 	}
-	if err := mtproto.WriteBigInt(serverDHInner, dhParams.Ga, 256); err != nil { // g_a
+	if err := mtproto.WriteBytes(serverDHInner, dhParams.Ga.Bytes()); err != nil { // g_a
 		return nil, err
 	}
 	if err := mtproto.WriteUint32(serverDHInner, uint32(time.Now().Unix())); err != nil { // server_time
 		return nil, err
 	}
 
-	serverDHData := serverDHInner.Bytes()
+	serverDHPlain := serverDHInner.Bytes()
+	hash := sha1.Sum(serverDHPlain)
+	serverDHData := append(hash[:], serverDHPlain...)
 	if rem := len(serverDHData) % 16; rem != 0 {
 		serverDHData = append(serverDHData, make([]byte, 16-rem)...)
 	}
@@ -302,6 +317,31 @@ func (h *DefaultHandshakeHandler) handlePQInnerData(data []byte) ([]byte, error)
 	}
 
 	return resp.Bytes(), nil
+}
+
+func parsePQInnerData(data []byte) (*bytes.Reader, uint32, error) {
+	ctors := map[uint32]bool{
+		0x83c95aec: true, // p_q_inner_data
+		0xa9f55f95: true, // p_q_inner_data_dc
+		0x56fddf88: true, // p_q_inner_data_temp_dc
+	}
+
+	rd := bytes.NewReader(data)
+	ctor, err := mtproto.ReadUint32(rd)
+	if err == nil && ctors[ctor] {
+		return rd, ctor, nil
+	}
+
+	// MTProto 2.0: RSA-decrypted data may be prefixed by SHA1 (20 bytes).
+	if len(data) > 24 {
+		rd = bytes.NewReader(data[20:])
+		ctor, err = mtproto.ReadUint32(rd)
+		if err == nil && ctors[ctor] {
+			return rd, ctor, nil
+		}
+	}
+
+	return nil, 0, ErrInvalidHandshake
 }
 
 func (h *DefaultHandshakeHandler) handleReqSetClientDHParams(data []byte) ([]byte, error) {
@@ -344,13 +384,9 @@ func (h *DefaultHandshakeHandler) handleReqSetClientDHParams(data []byte) ([]byt
 	block.CryptBlocks(decryptedData, encryptedData)
 
 	// Parse client_DH_inner_data
-	dr := bytes.NewReader(decryptedData)
-	clientDHConstructor, err := mtproto.ReadUint32(dr)
+	dr, err := parseClientDHInnerData(decryptedData)
 	if err != nil {
 		return nil, err
-	}
-	if clientDHConstructor != 0x6643b654 { // client_DH_inner_data
-		return nil, ErrInvalidHandshake
 	}
 
 	clientNonce, err := mtproto.ReadInt128(dr)
@@ -363,6 +399,9 @@ func (h *DefaultHandshakeHandler) handleReqSetClientDHParams(data []byte) ([]byt
 	}
 	if clientNonce != nonce || clientServerNonce != serverNonce {
 		return nil, ErrInvalidHandshake
+	}
+	if _, err := mtproto.ReadInt64(dr); err != nil { // retry_id
+		return nil, err
 	}
 
 	gbBytes, err := mtproto.ReadBytes(dr)
@@ -391,6 +430,7 @@ func (h *DefaultHandshakeHandler) handleReqSetClientDHParams(data []byte) ([]byt
 	if err := h.authKeys.Put(crypto.KeyID(authKeyID), authKey); err != nil {
 		return nil, err
 	}
+	initialServerSalts.Store(crypto.KeyID(authKeyID), computeServerSalt(newNonce, serverNonce))
 
 	// Clean up temp state
 	delete(tempDHStates, newNonce)
@@ -407,13 +447,30 @@ func (h *DefaultHandshakeHandler) handleReqSetClientDHParams(data []byte) ([]byt
 		return nil, err
 	}
 
-	// Compute new_nonce_hash1 = SHA1(new_nonce)[first 16 bytes] XOR SHA1(server_nonce)[first 16 bytes] XOR SHA1(new_nonce)[16:32]
-	newNonceHash1 := crypto.ComputeNewNonceHash1(newNonce, serverNonce)
+	// Compute new_nonce_hash1 per MTProto 2.0 using auth_key material.
+	newNonceHash1 := crypto.ComputeNewNonceHash1Auth(newNonce, authKeyBytes)
 	if err := mtproto.WriteInt128(resp, newNonceHash1); err != nil {
 		return nil, err
 	}
 
 	return resp.Bytes(), nil
+}
+
+func parseClientDHInnerData(data []byte) (*bytes.Reader, error) {
+	rd := bytes.NewReader(data)
+	ctor, err := mtproto.ReadUint32(rd)
+	if err == nil && ctor == 0x6643b654 { // client_DH_inner_data
+		return rd, nil
+	}
+	// MTProto 2.0: AES-IGE data may be prefixed by SHA1 (20 bytes).
+	if len(data) > 24 {
+		rd = bytes.NewReader(data[20:])
+		ctor, err = mtproto.ReadUint32(rd)
+		if err == nil && ctor == 0x6643b654 {
+			return rd, nil
+		}
+	}
+	return nil, ErrInvalidHandshake
 }
 
 func generateNonce() ([16]byte, error) {

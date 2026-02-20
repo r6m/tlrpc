@@ -31,9 +31,10 @@ func (g *MsgIDGenerator) Next() int64 {
 	defer g.mu.Unlock()
 
 	now := g.now()
-	msgID := (now.UnixNano() / int64(time.Millisecond)) << 32
-	msgID |= (now.UnixNano() % int64(time.Millisecond)) << 2
-	msgID &^= 3
+	intPart := now.Unix()
+	fracPart := int64(now.Nanosecond())
+	fracPart &^= 3
+	msgID := (intPart << 32) | fracPart
 
 	if msgID <= g.last {
 		msgID = g.last + 4

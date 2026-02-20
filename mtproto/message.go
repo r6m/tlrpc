@@ -3,7 +3,6 @@ package mtproto
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/sha256"
 	"errors"
 	"io"
 
@@ -82,14 +81,13 @@ func (m *UnencryptedMessage) Deserialize(data []byte) error {
 	return nil
 }
 
-// Decrypt decrypts the message payload into inner data.
-func (m *EncryptedMessage) Decrypt(key crypto.AuthKey) (*InnerData, error) {
-	aesKey, aesIV := crypto.ComputeKDF(key[:], m.MsgKey, true) // server receiving from client
+func (m *EncryptedMessage) decryptWithDirection(key crypto.AuthKey, fromClient bool) (*InnerData, error) {
+	aesKey, aesIV := crypto.ComputeKDF(key[:], m.MsgKey, fromClient)
 	block := crypto.NewAESIGEDecrypt(aesKey, aesIV)
 	plaintext := make([]byte, len(m.EncryptedData))
 	block.CryptBlocks(plaintext, m.EncryptedData)
 
-	msgKey := calcMsgKey(key, plaintext)
+	msgKey := calcMsgKey(key, plaintext, fromClient)
 	if !bytes.Equal(msgKey[:], m.MsgKey[:]) {
 		return nil, ErrMsgKeyMismatch
 	}
@@ -123,14 +121,23 @@ func (m *EncryptedMessage) Decrypt(key crypto.AuthKey) (*InnerData, error) {
 	return inner, nil
 }
 
-// Encrypt encrypts inner data into an encrypted message.
-func (m *InnerData) Encrypt(key crypto.AuthKey, authKeyID crypto.KeyID) (*EncryptedMessage, error) {
+// Decrypt decrypts a server-to-client message payload into inner data.
+func (m *EncryptedMessage) Decrypt(key crypto.AuthKey) (*InnerData, error) {
+	return m.decryptWithDirection(key, false)
+}
+
+// DecryptFromClient decrypts a client-to-server message payload into inner data.
+func (m *EncryptedMessage) DecryptFromClient(key crypto.AuthKey) (*InnerData, error) {
+	return m.decryptWithDirection(key, true)
+}
+
+func (m *InnerData) encryptWithDirection(key crypto.AuthKey, authKeyID crypto.KeyID, fromClient bool) (*EncryptedMessage, error) {
 	plaintext, err := m.serialize()
 	if err != nil {
 		return nil, err
 	}
-	msgKey := calcMsgKey(key, plaintext)
-	aesKey, aesIV := crypto.ComputeKDF(key[:], msgKey, false) // server sending to client
+	msgKey := calcMsgKey(key, plaintext, fromClient)
+	aesKey, aesIV := crypto.ComputeKDF(key[:], msgKey, fromClient)
 	block := crypto.NewAESIGE(aesKey, aesIV)
 	ciphertext := make([]byte, len(plaintext))
 	block.CryptBlocks(ciphertext, plaintext)
@@ -139,6 +146,16 @@ func (m *InnerData) Encrypt(key crypto.AuthKey, authKeyID crypto.KeyID) (*Encryp
 		MsgKey:        msgKey,
 		EncryptedData: ciphertext,
 	}, nil
+}
+
+// Encrypt encrypts a server-to-client inner message.
+func (m *InnerData) Encrypt(key crypto.AuthKey, authKeyID crypto.KeyID) (*EncryptedMessage, error) {
+	return m.encryptWithDirection(key, authKeyID, false)
+}
+
+// EncryptFromClient encrypts a client-to-server inner message.
+func (m *InnerData) EncryptFromClient(key crypto.AuthKey, authKeyID crypto.KeyID) (*EncryptedMessage, error) {
+	return m.encryptWithDirection(key, authKeyID, true)
 }
 
 func (m *InnerData) serialize() ([]byte, error) {
@@ -198,10 +215,6 @@ func (m *InnerData) serialize() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func calcMsgKey(key crypto.AuthKey, data []byte) [16]byte {
-	// MTProto 2.0: SHA-256(auth_key[0:32] + message_body), take middle 128 bits (bytes 8:24)
-	h := sha256.Sum256(append(key[:32], data...))
-	var msgKey [16]byte
-	copy(msgKey[:], h[8:24])
-	return msgKey
+func calcMsgKey(key crypto.AuthKey, data []byte, fromClient bool) [16]byte {
+	return crypto.ComputeMsgKey(key[:], data, fromClient)
 }

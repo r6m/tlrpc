@@ -133,5 +133,8 @@ func rsaDecrypt(key *rsa.PrivateKey, data []byte) ([]byte, error) {
 
 // DecryptRSA decrypts data using RSA private key (public function)
 func DecryptRSA(key *rsa.PrivateKey, data []byte) ([]byte, error) {
+	if decoded, err := decodeRSAPad(data, key); err == nil {
+		return decoded, nil
+	}
 	return rsaDecrypt(key, data)
 }

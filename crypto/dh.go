@@ -103,34 +103,48 @@ func ComputeCheckSHA(newNonce [32]byte, authKey []byte) [20]byte {
 	return hash
 }
 
-func ComputeMsgKey(authKey, data []byte) [16]byte {
-	// Use first 32 bytes of auth_key
-	h := sha256.Sum256(append(authKey[:32], data...))
+func ComputeMsgKey(authKey, data []byte, fromClient bool) [16]byte {
+	x := 0
+	if !fromClient {
+		x = 8
+	}
+	start := 88 + x
+	hh := sha256.New()
+	_, _ = hh.Write(authKey[start : start+32])
+	_, _ = hh.Write(data)
+	h := hh.Sum(nil)
 	var msgKey [16]byte
 	copy(msgKey[:], h[8:24])
 	return msgKey
 }
 
-func ComputeKDF(authKey []byte, msgKey [16]byte, _ bool) (key, iv []byte) {
-	// MTProto 2.0 AES key/IV derivation
-	// auth_key is 256 bytes, we use first 32 bytes and last 32 bytes
-	authKeyFirst32 := authKey[:32]
-	authKeyLast32 := authKey[len(authKey)-32:]
+// ComputeKDF derives AES key/IV for MTProto 2.0.
+// fromClient indicates whether the message was sent from client to server.
+func ComputeKDF(authKey []byte, msgKey [16]byte, fromClient bool) (key, iv []byte) {
+	x := 0
+	if !fromClient {
+		x = 8
+	}
 
-	h1 := sha256.Sum256(append(msgKey[:], authKeyFirst32...))
-	h2 := sha256.Sum256(append(authKeyLast32, msgKey[:]...))
+	h1h := sha256.New()
+	_, _ = h1h.Write(msgKey[:])
+	_, _ = h1h.Write(authKey[x : x+36])
+	h1 := h1h.Sum(nil)
+
+	h2h := sha256.New()
+	_, _ = h2h.Write(authKey[40+x : 40+x+36])
+	_, _ = h2h.Write(msgKey[:])
+	h2 := h2h.Sum(nil)
 
 	key = make([]byte, 32)
 	iv = make([]byte, 32)
-	copy(key[:12], h1[:12])
-	copy(key[12:20], h2[12:20])
-	copy(key[20:24], h1[20:24])
-	copy(key[24:32], h2[20:28])
+	copy(key[:8], h1[:8])
+	copy(key[8:24], h2[8:24])
+	copy(key[24:32], h1[24:32])
 
-	copy(iv[:8], h1[12:20])
-	copy(iv[8:16], h2[:12])
-	copy(iv[16:24], h1[24:32])
-	copy(iv[24:32], h2[28:32])
+	copy(iv[:8], h2[:8])
+	copy(iv[8:24], h1[8:24])
+	copy(iv[24:32], h2[24:32])
 
 	return key, iv
 }
@@ -296,9 +310,9 @@ func BigEndianToBytes(n *big.Int, size int) []byte {
 	return data[len(data)-size:]
 }
 
-// DeriveTempKeyIV derives temporary AES key and IV for handshake encryption
-// Key = SHA1(new_nonce + server_nonce) + first 12 bytes of SHA1(server_nonce + new_nonce)
-// IV = bytes 12-32 of SHA1(server_nonce + new_nonce) + first 8 bytes of SHA1(new_nonce + new_nonce)
+// DeriveTempKeyIV derives temporary AES key and IV for handshake encryption.
+// Key = SHA1(new_nonce + server_nonce) + SHA1(server_nonce + new_nonce)[0:12]
+// IV = SHA1(server_nonce + new_nonce)[12:20] + SHA1(new_nonce + new_nonce) + new_nonce[0:4]
 func DeriveTempKeyIV(newNonce [32]byte, serverNonce [16]byte) ([]byte, []byte) {
 	h1 := sha1.New()
 	h1.Write(newNonce[:])
@@ -310,13 +324,19 @@ func DeriveTempKeyIV(newNonce [32]byte, serverNonce [16]byte) ([]byte, []byte) {
 	h2.Write(newNonce[:])
 	hash2 := h2.Sum(nil)
 
+	h3 := sha1.New()
+	h3.Write(newNonce[:])
+	h3.Write(newNonce[:])
+	hash3 := h3.Sum(nil)
+
 	key := make([]byte, 32)
 	copy(key[:20], hash1)
 	copy(key[20:32], hash2[:12])
 
 	iv := make([]byte, 32)
-	copy(iv[:20], hash2[12:])
-	copy(iv[20:32], hash1[:12])
+	copy(iv[:8], hash2[12:20])
+	copy(iv[8:28], hash3)
+	copy(iv[28:32], newNonce[:4])
 
 	return key, iv
 }
@@ -329,8 +349,9 @@ func ComputeAuthKeyID(authKey []byte) int64 {
 	return int64(binary.LittleEndian.Uint64(sum[len(sum)-8:]))
 }
 
-// ComputeNewNonceHash1 computes new_nonce_hash1 for dh_gen_ok
-// new_nonce_hash1 = SHA1(new_nonce)[0:16] XOR SHA1(server_nonce)[0:16] XOR SHA1(new_nonce)[16:32]
+// ComputeNewNonceHash1 computes new_nonce_hash1 for dh_gen_ok.
+// This legacy helper does not include auth_key material.
+// Prefer ComputeNewNonceHash1Auth for MTProto 2.0 compatibility.
 func ComputeNewNonceHash1(newNonce [32]byte, serverNonce [16]byte) [16]byte {
 	h1 := sha1.New()
 	h1.Write(newNonce[:])
@@ -349,6 +370,20 @@ func ComputeNewNonceHash1(newNonce [32]byte, serverNonce [16]byte) [16]byte {
 		result[i] = hash1[i] ^ hash2[i] ^ tail
 	}
 	return result
+}
+
+// ComputeNewNonceHash1Auth computes new_nonce_hash1 for MTProto 2.0:
+// new_nonce_hash1 = SHA1(new_nonce + 1 + SHA1(auth_key)[0:8])[4:20]
+func ComputeNewNonceHash1Auth(newNonce [32]byte, authKey []byte) [16]byte {
+	authHash := sha1.Sum(authKey)
+	buf := make([]byte, 0, 32+1+8)
+	buf = append(buf, newNonce[:]...)
+	buf = append(buf, 1)
+	buf = append(buf, authHash[:8]...)
+	sum := sha1.Sum(buf)
+	var out [16]byte
+	copy(out[:], sum[4:20])
+	return out
 }
 
 func ReadUint32(r io.Reader) (uint32, error) {
