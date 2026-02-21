@@ -96,3 +96,33 @@ users.getUsers#0d91a548 id:Vector<InputUser> = Vector<User>;
 		t.Fatalf("expected to avoid direct nil-interface DeserializeTL call in vectors")
 	}
 }
+
+func TestServiceGenerator_RequestTrueFlagsUsePresenceBitsOnly(t *testing.T) {
+	const schemaText = `---types---
+boolTrue#997275b5 = Bool;
+
+---functions---
+messages.testTrueFlags#01020304 flags:# silent:flags.0?true id:int = Bool;
+`
+	p := parser.NewParser(schemaText)
+	schema, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var requestsBuf bytes.Buffer
+	req := NewServiceGenerator(naming.NewNamer(), schema, &requestsBuf)
+	if err := req.GenerateRequests(schema.Functions); err != nil {
+		t.Fatalf("generate requests: %v", err)
+	}
+	content := requestsBuf.String()
+	if strings.Contains(content, "WriteBool(w, r.Silent)") {
+		t.Fatalf("expected flags.0?true to avoid bool payload in serialize")
+	}
+	if strings.Contains(content, "ReadBool(rd)") {
+		t.Fatalf("expected flags.0?true to avoid bool payload in deserialize")
+	}
+	if !strings.Contains(content, "r.Silent = flags&(1<<0) != 0") {
+		t.Fatalf("expected true flag field assignment from flags bit")
+	}
+}

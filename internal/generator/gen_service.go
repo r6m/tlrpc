@@ -270,6 +270,9 @@ func (g *ServiceGenerator) generateRequestSerialize(fn parser.FuncDecl, reqBaseN
 		}
 		fieldName := g.namer.FieldName(param.Name)
 		if param.FlagBit != nil {
+			if isTrueType(param.Type) {
+				continue
+			}
 			if _, err := fmt.Fprintf(g.out, "\tif flags&(1<<%d) != 0 {\n", *param.FlagBit); err != nil {
 				return err
 			}
@@ -351,6 +354,12 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 		}
 		fieldName := g.namer.FieldName(param.Name)
 		if param.FlagBit != nil {
+			if isTrueType(param.Type) {
+				if _, err := fmt.Fprintf(g.out, "\tr.%s = flags&(1<<%d) != 0\n", fieldName, *param.FlagBit); err != nil {
+					return err
+				}
+				continue
+			}
 			if _, err := fmt.Fprintf(g.out, "\tif flags&(1<<%d) != 0 {\n", *param.FlagBit); err != nil {
 				return err
 			}
