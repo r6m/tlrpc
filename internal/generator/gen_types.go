@@ -547,6 +547,50 @@ func (g *TypeGenerator) writeDeserializeField(param parser.Parameter, fieldName,
 }
 
 func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent string) error {
+	if isUnionType(g.schema, t) {
+		iface := unionInterfaceName(g.namer, t)
+		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tctorID, err := mtproto.ReadUint32(r)\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tvalue, ok := obj.(%s)\n", indent, iface); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"constructor %%x is not %s\", ctorID)\n%s\t}\n", indent, indent, iface, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tvar boxedCtor bytes.Buffer\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(io.MultiReader(&boxedCtor, r)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\t%s = value\n", indent, target); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if t.Optional && !isTrueType(t) && needsOptionalPointer(t, g.goBaseType(t), g.schema) {
 		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic}
 		if readCall, ok := deserializeBuiltinCall(base); ok {

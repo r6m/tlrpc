@@ -106,11 +106,11 @@ func (w *FileWriter) header(filename string) string {
 	case "register.go":
 		return baseHeader + "import (\n\t\"context\"\n\t\"github.com/r6m/tlrpc\"\n)\n\n"
 	case "types.go":
-		return baseHeader + "import (\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n"
+		return baseHeader + "import (\n\t\"bytes\"\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\nvar _ = bytes.Buffer{}\n\n"
 	case "interfaces.go":
 		return baseHeader + "import (\n\t\"io\"\n)\n\n"
 	case "requests.go":
-		return baseHeader + "import (\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\n"
+		return baseHeader + "import (\n\t\"bytes\"\n\t\"fmt\"\n\t\"io\"\n\t\"github.com/r6m/tlrpc/mtproto\"\n)\n\nvar _ = bytes.Buffer{}\n\n"
 	case "constants.go":
 		return baseHeader + "// Constructor ID constants\n\n"
 	case "base_aliases.go":

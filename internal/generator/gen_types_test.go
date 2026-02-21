@@ -99,3 +99,27 @@ func TestTypeGenerator_DoesNotGenerateMTProtoEnvelopeTypes(t *testing.T) {
 		t.Fatalf("unexpected MTProto envelope type generated: RPCResult")
 	}
 }
+
+func TestTypeGenerator_UnionFieldDeserializeUsesConstructorDispatch(t *testing.T) {
+	data := readTestSchema(t, "simple.tl")
+	p := parser.NewParser(string(data))
+	schema, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var typesBuf bytes.Buffer
+	gen := NewTypeGenerator(naming.NewNamer(), &typesBuf, schema)
+	for i := range schema.Types {
+		if err := gen.GenerateType(&schema.Types[i]); err != nil {
+			t.Fatalf("generate type: %v", err)
+		}
+	}
+	content := typesBuf.String()
+	if !strings.Contains(content, "GetStaticConstructors()[ctorID]") {
+		t.Fatalf("expected union constructor dispatch in DeserializeTL")
+	}
+	if strings.Contains(content, "if err := v.User.DeserializeTL(r); err != nil {") {
+		t.Fatalf("expected union field to avoid direct interface DeserializeTL call")
+	}
+}

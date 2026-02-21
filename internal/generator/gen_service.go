@@ -421,6 +421,50 @@ func (g *ServiceGenerator) writeRequestDeserializeField(param parser.Parameter, 
 }
 
 func (g *ServiceGenerator) writeRequestDeserializeValue(t parser.TypeRef, target, indent string) error {
+	if isUnionType(g.schema, t) {
+		iface := unionInterfaceName(g.namer, t)
+		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tctorID, err := mtproto.ReadUint32(rd)\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tvalue, ok := obj.(%s)\n", indent, iface); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"constructor %%x is not %s\", ctorID)\n%s\t}\n", indent, indent, iface, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tvar boxedCtor bytes.Buffer\n", indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(io.MultiReader(&boxedCtor, rd)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s\t%s = value\n", indent, target); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	readCall, ok := deserializeBuiltinCallWithReader(t, "rd")
 	if ok {
 		if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := %s\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, readCall, indent, indent, indent); err != nil {

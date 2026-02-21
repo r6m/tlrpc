@@ -67,3 +67,32 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 		t.Fatalf("expected TLName method on request")
 	}
 }
+
+func TestServiceGenerator_RequestVectorUnionDeserializeUsesConstructorDispatch(t *testing.T) {
+	const schemaText = `---types---
+inputUserSelf#f7c1b13f = InputUser;
+inputUser#f21158c6 user_id:long access_hash:long = InputUser;
+userEmpty#d3bc4b7c id:long = User;
+
+---functions---
+users.getUsers#0d91a548 id:Vector<InputUser> = Vector<User>;
+`
+	p := parser.NewParser(schemaText)
+	schema, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var requestsBuf bytes.Buffer
+	req := NewServiceGenerator(naming.NewNamer(), schema, &requestsBuf)
+	if err := req.GenerateRequests(schema.Functions); err != nil {
+		t.Fatalf("generate requests: %v", err)
+	}
+	content := requestsBuf.String()
+	if !strings.Contains(content, "GetStaticConstructors()[ctorID]") {
+		t.Fatalf("expected constructor dispatch in request vector decode")
+	}
+	if strings.Contains(content, "var item InputUserType\n\t\tif err := item.DeserializeTL(rd); err != nil {") {
+		t.Fatalf("expected to avoid direct nil-interface DeserializeTL call in vectors")
+	}
+}
