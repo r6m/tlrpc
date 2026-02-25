@@ -401,10 +401,9 @@ func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name strin
 			if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, %s); err != nil {\n\t\treturn err\n\t}\n", setName); err != nil {
 				return err
 			}
-			if shouldSkipParam(param) {
-				continue
-			}
-		} else if shouldSkipParam(param) {
+			continue
+		}
+		if shouldSkipParam(param) {
 			continue
 		}
 		fieldName := g.namer.FieldName(param.Name)
@@ -694,15 +693,6 @@ func flagBit(param parser.Parameter) *int {
 		return param.FlagBit
 	}
 	return param.Type.FlagBit
-}
-
-func hasFlaggedParams(params []parser.Parameter) bool {
-	for _, param := range params {
-		if flagBit(param) != nil {
-			return true
-		}
-	}
-	return false
 }
 
 func isFlagParam(param parser.Parameter) bool {
