@@ -326,6 +326,21 @@ func TestLexer_VectorTokens(t *testing.T) {
 	}
 }
 
+func TestParser_ConditionalFieldPreservesFlagName(t *testing.T) {
+	input := `---types---
+user#01020304 flags:# flags2:# close_friend:flags2.2?true first_name:flags.1?string = User;
+`
+	p := NewParser(input)
+	schema, err := p.Parse()
+	require.NoError(t, err)
+	require.Len(t, schema.Types, 1)
+	require.Len(t, schema.Types[0].Constructors, 1)
+	params := schema.Types[0].Constructors[0].Params
+	require.Len(t, params, 4)
+	assert.Equal(t, "flags2", params[2].Type.FlagName)
+	assert.Equal(t, "flags", params[3].Type.FlagName)
+}
+
 // Benchmark parsing performance
 // func BenchmarkParser_Parse(b *testing.B) {
 // 	input := `---types---

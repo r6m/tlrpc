@@ -229,7 +229,7 @@ func (g *ServiceGenerator) generateRequestComputeFlags(fn parser.FuncDecl, reqBa
 		return err
 	}
 	for _, param := range fn.Params {
-		if isFlagsParam(param) || param.FlagBit == nil {
+		if isFlagsParam(param) || param.FlagBit == nil || flagSetName(param) != "flags" {
 			continue
 		}
 		fieldName := g.namer.FieldName(param.Name)
@@ -257,13 +257,35 @@ func (g *ServiceGenerator) generateRequestSerialize(fn parser.FuncDecl, reqBaseN
 		return err
 	}
 	if hasFlagsParam(fn.Params) {
-		if _, err := io.WriteString(g.out, "\tflags := r.computeFlags()\n"); err != nil {
-			return err
+		for _, setName := range listFlagSets(fn.Params) {
+			if setName == "flags" {
+				if _, err := io.WriteString(g.out, "\tflags := r.computeFlags()\n"); err != nil {
+					return err
+				}
+				continue
+			}
+			if _, err := fmt.Fprintf(g.out, "\t%s := uint32(0)\n", setName); err != nil {
+				return err
+			}
+			for _, param := range fn.Params {
+				if param.FlagBit == nil || flagSetName(param) != setName {
+					continue
+				}
+				fieldName := g.namer.FieldName(param.Name)
+				condition := "r." + fieldName + " != nil"
+				if isTrueType(param.Type) {
+					condition = "r." + fieldName
+				}
+				if _, err := fmt.Fprintf(g.out, "\tif %s {\n\t\t%s |= 1 << %d\n\t}\n", condition, setName, *param.FlagBit); err != nil {
+					return err
+				}
+			}
 		}
 	}
 	for _, param := range fn.Params {
 		if isFlagsParam(param) {
-			if _, err := io.WriteString(g.out, "\tif err := mtproto.WriteUint32(w, flags); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+			setName := param.Name
+			if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, %s); err != nil {\n\t\treturn err\n\t}\n", setName); err != nil {
 				return err
 			}
 			continue
@@ -273,7 +295,7 @@ func (g *ServiceGenerator) generateRequestSerialize(fn parser.FuncDecl, reqBaseN
 			if isTrueType(param.Type) {
 				continue
 			}
-			if _, err := fmt.Fprintf(g.out, "\tif flags&(1<<%d) != 0 {\n", *param.FlagBit); err != nil {
+			if _, err := fmt.Fprintf(g.out, "\tif %s&(1<<%d) != 0 {\n", flagSetName(param), *param.FlagBit); err != nil {
 				return err
 			}
 			if err := g.writeRequestSerializeField(param, fieldName, "\t\t"); err != nil {
@@ -341,13 +363,32 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 		return err
 	}
 	if hasFlagsParam(fn.Params) {
-		if _, err := io.WriteString(g.out, "\tvar flags uint32\n"); err != nil {
-			return err
+		for _, setName := range listFlagSets(fn.Params) {
+			if _, err := fmt.Fprintf(g.out, "\tvar %s uint32\n", setName); err != nil {
+				return err
+			}
 		}
 	}
+	flagUsage := flagSetUsage(fn.Params)
 	for _, param := range fn.Params {
 		if isFlagsParam(param) {
-			if _, err := io.WriteString(g.out, "\t{\n\t\tvalue, err := mtproto.ReadUint32(rd)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tflags = value\n\t}\n"); err != nil {
+			setName := param.Name
+			if !flagUsage[setName] {
+				if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+					return err
+				}
+				continue
+			}
+			if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := mtproto.ReadUint32(rd)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t%s = value\n", setName); err != nil {
+				return err
+			}
+			if !shouldSkipParam(param) {
+				fieldName := g.namer.FieldName(param.Name)
+				if _, err := fmt.Fprintf(g.out, "\t\tr.%s = value\n", fieldName); err != nil {
+					return err
+				}
+			}
+			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
 				return err
 			}
 			continue
@@ -355,12 +396,12 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 		fieldName := g.namer.FieldName(param.Name)
 		if param.FlagBit != nil {
 			if isTrueType(param.Type) {
-				if _, err := fmt.Fprintf(g.out, "\tr.%s = flags&(1<<%d) != 0\n", fieldName, *param.FlagBit); err != nil {
+				if _, err := fmt.Fprintf(g.out, "\tr.%s = %s&(1<<%d) != 0\n", fieldName, flagSetName(param), *param.FlagBit); err != nil {
 					return err
 				}
 				continue
 			}
-			if _, err := fmt.Fprintf(g.out, "\tif flags&(1<<%d) != 0 {\n", *param.FlagBit); err != nil {
+			if _, err := fmt.Fprintf(g.out, "\tif %s&(1<<%d) != 0 {\n", flagSetName(param), *param.FlagBit); err != nil {
 				return err
 			}
 			if err := g.writeRequestDeserializeField(param, fieldName, "\t\t"); err != nil {
@@ -514,7 +555,7 @@ func (g *ServiceGenerator) goType(t parser.TypeRef) string {
 }
 
 func isFlagsParam(param parser.Parameter) bool {
-	return param.Name == "flags" && param.Type.Name == "#"
+	return isFlagParam(param)
 }
 
 func hasFlagsParam(params []parser.Parameter) bool {

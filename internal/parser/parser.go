@@ -523,6 +523,7 @@ func (p *Parser) parseConditionalTypeRef() (TypeRef, error) {
 	if p.cur.Type != TokenIdent || !strings.HasPrefix(p.cur.Literal, "flags") {
 		return TypeRef{}, p.errorf("expected flags identifier, got %s", p.cur.Type)
 	}
+	flagName := p.cur.Literal
 	p.nextToken()      // consume flags identifier
 	p.expect(TokenDot) // "."
 
@@ -553,6 +554,7 @@ func (p *Parser) parseConditionalTypeRef() (TypeRef, error) {
 
 	// Mark as optional and store flag bit
 	actualType.Optional = true
+	actualType.FlagName = flagName
 	actualType.FlagBit = &[]int{flagBitValue}[0] // Convert to *int
 
 	return actualType, nil

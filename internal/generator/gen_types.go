@@ -170,6 +170,9 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 			if bit == nil {
 				continue
 			}
+			if flagSetName(param) != "flags" {
+				continue
+			}
 			fieldName := g.namer.FieldName(param.Name)
 			flagFields = append(flagFields, FlagFieldTemplateData{
 				Condition: flagCondition(param, fieldName),
@@ -180,10 +183,10 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 
 	// Generate serialization methods as strings
 	var serializeTL, deserializeTL string
-	if err := g.generateSerializeTLString(ctor, name, flagsParam != nil, &serializeTL); err != nil {
+	if err := g.generateSerializeTLString(ctor, name, &serializeTL); err != nil {
 		return err
 	}
-	if err := g.generateDeserializeTLString(ctor, name, flagsParam != nil, &deserializeTL); err != nil {
+	if err := g.generateDeserializeTLString(ctor, name, &deserializeTL); err != nil {
 		return err
 	}
 
@@ -292,6 +295,9 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 			if bit == nil {
 				continue
 			}
+			if flagSetName(param) != "flags" {
+				continue
+			}
 			fieldName := g.namer.FieldName(param.Name)
 			flagFields = append(flagFields, FlagFieldTemplateData{
 				Condition: flagCondition(param, fieldName),
@@ -302,10 +308,10 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 
 	// Generate serialization methods as strings
 	var serializeTL, deserializeTL string
-	if err := g.generateSerializeTLString(ctor, name, flagsParam != nil, &serializeTL); err != nil {
+	if err := g.generateSerializeTLString(ctor, name, &serializeTL); err != nil {
 		return err
 	}
-	if err := g.generateDeserializeTLString(ctor, name, flagsParam != nil, &deserializeTL); err != nil {
+	if err := g.generateDeserializeTLString(ctor, name, &deserializeTL); err != nil {
 		return err
 	}
 
@@ -329,13 +335,13 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 }
 
 // generateSerializeTLString generates SerializeTL method as a string
-func (g *TypeGenerator) generateSerializeTLString(ctor *parser.Constructor, name string, hasFlags bool, result *string) error {
+func (g *TypeGenerator) generateSerializeTLString(ctor *parser.Constructor, name string, result *string) error {
 	var buf bytes.Buffer
 	oldOut := g.out
 	g.out = &buf
 	defer func() { g.out = oldOut }()
 
-	if err := g.generateSerializeTL(ctor, name, hasFlags); err != nil {
+	if err := g.generateSerializeTL(ctor, name); err != nil {
 		return err
 	}
 
@@ -344,13 +350,13 @@ func (g *TypeGenerator) generateSerializeTLString(ctor *parser.Constructor, name
 }
 
 // generateDeserializeTLString generates DeserializeTL method as a string
-func (g *TypeGenerator) generateDeserializeTLString(ctor *parser.Constructor, name string, hasFlags bool, result *string) error {
+func (g *TypeGenerator) generateDeserializeTLString(ctor *parser.Constructor, name string, result *string) error {
 	var buf bytes.Buffer
 	oldOut := g.out
 	g.out = &buf
 	defer func() { g.out = oldOut }()
 
-	if err := g.generateDeserializeTL(ctor, name, hasFlags); err != nil {
+	if err := g.generateDeserializeTL(ctor, name); err != nil {
 		return err
 	}
 
@@ -358,7 +364,7 @@ func (g *TypeGenerator) generateDeserializeTLString(ctor *parser.Constructor, na
 	return nil
 }
 
-func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name string, hasFlags bool) error {
+func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name string) error {
 	if _, err := fmt.Fprintf(g.out, "func (v *%s) SerializeTL(w io.Writer) error {\n", name); err != nil {
 		return err
 	}
@@ -367,22 +373,46 @@ func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name strin
 			return err
 		}
 	}
-	if hasFlags {
-		if _, err := io.WriteString(g.out, "\tflags := v.computeFlags()\n\tif err := mtproto.WriteUint32(w, flags); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+	for _, setName := range listFlagSets(ctor.Params) {
+		if setName == "flags" {
+			if _, err := io.WriteString(g.out, "\tflags := v.computeFlags()\n"); err != nil {
+				return err
+			}
+			continue
+		}
+		if _, err := fmt.Fprintf(g.out, "\t%s := uint32(0)\n", setName); err != nil {
 			return err
+		}
+		for _, param := range ctor.Params {
+			bit := flagBit(param)
+			if bit == nil || flagSetName(param) != setName {
+				continue
+			}
+			fieldName := g.namer.FieldName(param.Name)
+			if _, err := fmt.Fprintf(g.out, "\tif %s {\n\t\t%s |= 1 << %d\n\t}\n", flagCondition(param, fieldName), setName, *bit); err != nil {
+				return err
+			}
 		}
 	}
 	for _, param := range ctor.Params {
-		if shouldSkipParam(param) {
+		bit := flagBit(param)
+		if isFlagParam(param) {
+			setName := flagParamName(param)
+			if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, %s); err != nil {\n\t\treturn err\n\t}\n", setName); err != nil {
+				return err
+			}
+			if shouldSkipParam(param) {
+				continue
+			}
+		} else if shouldSkipParam(param) {
 			continue
 		}
-		bit := flagBit(param)
 		fieldName := g.namer.FieldName(param.Name)
 		if isTrueType(param.Type) {
 			continue
 		}
 		if bit != nil {
-			if _, err := fmt.Fprintf(g.out, "\tif flags&(1<<%d) != 0 {\n", *bit); err != nil {
+			if _, err := fmt.Fprintf(g.out, "\tif %s&(1<<%d) != 0 {\n", flagSetName(param), *bit); err != nil {
 				return err
 			}
 			if err := g.writeSerializeField(param, fieldName, "\t\t"); err != nil {
@@ -442,7 +472,7 @@ func (g *TypeGenerator) writeSerializeValue(t parser.TypeRef, value, indent stri
 	return err
 }
 
-func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name string, hasFlags bool) error {
+func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name string) error {
 	if _, err := fmt.Fprintf(g.out, "func (v *%s) DeserializeTL(r io.Reader) error {\n", name); err != nil {
 		return err
 	}
@@ -454,34 +484,53 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 			return err
 		}
 	}
-	usesFlags := hasFlags && hasFlaggedParams(ctor.Params)
-	if hasFlags {
-		if usesFlags {
-			if _, err := io.WriteString(g.out, "\tflags, err := mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
-				return err
-			}
-		} else {
-			if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
-				return err
-			}
+	flagUsage := flagSetUsage(ctor.Params)
+	for _, setName := range listFlagSets(ctor.Params) {
+		if !flagUsage[setName] {
+			continue
+		}
+		if _, err := fmt.Fprintf(g.out, "\tvar %s uint32\n", setName); err != nil {
+			return err
 		}
 	}
 	for _, param := range ctor.Params {
+		bit := flagBit(param)
+		if isFlagParam(param) {
+			setName := flagParamName(param)
+			if !flagUsage[setName] {
+				if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+					return err
+				}
+				continue
+			}
+			if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := mtproto.ReadUint32(r)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t%s = value\n", setName); err != nil {
+				return err
+			}
+			if !shouldSkipParam(param) {
+				fieldName := g.namer.FieldName(param.Name)
+				if _, err := fmt.Fprintf(g.out, "\t\tv.%s = value\n", fieldName); err != nil {
+					return err
+				}
+			}
+			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
+				return err
+			}
+			continue
+		}
 		if shouldSkipParam(param) {
 			continue
 		}
-		bit := flagBit(param)
 		fieldName := g.namer.FieldName(param.Name)
 		if isTrueType(param.Type) {
 			if bit != nil {
-				if _, err := fmt.Fprintf(g.out, "\tv.%s = flags&(1<<%d) != 0\n", fieldName, *bit); err != nil {
+				if _, err := fmt.Fprintf(g.out, "\tv.%s = %s&(1<<%d) != 0\n", fieldName, flagSetName(param), *bit); err != nil {
 					return err
 				}
 			}
 			continue
 		}
 		if bit != nil {
-			if _, err := fmt.Fprintf(g.out, "\tif flags&(1<<%d) != 0 {\n", *bit); err != nil {
+			if _, err := fmt.Fprintf(g.out, "\tif %s&(1<<%d) != 0 {\n", flagSetName(param), *bit); err != nil {
 				return err
 			}
 			if err := g.writeDeserializeField(param, fieldName, "\t\t"); err != nil {
@@ -633,7 +682,7 @@ func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent s
 func findFlagsParam(ctor *parser.Constructor) *parser.Parameter {
 	for i := range ctor.Params {
 		param := &ctor.Params[i]
-		if param.Name == "flags" && param.Type.Name == "#" {
+		if param.Name == "flags" && isFlagParam(*param) {
 			return param
 		}
 	}
@@ -654,6 +703,57 @@ func hasFlaggedParams(params []parser.Parameter) bool {
 		}
 	}
 	return false
+}
+
+func isFlagParam(param parser.Parameter) bool {
+	return strings.HasPrefix(param.Name, "flags") && param.Type.Name == "#"
+}
+
+func flagParamName(param parser.Parameter) string {
+	if isFlagParam(param) {
+		return param.Name
+	}
+	return "flags"
+}
+
+func flagSetName(param parser.Parameter) string {
+	if param.Type.FlagName != "" {
+		return param.Type.FlagName
+	}
+	if param.FlagBit != nil || param.Type.FlagBit != nil {
+		return "flags"
+	}
+	return ""
+}
+
+func listFlagSets(params []parser.Parameter) []string {
+	out := make([]string, 0, 2)
+	seen := make(map[string]struct{}, 2)
+	for _, param := range params {
+		if !isFlagParam(param) {
+			continue
+		}
+		name := flagParamName(param)
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+	}
+	return out
+}
+
+func flagSetUsage(params []parser.Parameter) map[string]bool {
+	usage := make(map[string]bool)
+	for _, param := range params {
+		if isFlagParam(param) && !shouldSkipParam(param) {
+			usage[flagParamName(param)] = true
+		}
+		if flagBit(param) != nil {
+			usage[flagSetName(param)] = true
+		}
+	}
+	return usage
 }
 
 func flagCondition(param parser.Parameter, fieldName string) string {
@@ -721,7 +821,7 @@ func deserializeBuiltinCallWithReader(t parser.TypeRef, readerName string) (stri
 }
 
 func shouldSkipParam(param parser.Parameter) bool {
-	if param.Name == "flags" && param.Type.Name == "#" {
+	if isFlagParam(param) && param.Name == "flags" {
 		return true
 	}
 	if strings.EqualFold(param.Type.Name, "true") && param.Type.FlagBit != nil {

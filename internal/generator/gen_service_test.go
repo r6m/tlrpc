@@ -126,3 +126,36 @@ messages.testTrueFlags#01020304 flags:# silent:flags.0?true id:int = Bool;
 		t.Fatalf("expected true flag field assignment from flags bit")
 	}
 }
+
+func TestServiceGenerator_RequestSupportsMultiFlagSets(t *testing.T) {
+	const schemaText = `---types---
+boolTrue#997275b5 = Bool;
+
+---functions---
+messages.testMultiFlags#01020304 flags:# flags2:# silent:flags.0?true close_friend:flags2.2?true about:flags2.3?string = Bool;
+`
+	p := parser.NewParser(schemaText)
+	schema, err := p.Parse()
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	var requestsBuf bytes.Buffer
+	req := NewServiceGenerator(naming.NewNamer(), schema, &requestsBuf)
+	if err := req.GenerateRequests(schema.Functions); err != nil {
+		t.Fatalf("generate requests: %v", err)
+	}
+	content := requestsBuf.String()
+	if !strings.Contains(content, "flags2 := uint32(0)") {
+		t.Fatalf("expected flags2 local variable in request serialize")
+	}
+	if !strings.Contains(content, "if r.CloseFriend {\n\t\tflags2 |= 1 << 2") {
+		t.Fatalf("expected flags2 bool bit computation in request serialize")
+	}
+	if !strings.Contains(content, "if flags2&(1<<3) != 0") {
+		t.Fatalf("expected flags2 optional gate in request serialize")
+	}
+	if !strings.Contains(content, "closeFriend = flags2&(1<<2) != 0") && !strings.Contains(content, "r.CloseFriend = flags2&(1<<2) != 0") {
+		t.Fatalf("expected flags2 bool assignment in request deserialize")
+	}
+}

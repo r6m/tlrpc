@@ -68,6 +68,7 @@ type TypeRef struct {
 	Generic    *TypeRef // For vector<Generic>
 	GenericArg string   // NEW: for "Vector t" - the "t" part
 	Optional   bool     // flags.N?Type
+	FlagName   string   // Conditional flag source, e.g. "flags", "flags2"
 	FlagBit    *int     // Conditional on this flag bit
 	IsTypeVar  bool     // NEW: true if this is a type variable like "t" or "X"
 }
@@ -119,7 +120,11 @@ func (t TypeRef) String() string {
 	}
 
 	if t.FlagBit != nil {
-		result += fmt.Sprintf("flags.%d?", *t.FlagBit)
+		name := t.FlagName
+		if name == "" {
+			name = "flags"
+		}
+		result += fmt.Sprintf("%s.%d?", name, *t.FlagBit)
 	}
 
 	if t.Namespace != "" {
