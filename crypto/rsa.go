@@ -128,7 +128,7 @@ func LoadPEMPrivateKey(path string) (*ServerKey, error) {
 		return nil, ErrInvalidKeyFormat
 	}
 
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	key, err := parseRSAPrivateKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("parse private key: %w", err)
 	}
@@ -140,6 +140,23 @@ func LoadPEMPrivateKey(path string) (*ServerKey, error) {
 	sk.Fingerprint = make([]byte, 8)
 	binary.LittleEndian.PutUint64(sk.Fingerprint, uint64(sk.ID))
 	return sk, nil
+}
+
+func parseRSAPrivateKey(data []byte) (*rsa.PrivateKey, error) {
+	key, pkcs1Err := x509.ParsePKCS1PrivateKey(data)
+	if pkcs1Err == nil {
+		return key, nil
+	}
+
+	parsed, pkcs8Err := x509.ParsePKCS8PrivateKey(data)
+	if pkcs8Err != nil {
+		return nil, fmt.Errorf("%w: PKCS#1: %v; PKCS#8: %v", ErrInvalidKeyFormat, pkcs1Err, pkcs8Err)
+	}
+	key, ok := parsed.(*rsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("%w: PKCS#8 key type %T is not RSA", ErrInvalidKeyFormat, parsed)
+	}
+	return key, nil
 }
 
 func SavePEMPrivateKey(path string, key *ServerKey) error {

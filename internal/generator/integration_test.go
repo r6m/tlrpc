@@ -224,11 +224,12 @@ func (c *memoryConn) WriteMessage(payload []byte) error {
 	}
 }
 
-func (c *memoryConn) Close() error                       { c.cancel(); return nil }
-func (c *memoryConn) LocalAddr() net.Addr                { return memoryAddr("local") }
-func (c *memoryConn) RemoteAddr() net.Addr               { return memoryAddr("remote") }
-func (c *memoryConn) SetDeadline(time.Time) error        { return nil }
-func (c *memoryConn) Context() context.Context           { return c.ctx }
+func (c *memoryConn) Close() error                            { c.cancel(); return nil }
+func (c *memoryConn) LocalAddr() net.Addr                     { return memoryAddr("local") }
+func (c *memoryConn) RemoteAddr() net.Addr                    { return memoryAddr("remote") }
+func (c *memoryConn) SetReadDeadline(time.Time) error         { return nil }
+func (c *memoryConn) SetWriteDeadline(time.Time) error        { return nil }
+func (c *memoryConn) Context() context.Context                { return c.ctx }
 
 type singleListener struct {
 	conn transport.Conn

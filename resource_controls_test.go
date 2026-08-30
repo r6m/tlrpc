@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,7 +16,9 @@ import (
 func TestControlledConnEnforcesCompletePayloadBounds(t *testing.T) {
 	base := newResourceTestConn()
 	base.reads = [][]byte{{1, 2, 3, 4}, {1, 2, 3, 4, 5}}
-	conn := NewServer(WithMaxMessageSize(4)).controlConn(base)
+	limits := testResourceLimits()
+	limits.MaxPayloadBytes = 4
+	conn := NewServer(WithResourceLimits(limits)).controlConn(base)
 
 	payload, err := conn.ReadMessage(0)
 	if err != nil {
@@ -59,10 +60,7 @@ func TestControlledConnUsesIndependentOperationDeadlines(t *testing.T) {
 		}
 		return nil
 	}
-	conn := NewServer(
-		WithReadTimeout(time.Second),
-		WithWriteTimeout(time.Second),
-	).controlConn(base)
+	conn := NewServer(WithResourceLimits(testResourceLimits())).controlConn(base)
 
 	readDone := make(chan error, 1)
 	go func() {
@@ -105,26 +103,13 @@ func TestControlledConnUsesIndependentOperationDeadlines(t *testing.T) {
 	}
 }
 
-func TestControlledConnRejectsCombinedDeadlineFallback(t *testing.T) {
-	base := &combinedDeadlineOnlyConn{base: newResourceTestConn()}
-	readConn := NewServer(WithReadTimeout(time.Second)).controlConn(base)
-	if _, err := readConn.ReadMessage(0); !errors.Is(err, ErrDirectionalDeadlinesUnsupported) {
-		t.Fatalf("read error = %v, want ErrDirectionalDeadlinesUnsupported", err)
-	}
-	writeConn := NewServer(WithWriteTimeout(time.Second)).controlConn(base)
-	if err := writeConn.WriteMessage([]byte{1, 2, 3, 4}); !errors.Is(err, ErrDirectionalDeadlinesUnsupported) {
-		t.Fatalf("write error = %v, want ErrDirectionalDeadlinesUnsupported", err)
-	}
-	if got := base.combinedDeadlineCalls.Load(); got != 0 {
-		t.Fatalf("SetDeadline called %d times; directional options must not alter both directions", got)
-	}
-}
-
 func TestControlledConnSerializesWritesAndBoundsLockWait(t *testing.T) {
 	base := newResourceTestConn()
 	base.writeStarted = make(chan struct{}, 1)
 	base.writeBlock = make(chan struct{})
-	conn := NewServer(WithWriteTimeout(100 * time.Millisecond)).controlConn(base)
+	limits := testResourceLimits()
+	limits.WriteTimeout = 100 * time.Millisecond
+	conn := NewServer(WithResourceLimits(limits)).controlConn(base)
 
 	firstDone := make(chan error, 1)
 	go func() { firstDone <- conn.WriteMessage([]byte{1}) }()
@@ -160,8 +145,10 @@ func TestControlledConnSerializesWritesAndBoundsLockWait(t *testing.T) {
 	}
 }
 
-func TestMaxConcurrentStreamsBoundsApplicationHandlers(t *testing.T) {
-	s := NewServer(WithMaxConcurrentStreams(1))
+func TestMaxInFlightRequestsBoundsApplicationHandlers(t *testing.T) {
+	limits := testResourceLimits()
+	limits.MaxInFlightRequests = 1
+	s := NewServer(WithResourceLimits(limits))
 	entered := make(chan struct{}, 2)
 	release := make(chan struct{})
 	handler := func(ctx context.Context) error {
@@ -207,7 +194,9 @@ func TestMaxConcurrentStreamsBoundsApplicationHandlers(t *testing.T) {
 }
 
 func TestHandlerAdmissionIsCanceledByShutdown(t *testing.T) {
-	s := NewServer(WithMaxConcurrentStreams(1))
+	limits := testResourceLimits()
+	limits.MaxInFlightRequests = 1
+	s := NewServer(WithResourceLimits(limits))
 	if err := s.acquireHandler(context.Background()); err != nil {
 		t.Fatalf("occupy handler slot: %v", err)
 	}
@@ -226,6 +215,15 @@ func TestHandlerAdmissionIsCanceledByShutdown(t *testing.T) {
 		t.Fatal("handler waiter remained blocked after shutdown")
 	}
 	s.releaseHandler()
+}
+
+func testResourceLimits() ResourceLimits {
+	return ResourceLimits{
+		MaxPayloadBytes:     1 << 20,
+		MaxInFlightRequests: 8,
+		ReadTimeout:         time.Second,
+		WriteTimeout:        time.Second,
+	}
 }
 
 type resourceTestConn struct {
@@ -305,9 +303,6 @@ func (c *resourceTestConn) Close() error {
 }
 func (c *resourceTestConn) LocalAddr() net.Addr  { return resourceTestAddr("local") }
 func (c *resourceTestConn) RemoteAddr() net.Addr { return resourceTestAddr("remote") }
-func (c *resourceTestConn) SetDeadline(time.Time) error {
-	return errors.New("combined deadline must not be used")
-}
 func (c *resourceTestConn) SetReadDeadline(deadline time.Time) error {
 	c.mu.Lock()
 	c.readDeadline = deadline
@@ -327,26 +322,6 @@ func (c *resourceTestConn) SetWriteDeadline(deadline time.Time) error {
 	return nil
 }
 func (c *resourceTestConn) Context() context.Context { return c.ctx }
-
-type combinedDeadlineOnlyConn struct {
-	base                  *resourceTestConn
-	combinedDeadlineCalls atomic.Int32
-}
-
-func (c *combinedDeadlineOnlyConn) ReadMessage(maxPayloadBytes int) ([]byte, error) {
-	return c.base.ReadMessage(maxPayloadBytes)
-}
-func (c *combinedDeadlineOnlyConn) WriteMessage(payload []byte) error {
-	return c.base.WriteMessage(payload)
-}
-func (c *combinedDeadlineOnlyConn) Close() error             { return c.base.Close() }
-func (c *combinedDeadlineOnlyConn) LocalAddr() net.Addr      { return c.base.LocalAddr() }
-func (c *combinedDeadlineOnlyConn) RemoteAddr() net.Addr     { return c.base.RemoteAddr() }
-func (c *combinedDeadlineOnlyConn) Context() context.Context { return c.base.Context() }
-func (c *combinedDeadlineOnlyConn) SetDeadline(time.Time) error {
-	c.combinedDeadlineCalls.Add(1)
-	return nil
-}
 
 type resourceTestAddr string
 

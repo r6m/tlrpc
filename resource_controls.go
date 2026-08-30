@@ -15,10 +15,6 @@ var (
 	// ErrMessageTooLarge reports a complete MTProto payload that exceeds the
 	// configured inbound or outbound limit.
 	ErrMessageTooLarge = errors.New("tlrpc: MTProto payload exceeds maximum message size")
-	// ErrDirectionalDeadlinesUnsupported reports a transport that cannot apply
-	// read and write deadlines independently. TLRPC refuses to use SetDeadline
-	// as a fallback because doing so can interrupt traffic in the other direction.
-	ErrDirectionalDeadlinesUnsupported = errors.New("tlrpc: transport does not support directional deadlines")
 	// ErrServerStopped is returned when shutdown cancels a handler waiting for a
 	// server-wide application execution slot.
 	ErrServerStopped = errors.New("tlrpc: server stopped")
@@ -36,34 +32,26 @@ func (e *messageSizeError) Error() string {
 
 func (e *messageSizeError) Unwrap() error { return ErrMessageTooLarge }
 
-type readDeadlineSetter interface {
-	SetReadDeadline(time.Time) error
-}
-
-type writeDeadlineSetter interface {
-	SetWriteDeadline(time.Time) error
-}
-
 // controlledConn is the single runtime I/O boundary for an accepted
 // connection. It enforces complete-payload limits, directional operation
 // deadlines, and one synchronous serialized writer. Because writes are not
 // queued, callers themselves receive backpressure and there is no hidden
 // buffer to overflow.
 type controlledConn struct {
-	base           transport.Conn
-	maxMessageSize int
-	readTimeout    time.Duration
-	writeTimeout   time.Duration
-	writePermit    chan struct{}
+	base            transport.Conn
+	maxPayloadBytes int
+	readTimeout     time.Duration
+	writeTimeout    time.Duration
+	writePermit     chan struct{}
 }
 
 func (s *Server) controlConn(base transport.Conn) *controlledConn {
 	c := &controlledConn{
-		base:           base,
-		maxMessageSize: s.maxMessageSize,
-		readTimeout:    s.readTimeout,
-		writeTimeout:   s.writeTimeout,
-		writePermit:    make(chan struct{}, 1),
+		base:            base,
+		maxPayloadBytes: s.maxPayloadBytes,
+		readTimeout:     s.readTimeout,
+		writeTimeout:    s.writeTimeout,
+		writePermit:     make(chan struct{}, 1),
 	}
 	c.writePermit <- struct{}{}
 	return c
@@ -74,8 +62,8 @@ func (c *controlledConn) ReadMessage(maxPayloadBytes int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.maxMessageSize > 0 && (maxPayloadBytes <= 0 || c.maxMessageSize < maxPayloadBytes) {
-		maxPayloadBytes = c.maxMessageSize
+	if c.maxPayloadBytes > 0 && (maxPayloadBytes <= 0 || c.maxPayloadBytes < maxPayloadBytes) {
+		maxPayloadBytes = c.maxPayloadBytes
 	}
 	payload, readErr := c.base.ReadMessage(maxPayloadBytes)
 	clearErr := clear()
@@ -92,8 +80,8 @@ func (c *controlledConn) ReadMessage(maxPayloadBytes int) ([]byte, error) {
 }
 
 func (c *controlledConn) WriteMessage(payload []byte) error {
-	if c.maxMessageSize > 0 && len(payload) > c.maxMessageSize {
-		return &messageSizeError{direction: "outbound", size: len(payload), limit: c.maxMessageSize}
+	if c.maxPayloadBytes > 0 && len(payload) > c.maxPayloadBytes {
+		return &messageSizeError{direction: "outbound", size: len(payload), limit: c.maxPayloadBytes}
 	}
 
 	deadline, err := c.acquireWriter()
@@ -145,60 +133,41 @@ func (c *controlledConn) beginRead() (func() error, error) {
 	if c.readTimeout <= 0 {
 		return func() error { return nil }, nil
 	}
-	setter, ok := c.base.(readDeadlineSetter)
-	if !ok {
-		return nil, ErrDirectionalDeadlinesUnsupported
-	}
-	if err := setter.SetReadDeadline(time.Now().Add(c.readTimeout)); err != nil {
+	if err := c.base.SetReadDeadline(time.Now().Add(c.readTimeout)); err != nil {
 		return nil, err
 	}
-	return func() error { return setter.SetReadDeadline(time.Time{}) }, nil
+	return func() error { return c.base.SetReadDeadline(time.Time{}) }, nil
 }
 
 func (c *controlledConn) beginWrite(deadline time.Time) (func() error, error) {
 	if c.writeTimeout <= 0 {
 		return func() error { return nil }, nil
 	}
-	setter, ok := c.base.(writeDeadlineSetter)
-	if !ok {
-		return nil, ErrDirectionalDeadlinesUnsupported
-	}
 	if deadline.IsZero() {
 		deadline = time.Now().Add(c.writeTimeout)
 	}
-	if err := setter.SetWriteDeadline(deadline); err != nil {
+	if err := c.base.SetWriteDeadline(deadline); err != nil {
 		return nil, err
 	}
-	return func() error { return setter.SetWriteDeadline(time.Time{}) }, nil
+	return func() error { return c.base.SetWriteDeadline(time.Time{}) }, nil
 }
 
-func (c *controlledConn) Close() error                  { return c.base.Close() }
-func (c *controlledConn) LocalAddr() net.Addr           { return c.base.LocalAddr() }
-func (c *controlledConn) RemoteAddr() net.Addr          { return c.base.RemoteAddr() }
-func (c *controlledConn) Context() context.Context      { return c.base.Context() }
-func (c *controlledConn) SetDeadline(t time.Time) error { return c.base.SetDeadline(t) }
+func (c *controlledConn) Close() error             { return c.base.Close() }
+func (c *controlledConn) LocalAddr() net.Addr      { return c.base.LocalAddr() }
+func (c *controlledConn) RemoteAddr() net.Addr     { return c.base.RemoteAddr() }
+func (c *controlledConn) Context() context.Context { return c.base.Context() }
+func (c *controlledConn) SetReadDeadline(t time.Time) error {
+	return c.base.SetReadDeadline(t)
+}
+func (c *controlledConn) SetWriteDeadline(t time.Time) error {
+	return c.base.SetWriteDeadline(t)
+}
 
 func (c *controlledConn) TransportMode() string {
 	if provider, ok := c.base.(interface{ TransportMode() string }); ok {
 		return provider.TransportMode()
 	}
 	return ""
-}
-
-func (c *controlledConn) SetReadDeadline(t time.Time) error {
-	setter, ok := c.base.(readDeadlineSetter)
-	if !ok {
-		return ErrDirectionalDeadlinesUnsupported
-	}
-	return setter.SetReadDeadline(t)
-}
-
-func (c *controlledConn) SetWriteDeadline(t time.Time) error {
-	setter, ok := c.base.(writeDeadlineSetter)
-	if !ok {
-		return ErrDirectionalDeadlinesUnsupported
-	}
-	return setter.SetWriteDeadline(t)
 }
 
 func (s *Server) acquireHandler(ctx context.Context) error {

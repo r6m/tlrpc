@@ -22,40 +22,44 @@ const (
 	DefaultReliabilitySessionCapacity = 4096
 	DefaultReliabilityMessageCapacity = 4096
 	DefaultReliabilityTTL             = 10 * time.Minute
+	DefaultMaxPayloadBytes            = 16 << 20
+	DefaultMaxInFlightRequests        = 1024
+	DefaultReadTimeout                = 2 * time.Minute
+	DefaultWriteTimeout               = 30 * time.Second
 )
 
 // Server represents an RPC server
 type Server struct {
-	authKeys             crypto.AuthKeyManager
-	serverKeys           crypto.ServerKeyManager
-	store                session.Store
-	runtimeLeases        *runtimev2.SessionLeaseRegistry
-	runtimeReliability   *runtimev2.ReliabilityRegistry
-	runtimeHandshake     *handshakev2.Engine
-	runtimePushes        *runtimePushRegistry
-	dispatcher           *dispatcher
-	schemaLayer          int
-	schemaLayerSet       bool
-	unaryInterceptors    []UnaryInterceptor
-	logger               Logger
-	services             map[string]*serviceInfo
-	shutdownCh           chan struct{}
-	onSessionBound       OnSessionBoundHook
-	onSessionUnbound     OnSessionUnboundHook
-	reliabilitySessions  int
-	reliabilityMessages  int
-	reliabilityTTL       time.Duration
-	maxMessageSize       int
-	maxConcurrentStreams int
-	readTimeout          time.Duration
-	writeTimeout         time.Duration
-	handlerSlots         chan struct{}
-	lifecycleMu          sync.Mutex
-	listeners            map[*ownedListener]struct{}
-	connections          map[*ownedConn]struct{}
-	connectionWG         sync.WaitGroup
-	stopOnce             sync.Once
-	stopDone             chan struct{}
+	authKeys            crypto.AuthKeyManager
+	serverKeys          crypto.ServerKeyManager
+	store               session.Store
+	runtimeLeases       *runtimev2.SessionLeaseRegistry
+	runtimeReliability  *runtimev2.ReliabilityRegistry
+	runtimeHandshake    *handshakev2.Engine
+	runtimePushes       *runtimePushRegistry
+	dispatcher          *dispatcher
+	schemaLayer         int
+	schemaLayerSet      bool
+	unaryInterceptors   []UnaryInterceptor
+	logger              Logger
+	services            map[string]*serviceInfo
+	shutdownCh          chan struct{}
+	onSessionBound      OnSessionBoundHook
+	onSessionUnbound    OnSessionUnboundHook
+	reliabilitySessions int
+	reliabilityMessages int
+	reliabilityTTL      time.Duration
+	maxPayloadBytes     int
+	maxInFlightRequests int
+	readTimeout         time.Duration
+	writeTimeout        time.Duration
+	handlerSlots        chan struct{}
+	lifecycleMu         sync.Mutex
+	listeners           map[*ownedListener]struct{}
+	connections         map[*ownedConn]struct{}
+	connectionWG        sync.WaitGroup
+	stopOnce            sync.Once
+	stopDone            chan struct{}
 }
 
 type closer interface {
@@ -109,13 +113,17 @@ func NewServer(opts ...ServerOption) *Server {
 		reliabilitySessions: DefaultReliabilitySessionCapacity,
 		reliabilityMessages: DefaultReliabilityMessageCapacity,
 		reliabilityTTL:      DefaultReliabilityTTL,
+		maxPayloadBytes:     DefaultMaxPayloadBytes,
+		maxInFlightRequests: DefaultMaxInFlightRequests,
+		readTimeout:         DefaultReadTimeout,
+		writeTimeout:        DefaultWriteTimeout,
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
 	s.runtimePushes = newRuntimePushRegistry(s)
-	if s.maxConcurrentStreams > 0 {
-		s.handlerSlots = make(chan struct{}, s.maxConcurrentStreams)
+	if s.maxInFlightRequests > 0 {
+		s.handlerSlots = make(chan struct{}, s.maxInFlightRequests)
 	}
 	s.runtimeLeases = runtimev2.NewSessionLeaseRegistry(s.store)
 	var err error
@@ -376,8 +384,8 @@ func (s *Server) serveConn(conn transport.Conn) bool {
 	runtimeConn, err := runtimev2.NewConnection(runtimev2.ConnectionConfig{
 		Conn: conn, AuthKeys: s.authKeys, Handshake: s.runtimeHandshake,
 		Leases: s.runtimeLeases, Reliability: s.runtimeReliability,
-		Application: application, MaxPayloadBytes: s.maxMessageSize,
-		MaxDecodedPayload: s.maxMessageSize, ActiveRequests: s.maxConcurrentStreams,
+		Application: application, MaxPayloadBytes: s.maxPayloadBytes,
+		MaxDecodedPayload: s.maxPayloadBytes, ActiveRequests: s.maxInFlightRequests,
 		SchemaLayer: s.schemaLayer, Transport: runtimeTransportMode(conn),
 		Presence: s.runtimePushes,
 	})
@@ -506,42 +514,33 @@ func WithReliabilityLimits(sessionCapacity, messageCapacity int, ttl time.Durati
 	}
 }
 
-// WithMaxMessageSize sets the maximum message size in bytes.
-func WithMaxMessageSize(size int) ServerOption {
-	return func(s *Server) {
-		if size <= 0 {
-			panic("tlrpc: maximum message size must be positive")
-		}
-		s.maxMessageSize = size
-	}
+// ResourceLimits configures the bounded Runtime v2 connection and application
+// execution policy. Every field must be positive when the policy is supplied.
+type ResourceLimits struct {
+	MaxPayloadBytes     int
+	MaxInFlightRequests int
+	ReadTimeout         time.Duration
+	WriteTimeout        time.Duration
 }
 
-// WithMaxConcurrentStreams sets the maximum number of concurrent streams.
-func WithMaxConcurrentStreams(n int) ServerOption {
+// WithResourceLimits applies one TL-native resource policy to Runtime v2.
+func WithResourceLimits(limits ResourceLimits) ServerOption {
 	return func(s *Server) {
-		if n <= 0 {
-			panic("tlrpc: maximum concurrent streams must be positive")
+		if limits.MaxPayloadBytes <= 0 {
+			panic("tlrpc: maximum payload bytes must be positive")
 		}
-		s.maxConcurrentStreams = n
-	}
-}
-
-// WithReadTimeout sets the read timeout for connections.
-func WithReadTimeout(timeout time.Duration) ServerOption {
-	return func(s *Server) {
-		if timeout <= 0 {
+		if limits.MaxInFlightRequests <= 0 {
+			panic("tlrpc: maximum in-flight requests must be positive")
+		}
+		if limits.ReadTimeout <= 0 {
 			panic("tlrpc: read timeout must be positive")
 		}
-		s.readTimeout = timeout
-	}
-}
-
-// WithWriteTimeout sets the write timeout for connections.
-func WithWriteTimeout(timeout time.Duration) ServerOption {
-	return func(s *Server) {
-		if timeout <= 0 {
+		if limits.WriteTimeout <= 0 {
 			panic("tlrpc: write timeout must be positive")
 		}
-		s.writeTimeout = timeout
+		s.maxPayloadBytes = limits.MaxPayloadBytes
+		s.maxInFlightRequests = limits.MaxInFlightRequests
+		s.readTimeout = limits.ReadTimeout
+		s.writeTimeout = limits.WriteTimeout
 	}
 }

@@ -12,7 +12,7 @@ for path in conn.go conn_context.go conn_handler_state.go conn_reliability.go co
 done
 
 # Removed public APIs must not return in production code.
-if rg -n "With(Transport|SessionManager|MaxLayer|Layers|UnknownConstructorHandler)\\b|SessionFromContext\\b|ConnFromContext\\b|globalDispatcher\\b|func \\(s \\*Server\\) Register(Constructor|Method)\\b" \
+if rg -n "With(Transport|SessionManager|MaxLayer|Layers|UnknownConstructorHandler|MaxMessageSize|MaxConcurrentStreams|ReadTimeout|WriteTimeout)\\b|SessionFromContext\\b|ConnFromContext\\b|globalDispatcher\\b|func \\(s \\*Server\\) Register(Constructor|Method)\\b" \
 	--glob '*.go' \
 	--glob '!**/*_test.go' \
 	--glob '!scripts/check_no_legacy.sh' \

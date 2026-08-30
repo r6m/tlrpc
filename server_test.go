@@ -309,53 +309,63 @@ func TestWithUnaryInterceptor(t *testing.T) {
 	}
 }
 
-func TestWithMaxMessageSize(t *testing.T) {
-	s := NewServer(WithMaxMessageSize(1024))
-	if s.maxMessageSize != 1024 {
-		t.Fatalf("max message size = %d, want 1024", s.maxMessageSize)
+func TestWithResourceLimits(t *testing.T) {
+	s := NewServer(WithResourceLimits(ResourceLimits{
+		MaxPayloadBytes:     1024,
+		MaxInFlightRequests: 10,
+		ReadTimeout:         time.Second,
+		WriteTimeout:        2 * time.Second,
+	}))
+	if s.maxPayloadBytes != 1024 {
+		t.Fatalf("max payload bytes = %d, want 1024", s.maxPayloadBytes)
 	}
-}
-
-func TestWithMaxConcurrentStreams(t *testing.T) {
-	s := NewServer(WithMaxConcurrentStreams(10))
 	if cap(s.handlerSlots) != 10 {
 		t.Fatalf("handler capacity = %d, want 10", cap(s.handlerSlots))
 	}
-}
-
-func TestWithReadTimeout(t *testing.T) {
-	s := NewServer(WithReadTimeout(time.Second))
 	if s.readTimeout != time.Second {
 		t.Fatalf("read timeout = %v, want 1s", s.readTimeout)
 	}
-}
-
-func TestWithWriteTimeout(t *testing.T) {
-	s := NewServer(WithWriteTimeout(time.Second))
-	if s.writeTimeout != time.Second {
-		t.Fatalf("write timeout = %v, want 1s", s.writeTimeout)
+	if s.writeTimeout != 2*time.Second {
+		t.Fatalf("write timeout = %v, want 2s", s.writeTimeout)
 	}
 }
 
-func TestResourceOptionsRejectInvalidValues(t *testing.T) {
-	tests := map[string]ServerOption{
-		"message size zero":      WithMaxMessageSize(0),
-		"message size negative":  WithMaxMessageSize(-1),
-		"concurrency zero":       WithMaxConcurrentStreams(0),
-		"concurrency negative":   WithMaxConcurrentStreams(-1),
-		"read timeout zero":      WithReadTimeout(0),
-		"read timeout negative":  WithReadTimeout(-time.Second),
-		"write timeout zero":     WithWriteTimeout(0),
-		"write timeout negative": WithWriteTimeout(-time.Second),
+func TestNewServerUsesBoundedResourceDefaults(t *testing.T) {
+	s := NewServer()
+	if s.maxPayloadBytes != DefaultMaxPayloadBytes {
+		t.Fatalf("max payload bytes = %d, want %d", s.maxPayloadBytes, DefaultMaxPayloadBytes)
 	}
-	for name, option := range tests {
+	if cap(s.handlerSlots) != DefaultMaxInFlightRequests {
+		t.Fatalf("handler capacity = %d, want %d", cap(s.handlerSlots), DefaultMaxInFlightRequests)
+	}
+	if s.readTimeout != DefaultReadTimeout {
+		t.Fatalf("read timeout = %v, want %v", s.readTimeout, DefaultReadTimeout)
+	}
+	if s.writeTimeout != DefaultWriteTimeout {
+		t.Fatalf("write timeout = %v, want %v", s.writeTimeout, DefaultWriteTimeout)
+	}
+}
+
+func TestResourceLimitsRejectInvalidValues(t *testing.T) {
+	valid := ResourceLimits{MaxPayloadBytes: 1024, MaxInFlightRequests: 10, ReadTimeout: time.Second, WriteTimeout: time.Second}
+	tests := map[string]ResourceLimits{
+		"payload zero":           {MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"payload negative":       {MaxPayloadBytes: -1, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"requests zero":          {MaxPayloadBytes: valid.MaxPayloadBytes, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"requests negative":      {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: -1, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"read timeout zero":      {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, WriteTimeout: valid.WriteTimeout},
+		"read timeout negative":  {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: -time.Second, WriteTimeout: valid.WriteTimeout},
+		"write timeout zero":     {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout},
+		"write timeout negative": {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout, WriteTimeout: -time.Second},
+	}
+	for name, limits := range tests {
 		t.Run(name, func(t *testing.T) {
 			defer func() {
 				if recover() == nil {
 					t.Fatal("NewServer accepted invalid resource configuration")
 				}
 			}()
-			_ = NewServer(option)
+			_ = NewServer(WithResourceLimits(limits))
 		})
 	}
 }

@@ -4,6 +4,22 @@ set -euo pipefail
 root_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root_dir"
 
+if [[ $# -ne 1 ]]; then
+  echo "usage: $0 vMAJOR.MINOR.PATCH" >&2
+  exit 1
+fi
+if [[ ! $1 =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "usage: $0 vMAJOR.MINOR.PATCH" >&2
+  exit 1
+fi
+release_tag=$1
+release_version=${release_tag#v}
+
+if ! grep -Fq "## [$release_version]" CHANGELOG.md; then
+  echo "ERROR: CHANGELOG.md has no $release_version release section." >&2
+  exit 1
+fi
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "ERROR: git working tree is dirty. Commit or stash changes before release." >&2
   exit 1
@@ -35,11 +51,11 @@ go test -p=1 -tags=gotd_integ ./transport -run TestGotd -count=1
 make lint
 go test -p=1 ./compat -run Scenario -count=1 -timeout 60s
 
-cat <<'NEXT'
+cat <<NEXT
 Checks passed.
 
 Next steps:
-  git tag -a v0.8.0 -m "v0.8.0"
-  git push origin v0.8.0
+  git tag -a $release_tag -m "$release_tag"
+  git push origin $release_tag
   Create GitHub Release using CHANGELOG.md notes.
 NEXT

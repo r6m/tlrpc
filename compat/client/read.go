@@ -19,12 +19,12 @@ func (c *Client) ReadOne(ctx context.Context) (tlrpc.TLObject, error) {
 		return object, nil
 	}
 	if deadline, ok := ctx.Deadline(); ok {
-		if err := c.conn.SetDeadline(deadline); err != nil {
+		if err := c.conn.SetReadDeadline(deadline); err != nil {
 			return nil, err
 		}
-		defer func() { _ = c.conn.SetDeadline(time.Time{}) }()
+		defer func() { _ = c.conn.SetReadDeadline(time.Time{}) }()
 	} else {
-		if err := c.conn.SetDeadline(time.Time{}); err != nil {
+		if err := c.conn.SetReadDeadline(time.Time{}); err != nil {
 			return nil, err
 		}
 	}

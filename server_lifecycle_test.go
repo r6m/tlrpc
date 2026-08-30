@@ -238,10 +238,11 @@ func (c *lifecycleConn) Close() error {
 	return nil
 }
 
-func (c *lifecycleConn) LocalAddr() net.Addr         { return lifecycleAddr("local") }
-func (c *lifecycleConn) RemoteAddr() net.Addr        { return lifecycleAddr("remote") }
-func (c *lifecycleConn) SetDeadline(time.Time) error { return nil }
-func (c *lifecycleConn) Context() context.Context    { return c.ctx }
+func (c *lifecycleConn) LocalAddr() net.Addr              { return lifecycleAddr("local") }
+func (c *lifecycleConn) RemoteAddr() net.Addr             { return lifecycleAddr("remote") }
+func (c *lifecycleConn) SetReadDeadline(time.Time) error  { return nil }
+func (c *lifecycleConn) SetWriteDeadline(time.Time) error { return nil }
+func (c *lifecycleConn) Context() context.Context         { return c.ctx }
 
 type lifecycleAddr string
 

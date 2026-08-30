@@ -188,7 +188,7 @@ func sendReliabilityRPC(t *testing.T, cli *client.Client, requestID int64, value
 
 func readReliabilityPacket(t *testing.T, cli *client.Client) ([]byte, *mtproto.InnerData, tlrpc.TLObject) {
 	t.Helper()
-	if err := cli.Conn().SetDeadline(time.Now().Add(2 * time.Second)); err != nil {
+	if err := cli.Conn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
 		t.Fatalf("set reliability read deadline: %v", err)
 	}
 	packet, err := cli.Conn().ReadMessage(0)

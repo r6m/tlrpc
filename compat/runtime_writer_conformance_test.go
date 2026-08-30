@@ -203,7 +203,7 @@ func dialEncryptedHarnessFromHarness(t *testing.T, h *testHarness) (*encryptedHa
 
 func readRuntimeWriterWireObject(t *testing.T, cli *client.Client) (*mtproto.InnerData, tlrpc.TLObject) {
 	t.Helper()
-	if err := cli.Conn().SetDeadline(time.Now().Add(2 * time.Second)); err != nil {
+	if err := cli.Conn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
 		t.Fatalf("set deadline: %v", err)
 	}
 	packet, err := cli.Conn().ReadMessage(0)

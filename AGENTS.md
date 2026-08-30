@@ -10,8 +10,9 @@ Fix project structure + docs so they match the actual code, and ensure `go test 
 
 ## Non-goals
 - No protobuf/gRPC transport layer.
-- TLRPC has no released compatibility contract yet. Prefer one coherent final
-  API and delete obsolete APIs/adapters instead of adding compatibility shims.
+- TLRPC is pre-1.0 and may make deliberate breaking minor releases. Prefer one
+  coherent API and delete obsolete APIs/adapters instead of adding compatibility
+  shims unless a released contract explicitly requires them.
 
 ## Required workflow
 1) Read: README.md, docs/index.md, docs/requirements.md,

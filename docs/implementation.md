@@ -205,15 +205,28 @@ WithLogger
 WithOnSessionBound
 WithOnSessionUnbound
 WithReliabilityLimits
-WithMaxMessageSize
-WithMaxConcurrentStreams
-WithReadTimeout
-WithWriteTimeout
+WithResourceLimits
 ```
 
-Invalid non-positive limits panic during configuration. Message size is
-enforced before transport allocation and before protocol decode. Handler
-concurrency, reliability capacity/TTL, and directional deadlines are bounded.
+`WithResourceLimits` accepts one Runtime v2 policy rather than separate
+gRPC-shaped message, stream, and timeout knobs:
+
+```go
+tlrpc.WithResourceLimits(tlrpc.ResourceLimits{
+	MaxPayloadBytes:     16 << 20,
+	MaxInFlightRequests: 1024,
+	ReadTimeout:         2 * time.Minute,
+	WriteTimeout:        30 * time.Second,
+})
+```
+
+Every supplied field must be positive; invalid policies panic during
+configuration. Payload size is enforced before transport allocation and before
+protocol decode. Request admission, reliability capacity/TTL, and directional
+deadlines are bounded. `NewServer` applies the values shown above by default;
+the option replaces that complete policy. Custom `transport.Conn`
+implementations must expose independent `SetReadDeadline` and
+`SetWriteDeadline` operations.
 
 There is no compatibility runtime selector or deprecated option family.
 

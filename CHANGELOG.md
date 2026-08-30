@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-30
+
+### Changed
+- Replace the four gRPC-shaped `WithMaxMessageSize`,
+  `WithMaxConcurrentStreams`, `WithReadTimeout`, and `WithWriteTimeout`
+  options with one TL-native `WithResourceLimits(ResourceLimits)` policy. The
+  old exports are removed without aliases.
+- Require transport connections to expose independent read and write deadlines,
+  making the Runtime v2 resource policy enforceable for custom transports.
+
+### Fixed
+- Accept standard PKCS#8 RSA private-key PEM files in addition to PKCS#1 files
+  when loading an MTProto server key.
+
 ## [0.8.0] - 2026-08-30
 
 This release establishes the first supported framework API.

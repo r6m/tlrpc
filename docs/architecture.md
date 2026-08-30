@@ -23,7 +23,7 @@ and structured errors. The public wire remains TL/MTProto.
 
 The framework is schema-neutral. Telegram layer 228 exercises the same parser,
 generator, descriptor, and runtime paths as an arbitrary schema. `tgserver`
-will sit above this boundary as a consumer.
+sits above this boundary as a consumer.
 
 ## Component ownership
 

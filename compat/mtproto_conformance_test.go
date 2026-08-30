@@ -194,7 +194,7 @@ func TestMsgsAckIsConsumedWithoutAcknowledgingTheAcknowledgement(t *testing.T) {
 	_, cli := dialEncryptedHarness(t)
 	payload := serializeCompatObject(t, &mtprototl.MsgsAck{MsgIDs: []int64{41, 42}})
 	writeEncryptedRequest(t, cli, client.NextMsgID(), 0, payload)
-	if err := cli.Conn().SetDeadline(time.Now().Add(150 * time.Millisecond)); err != nil {
+	if err := cli.Conn().SetReadDeadline(time.Now().Add(150 * time.Millisecond)); err != nil {
 		t.Fatalf("set deadline: %v", err)
 	}
 	_, err := cli.Conn().ReadMessage(0)
@@ -380,7 +380,7 @@ func readUntilConstructor(t *testing.T, cli *client.Client, constructorID uint32
 
 func readKnownObject(t *testing.T, cli *client.Client) (*mtproto.InnerData, tlrpc.TLObject) {
 	t.Helper()
-	if err := cli.Conn().SetDeadline(time.Now().Add(2 * time.Second)); err != nil {
+	if err := cli.Conn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
 		t.Fatalf("set deadline: %v", err)
 	}
 	packet, err := cli.Conn().ReadMessage(0)

@@ -44,8 +44,11 @@ type Conn interface {
 	// RemoteAddr returns remote address.
 	RemoteAddr() net.Addr
 
-	// SetDeadline sets read/write deadlines.
-	SetDeadline(t time.Time) error
+	// SetReadDeadline sets the deadline for future reads.
+	SetReadDeadline(t time.Time) error
+
+	// SetWriteDeadline sets the deadline for future writes.
+	SetWriteDeadline(t time.Time) error
 
 	// Context returns connection context (cancelled on close).
 	Context() context.Context

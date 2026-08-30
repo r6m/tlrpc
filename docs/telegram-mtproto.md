@@ -212,9 +212,9 @@ Telegram product backend.
 
 ## `tgserver` boundary
 
-Future `tgserver` integration will generate contracts from its selected
-Telegram schema, implement those generated services, provide durable auth-key
-and composite-session stores, and use TLRPC for TCP/WebSocket protocol handling.
+`tgserver` generates contracts from its selected Telegram schema, implements
+those generated services, provides durable auth-key and composite-session
+stores, and uses TLRPC for TCP/WebSocket protocol handling.
 
 Authentication policy, users, dialogs, messages, media, bots, durable updates,
 and deployment topology remain in `tgserver`. Reusable MTProto mechanics may

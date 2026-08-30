@@ -54,6 +54,5 @@ connection in handler context, direct method/constructor registration,
 deprecated runtime flag, compatibility adapter, or parallel legacy pipeline.
 
 Telegram layer 228 is an exact compatibility fixture. `tgserver` now uses
-Runtime v2 as its sole protocol gateway with a durable composite store. Release
-publication remains separate consumer work and does not change the framework
-boundary.
+Runtime v2 as its sole protocol gateway with a durable composite store. It is
+a released-module consumer and does not change the framework boundary.
