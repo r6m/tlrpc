@@ -81,8 +81,8 @@ Known limitations remain intentionally outside the v0.8 framework contract:
 process-local publish is neither durable nor distributed, additional carriers
 are future extensions, and product update history, fanout, databases, queues,
 object storage, HTTP Bot API behavior, and deployment policy remain application
-responsibilities. The sole incomplete release action is external publication,
-which requires explicit authorization.
+responsibilities. TLRPC v0.8.0 was published on 2026-08-30 after explicit
+authorization.
 
 ## Gate 3: Adopt released TLRPC in `tgserver`
 
@@ -104,14 +104,14 @@ This is consumer work, not part of defining TLRPC complete.
 Gate: `tgserver` uses TLRPC as its generic protocol framework without TLRPC
 absorbing Telegram product semantics or deployment policy.
 
-Current progress: tgserver's source is generated at layer 228, implements and
+Current state: tgserver's source is generated at layer 228, implements and
 registers product services through Runtime v2, uses explicit binding and
 semantic publish, and includes a PostgreSQL `session.Store` for every detached
 snapshot field. Runtime v2 is now its sole TCP/WebSocket gateway; the previous
 gateway, router, MTProto, transport, crypto, and in-process gRPC bridge have
 been deleted. The full suite plus real-gotd authentication, live delivery,
-reconnect, and missed-update recovery gates pass in a temporary two-module
-workspace. Publishing v0.8 and consuming the published module remain.
+reconnect, and missed-update recovery gates pass against the published v0.8.0
+module with no workspace replacement.
 
 ## Later framework work
 

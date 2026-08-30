@@ -305,6 +305,5 @@ avoid creating competing compiler fleets on development machines.
 ## 9. Current limitations
 
 - Local publish is not durable or distributed.
-- Publishing the first release remains a future milestone. `tgserver` has
-  completed its source cutover and deleted its previous gateway stack, but
-  still uses the temporary two-module workspace until v0.8 is published.
+- v0.8.0 is published and `tgserver` verifies its source cutover against that
+  module without a workspace replacement.

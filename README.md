@@ -81,6 +81,7 @@ work and from the later `tgserver` integration.
 
 ## Release status
 
-TLRPC has no released backward-compatibility contract. Superseded APIs and the
-old runtime are replaced rather than retained as legacy modes. See
-[CHANGELOG.md](./CHANGELOG.md) for release notes when a release is authorized.
+v0.8.0 is the first supported Runtime v2 framework release. Earlier APIs have
+no backward-compatibility contract: superseded APIs and the old runtime were
+replaced rather than retained as legacy modes. See [CHANGELOG.md](./CHANGELOG.md)
+for release notes.
