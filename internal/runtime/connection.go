@@ -74,9 +74,9 @@ type Connection struct {
 	router            *Router
 	active            *ActiveRequestRegistry
 	sender            *requestSender
-	acceptsPush       bool
 	requestWG         sync.WaitGroup
 	outcomeMu         sync.Mutex
+	acceptsPush       bool
 	receivedEncrypted bool
 
 	handshakeSession *handshake.Session
@@ -292,8 +292,11 @@ func (c *Connection) handleEncrypted(ctx context.Context, decoded DecodedFrame) 
 			}
 			continue
 		}
-		c.setPushSubscription(snapshot, !current.SuppressPush)
-
+		if !current.SuppressPush {
+			if err := c.subscribeForPush(); err != nil {
+				return err
+			}
+		}
 		handlerCtx, complete, err := active.Begin(ctx, current.MessageID)
 		if err != nil {
 			return err
@@ -391,9 +394,25 @@ func (c *Connection) bind(ctx context.Context, decoded DecodedFrame) error {
 	c.validator = validator
 	c.writer = writer
 	c.sender = &requestSender{writer: writer}
-	c.acceptsPush = true
 	c.router = router
 	c.active = active
+	if c.config.Presence != nil {
+		c.config.Presence.Update(snapshot, c.sender, false)
+	}
+	return nil
+}
+
+func (c *Connection) subscribeForPush() error {
+	c.outcomeMu.Lock()
+	defer c.outcomeMu.Unlock()
+	if c.acceptsPush {
+		return nil
+	}
+	snapshot, err := c.lease.Snapshot()
+	if err != nil {
+		return err
+	}
+	c.acceptsPush = true
 	if c.config.Presence != nil {
 		c.config.Presence.Update(snapshot, c.sender, true)
 	}
@@ -486,22 +505,9 @@ func (c *Connection) applyMutationsLocked(ctx context.Context, mutations []Sessi
 		return err
 	}
 	if c.config.Presence != nil {
-		c.mu.Lock()
-		acceptsPush := c.acceptsPush
-		c.mu.Unlock()
-		c.config.Presence.Update(next, c.sender, acceptsPush)
+		c.config.Presence.Update(next, c.sender, c.acceptsPush)
 	}
 	return nil
-}
-
-func (c *Connection) setPushSubscription(snapshot session.Snapshot, acceptsPush bool) {
-	c.mu.Lock()
-	c.acceptsPush = acceptsPush
-	sender := c.sender
-	c.mu.Unlock()
-	if c.config.Presence != nil && sender != nil {
-		c.config.Presence.Update(snapshot, sender, acceptsPush)
-	}
 }
 
 func (c *Connection) requestInfo(snapshot session.Snapshot) RequestInfo {

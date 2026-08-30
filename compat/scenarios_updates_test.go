@@ -137,7 +137,7 @@ func TestScenarioReconnectGetDifferenceTCPAndWS(t *testing.T) {
 	}
 }
 
-func TestScenarioInvokeWithoutUpdatesTCPAndWS(t *testing.T) {
+func TestScenarioInvokeWithoutUpdatesKeepsExistingSubscriptionTCPAndWS(t *testing.T) {
 	srv := startScenarioServer(t)
 	cases := []struct {
 		name string
@@ -171,10 +171,10 @@ func TestScenarioInvokeWithoutUpdatesTCPAndWS(t *testing.T) {
 				t.Fatalf("publish update: %v", err)
 			}
 
-			readCtx, cancelRead := context.WithTimeout(context.Background(), 400*time.Millisecond)
+			readCtx, cancelRead := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancelRead()
-			if _, err := cli.ReadOne(readCtx); err == nil {
-				t.Fatalf("expected no pushed updates")
+			if _, err := cli.ReadOne(readCtx); err != nil {
+				t.Fatalf("existing subscription lost after invokeWithoutUpdates: %v", err)
 			}
 			_ = cli.Close()
 

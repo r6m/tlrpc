@@ -82,6 +82,118 @@ func TestConnectionRoutesGeneratedApplicationThroughSingleWriter(t *testing.T) {
 	}
 }
 
+func TestConnectionInvokeWithoutUpdatesKeepsBoundSessionSubscribed(t *testing.T) {
+	const (
+		bindConstructor       = uint32(0x31313131)
+		normalConstructor     = uint32(0x32323232)
+		suppressedConstructor = uint32(0x33333333)
+		incidentalSenderPush  = uint32(0x41414141)
+		incidentalOutcomePush = uint32(0x42424242)
+		laterServerPush       = uint32(0x43434343)
+	)
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	application := &subscriptionApplicationStub{
+		bindConstructor:       bindConstructor,
+		suppressedConstructor: suppressedConstructor,
+		incidentalSenderPush:  incidentalSenderPush,
+		incidentalOutcomePush: incidentalOutcomePush,
+	}
+	presence := newSubscriptionPresenceStub()
+	harness := newConnectionHarness(t, now, application, 100, nil)
+	harness.connection.config.Presence = presence
+
+	handle := func(messageID int64, sequence int32, body []byte) {
+		t.Helper()
+		err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+			Encrypted: &mtproto.InnerData{
+				Salt: inboundSalt, SessionID: inboundSessionID,
+				MsgID: messageID, SeqNo: sequence, Data: body,
+			},
+			AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+		})
+		if err != nil {
+			t.Fatalf("handleEncrypted(%08x): %v", binaryConstructor(body), err)
+		}
+	}
+
+	handle(inboundMessageID(4), 1, constructorBody(bindConstructor))
+	presence.waitForUser(t, 42)
+	waitForWrittenFrames(t, harness.transport, 3)
+
+	handle(inboundMessageID(8), 3, constructorBody(normalConstructor))
+	waitForWrittenFrames(t, harness.transport, 5)
+
+	withoutUpdates := encodeControlBody(t, &mtprototl.InvokeWithoutUpdates{
+		QueryRaw: constructorBody(suppressedConstructor),
+	})
+	handle(inboundMessageID(12), 5, withoutUpdates)
+	waitForWrittenFrames(t, harness.transport, 7)
+
+	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
+		t.Fatalf("publish after invokeWithoutUpdates: %v", err)
+	}
+	waitForWrittenFrames(t, harness.transport, 8)
+
+	constructors := make([]uint32, 0, 8)
+	for _, frame := range harness.transport.writtenFrames() {
+		constructors = append(constructors, binaryConstructor(decryptWriterFrame(t, harness.authKey, frame).Data))
+	}
+	if containsConstructor(constructors, incidentalSenderPush) {
+		t.Fatalf("request sender push escaped invokeWithoutUpdates suppression: %08x", constructors)
+	}
+	if containsConstructor(constructors, incidentalOutcomePush) {
+		t.Fatalf("request outcome push escaped invokeWithoutUpdates suppression: %08x", constructors)
+	}
+	if !containsConstructor(constructors, laterServerPush) {
+		t.Fatalf("later server push was not delivered: %08x", constructors)
+	}
+
+	harness.connection.shutdown(io.EOF)
+}
+
+func TestConnectionInvokeWithoutUpdatesDoesNotSubscribeColdBoundSession(t *testing.T) {
+	const (
+		bindConstructor   = uint32(0x61616161)
+		normalConstructor = uint32(0x62626262)
+		laterServerPush   = uint32(0x63636363)
+	)
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	application := &subscriptionApplicationStub{bindConstructor: bindConstructor}
+	presence := newSubscriptionPresenceStub()
+	harness := newConnectionHarness(t, now, application, 100, nil)
+	harness.connection.config.Presence = presence
+
+	handle := func(messageID int64, sequence int32, body []byte) {
+		t.Helper()
+		if err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+			Encrypted: &mtproto.InnerData{
+				Salt: inboundSalt, SessionID: inboundSessionID,
+				MsgID: messageID, SeqNo: sequence, Data: body,
+			},
+			AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+		}); err != nil {
+			t.Fatalf("handleEncrypted(%08x): %v", binaryConstructor(body), err)
+		}
+	}
+
+	handle(inboundMessageID(4), 1, encodeControlBody(t, &mtprototl.InvokeWithoutUpdates{
+		QueryRaw: constructorBody(bindConstructor),
+	}))
+	waitForWrittenFrames(t, harness.transport, 3)
+	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err == nil {
+		t.Fatal("cold invokeWithoutUpdates connection unexpectedly subscribed for push")
+	}
+
+	handle(inboundMessageID(8), 3, constructorBody(normalConstructor))
+	waitForWrittenFrames(t, harness.transport, 5)
+	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
+		t.Fatalf("publish after normal request: %v", err)
+	}
+	waitForWrittenFrames(t, harness.transport, 6)
+
+	harness.connection.shutdown(io.EOF)
+}
+
 func TestConnectionRPCDropCancelsRunningGeneratedHandler(t *testing.T) {
 	now := time.Unix(inboundNowSeconds, 0).UTC()
 	requestID := inboundMessageID(4)
@@ -176,6 +288,123 @@ type connectionApplicationStub struct {
 	block    bool
 	started  chan struct{}
 	canceled chan struct{}
+}
+
+type subscriptionApplicationStub struct {
+	bindConstructor       uint32
+	suppressedConstructor uint32
+	incidentalSenderPush  uint32
+	incidentalOutcomePush uint32
+}
+
+func (s *subscriptionApplicationStub) DispatchApplication(ctx context.Context, request Request) (Outcome, error) {
+	response := RPCResult{RequestMessageID: request.Message.MessageID, Body: constructorBody(0x51515151)}
+	switch request.Message.ConstructorID {
+	case s.bindConstructor:
+		return Outcome{Intents: []Intent{response}, Mutations: []SessionMutation{BindUser{UserID: 42}}}, nil
+	case s.suppressedConstructor:
+		if err := request.Info.Sender.Push(ctx, constructorBody(s.incidentalSenderPush)); err != nil {
+			return Outcome{}, err
+		}
+		return Outcome{Intents: []Intent{
+			Push{Body: constructorBody(s.incidentalOutcomePush)},
+			response,
+		}}, nil
+	default:
+		return Outcome{Intents: []Intent{response}}, nil
+	}
+}
+
+type subscriptionPresenceStub struct {
+	mu      sync.Mutex
+	byUser  map[int64]Sender
+	updated chan struct{}
+}
+
+func newSubscriptionPresenceStub() *subscriptionPresenceStub {
+	return &subscriptionPresenceStub{byUser: make(map[int64]Sender), updated: make(chan struct{}, 8)}
+}
+
+func (s *subscriptionPresenceStub) Update(snapshot session.Snapshot, sender Sender, acceptsPush bool) {
+	s.mu.Lock()
+	if snapshot.UserID != 0 {
+		if acceptsPush {
+			s.byUser[snapshot.UserID] = sender
+		} else if s.byUser[snapshot.UserID] == sender {
+			delete(s.byUser, snapshot.UserID)
+		}
+	}
+	s.mu.Unlock()
+	select {
+	case s.updated <- struct{}{}:
+	default:
+	}
+}
+
+func (s *subscriptionPresenceStub) Remove(_ session.SessionKey, sender Sender) {
+	s.mu.Lock()
+	for userID, current := range s.byUser {
+		if current == sender {
+			delete(s.byUser, userID)
+		}
+	}
+	s.mu.Unlock()
+}
+
+func (s *subscriptionPresenceStub) publish(ctx context.Context, userID int64, body []byte) error {
+	s.mu.Lock()
+	sender := s.byUser[userID]
+	s.mu.Unlock()
+	if sender == nil {
+		return errors.New("bound session is not subscribed for server push")
+	}
+	return sender.Push(ctx, body)
+}
+
+func (s *subscriptionPresenceStub) waitForUser(t *testing.T, userID int64) {
+	t.Helper()
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	for {
+		s.mu.Lock()
+		bound := s.byUser[userID] != nil
+		s.mu.Unlock()
+		if bound {
+			return
+		}
+		select {
+		case <-s.updated:
+		case <-deadline.C:
+			t.Fatalf("user %d was not bound for push", userID)
+		}
+	}
+}
+
+func waitForWrittenFrames(t *testing.T, transport *scriptedFrameConnection, count int) {
+	t.Helper()
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	ticker := time.NewTicker(time.Millisecond)
+	defer ticker.Stop()
+	for {
+		if len(transport.writtenFrames()) >= count {
+			return
+		}
+		select {
+		case <-ticker.C:
+		case <-deadline.C:
+			t.Fatalf("written frames = %d, want at least %d", len(transport.writtenFrames()), count)
+		}
+	}
+}
+
+func containsConstructor(constructors []uint32, want uint32) bool {
+	for _, constructor := range constructors {
+		if constructor == want {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *connectionApplicationStub) DispatchApplication(ctx context.Context, request Request) (Outcome, error) {
