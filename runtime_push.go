@@ -20,15 +20,15 @@ type runtimePushBinding struct {
 // transport, auth key, message-ID generator, sequence generator, or packet.
 type runtimePushRegistry struct {
 	mu     sync.RWMutex
-	byKey  map[session.SessionKey]runtimePushBinding
-	byUser map[int64]map[session.SessionKey]runtimev2.Sender
+	byKey  map[session.SessionKey][]runtimePushBinding
+	byUser map[int64]map[session.SessionKey][]runtimev2.Sender
 	server *Server
 }
 
 func newRuntimePushRegistry(server *Server) *runtimePushRegistry {
 	return &runtimePushRegistry{
-		byKey:  make(map[session.SessionKey]runtimePushBinding),
-		byUser: make(map[int64]map[session.SessionKey]runtimev2.Sender),
+		byKey:  make(map[session.SessionKey][]runtimePushBinding),
+		byUser: make(map[int64]map[session.SessionKey][]runtimev2.Sender),
 		server: server,
 	}
 }
@@ -43,22 +43,35 @@ func (r *runtimePushRegistry) Update(snapshot session.Snapshot, sender runtimev2
 		ServerSalt: snapshot.ServerSalt, UserID: snapshot.UserID, Layer: snapshot.Layer,
 	}
 	r.mu.Lock()
-	previous, existed := r.byKey[key]
+	bindingsForKey := r.byKey[key]
+	index := -1
+	var previous runtimePushBinding
+	for i, candidate := range bindingsForKey {
+		if candidate.sender == sender {
+			index = i
+			previous = candidate
+			break
+		}
+	}
+	existed := index >= 0
 	if existed {
 		r.removeUserLocked(key, previous)
+		bindingsForKey[index] = runtimePushBinding{binding: binding, sender: sender}
+	} else {
+		bindingsForKey = append(bindingsForKey, runtimePushBinding{binding: binding, sender: sender})
 	}
-	r.byKey[key] = runtimePushBinding{binding: binding, sender: sender}
+	r.byKey[key] = bindingsForKey
 	if binding.UserID != 0 && acceptsPush {
 		bindings := r.byUser[binding.UserID]
 		if bindings == nil {
-			bindings = make(map[session.SessionKey]runtimev2.Sender)
+			bindings = make(map[session.SessionKey][]runtimev2.Sender)
 			r.byUser[binding.UserID] = bindings
 		}
-		bindings[key] = sender
+		bindings[key] = append(bindings[key], sender)
 	}
 	r.mu.Unlock()
 	bindingChanged := !existed || previous.binding != binding
-	if (!existed || previous.sender != sender || bindingChanged) && r.server != nil && r.server.onSessionBound != nil {
+	if bindingChanged && r.server != nil && r.server.onSessionBound != nil {
 		r.server.onSessionBound(binding, runtimeSender{sender: sender})
 	}
 }
@@ -68,13 +81,28 @@ func (r *runtimePushRegistry) Remove(key session.SessionKey, sender runtimev2.Se
 		return
 	}
 	r.mu.Lock()
-	binding, exists := r.byKey[key]
-	if exists && binding.sender == sender {
-		delete(r.byKey, key)
+	bindings := r.byKey[key]
+	index := -1
+	var binding runtimePushBinding
+	for i, candidate := range bindings {
+		if candidate.sender == sender {
+			index = i
+			binding = candidate
+			break
+		}
+	}
+	exists := index >= 0
+	if exists {
+		bindings = append(bindings[:index], bindings[index+1:]...)
+		if len(bindings) == 0 {
+			delete(r.byKey, key)
+		} else {
+			r.byKey[key] = bindings
+		}
 		r.removeUserLocked(key, binding)
 	}
 	r.mu.Unlock()
-	if exists && binding.sender == sender && r.server != nil && r.server.onSessionUnbound != nil {
+	if exists && r.server != nil && r.server.onSessionUnbound != nil {
 		r.server.onSessionUnbound(binding.binding)
 	}
 }
@@ -84,8 +112,17 @@ func (r *runtimePushRegistry) removeUserLocked(key session.SessionKey, binding r
 		return
 	}
 	bindings := r.byUser[binding.binding.UserID]
-	if bindings[key] == binding.sender {
+	senders := bindings[key]
+	for i, sender := range senders {
+		if sender == binding.sender {
+			senders = append(senders[:i], senders[i+1:]...)
+			break
+		}
+	}
+	if len(senders) == 0 {
 		delete(bindings, key)
+	} else {
+		bindings[key] = senders
 	}
 	if len(bindings) == 0 {
 		delete(r.byUser, binding.binding.UserID)
@@ -107,11 +144,11 @@ func (r *runtimePushRegistry) publish(ctx context.Context, userID int64, exclude
 	r.mu.RLock()
 	bindings := r.byUser[userID]
 	senders := make([]runtimev2.Sender, 0, len(bindings))
-	for key, sender := range bindings {
+	for key, sessionSenders := range bindings {
 		if excluded != nil && key == *excluded {
 			continue
 		}
-		senders = append(senders, sender)
+		senders = append(senders, sessionSenders...)
 	}
 	r.mu.RUnlock()
 	var failures []error

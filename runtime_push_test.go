@@ -91,6 +91,38 @@ func TestRuntimePushRegistryPublishExceptSkipsOnlyExactSession(t *testing.T) {
 	}
 }
 
+func TestRuntimePushRegistryColdParallelConnectionDoesNotMaskSubscriber(t *testing.T) {
+	registry := newRuntimePushRegistry(nil)
+	subscribed := &recordingRuntimeSender{}
+	cold := &recordingRuntimeSender{}
+	snapshot := session.Snapshot{AuthKeyID: 11, SessionID: 22, UserID: 33}
+
+	registry.Update(snapshot, subscribed, true)
+	registry.Update(snapshot, cold, false)
+	if err := registry.Publish(context.Background(), 33, []byte{1}); err != nil {
+		t.Fatal(err)
+	}
+	if subscribed.pushes != 1 || cold.pushes != 0 {
+		t.Fatalf("parallel publish counts = (%d, %d), want (1, 0)", subscribed.pushes, cold.pushes)
+	}
+
+	registry.Remove(snapshot.Key(), cold)
+	if err := registry.Publish(context.Background(), 33, []byte{2}); err != nil {
+		t.Fatal(err)
+	}
+	if subscribed.pushes != 2 || cold.pushes != 0 {
+		t.Fatalf("publish after cold removal = (%d, %d), want (2, 0)", subscribed.pushes, cold.pushes)
+	}
+
+	registry.Update(snapshot, cold, true)
+	if err := registry.Publish(context.Background(), 33, []byte{3}); err != nil {
+		t.Fatal(err)
+	}
+	if subscribed.pushes != 3 || cold.pushes != 1 {
+		t.Fatalf("two-subscriber publish counts = (%d, %d), want (3, 1)", subscribed.pushes, cold.pushes)
+	}
+}
+
 func TestServerPublishExceptUsesCompositeBindingAndAggregatesIncludedFailures(t *testing.T) {
 	server := NewServer()
 	excludedFailure := errors.New("excluded failure")
