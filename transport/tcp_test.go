@@ -17,7 +17,7 @@ func TestMTProtoConnAbridged(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		msg, err := srv.ReadMessage()
+		msg, err := srv.ReadMessage(0)
 		if err != nil {
 			done <- err
 			return
@@ -32,7 +32,7 @@ func TestMTProtoConnAbridged(t *testing.T) {
 	if err := cli.WriteMessage([]byte("helloooo")); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	resp, err := cli.ReadMessage()
+	resp, err := cli.ReadMessage(0)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}

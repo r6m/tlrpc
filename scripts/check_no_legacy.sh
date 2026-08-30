@@ -3,29 +3,27 @@ set -eu
 
 fail=0
 
-# Forbid legacy transport option usage.
-if rg -n "WithTransport\\(" .; then
-  echo "legacy check failed: WithTransport is not allowed. Use ServeTransport with listeners instead." >&2
-  fail=1
+# Removed runtime files must stay removed.
+for path in conn.go conn_context.go conn_handler_state.go conn_reliability.go conn_send.go handshake.go reliability_runtime.go updates_runtime.go session/compat.go session/lru.go session/manager.go session/session.go gotd_hooks_enabled.go gotd_hooks_stub.go unknown_constructor.go; do
+  if [ -e "$path" ]; then
+    echo "legacy check failed: removed runtime file still exists: $path" >&2
+    fail=1
+  fi
+done
+
+# Removed public APIs must not return in production code.
+if rg -n "With(Transport|SessionManager|MaxLayer|Layers|UnknownConstructorHandler)\\b|SessionFromContext\\b|ConnFromContext\\b|globalDispatcher\\b|func \\(s \\*Server\\) Register(Constructor|Method)\\b" \
+	--glob '*.go' \
+	--glob '!**/*_test.go' \
+	--glob '!scripts/check_no_legacy.sh' \
+	.; then
+	echo "legacy check failed: removed public runtime API is present" >&2
+	fail=1
 fi
 
-# Forbid MTProto constructor IDs hardcoded in conn.go.
-mtproto_ids='0x73f1f8dc|0x62d6b459|0x3072cfa1|0xf35c6d01|0x2144ca19|0x7d861a08|0xda69fb52|0x04deb57d'
-if rg -n "$mtproto_ids" conn.go >/dev/null 2>&1; then
-  echo "legacy check failed: MTProto constructor IDs found in conn.go" >&2
-  rg -n "$mtproto_ids" conn.go || true
-  fail=1
-fi
-
-# Forbid removed global registry APIs outside their definition/tests.
-if rg -n "tlrpc\\.Register(Constructor|Method)\\b|globalDispatcher" \
-  --glob '!dispatcher.go' \
-  --glob '!dispatcher_test.go' \
-  --glob '!scripts/check_no_legacy.sh' \
-  --glob '!**/*_test.go' \
-  .; then
-  echo "legacy check failed: removed global registry APIs are not allowed" >&2
-  fail=1
+if rg -n "type (SessionStore|HandshakeHandler|Conn|Handler|Interceptor)\\b" types.go; then
+	echo "legacy check failed: removed root type alias is present" >&2
+	fail=1
 fi
 
 # Forbid legacy custom framing usage outside transport.

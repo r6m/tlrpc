@@ -16,7 +16,7 @@ type Full struct {
 
 func (f *Full) ProtocolTag() uint32 { return 0 }
 
-func (f *Full) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
+func (f *Full) ReadPacket(r io.Reader, maxPayloadBytes int) ([]byte, *uint32, error) {
 	var header [8]byte
 	if _, err := io.ReadFull(r, header[:]); err != nil {
 		return nil, nil, err
@@ -25,7 +25,10 @@ func (f *Full) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
 	if length < fullMinLen {
 		return nil, nil, ErrInvalidLength
 	}
-	payloadLen := int(length) - fullMinLen
+	payloadLen, err := checkedPayloadLength(uint64(length)-fullMinLen, maxPayloadBytes)
+	if err != nil {
+		return nil, nil, err
+	}
 	payload := make([]byte, payloadLen)
 	if _, err := io.ReadFull(r, payload); err != nil {
 		return nil, nil, err

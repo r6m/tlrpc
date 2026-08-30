@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-
-	"github.com/r6m/tlrpc/session"
 )
 
 // mockAuthorizer implements Authorizer interface for testing
@@ -50,54 +48,6 @@ func TestChainUnaryInterceptors(t *testing.T) {
 
 	if resp != "response" {
 		t.Errorf("chained interceptor returned wrong response: got %v, want %v", resp, "response")
-	}
-
-	// Verify call order (interceptors applied in reverse order, so interceptor1 is outermost)
-	expectedOrder := []string{"interceptor1", "interceptor2", "handler"}
-	if len(callOrder) != len(expectedOrder) {
-		t.Errorf("wrong call order length: got %d, want %d", len(callOrder), len(expectedOrder))
-	}
-
-	for i, expected := range expectedOrder {
-		if i >= len(callOrder) || callOrder[i] != expected {
-			t.Errorf("wrong call order at position %d: got %v, want %v", i, callOrder, expectedOrder)
-		}
-	}
-}
-
-func TestChainInterceptors(t *testing.T) {
-	callOrder := []string{}
-
-	interceptor1 := func(next Handler) Handler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			callOrder = append(callOrder, "interceptor1")
-			return next(ctx, req)
-		}
-	}
-
-	interceptor2 := func(next Handler) Handler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			callOrder = append(callOrder, "interceptor2")
-			return next(ctx, req)
-		}
-	}
-
-	chained := ChainInterceptors(interceptor1, interceptor2)
-
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		callOrder = append(callOrder, "handler")
-		return "response", nil
-	}
-
-	wrappedHandler := chained(handler)
-	resp, err := wrappedHandler(context.Background(), "request")
-
-	if err != nil {
-		t.Errorf("chained legacy interceptor returned error: %v", err)
-	}
-
-	if resp != "response" {
-		t.Errorf("chained legacy interceptor returned wrong response: got %v, want %v", resp, "response")
 	}
 
 	// Verify call order (interceptors applied in reverse order, so interceptor1 is outermost)
@@ -327,9 +277,6 @@ func TestAuthInterceptorNilAuthorizer(t *testing.T) {
 // Test context helper functions that aren't covered by context_test.go
 func TestContextHelpersNilContext(t *testing.T) {
 	ctx := context.Background()
-	if SessionFromContext(ctx) != nil {
-		t.Error("SessionFromContext should return nil for empty context")
-	}
 	if LayerFromContext(ctx) != 0 {
 		t.Error("LayerFromContext should return 0 for empty context")
 	}
@@ -341,26 +288,13 @@ func TestContextHelpersNilContext(t *testing.T) {
 	}
 }
 
-func TestContextHelpersWrongType(t *testing.T) {
-	ctx := context.WithValue(context.Background(), contextKeySession, "not a session")
-
-	if SessionFromContext(ctx) != nil {
-		t.Error("SessionFromContext with wrong type should return nil")
-	}
-}
-
 func TestWithContextHelpers(t *testing.T) {
-	session := &session.Session{ID: 123}
 	ctx := context.Background()
 
-	ctx = withSession(ctx, session)
 	ctx = withLayer(ctx, 42)
 	ctx = withAuthKeyID(ctx, 456)
 	ctx = withUserID(ctx, 789)
 
-	if SessionFromContext(ctx) != session {
-		t.Error("withSession/withSessionFromContext round trip failed")
-	}
 	if LayerFromContext(ctx) != 42 {
 		t.Error("withLayer/LayerFromContext round trip failed")
 	}

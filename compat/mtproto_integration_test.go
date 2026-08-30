@@ -49,6 +49,38 @@ type pingResp struct {
 	Value int32
 }
 
+type pingServiceServer interface {
+	Ping(context.Context, *pingReq) (*pingResp, error)
+}
+
+type pingService struct {
+	call func(context.Context, *pingReq) (*pingResp, error)
+}
+
+func (s *pingService) Ping(ctx context.Context, request *pingReq) (*pingResp, error) {
+	if s.call != nil {
+		return s.call(ctx, request)
+	}
+	return &pingResp{Value: request.Value + 1}, nil
+}
+
+func pingServiceHandler(service interface{}, ctx context.Context, request *pingReq) (*pingResp, error) {
+	return service.(pingServiceServer).Ping(ctx, request)
+}
+
+func registerPingService(server *tlrpc.Server, implementation pingServiceServer) {
+	server.RegisterService(tlrpc.ServiceDesc{
+		ServiceName: "compat.PingService",
+		SchemaLayer: 170,
+		HandlerType: (*pingServiceServer)(nil),
+		Methods: []tlrpc.MethodDesc{{
+			MethodName: "Ping", ConstructorID: pingReqID,
+			NewRequest: func() tlrpc.TLObject { return &pingReq{} },
+			Handler:    pingServiceHandler,
+		}},
+	}, implementation)
+}
+
 func (*pingResp) ConstructorID() uint32 { return pingRespID }
 
 func (r *pingResp) SerializeTL(w io.Writer) error {
@@ -73,54 +105,51 @@ func (r *pingResp) DeserializeTL(rd io.Reader) error {
 type testHarness struct {
 	server   *tlrpc.Server
 	authKeys crypto.AuthKeyManager
-	sessions session.Manager
+	store    *session.MemoryStore
 	keyID    crypto.KeyID
 	key      crypto.AuthKey
 	salt     int64
 	session  int64
+	ping     *pingService
 }
 
 func newHarness(t *testing.T) *testHarness {
 	t.Helper()
 	authKeys := crypto.NewMemoryAuthKeyManager()
-	sessions := session.NewMemoryManager()
+	store := session.NewMemoryStore()
 	srv := tlrpc.NewServer(
 		tlrpc.WithAuthKeyManager(authKeys),
-		tlrpc.WithSessionManager(sessions),
-		tlrpc.WithMaxLayer(170),
+		tlrpc.WithSessionStore(store),
 	)
-	keyID := crypto.KeyID(0x0102030405060708)
 	var key crypto.AuthKey
 	for i := range key {
 		key[i] = byte(i)
 	}
+	keyID := key.ID()
 	if err := authKeys.Put(keyID, key); err != nil {
 		t.Fatalf("put auth key: %v", err)
 	}
-	sess, err := sessions.Create(keyID)
-	if err != nil {
-		t.Fatalf("create session: %v", err)
-	}
-	sess.ServerSalt = 0x1122334455667788
-	sess.SessionID = 0x0101010102020202
-	if err := sessions.Save(sess); err != nil {
-		t.Fatalf("save session: %v", err)
+	const serverSalt = int64(0x1122334455667788)
+	const sessionID = int64(0x0101010102020202)
+	keyIdentity := session.SessionKey{AuthKeyID: keyID, SessionID: sessionID}
+	if _, _, err := store.LoadOrCreate(context.Background(), keyIdentity, session.Snapshot{
+		AuthKeyID: keyID, SessionID: sessionID, ServerSalt: serverSalt,
+	}); err != nil {
+		t.Fatalf("create session snapshot: %v", err)
 	}
 
-	srv.RegisterConstructor(pingReqID, func() tlrpc.TLObject { return &pingReq{} })
-	srv.RegisterMethod(pingReqID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		req := obj.(*pingReq)
-		return &pingResp{Value: req.Value + 1}, nil
-	})
+	ping := &pingService{}
+	registerPingService(srv, ping)
 
 	return &testHarness{
 		server:   srv,
 		authKeys: authKeys,
-		sessions: sessions,
+		store:    store,
 		keyID:    keyID,
 		key:      key,
-		salt:     sess.ServerSalt,
-		session:  sess.SessionID,
+		salt:     serverSalt,
+		session:  sessionID,
+		ping:     ping,
 	}
 }
 
@@ -199,16 +228,13 @@ func TestWrappedInvokeWithLayerInitConnection(t *testing.T) {
 
 	seenLayer := 0
 	seenAPIID := int32(0)
-	h.server.RegisterMethod(pingReqID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
+	h.ping.call = func(ctx context.Context, req *pingReq) (*pingResp, error) {
 		seenLayer = tlrpc.LayerFromContext(ctx)
-		if sess := tlrpc.SessionFromContext(ctx); sess != nil {
-			if apiIDValue, ok := sess.Data.Load("init.api_id"); ok {
-				seenAPIID, _ = apiIDValue.(int32)
-			}
+		if metadata, ok := tlrpc.ClientMetadataFromContext(ctx); ok {
+			seenAPIID = metadata.APIID
 		}
-		req := obj.(*pingReq)
 		return &pingResp{Value: req.Value + 1}, nil
-	})
+	}
 
 	tcp := &transport.TCPTransport{}
 	lis, err := tcp.Listen("127.0.0.1:0")

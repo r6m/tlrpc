@@ -14,8 +14,8 @@ type echoServer struct {
 }
 
 func (s *echoServer) Echo(ctx context.Context, req *echo.EchoEchoRequest) (*echo.EchoResponse, error) {
-	if conn, ok := tlrpc.ConnFromContext(ctx); ok {
-		_ = conn.Send(&echo.EchoUpdate{Message: "server push: " + req.Message})
+	if sender, ok := tlrpc.SenderFromContext(ctx); ok {
+		_ = sender.Send(ctx, &echo.EchoUpdate{Message: "server push: " + req.Message})
 	}
 	return &echo.EchoResponse{Message: req.Message}, nil
 }
@@ -24,7 +24,7 @@ func main() {
 	tcp := &transport.TCPTransport{}
 	ws := &transport.WebSocketTransport{}
 	srv := tlrpc.NewServer(
-		tlrpc.WithOnSessionBound(func(binding tlrpc.Binding, _ tlrpc.Conn) {
+		tlrpc.WithOnSessionBound(func(binding tlrpc.Binding, _ tlrpc.Sender) {
 			log.Printf("session bound: auth_key_id=%d user_id=%d", binding.AuthKeyID, binding.UserID)
 		}),
 		tlrpc.WithOnSessionUnbound(func(binding tlrpc.Binding) {

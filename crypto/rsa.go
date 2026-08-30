@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
@@ -9,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 )
 
@@ -81,16 +83,38 @@ func GenerateServerKey() (*ServerKey, error) {
 }
 
 func generateKeyFingerprint(key *rsa.PrivateKey) int64 {
-	nBytes := key.N.Bytes()
-	eBytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(eBytes, uint32(key.E))
+	return PublicKeyFingerprint(&key.PublicKey)
+}
 
-	h := sha1.New()
-	h.Write(nBytes)
-	h.Write(eBytes)
-	sum := h.Sum(nil)
+// PublicKeyFingerprint returns Telegram's canonical RSA public-key
+// fingerprint: SHA-1 over TL-serialized modulus and exponent, interpreted from
+// the digest's final eight bytes in little-endian order.
+func PublicKeyFingerprint(key *rsa.PublicKey) int64 {
+	if key == nil || key.N == nil {
+		return 0
+	}
+	var encoded bytes.Buffer
+	writeFingerprintTLBytes(&encoded, key.N.Bytes())
+	writeFingerprintTLBytes(&encoded, big.NewInt(int64(key.E)).Bytes())
+	sum := sha1.Sum(encoded.Bytes())
+	return int64(binary.LittleEndian.Uint64(sum[12:20]))
+}
 
-	return int64(binary.LittleEndian.Uint64(sum[:8]))
+func writeFingerprintTLBytes(dst *bytes.Buffer, value []byte) {
+	fieldLength := 1
+	if len(value) < 254 {
+		_ = dst.WriteByte(byte(len(value)))
+	} else {
+		fieldLength = 4
+		_ = dst.WriteByte(254)
+		_ = dst.WriteByte(byte(len(value)))
+		_ = dst.WriteByte(byte(len(value) >> 8))
+		_ = dst.WriteByte(byte(len(value) >> 16))
+	}
+	_, _ = dst.Write(value)
+	for padding := (4 - (fieldLength+len(value))%4) % 4; padding > 0; padding-- {
+		_ = dst.WriteByte(0)
+	}
 }
 
 func LoadPEMPrivateKey(path string) (*ServerKey, error) {

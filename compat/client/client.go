@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/r6m/tlrpc"
@@ -38,6 +39,29 @@ type Client struct {
 	constructors map[uint32]func() tlrpc.TLObject
 	trace        TraceFunc
 	msgID        func() int64
+	pendingMu    sync.Mutex
+	pending      []tlrpc.TLObject
+}
+
+func (c *Client) queuePush(object tlrpc.TLObject) {
+	if object == nil {
+		return
+	}
+	c.pendingMu.Lock()
+	c.pending = append(c.pending, object)
+	c.pendingMu.Unlock()
+}
+
+func (c *Client) popPush() tlrpc.TLObject {
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	if len(c.pending) == 0 {
+		return nil
+	}
+	object := c.pending[0]
+	copy(c.pending, c.pending[1:])
+	c.pending = c.pending[:len(c.pending)-1]
+	return object
 }
 
 type Option func(*Client)
@@ -192,9 +216,9 @@ func (c *Client) invokeRaw(ctx context.Context, payload []byte) (tlrpc.TLObject,
 	if c.authKeyID == 0 {
 		return nil, errors.New("compat client: handshake required before invoke")
 	}
+	seq := c.nextSeqNo()
 	for attempt := 0; attempt < 2; attempt++ {
 		msgID := c.msgID()
-		seq := c.nextSeqNo()
 		inner := &mtproto.InnerData{
 			Salt:      c.serverSalt,
 			SessionID: c.sessionID,
@@ -226,8 +250,9 @@ func (c *Client) invokeRaw(ctx context.Context, payload []byte) (tlrpc.TLObject,
 }
 
 func (c *Client) nextSeqNo() int32 {
+	seq := c.seqNo*2 + 1
 	c.seqNo++
-	return c.seqNo
+	return seq
 }
 
 func codecToProtocol(codec Codec) (transport.Protocol, error) {

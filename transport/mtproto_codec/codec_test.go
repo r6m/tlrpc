@@ -13,7 +13,7 @@ func TestAbridgedCodecRoundTrip(t *testing.T) {
 	if err := codec.WritePacket(buf, payload); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()), 0)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestIntermediateCodecRoundTrip(t *testing.T) {
 	if err := codec.WritePacket(buf, payload); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()), 0)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestPaddedIntermediateCodecRoundTrip(t *testing.T) {
 	if err := codec.WritePacket(buf, payload); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()), 0)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestPaddedIntermediateCodecStripsPadding(t *testing.T) {
 		t.Fatalf("write pad: %v", err)
 	}
 
-	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()), 0)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestFullCodecRoundTrip(t *testing.T) {
 	if err := codec.WritePacket(buf, payload); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	got, _, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()), 0)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestIntermediateQuickAck(t *testing.T) {
 	if err := binary.Write(buf, binary.LittleEndian, token|0x80000000); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	_, got, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()))
+	_, got, err := codec.ReadPacket(bytes.NewReader(buf.Bytes()), 0)
 	if err != ErrQuickAck || got == nil || *got != token {
 		t.Fatalf("expected quick ack token")
 	}

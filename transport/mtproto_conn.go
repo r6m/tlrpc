@@ -78,7 +78,7 @@ func (c *MTProtoConn) ensureNegotiated() error {
 }
 
 // ReadMessage reads a single MTProto transport packet.
-func (c *MTProtoConn) ReadMessage() ([]byte, error) {
+func (c *MTProtoConn) ReadMessage(maxPayloadBytes int) ([]byte, error) {
 	c.readMu.Lock()
 	defer c.readMu.Unlock()
 
@@ -86,7 +86,7 @@ func (c *MTProtoConn) ReadMessage() ([]byte, error) {
 		return nil, err
 	}
 	for {
-		payload, quickAck, err := c.codec.ReadPacket(c.r)
+		payload, quickAck, err := c.codec.ReadPacket(c.r, maxPayloadBytes)
 		if err != nil {
 			if err == mtprotocodec.ErrQuickAck && quickAck != nil {
 				continue
@@ -134,6 +134,14 @@ func (c *MTProtoConn) RemoteAddr() net.Addr {
 
 func (c *MTProtoConn) SetDeadline(t time.Time) error {
 	return c.conn.SetDeadline(t)
+}
+
+func (c *MTProtoConn) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+
+func (c *MTProtoConn) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
 }
 
 func (c *MTProtoConn) Context() context.Context {

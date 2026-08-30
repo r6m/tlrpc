@@ -55,27 +55,25 @@ func TestCompatMinimalRPCAndPush(t *testing.T) {
 	serverKeys.AddKey(compatKey)
 
 	authKeys := crypto.NewMemoryAuthKeyManager()
-	sessions := session.NewMemoryManager()
+	sessions := session.NewMemoryStore()
 
 	srv := tlrpc.NewServer(
 		tlrpc.WithAuthKeyManager(authKeys),
-		tlrpc.WithSessionManager(sessions),
+		tlrpc.WithSessionStore(sessions),
 		tlrpc.WithServerKeyManager(serverKeys),
-		tlrpc.WithMaxLayer(217),
 	)
 
-	gen.RegisterHelpServer(srv, &scenarioHelpService{})
-
-	notifyID := (&gen.HelpGetConfigRequest{}).ConstructorID()
-	srv.RegisterMethod(notifyID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		if conn, ok := tlrpc.ConnFromContext(ctx); ok {
-			go func() {
-				time.Sleep(10 * time.Millisecond)
-				_ = conn.Send(&compatPush{Value: 7})
-			}()
-		}
-		return (&scenarioHelpService{}).GetConfig(ctx, obj.(*gen.HelpGetConfigRequest))
-	})
+	srv.RegisterService(tlrpc.ServiceDesc{
+		ServiceName: "compat.push.Help",
+		SchemaLayer: gen.SchemaLayer,
+		HandlerType: (*minimalPushHelpServer)(nil),
+		Methods: []tlrpc.MethodDesc{{
+			MethodName:    "GetConfig",
+			ConstructorID: (&gen.HelpGetConfigRequest{}).ConstructorID(),
+			NewRequest:    func() tlrpc.TLObject { return &gen.HelpGetConfigRequest{} },
+			Handler:       minimalPushGetConfigHandler,
+		}},
+	}, minimalPushHelpService{})
 
 	tcpLis, err := (&transport.TCPTransport{AllowObfuscation: true}).Listen("127.0.0.1:0")
 	if err != nil {
@@ -122,4 +120,26 @@ func TestCompatMinimalRPCAndPush(t *testing.T) {
 	if push.Value != 7 {
 		t.Fatalf("unexpected push value %d", push.Value)
 	}
+}
+
+type minimalPushHelpServer interface {
+	GetConfig(context.Context, *gen.HelpGetConfigRequest) (*gen.Config, error)
+}
+
+type minimalPushHelpService struct{}
+
+func (minimalPushHelpService) GetConfig(ctx context.Context, request *gen.HelpGetConfigRequest) (*gen.Config, error) {
+	sender, ok := tlrpc.SenderFromContext(ctx)
+	if !ok {
+		return nil, tlrpc.ErrSenderUnavailable
+	}
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		_ = sender.Send(context.Background(), &compatPush{Value: 7})
+	}()
+	return (&scenarioHelpService{}).GetConfig(ctx, request)
+}
+
+func minimalPushGetConfigHandler(service interface{}, ctx context.Context, request *gen.HelpGetConfigRequest) (*gen.Config, error) {
+	return service.(minimalPushHelpServer).GetConfig(ctx, request)
 }

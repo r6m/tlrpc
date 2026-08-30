@@ -1,14 +1,12 @@
 package client
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/mtproto"
 	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 )
 
@@ -37,7 +35,7 @@ func (e *BadMsgNotificationError) Error() string {
 func (c *Client) readResponse(ctx context.Context, reqMsgID int64) (tlrpc.TLObject, error) {
 	_ = ctx
 	for i := 0; i < 10; i++ {
-		packet, err := c.conn.ReadMessage()
+		packet, err := c.conn.ReadMessage(0)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +96,8 @@ func (c *Client) handleDecoded(obj tlrpc.TLObject, reqMsgID int64) (tlrpc.TLObje
 		}
 	default:
 		c.traceInbound(val)
-		return val, true, nil
+		c.queuePush(val)
+		return nil, false, nil
 	}
 }
 
@@ -112,12 +111,7 @@ func (c *Client) decodeRPCResult(result *mtprototl.RPCResult) (tlrpc.TLObject, e
 	}
 	switch val := obj.(type) {
 	case *mtprototl.GzipPacked:
-		gr, err := gzip.NewReader(bytes.NewReader(val.PackedData))
-		if err != nil {
-			return nil, err
-		}
-		defer func() { _ = gr.Close() }()
-		unpacked, err := io.ReadAll(gr)
+		unpacked, err := mtproto.DecompressGzip(val.PackedData, 0)
 		if err != nil {
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package tl
 import (
 	"bytes"
 	"compress/gzip"
+	"io"
 	"testing"
 
 	"github.com/r6m/tlrpc/mtproto"
@@ -151,6 +152,80 @@ func TestFutureSaltsRoundTripUsesBareVector(t *testing.T) {
 	if len(out.Salts) != 1 || out.Salts[0].Salt != 3 {
 		t.Fatalf("unexpected salts: %+v", out.Salts)
 	}
+}
+
+func TestRPCDropAnswerRoundTrip(t *testing.T) {
+	in := &RPCDropAnswer{ReqMsgID: 12345}
+	buf := &bytes.Buffer{}
+	if err := in.SerializeTL(buf); err != nil {
+		t.Fatalf("serialize request: %v", err)
+	}
+	out := &RPCDropAnswer{}
+	if err := out.DeserializeTL(bytes.NewReader(buf.Bytes())); err != nil {
+		t.Fatalf("deserialize request: %v", err)
+	}
+	if out.ReqMsgID != in.ReqMsgID {
+		t.Fatalf("req_msg_id = %d, want %d", out.ReqMsgID, in.ReqMsgID)
+	}
+
+	unknown := &RPCAnswerUnknown{}
+	buf.Reset()
+	if err := unknown.SerializeTL(buf); err != nil {
+		t.Fatalf("serialize response: %v", err)
+	}
+	if err := (&RPCAnswerUnknown{}).DeserializeTL(bytes.NewReader(buf.Bytes())); err != nil {
+		t.Fatalf("deserialize response: %v", err)
+	}
+}
+
+func TestNestedContainerDecodingSafety(t *testing.T) {
+	buf := &bytes.Buffer{}
+	if err := mtproto.WriteUint32(buf, MsgContainerID); err != nil {
+		t.Fatalf("write container constructor: %v", err)
+	}
+	if err := mtproto.WriteVectorHeader(buf, 1); err != nil {
+		t.Fatalf("write message vector: %v", err)
+	}
+	if err := mtproto.WriteInt64(buf, 1); err != nil {
+		t.Fatalf("write child message id: %v", err)
+	}
+	if err := mtproto.WriteInt32(buf, 1); err != nil {
+		t.Fatalf("write child sequence: %v", err)
+	}
+	if err := mtproto.WriteInt32(buf, 64); err != nil {
+		t.Fatalf("write child body length: %v", err)
+	}
+	buf.WriteByte(0xaa)
+
+	reader := newGuardedContainerReader(buf.Bytes(), 16)
+	if err := (&MsgContainer{}).DeserializeTL(reader); err == nil {
+		t.Fatal("msg_container accepted a child length larger than the remaining input")
+	}
+	if reader.oversizedRead {
+		t.Errorf("msg_container requested more than %d bytes in one child-body read", reader.maxRead)
+	}
+}
+
+type guardedContainerReader struct {
+	reader        *bytes.Reader
+	maxRead       int
+	oversizedRead bool
+}
+
+func newGuardedContainerReader(data []byte, maxRead int) *guardedContainerReader {
+	return &guardedContainerReader{reader: bytes.NewReader(data), maxRead: maxRead}
+}
+
+func (r *guardedContainerReader) Read(p []byte) (int, error) {
+	if len(p) > r.maxRead {
+		r.oversizedRead = true
+		return 0, io.ErrUnexpectedEOF
+	}
+	return r.reader.Read(p)
+}
+
+func (r *guardedContainerReader) Len() int {
+	return r.reader.Len()
 }
 
 func bytesToUint32(b []byte) uint32 {

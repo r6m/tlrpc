@@ -169,7 +169,7 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
 		for _, fn := range services[service] {
-			if fn.IsTemplate {
+			if fn.IsTemplate || fn.IsHelper {
 				continue
 			}
 			methodName := fn.Name // Use full method name with service prefix

@@ -46,11 +46,38 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !strings.Contains(register, "func RegisterAuthServer") {
 		t.Fatalf("expected RegisterAuthServer")
 	}
-	if !strings.Contains(register, "s.RegisterConstructor(0xa677244f") {
-		t.Fatalf("expected constructor registration")
+	if !strings.Contains(register, "var Auth_ServiceDesc = tlrpc.ServiceDesc{") {
+		t.Fatalf("expected static service descriptor")
 	}
-	if !strings.Contains(register, "s.RegisterMethod(0xa677244f") {
-		t.Fatalf("expected method registration")
+	if !strings.Contains(register, "ServiceName: \"auth\"") {
+		t.Fatalf("expected TL service namespace in descriptor")
+	}
+	if !strings.Contains(register, "SchemaLayer: SchemaLayer") {
+		t.Fatalf("expected descriptor layer ownership from generated schema metadata")
+	}
+	if !strings.Contains(register, "HandlerType: (*AuthServer)(nil)") {
+		t.Fatalf("expected service handler type")
+	}
+	if !strings.Contains(register, "func _Auth_SendCode_Handler(srv interface{}, ctx context.Context, req *AuthSendCodeRequest) (*AuthSentCode, error)") {
+		t.Fatalf("expected typed method handler")
+	}
+	if !strings.Contains(register, "return srv.(AuthServer).SendCode(ctx, req)") {
+		t.Fatalf("expected method handler to invoke the generated interface")
+	}
+	if !strings.Contains(register, "ConstructorID: 0xa677244f") {
+		t.Fatalf("expected method constructor ID")
+	}
+	if !strings.Contains(register, "NewRequest: func() tlrpc.TLObject { return &AuthSendCodeRequest{} }") {
+		t.Fatalf("expected request constructor")
+	}
+	if !strings.Contains(register, "Handler: _Auth_SendCode_Handler") {
+		t.Fatalf("expected static method handler")
+	}
+	if !strings.Contains(register, "s.RegisterService(Auth_ServiceDesc, srv)") {
+		t.Fatalf("expected descriptor registration")
+	}
+	if strings.Contains(register, "s.RegisterConstructor(") || strings.Contains(register, "s.RegisterMethod(") {
+		t.Fatalf("expected registration to use RegisterService exclusively")
 	}
 
 	requests := requestsBuf.String()

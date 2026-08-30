@@ -2,9 +2,8 @@
 
 # Variables
 GO := go
-GOFLAGS := -v
-PKG := ./pkg/...
-CMD := ./cmd/...
+GOFLAGS := -p=1
+PKG := ./...
 
 all: deps lint test build
 
@@ -24,7 +23,7 @@ build-pkg:
 
 # Testing
 test:
-	$(GO) test $(GOFLAGS) -race $(PKG)
+	$(GO) test $(GOFLAGS) $(PKG)
 
 test-short:
 	$(GO) test $(GOFLAGS) -short $(PKG)
@@ -43,14 +42,14 @@ coverage:
 generate: generate-test generate-examples
 
 generate-test:
-	$(GO) run ./cmd/tlrpc-gen --schema=testdata/layer222.tl --out=internal/testdata/gen
+	$(GO) run ./cmd/tlrpc-gen --schema=testdata/schemas/framework_acceptance.tl --out=internal/testdata/gen --package=gen
 
 generate-examples:
 	$(GO) run ./cmd/tlrpc-gen --schema=examples/echo/schema.tl --out=examples/echo/gen
 
 # Linting
 lint:
-	golangci-lint run ./...
+	golangci-lint run --concurrency 1 ./...
 	$(MAKE) check-type-domains
 	$(MAKE) check-no-withtransport
 	$(MAKE) check-no-legacy

@@ -6,11 +6,33 @@ import (
 	"testing"
 
 	"github.com/r6m/tlrpc/mtproto"
+	"github.com/r6m/tlrpc/types"
 )
+
+func TestNormalizeResponseBool(t *testing.T) {
+	trueObject, err := normalizeResponse(true)
+	if err != nil {
+		t.Fatalf("normalize true: %v", err)
+	}
+	if _, ok := trueObject.(*types.BoolTrue); !ok {
+		t.Fatalf("true response = %T", trueObject)
+	}
+	falseObject, err := normalizeResponse(false)
+	if err != nil {
+		t.Fatalf("normalize false: %v", err)
+	}
+	if _, ok := falseObject.(*types.BoolFalse); !ok {
+		t.Fatalf("false response = %T", falseObject)
+	}
+}
 
 type testTL struct {
 	id uint32
 }
+
+type constructorOnlyTL struct{}
+
+func (*constructorOnlyTL) ConstructorID() uint32 { return 0x01020304 }
 
 func (t *testTL) ConstructorID() uint32 { return t.id }
 func (t *testTL) Method() string        { return "" }
@@ -98,5 +120,22 @@ func TestNormalizeResponseVectorPrimitives(t *testing.T) {
 
 	if !bytes.Equal(data, buf.Bytes()) {
 		t.Fatalf("vector primitive encoding mismatch: got %x want %x", data, buf.Bytes())
+	}
+}
+
+func TestEncodeTLObjectRejectsMissingSerializer(t *testing.T) {
+	_, err := encodeTLObject(&constructorOnlyTL{})
+	if err == nil {
+		t.Fatal("expected missing serializer error")
+	}
+}
+
+func TestNormalizeResponseVectorRejectsMissingSerializer(t *testing.T) {
+	obj, err := normalizeResponse([]TLObject{&constructorOnlyTL{}})
+	if err != nil {
+		t.Fatalf("normalizeResponse error: %v", err)
+	}
+	if _, err := encodeTLObject(obj); err == nil {
+		t.Fatal("expected vector item serializer error")
 	}
 }

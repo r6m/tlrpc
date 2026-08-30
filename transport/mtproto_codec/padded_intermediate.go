@@ -13,7 +13,7 @@ type PaddedIntermediate struct {
 
 func (p *PaddedIntermediate) ProtocolTag() uint32 { return paddedIntermediateTag }
 
-func (p *PaddedIntermediate) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
+func (p *PaddedIntermediate) ReadPacket(r io.Reader, maxPayloadBytes int) ([]byte, *uint32, error) {
 	var header [4]byte
 	if _, err := io.ReadFull(r, header[:]); err != nil {
 		return nil, nil, err
@@ -25,10 +25,17 @@ func (p *PaddedIntermediate) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
 			return nil, &token, ErrQuickAck
 		}
 	}
-	if length == 0 || length > 1<<24 {
-		return nil, nil, ErrInvalidLength
+	if length == 0 || uint64(length) > uint64(MaxPacketPayloadBytes)+3 {
+		if length == 0 {
+			return nil, nil, ErrInvalidLength
+		}
+		return nil, nil, ErrPayloadTooLarge
 	}
-	payload := make([]byte, length)
+	effectiveLength := uint64(length - length%4)
+	if _, err := checkedPayloadLength(effectiveLength, maxPayloadBytes); err != nil {
+		return nil, nil, err
+	}
+	payload := make([]byte, int(length))
 	if _, err := io.ReadFull(r, payload); err != nil {
 		return nil, nil, err
 	}

@@ -10,12 +10,16 @@ Fix project structure + docs so they match the actual code, and ensure `go test 
 
 ## Non-goals
 - No protobuf/gRPC transport layer.
-- No public API breaking changes without compatibility shims.
+- TLRPC has no released compatibility contract yet. Prefer one coherent final
+  API and delete obsolete APIs/adapters instead of adding compatibility shims.
 
 ## Required workflow
-1) Read: README.md, API.md, SCHEMA.md, server.go, conn.go, dispatcher.go, session/*, internal/generator/*
-2) Make small, reviewable commits.
-3) After each major step run:
+1) Read: README.md, docs/index.md, docs/requirements.md,
+   docs/telegram-mtproto.md, docs/architecture.md, docs/implementation.md,
+   docs/roadmap.md, server.go, runtime_application.go, internal/runtime/*,
+   dispatcher.go, session/*, internal/generator/*
+2) Keep changes focused and reviewable.
+3) After each major step run sequentially (`-p=1`) to avoid compiler pressure:
    - gofmt ./...
    - go test ./...
    - go vet ./...
@@ -26,9 +30,10 @@ Fix project structure + docs so they match the actual code, and ensure `go test 
 - Docs are not duplicated/contradictory; one source of truth under /docs.
 - Dispatch pipeline is documented end-to-end.
 - Registration story is consistent: method constructor ID -> handler exists at runtime.
-- conn.go dispatch calls handlers even if no interceptors are configured.
+- Runtime v2 dispatch calls generated service handlers with or without interceptors.
 
 ## Style rules
-- Prefer minimal, backward-compatible changes.
+- Prefer focused, reviewable changes that converge on the final design; do not
+  retain legacy code solely for backward compatibility.
 - If moving docs, use git mv.
 - Update links after moves.

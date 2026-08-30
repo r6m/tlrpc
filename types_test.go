@@ -4,16 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
 )
 
 func TestTypeAliases(t *testing.T) {
 	// Test that type aliases work correctly
-
-	// Session type alias
-	sess := &session.Session{}
-	_ = sess
 
 	// Transport type alias
 	var tr Transport = &transport.TCPTransport{}
@@ -133,27 +128,6 @@ func TestLoggerInterface(t *testing.T) {
 	}
 }
 
-type mockHandshakeHandlerForTypes struct{}
-
-func (m *mockHandshakeHandlerForTypes) HandleUnencrypted(ctx context.Context, msgID int64, data []byte) ([]byte, error) {
-	return []byte("response"), nil
-}
-
-func TestHandshakeHandlerInterface(t *testing.T) {
-	handler := &mockHandshakeHandlerForTypes{}
-
-	var h HandshakeHandler = handler
-	resp, err := h.HandleUnencrypted(context.TODO(), 123, []byte("request"))
-
-	if err != nil {
-		t.Errorf("HandleUnencrypted returned error: %v", err)
-	}
-
-	if string(resp) != "response" {
-		t.Errorf("HandleUnencrypted returned wrong response: got %s, want %s", string(resp), "response")
-	}
-}
-
 type mockAuthorizerForTypes struct {
 	allow bool
 }
@@ -194,43 +168,5 @@ func TestUnaryHandlerType(t *testing.T) {
 
 	if resp != "response" {
 		t.Errorf("UnaryHandler returned wrong response: got %v, want %v", resp, "response")
-	}
-}
-
-func TestHandlerType(t *testing.T) {
-	var handler Handler = func(ctx context.Context, req interface{}) (interface{}, error) {
-		return "response", nil
-	}
-
-	resp, err := handler(nil, "request")
-	if err != nil {
-		t.Errorf("Handler returned error: %v", err)
-	}
-
-	if resp != "response" {
-		t.Errorf("Handler returned wrong response: got %v, want %v", resp, "response")
-	}
-}
-
-func TestInterceptorType(t *testing.T) {
-	var interceptor Interceptor = func(next Handler) Handler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			return next(ctx, req)
-		}
-	}
-
-	originalHandler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return "response", nil
-	}
-
-	wrappedHandler := interceptor(originalHandler)
-	resp, err := wrappedHandler(nil, "request")
-
-	if err != nil {
-		t.Errorf("Interceptor returned error: %v", err)
-	}
-
-	if resp != "response" {
-		t.Errorf("Interceptor returned wrong response: got %v, want %v", resp, "response")
 	}
 }

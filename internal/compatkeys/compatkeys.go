@@ -1,18 +1,14 @@
 package compatkeys
 
 import (
-	"bytes"
 	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/x509"
 	_ "embed"
 	"encoding/binary"
 	"encoding/pem"
 	"fmt"
-	"math/big"
 
 	"github.com/r6m/tlrpc/crypto"
-	"github.com/r6m/tlrpc/mtproto"
 )
 
 //go:embed compat_server_key.pem
@@ -37,23 +33,8 @@ func ServerKey() (*crypto.ServerKey, error) {
 		}
 	}
 	sk := &crypto.ServerKey{Key: key}
-	sk.ID = generateKeyFingerprint(key)
+	sk.ID = crypto.PublicKeyFingerprint(&key.PublicKey)
 	sk.Fingerprint = make([]byte, 8)
 	binary.LittleEndian.PutUint64(sk.Fingerprint, uint64(sk.ID))
 	return sk, nil
-}
-
-func generateKeyFingerprint(key *rsa.PrivateKey) int64 {
-	nBytes := key.N.Bytes()
-	eBytes := big.NewInt(int64(key.E)).Bytes()
-
-	var buf bytes.Buffer
-	_ = mtproto.WriteBytes(&buf, nBytes)
-	_ = mtproto.WriteBytes(&buf, eBytes)
-
-	h := sha1.New()
-	_, _ = h.Write(buf.Bytes())
-	sum := h.Sum(nil)
-
-	return int64(binary.LittleEndian.Uint64(sum[12:20]))
 }

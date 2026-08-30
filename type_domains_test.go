@@ -1,29 +1,16 @@
 package tlrpc
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
-func TestNoMTProtoMagicIDsInConn(t *testing.T) {
-	data, err := os.ReadFile("conn.go")
-	if err != nil {
-		t.Fatalf("read conn.go: %v", err)
-	}
-	for _, id := range []string{
-		"0x73f1f8dc",
-		"0x62d6b459",
-		"0x3072cfa1",
-		"0xf35c6d01",
-		"0x2144ca19",
-		"0x7d861a08",
-		"0xda69fb52",
-		"0x04deb57d",
-	} {
-		if strings.Contains(string(data), id) {
-			t.Fatalf("conn.go contains MTProto constructor ID %s", id)
+func TestLegacyConnectionPipelineIsRemoved(t *testing.T) {
+	for _, name := range []string{"conn.go", "conn_send.go", "conn_reliability.go", "handshake.go"} {
+		if _, err := os.Stat(name); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("legacy runtime file %s still exists or cannot be checked: %v", name, err)
 		}
 	}
 }

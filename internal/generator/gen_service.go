@@ -80,7 +80,7 @@ func (g *ServiceGenerator) GenerateService(funcs []parser.FuncDecl) error {
 		var stubMethods []StubMethodTemplateData
 
 		for _, fn := range services[service] {
-			if fn.IsTemplate {
+			if fn.IsTemplate || fn.IsHelper {
 				continue
 			}
 			method := g.namer.MethodName(fn.Name)
@@ -130,9 +130,45 @@ func (g *ServiceGenerator) GenerateRegistration(funcs []parser.FuncDecl) error {
 	return nil
 }
 
-// generateRegistrationFunction emits the simplified registration function.
+// generateRegistrationFunction emits a static service descriptor and its
+// gRPC-like registration helper.
 func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []parser.FuncDecl) error {
 	name := g.namer.ServiceName(service)
+	descName := strings.TrimSuffix(name, "Server") + "_ServiceDesc"
+
+	var methods []parser.FuncDecl
+	for _, fn := range funcs {
+		if fn.IsTemplate || fn.IsHelper {
+			continue
+		}
+		methods = append(methods, fn)
+	}
+
+	for _, fn := range methods {
+		method := g.namer.MethodName(fn.Name)
+		reqType := g.namer.RequestName(fn.Name)
+		respType := g.responseType(fn.ResultType)
+		handlerName := "_" + strings.TrimSuffix(name, "Server") + "_" + method + "_Handler"
+
+		if _, err := fmt.Fprintf(g.out, "func %s(srv interface{}, ctx context.Context, req *%s) (%s, error) {\n\treturn srv.(%s).%s(ctx, req)\n}\n\n", handlerName, reqType, respType, name, method); err != nil {
+			return err
+		}
+	}
+
+	if _, err := fmt.Fprintf(g.out, "// %s is the static descriptor for the %s service.\nvar %s = tlrpc.ServiceDesc{\n\tServiceName: %q,\n\tSchemaLayer: SchemaLayer,\n\tHandlerType: (*%s)(nil),\n\tMethods: []tlrpc.MethodDesc{\n", descName, name, descName, service, name); err != nil {
+		return err
+	}
+	for _, fn := range methods {
+		method := g.namer.MethodName(fn.Name)
+		reqType := g.namer.RequestName(fn.Name)
+		handlerName := "_" + strings.TrimSuffix(name, "Server") + "_" + method + "_Handler"
+		if _, err := fmt.Fprintf(g.out, "\t\t{\n\t\t\tMethodName: %q,\n\t\t\tConstructorID: 0x%08x,\n\t\t\tNewRequest: func() tlrpc.TLObject { return &%s{} },\n\t\t\tHandler: %s,\n\t\t},\n", method, fn.ID, reqType, handlerName); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(g.out, "\t},\n}\n\n"); err != nil {
+		return err
+	}
 
 	if _, err := fmt.Fprintf(g.out, "// Register%s registers the %s server with the TLRPC server.\nfunc Register%s(s *tlrpc.Server, srv %s) {\n", name, name, name, name); err != nil {
 		return err
@@ -143,21 +179,7 @@ func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []
 		return err
 	}
 
-	for _, fn := range funcs {
-		if fn.IsTemplate {
-			continue
-		}
-		method := g.namer.MethodName(fn.Name)
-		reqType := g.namer.RequestName(fn.Name)
-		if _, err := fmt.Fprintf(g.out, "\ts.RegisterConstructor(0x%08x, func() tlrpc.TLObject { return &%s{} })\n", fn.ID, reqType); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "\ts.RegisterMethod(0x%08x, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {\n\t\treturn srv.%s(ctx, obj.(*%s))\n\t})\n", fn.ID, method, reqType); err != nil {
-			return err
-		}
-	}
-
-	if _, err := io.WriteString(g.out, "}\n\n"); err != nil {
+	if _, err := fmt.Fprintf(g.out, "\ts.RegisterService(%s, srv)\n}\n\n", descName); err != nil {
 		return err
 	}
 
@@ -170,7 +192,7 @@ func (g *ServiceGenerator) GenerateRequests(funcs []parser.FuncDecl) error {
 	serviceNames := sortedKeys(services)
 	for _, service := range serviceNames {
 		for _, fn := range services[service] {
-			if fn.IsTemplate {
+			if fn.IsTemplate || fn.IsHelper {
 				continue
 			}
 			reqName := g.namer.RequestName(fn.Name)

@@ -6,6 +6,21 @@ import (
 	"io"
 )
 
+func encodeTLObject(obj TLObject) ([]byte, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("tlrpc: cannot encode nil TL object")
+	}
+	serializer, ok := obj.(interface{ SerializeTL(io.Writer) error })
+	if !ok {
+		return nil, fmt.Errorf("constructor %08x does not implement SerializeTL", obj.ConstructorID())
+	}
+	var buffer bytes.Buffer
+	if err := serializer.SerializeTL(&buffer); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
 func decodeTLObject(d *dispatcher, data []byte) (TLObject, *bytes.Reader, error) {
 	if len(data) < 4 {
 		return nil, nil, io.ErrUnexpectedEOF

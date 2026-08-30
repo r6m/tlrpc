@@ -14,9 +14,12 @@ func TestAuthKeyID(t *testing.T) {
 	}
 
 	hash := sha1.Sum(key[:])
-	expected := KeyID(binary.LittleEndian.Uint64(hash[:8]))
+	expected := KeyID(binary.LittleEndian.Uint64(hash[len(hash)-8:]))
 	if key.ID() != expected {
 		t.Fatalf("key id mismatch")
+	}
+	if key.ID() != KeyID(ComputeAuthKeyID(key[:])) {
+		t.Fatalf("AuthKey.ID and ComputeAuthKeyID disagree")
 	}
 }
 

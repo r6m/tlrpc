@@ -40,6 +40,7 @@ type Constructor struct {
 	ResultType    TypeRef // Return type
 	IsBare        bool    // % prefix
 	VectorCount   *string // NEW: element variable for vectors, e.g., "t" in "# [ t ]"
+	IsBuiltin     bool    // pseudo-declaration for a primitive built-in type
 }
 
 // FuncDecl represents a function declaration.
@@ -50,6 +51,7 @@ type FuncDecl struct {
 	Params        []Parameter
 	ResultType    TypeRef
 	IsTemplate    bool // NEW: true if return type is generic param (e.g., = X)
+	IsHelper      bool // schema-only serializer prefix paired with a generic function
 }
 
 // Parameter represents a parameter in a constructor or function.

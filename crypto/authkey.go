@@ -1,24 +1,22 @@
 package crypto
 
 import (
-	"crypto/sha1"
 	"crypto/subtle"
-	"encoding/binary"
 	"errors"
 )
 
 // AuthKey is a 256-bit shared secret.
 type AuthKey [256]byte
 
-// KeyID is the first 64 bits of SHA1(auth_key).
+// KeyID is the last 64 bits of SHA1(auth_key), decoded little-endian as
+// required by MTProto.
 type KeyID uint64
 
 var ErrAuthKeyNotFound = errors.New("crypto: auth key not found")
 
 // ID returns the KeyID for the auth key.
 func (k AuthKey) ID() KeyID {
-	hash := sha1.Sum(k[:])
-	return KeyID(binary.LittleEndian.Uint64(hash[:8]))
+	return KeyID(ComputeAuthKeyID(k[:]))
 }
 
 // Equal compares two auth keys in constant time.

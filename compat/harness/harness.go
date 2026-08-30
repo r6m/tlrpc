@@ -20,7 +20,7 @@ type Server struct {
 	TCP      transport.Listener
 	TCPAddr  string
 	AuthKeys crypto.AuthKeyManager
-	Sessions session.Manager
+	Sessions session.Store
 }
 
 // Start creates a minimal compat server with in-memory state and a single TCP transport.
@@ -33,18 +33,16 @@ func Start() (*Server, error) {
 	serverKeys.AddKey(compatKey)
 
 	authKeys := crypto.NewMemoryAuthKeyManager()
-	sessions := session.NewMemoryManager()
+	sessions := session.NewMemoryStore()
 
 	srv := tlrpc.NewServer(
 		tlrpc.WithAuthKeyManager(authKeys),
-		tlrpc.WithSessionManager(sessions),
+		tlrpc.WithSessionStore(sessions),
 		tlrpc.WithServerKeyManager(serverKeys),
-		tlrpc.WithMaxLayer(217),
 	)
 
 	gen.RegisterHelpServer(srv, &helpService{})
-	registerAuthSignIn(srv)
-	registerHelpNearestDcError(srv)
+	gen.RegisterAuthServer(srv, &authService{})
 
 	tcpLis, err := (&transport.TCPTransport{AllowObfuscation: true}).Listen("127.0.0.1:0")
 	if err != nil {
@@ -123,23 +121,16 @@ func (s *helpService) GetConfig(context.Context, *gen.HelpGetConfigRequest) (*ge
 	}, nil
 }
 
-func registerAuthSignIn(srv *tlrpc.Server) {
-	signInID := (&gen.AuthSignInRequest{}).ConstructorID()
-	srv.RegisterConstructor(signInID, func() tlrpc.TLObject { return &gen.AuthSignInRequest{} })
-	srv.RegisterMethod(signInID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		_ = obj.(*gen.AuthSignInRequest)
-		userID := int64(1)
-		if sess := tlrpc.SessionFromContext(ctx); sess != nil {
-			sess.UserID = userID
-		}
-		return &gen.AuthAuthorization{User: &gen.UserEmpty{ID: userID}}, nil
-	})
+func (s *helpService) GetNearestDc(context.Context, *gen.HelpGetNearestDcRequest) (*gen.NearestDc, error) {
+	return nil, tlrpc.NewBadRequestError("NEAREST_DC_UNAVAILABLE")
 }
 
-func registerHelpNearestDcError(srv *tlrpc.Server) {
-	nearestID := (&gen.HelpGetNearestDcRequest{}).ConstructorID()
-	srv.RegisterConstructor(nearestID, func() tlrpc.TLObject { return &gen.HelpGetNearestDcRequest{} })
-	srv.RegisterMethod(nearestID, func(context.Context, tlrpc.TLObject) (interface{}, error) {
-		return nil, tlrpc.NewBadRequestError("NEAREST_DC_UNAVAILABLE")
-	})
+type authService struct{ gen.UnimplementedAuthServer }
+
+func (s *authService) SignIn(ctx context.Context, _ *gen.AuthSignInRequest) (gen.AuthAuthorizationType, error) {
+	const userID int64 = 1
+	if err := tlrpc.BindSessionUser(ctx, userID); err != nil {
+		return nil, err
+	}
+	return &gen.AuthAuthorization{User: &gen.UserEmpty{ID: userID}}, nil
 }

@@ -38,7 +38,7 @@ func (m *MsgsAck) DeserializeTL(r io.Reader) error {
 		return fmt.Errorf("wrong constructor: got %08x, want %08x", ctor, m.ConstructorID())
 	}
 	ids := make([]int64, 0, 4)
-	if err := mtproto.ReadVector(r, func() error {
+	if err := mtproto.ReadVectorBounded(r, MaxMessageStateIDs, func() error {
 		id, err := mtproto.ReadInt64(r)
 		if err != nil {
 			return err

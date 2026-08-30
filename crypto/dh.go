@@ -349,29 +349,6 @@ func ComputeAuthKeyID(authKey []byte) int64 {
 	return int64(binary.LittleEndian.Uint64(sum[len(sum)-8:]))
 }
 
-// ComputeNewNonceHash1 computes new_nonce_hash1 for dh_gen_ok.
-// This legacy helper does not include auth_key material.
-// Prefer ComputeNewNonceHash1Auth for MTProto 2.0 compatibility.
-func ComputeNewNonceHash1(newNonce [32]byte, serverNonce [16]byte) [16]byte {
-	h1 := sha1.New()
-	h1.Write(newNonce[:])
-	hash1 := h1.Sum(nil)
-
-	h2 := sha1.New()
-	h2.Write(serverNonce[:])
-	hash2 := h2.Sum(nil)
-
-	var result [16]byte
-	for i := 0; i < 16; i++ {
-		var tail byte
-		if i+16 < len(hash1) {
-			tail = hash1[i+16]
-		}
-		result[i] = hash1[i] ^ hash2[i] ^ tail
-	}
-	return result
-}
-
 // ComputeNewNonceHash1Auth computes new_nonce_hash1 for MTProto 2.0:
 // new_nonce_hash1 = SHA1(new_nonce + 1 + SHA1(auth_key)[0:8])[4:20]
 func ComputeNewNonceHash1Auth(newNonce [32]byte, authKey []byte) [16]byte {

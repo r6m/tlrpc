@@ -27,53 +27,70 @@ func newHandshakeHarness(t *testing.T) (*tlrpc.Server, *crypto.ServerKey) {
 		t.Fatalf("generate server key: %v", err)
 	}
 	serverKeys.AddKey(serverKey)
-	sessions := session.NewMemoryManager()
+	sessions := session.NewMemoryStore()
 
 	srv := tlrpc.NewServer(
 		tlrpc.WithAuthKeyManager(memAuth),
-		tlrpc.WithSessionManager(sessions),
+		tlrpc.WithSessionStore(sessions),
 		tlrpc.WithServerKeyManager(serverKeys),
-		tlrpc.WithMaxLayer(170),
 	)
-	srv.RegisterConstructor((&gen.HelpGetConfigRequest{}).ConstructorID(), func() tlrpc.TLObject {
-		return &gen.HelpGetConfigRequest{}
-	})
-	srv.RegisterMethod((&gen.HelpGetConfigRequest{}).ConstructorID(), func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		_ = obj.(*gen.HelpGetConfigRequest)
-		now := int32(time.Now().Unix())
-		return &gen.Config{
-			Date:                    now,
-			Expires:                 now + 3600,
-			ThisDc:                  1,
-			DcTxtDomainName:         "localhost",
-			ChatSizeMax:             200,
-			MegagroupSizeMax:        10000,
-			ForwardedCountMax:       100,
-			OnlineUpdatePeriodMs:    30000,
-			OfflineBlurTimeoutMs:    5000,
-			OfflineIdleTimeoutMs:    30000,
-			OnlineCloudTimeoutMs:    30000,
-			NotifyCloudDelayMs:      3000,
-			NotifyDefaultDelayMs:    1500,
-			PushChatPeriodMs:        30000,
-			PushChatLimit:           2,
-			EditTimeLimit:           172800,
-			RevokeTimeLimit:         172800,
-			RevokePmTimeLimit:       172800,
-			RatingEDecay:            2419200,
-			StickersRecentLimit:     30,
-			ChannelsReadMediaPeriod: 604800,
-			CallReceiveTimeoutMs:    20000,
-			CallRingTimeoutMs:       90000,
-			CallConnectTimeoutMs:    30000,
-			CallPacketTimeoutMs:     10000,
-			MeURLPrefix:             "https://t.me/",
-			CaptionLengthMax:        1024,
-			MessageLengthMax:        4096,
-			WebfileDcID:             1,
-		}, nil
-	})
+	srv.RegisterService(tlrpc.ServiceDesc{
+		ServiceName: "compat.handshake.Help",
+		SchemaLayer: gen.SchemaLayer,
+		HandlerType: (*handshakeHelpServer)(nil),
+		Methods: []tlrpc.MethodDesc{{
+			MethodName:    "GetConfig",
+			ConstructorID: (&gen.HelpGetConfigRequest{}).ConstructorID(),
+			NewRequest:    func() tlrpc.TLObject { return &gen.HelpGetConfigRequest{} },
+			Handler:       handshakeHelpGetConfigHandler,
+		}},
+	}, handshakeHelpService{})
 	return srv, serverKey
+}
+
+type handshakeHelpServer interface {
+	GetConfig(context.Context, *gen.HelpGetConfigRequest) (*gen.Config, error)
+}
+
+type handshakeHelpService struct{}
+
+func (handshakeHelpService) GetConfig(context.Context, *gen.HelpGetConfigRequest) (*gen.Config, error) {
+	now := int32(time.Now().Unix())
+	return &gen.Config{
+		Date:                    now,
+		Expires:                 now + 3600,
+		ThisDc:                  1,
+		DcTxtDomainName:         "localhost",
+		ChatSizeMax:             200,
+		MegagroupSizeMax:        10000,
+		ForwardedCountMax:       100,
+		OnlineUpdatePeriodMs:    30000,
+		OfflineBlurTimeoutMs:    5000,
+		OfflineIdleTimeoutMs:    30000,
+		OnlineCloudTimeoutMs:    30000,
+		NotifyCloudDelayMs:      3000,
+		NotifyDefaultDelayMs:    1500,
+		PushChatPeriodMs:        30000,
+		PushChatLimit:           2,
+		EditTimeLimit:           172800,
+		RevokeTimeLimit:         172800,
+		RevokePmTimeLimit:       172800,
+		RatingEDecay:            2419200,
+		StickersRecentLimit:     30,
+		ChannelsReadMediaPeriod: 604800,
+		CallReceiveTimeoutMs:    20000,
+		CallRingTimeoutMs:       90000,
+		CallConnectTimeoutMs:    30000,
+		CallPacketTimeoutMs:     10000,
+		MeURLPrefix:             "https://t.me/",
+		CaptionLengthMax:        1024,
+		MessageLengthMax:        4096,
+		WebfileDcID:             1,
+	}, nil
+}
+
+func handshakeHelpGetConfigHandler(service interface{}, ctx context.Context, request *gen.HelpGetConfigRequest) (*gen.Config, error) {
+	return service.(handshakeHelpServer).GetConfig(ctx, request)
 }
 
 func runServer(t *testing.T, srv *tlrpc.Server, lis transport.Listener) {
@@ -209,16 +226,16 @@ func TestHandshakeNegativeWrongMsgIDGetsBadMsgNotification(t *testing.T) {
 		t.Fatalf("serialize: %v", err)
 	}
 	msgID1 := client.NextMsgID()
-	packet, err := cli.EncryptMessage(msgID1, 1, payload)
+	packet, err := cli.EncryptMessage(msgID1, 3, payload)
 	if err != nil {
 		t.Fatalf("encrypt request: %v", err)
 	}
 	if err := cli.Conn().WriteMessage(packet); err != nil {
 		t.Fatalf("write request: %v", err)
 	}
-	_, _ = cli.Conn().ReadMessage()
+	_, _ = cli.Conn().ReadMessage(0)
 
-	packet, err = cli.EncryptMessage(msgID1-4, 1, payload)
+	packet, err = cli.EncryptMessage(msgID1, 5, payload)
 	if err != nil {
 		t.Fatalf("encrypt request: %v", err)
 	}
@@ -227,7 +244,7 @@ func TestHandshakeNegativeWrongMsgIDGetsBadMsgNotification(t *testing.T) {
 	}
 
 	for i := 0; i < 4; i++ {
-		packet, err := cli.Conn().ReadMessage()
+		packet, err := cli.Conn().ReadMessage(0)
 		if err != nil {
 			t.Fatalf("read response: %v", err)
 		}
@@ -274,7 +291,7 @@ func TestHandshakeNegativeWrongSaltGetsBadServerSalt(t *testing.T) {
 	}
 
 	for i := 0; i < 4; i++ {
-		packet, err := cli.Conn().ReadMessage()
+		packet, err := cli.Conn().ReadMessage(0)
 		if err != nil {
 			t.Fatalf("read response: %v", err)
 		}

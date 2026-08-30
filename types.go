@@ -1,20 +1,15 @@
-// Package tlrpc provides the core framework for Telegram RPC servers and clients.
+// Package tlrpc provides a schema-first TL RPC framework for Go servers and
+// clients. Applications supply their own TL schema, generate service contracts,
+// and implement those contracts; Telegram is one supported MTProto consumer.
 package tlrpc
 
 import (
 	"context"
 
-	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
 )
 
-// Session represents a user session.
-type Session = session.Session
-
-// SessionStore interface for session storage (legacy, for backward compatibility).
-type SessionStore = session.SessionStore
-
-// TLObject interface for Telegram objects
+// TLObject is the common constructor identity implemented by generated TL values.
 type TLObject interface {
 	ConstructorID() uint32
 }
@@ -24,15 +19,6 @@ type Transport = transport.Transport
 
 // Listener interface for accepting connections.
 type Listener = transport.Listener
-
-// TransportConn aliases transport.Conn for low-level access.
-type TransportConn = transport.Conn
-
-// Conn interface for connections exposed to handlers.
-type Conn interface {
-	transport.Conn
-	Send(TLObject) error
-}
 
 // Logger interface for logging.
 type Logger interface {
@@ -44,6 +30,9 @@ type Logger interface {
 // ServiceDesc describes a service for registration.
 type ServiceDesc struct {
 	ServiceName string
+	// SchemaLayer is the layer represented by the generated package. Zero means
+	// the application supplied an unlayered schema.
+	SchemaLayer int
 	HandlerType interface{}
 	Methods     []MethodDesc
 }
@@ -54,11 +43,6 @@ type MethodDesc struct {
 	ConstructorID uint32          // TL constructor ID for the request method.
 	NewRequest    func() TLObject // Constructs an empty request object for decoding.
 	Handler       interface{}     // Handler function (various signatures supported)
-}
-
-// HandshakeHandler handles unencrypted handshake messages
-type HandshakeHandler interface {
-	HandleUnencrypted(ctx context.Context, msgID int64, data []byte) ([]byte, error)
 }
 
 // UnaryServerInfo provides information about the current RPC call.
@@ -80,9 +64,3 @@ type UnaryInterceptor func(ctx context.Context, req interface{}, info *UnaryServ
 type Authorizer interface {
 	Authorize(ctx context.Context, req interface{}) error
 }
-
-// Handler represents a request handler function.
-type Handler func(ctx context.Context, req interface{}) (interface{}, error)
-
-// Interceptor represents middleware for request/response processing.
-type Interceptor func(next Handler) Handler

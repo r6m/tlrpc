@@ -7,6 +7,8 @@ import (
 	"github.com/r6m/tlrpc/mtproto"
 )
 
+const MaxFutureSalts = 64
+
 // GetFutureSaltsRequest corresponds to get_future_salts#b921bd04 num:int = FutureSalts.
 type GetFutureSaltsRequest struct {
 	Num int32
@@ -95,6 +97,9 @@ type FutureSalts struct {
 func (*FutureSalts) ConstructorID() uint32 { return FutureSaltsID }
 
 func (m *FutureSalts) SerializeTL(w io.Writer) error {
+	if len(m.Salts) > MaxFutureSalts {
+		return fmt.Errorf("future_salts count exceeds limit: %d", len(m.Salts))
+	}
 	if err := mtproto.WriteUint32(w, m.ConstructorID()); err != nil {
 		return err
 	}
@@ -135,6 +140,9 @@ func (m *FutureSalts) DeserializeTL(r io.Reader) error {
 	}
 	if count < 0 {
 		return fmt.Errorf("invalid future_salts count: %d", count)
+	}
+	if count > MaxFutureSalts {
+		return fmt.Errorf("future_salts count exceeds limit: %d", count)
 	}
 	m.Salts = make([]FutureSalt, 0, count)
 	for i := int32(0); i < count; i++ {

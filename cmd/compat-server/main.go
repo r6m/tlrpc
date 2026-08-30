@@ -135,8 +135,8 @@ func (s *authService) SendCode(context.Context, *gen.AuthSendCodeRequest) (gen.A
 func (s *authService) SignIn(ctx context.Context, req *gen.AuthSignInRequest) (gen.AuthAuthorizationType, error) {
 	_ = req
 	userID := int64(1)
-	if sess := tlrpc.SessionFromContext(ctx); sess != nil {
-		sess.UserID = userID
+	if err := tlrpc.BindSessionUser(ctx, userID); err != nil {
+		return nil, err
 	}
 	auth := gen.AuthAuthorizationType(&gen.AuthAuthorization{
 		User: &gen.UserEmpty{ID: userID},
@@ -168,12 +168,10 @@ func traceInterceptor(trace bool) tlrpc.UnaryInterceptor {
 func main() {
 	var tcpAddr string
 	var wsAddr string
-	var maxLayer int
 	var wsSecretHex string
 	var trace bool
 	flag.StringVar(&tcpAddr, "tcp", "127.0.0.1:8080", "TCP listen address")
 	flag.StringVar(&wsAddr, "ws", "127.0.0.1:8081", "WebSocket listen address")
-	flag.IntVar(&maxLayer, "max-layer", 217, "maximum supported API layer")
 	flag.StringVar(&wsSecretHex, "ws-secret-hex", "", "hex obfuscated2 secret for WebSocket")
 	flag.BoolVar(&trace, "trace", true, "enable inbound request trace logs")
 	flag.Parse()
@@ -204,7 +202,6 @@ func main() {
 	}
 
 	srv := tlrpc.NewServer(
-		tlrpc.WithMaxLayer(maxLayer),
 		tlrpc.WithLogger(stdLogger{}),
 		tlrpc.WithUnaryInterceptor(traceInterceptor(trace)),
 		tlrpc.WithServerKeyManager(serverKeys),
@@ -223,7 +220,7 @@ func main() {
 		log.Fatalf("ws listen failed: %v", err)
 	}
 
-	log.Printf("compat server listening tcp=%s ws=%s max_layer=%d trace=%v", tcpAddr, wsAddr, maxLayer, trace)
+	log.Printf("compat server listening tcp=%s ws=%s schema_layer=%d trace=%v", tcpAddr, wsAddr, 217, trace)
 
 	go func() {
 		if err := srv.ServeTransport(tcpLis); err != nil {

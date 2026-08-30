@@ -49,18 +49,3 @@ func (d *dispatcher) LookupMethod(id uint32) (func(context.Context, TLObject) (i
 	d.mu.RUnlock()
 	return handler, ok
 }
-
-// RegisterConstructor registers a constructor function in the global dispatcher.
-// Deprecated: server runtime dispatch uses a per-server dispatcher registered via RegisterService.
-func RegisterConstructor(id uint32, constructor func() TLObject) {
-	globalDispatcher.RegisterConstructor(id, constructor)
-}
-
-// RegisterMethod registers a method handler in the global dispatcher.
-// Deprecated: server runtime dispatch uses a per-server dispatcher registered via RegisterService.
-func RegisterMethod(id uint32, handler func(context.Context, TLObject) (interface{}, error)) {
-	globalDispatcher.RegisterMethod(id, handler)
-}
-
-// global dispatcher instance
-var globalDispatcher = newDispatcher()

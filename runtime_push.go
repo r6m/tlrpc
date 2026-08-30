@@ -1,0 +1,138 @@
+package tlrpc
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+
+	runtimev2 "github.com/r6m/tlrpc/internal/runtime"
+	"github.com/r6m/tlrpc/session"
+)
+
+type runtimePushBinding struct {
+	binding Binding
+	sender  runtimev2.Sender
+}
+
+// runtimePushRegistry stores semantic senders only. It never receives a raw
+// transport, auth key, message-ID generator, sequence generator, or packet.
+type runtimePushRegistry struct {
+	mu     sync.RWMutex
+	byKey  map[session.SessionKey]runtimePushBinding
+	byUser map[int64]map[session.SessionKey]runtimev2.Sender
+	server *Server
+}
+
+func newRuntimePushRegistry(server *Server) *runtimePushRegistry {
+	return &runtimePushRegistry{
+		byKey:  make(map[session.SessionKey]runtimePushBinding),
+		byUser: make(map[int64]map[session.SessionKey]runtimev2.Sender),
+		server: server,
+	}
+}
+
+func (r *runtimePushRegistry) Update(snapshot session.Snapshot, sender runtimev2.Sender, acceptsPush bool) {
+	if r == nil || sender == nil {
+		return
+	}
+	key := snapshot.Key()
+	binding := Binding{
+		AuthKeyID: int64(snapshot.AuthKeyID), SessionID: snapshot.SessionID,
+		ServerSalt: snapshot.ServerSalt, UserID: snapshot.UserID, Layer: snapshot.Layer,
+	}
+	r.mu.Lock()
+	previous, existed := r.byKey[key]
+	if existed {
+		r.removeUserLocked(key, previous)
+	}
+	r.byKey[key] = runtimePushBinding{binding: binding, sender: sender}
+	if binding.UserID != 0 && acceptsPush {
+		bindings := r.byUser[binding.UserID]
+		if bindings == nil {
+			bindings = make(map[session.SessionKey]runtimev2.Sender)
+			r.byUser[binding.UserID] = bindings
+		}
+		bindings[key] = sender
+	}
+	r.mu.Unlock()
+	bindingChanged := !existed || previous.binding != binding
+	if (!existed || previous.sender != sender || bindingChanged) && r.server != nil && r.server.onSessionBound != nil {
+		r.server.onSessionBound(binding, runtimeSender{sender: sender})
+	}
+}
+
+func (r *runtimePushRegistry) Remove(key session.SessionKey, sender runtimev2.Sender) {
+	if r == nil || sender == nil {
+		return
+	}
+	r.mu.Lock()
+	binding, exists := r.byKey[key]
+	if exists && binding.sender == sender {
+		delete(r.byKey, key)
+		r.removeUserLocked(key, binding)
+	}
+	r.mu.Unlock()
+	if exists && binding.sender == sender && r.server != nil && r.server.onSessionUnbound != nil {
+		r.server.onSessionUnbound(binding.binding)
+	}
+}
+
+func (r *runtimePushRegistry) removeUserLocked(key session.SessionKey, binding runtimePushBinding) {
+	if binding.binding.UserID == 0 {
+		return
+	}
+	bindings := r.byUser[binding.binding.UserID]
+	if bindings[key] == binding.sender {
+		delete(bindings, key)
+	}
+	if len(bindings) == 0 {
+		delete(r.byUser, binding.binding.UserID)
+	}
+}
+
+func (r *runtimePushRegistry) Publish(ctx context.Context, userID int64, body []byte) error {
+	if r == nil || userID <= 0 {
+		return nil
+	}
+	r.mu.RLock()
+	bindings := r.byUser[userID]
+	senders := make([]runtimev2.Sender, 0, len(bindings))
+	for _, sender := range bindings {
+		senders = append(senders, sender)
+	}
+	r.mu.RUnlock()
+	var failures []error
+	for _, sender := range senders {
+		if err := sender.Push(ctx, append([]byte(nil), body...)); err != nil {
+			failures = append(failures, err)
+		}
+	}
+	return errors.Join(failures...)
+}
+
+// Publish sends one schema-defined server push to every active session bound
+// to userID through Runtime v2's per-connection writer.
+func (s *Server) Publish(userID int64, update TLObject) error {
+	return s.PublishContext(context.Background(), userID, update)
+}
+
+// PublishContext is Publish with caller-controlled cancellation and deadlines.
+func (s *Server) PublishContext(ctx context.Context, userID int64, update TLObject) error {
+	if s == nil || s.runtimePushes == nil {
+		return nil
+	}
+	if userID <= 0 {
+		return ErrInvalidUserID
+	}
+	body, err := encodeTLObject(update)
+	if err != nil {
+		return fmt.Errorf("tlrpc: encode push: %w", err)
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return s.runtimePushes.Publish(ctx, userID, body)
+}
+
+var _ runtimev2.SessionPresence = (*runtimePushRegistry)(nil)

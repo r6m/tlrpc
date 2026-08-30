@@ -1,26 +1,86 @@
 # tlrpc
 
-TLRPC is a Go framework for building Telegram MTProto/TL RPC servers with generated service bindings.
+TLRPC is a standalone, schema-first Go RPC framework for TL. A project supplies
+its own TL schema, generates typed Go objects and gRPC-like service contracts,
+implements those services, and registers them with a TLRPC server. The public
+wire protocol remains TL/MTProto—protobuf and gRPC are not involved.
+
+Runtime v2 provides the reusable protocol edge: bounded TCP and WebSocket
+framing, MTProto authorization-key handshake and encryption, composite session
+leases backed by detached snapshots, wrapper and control handling, and one
+per-connection writer that owns outbound ordering, message IDs, sequence
+numbers, correlation, reliability, encryption, and persistence.
+
+The application owns its schema, service behavior, authorization policy,
+durable domain state, and deployment configuration. Telegram layer 228 is a
+compatibility fixture used to prove the parser, generator, and MTProto runtime;
+it is not a framework default or a baked-in product. `tgserver` is a separate
+consumer and integration proof, not a required companion.
 
 ## Quick start
 
 ```bash
 go install github.com/r6m/tlrpc/cmd/tlrpc-gen@latest
-go install github.com/r6m/tlrpc/cmd/tlrpc-client@latest
 tlrpc-gen --schema=./schema.tl --out=./gen --package=gen
 ```
 
-```go
-srv := tlrpc.NewServer()
-gen.RegisterAuthServer(srv, &AuthService{})
-log.Fatal(srv.Serve(listener))
+For a layered schema, provide the base layer, repeat `--layer-diff` in the
+order the fragments must be applied, and select one target layer:
+
+```bash
+tlrpc-gen \
+  --schema=./schema/base.tl \
+  --base-layer=226 \
+  --layer-diff=227:./schema/layers/227.tl \
+  --layer-diff=228:./schema/layers/228.tl \
+  --layer=228 \
+  --out=./gen \
+  --package=gen
 ```
+
+Each delta fragment contains ordinary TL declarations. A declaration with the
+same name replaces the previous declaration, a new name adds a declaration,
+and the exact comment directives `// @tlrpc remove constructor NAME` and
+`// @tlrpc remove function NAME` remove declarations. Resolution happens only
+during generation; Runtime v2 never converts objects or method semantics
+between layers.
+
+```go
+type EchoService struct {
+	gen.UnimplementedEchoServer
+}
+
+func (s *EchoService) Echo(
+	ctx context.Context,
+	req *gen.EchoEchoRequest,
+) (*gen.EchoResponse, error) {
+	return &gen.EchoResponse{Message: req.Message}, nil
+}
+
+server := tlrpc.NewServer()
+gen.RegisterEchoServer(server, &EchoService{})
+log.Fatal(server.Serve(listener))
+```
+
+Generated registration is the application dispatch surface. Applications do
+not register raw constructor or method callbacks and handlers are not given a
+mutable protocol session or raw connection.
 
 ## Documentation
 
-See [docs/index.md](./docs/index.md).
+Start at [docs/index.md](./docs/index.md):
 
-## Versioning / Releases
+- [Requirements](./docs/requirements.md)
+- [Architecture](./docs/architecture.md)
+- [Implementation](./docs/implementation.md)
+- [Telegram and MTProto](./docs/telegram-mtproto.md)
+- [Roadmap](./docs/roadmap.md)
 
-- Tags are required for `@latest` (`v0.x` releases are considered unstable; APIs may change).
-- See [CHANGELOG.md](./CHANGELOG.md) for release notes.
+The documentation labels current Runtime v2 behavior separately from future
+work and from the later `tgserver` integration.
+
+## Release status
+
+TLRPC has no released backward-compatibility contract. Superseded APIs and the
+old runtime are replaced rather than retained as legacy modes. See
+[CHANGELOG.md](./CHANGELOG.md) for release notes when a release is authorized.

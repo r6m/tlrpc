@@ -97,7 +97,11 @@ func TestScenarioReconnectGetDifferenceTCPAndWS(t *testing.T) {
 			}
 			state := stateObj.(*gen.UpdatesState)
 
-			_ = cli.Close()
+			sessionInfo := cli.Session()
+			if err := cli.Close(); err != nil {
+				t.Fatalf("close client before offline update: %v", err)
+			}
+			srv.waitUnbound(t, sessionInfo)
 
 			update := &gen.UpdateUserStatus{UserID: userID, Status: &gen.UserStatusOnline{Expires: int32(time.Now().Unix() + 120)}}
 			if _, err := srv.updates.publish(srv.srv, userID, update); err != nil {

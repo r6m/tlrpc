@@ -28,7 +28,7 @@ func TestNegotiateAbridgedTag(t *testing.T) {
 		t.Fatalf("expected abridged codec, got %T", codec)
 	}
 
-	got, _, err := codec.ReadPacket(rw)
+	got, _, err := codec.ReadPacket(rw, 0)
 	if err != nil {
 		t.Fatalf("read packet: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestNegotiateIntermediateTag(t *testing.T) {
 		t.Fatalf("expected intermediate codec, got %T", codec)
 	}
 
-	got, _, err := codec.ReadPacket(rw)
+	got, _, err := codec.ReadPacket(rw, 0)
 	if err != nil {
 		t.Fatalf("read packet: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestNegotiatePaddedIntermediateTag(t *testing.T) {
 		t.Fatalf("expected padded intermediate codec, got %T", codec)
 	}
 
-	got, _, err := codec.ReadPacket(rw)
+	got, _, err := codec.ReadPacket(rw, 0)
 	if err != nil {
 		t.Fatalf("read packet: %v", err)
 	}

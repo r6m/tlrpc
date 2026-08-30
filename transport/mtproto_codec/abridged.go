@@ -13,7 +13,7 @@ type Abridged struct {
 
 func (a *Abridged) ProtocolTag() uint32 { return 0xEFEFEFEF }
 
-func (a *Abridged) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
+func (a *Abridged) ReadPacket(r io.Reader, maxPayloadBytes int) ([]byte, *uint32, error) {
 	var first [1]byte
 	if _, err := io.ReadFull(r, first[:]); err != nil {
 		return nil, nil, err
@@ -41,7 +41,10 @@ func (a *Abridged) ReadPacket(r io.Reader) ([]byte, *uint32, error) {
 	if length == 0 {
 		return nil, nil, ErrInvalidLength
 	}
-	payloadLen := int(length) * 4
+	payloadLen, err := checkedPayloadLength(uint64(length)*4, maxPayloadBytes)
+	if err != nil {
+		return nil, nil, err
+	}
 	payload := make([]byte, payloadLen)
 	if _, err := io.ReadFull(r, payload); err != nil {
 		return nil, nil, err

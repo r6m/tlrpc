@@ -907,6 +907,13 @@ func isTrueType(t parser.TypeRef) bool {
 	return strings.EqualFold(t.Name, "true")
 }
 
+// GenerateSchemaMetadata exposes generation-only schema metadata to consumers.
+// Runtime dispatch remains constructor-driven and does not select API layers.
+func GenerateSchemaMetadata(out io.Writer, layer int) error {
+	_, err := fmt.Fprintf(out, "// SchemaLayer is the layer represented by this generated package.\nconst SchemaLayer = %d\n\n", layer)
+	return err
+}
+
 // GenerateConstructorConstants writes constructor IDs as constants.
 func GenerateConstructorConstants(namer *naming.Namer, out io.Writer, ctors []parser.Constructor) error {
 	buf := &bytes.Buffer{}

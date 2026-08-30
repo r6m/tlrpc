@@ -1,4 +1,5 @@
-// Package tlrpc provides the core framework for Telegram RPC servers and clients.
+// Package tlrpc provides a schema-first TL RPC framework for Go servers and
+// clients. Applications supply their own TL schema and service implementations.
 package tlrpc
 
 import (
@@ -7,33 +8,84 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/r6m/tlrpc/crypto"
-	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
+	handshakev2 "github.com/r6m/tlrpc/internal/handshake"
+	runtimev2 "github.com/r6m/tlrpc/internal/runtime"
 	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
-	"github.com/r6m/tlrpc/types"
+)
+
+const (
+	DefaultReliabilitySessionCapacity = 4096
+	DefaultReliabilityMessageCapacity = 4096
+	DefaultReliabilityTTL             = 10 * time.Minute
 )
 
 // Server represents an RPC server
 type Server struct {
-	authKeys                  crypto.AuthKeyManager
-	serverKeys                crypto.ServerKeyManager
-	sessions                  session.Manager
-	dispatcher                *dispatcher
-	maxLayer                  int
-	layers                    []int
-	unaryInterceptors         []UnaryInterceptor // New gRPC-like interceptors
-	logger                    Logger
-	services                  map[string]*serviceInfo // for backward compatibility
-	handshakeHandler          HandshakeHandler
-	shutdownCh                chan struct{}
-	updateHub                 *updateHub
-	onSessionBound            OnSessionBoundHook
-	onSessionUnbound          OnSessionUnboundHook
-	gotdTestHooks             any
-	unknownConstructorHandler UnknownConstructorHandler
+	authKeys             crypto.AuthKeyManager
+	serverKeys           crypto.ServerKeyManager
+	store                session.Store
+	runtimeLeases        *runtimev2.SessionLeaseRegistry
+	runtimeReliability   *runtimev2.ReliabilityRegistry
+	runtimeHandshake     *handshakev2.Engine
+	runtimePushes        *runtimePushRegistry
+	dispatcher           *dispatcher
+	schemaLayer          int
+	schemaLayerSet       bool
+	unaryInterceptors    []UnaryInterceptor
+	logger               Logger
+	services             map[string]*serviceInfo
+	shutdownCh           chan struct{}
+	onSessionBound       OnSessionBoundHook
+	onSessionUnbound     OnSessionUnboundHook
+	reliabilitySessions  int
+	reliabilityMessages  int
+	reliabilityTTL       time.Duration
+	maxMessageSize       int
+	maxConcurrentStreams int
+	readTimeout          time.Duration
+	writeTimeout         time.Duration
+	handlerSlots         chan struct{}
+	lifecycleMu          sync.Mutex
+	listeners            map[*ownedListener]struct{}
+	connections          map[*ownedConn]struct{}
+	connectionWG         sync.WaitGroup
+	stopOnce             sync.Once
+	stopDone             chan struct{}
+}
+
+type closer interface {
+	Close() error
+}
+
+type ownedListener struct {
+	closer closer
+	once   sync.Once
+	err    error
+}
+
+func (l *ownedListener) close() error {
+	l.once.Do(func() {
+		l.err = l.closer.Close()
+	})
+	return l.err
+}
+
+type ownedConn struct {
+	conn transport.Conn
+	once sync.Once
+	err  error
+}
+
+func (c *ownedConn) close() error {
+	c.once.Do(func() {
+		c.err = c.conn.Close()
+	})
+	return c.err
 }
 
 // serviceInfo stores service implementation info
@@ -45,57 +97,41 @@ type serviceInfo struct {
 // NewServer creates a new RPC server with the given options
 func NewServer(opts ...ServerOption) *Server {
 	s := &Server{
-		dispatcher: newDispatcher(),
-		authKeys:   crypto.NewMemoryAuthKeyManager(),
-		serverKeys: crypto.NewMemoryServerKeyManager(),
-		sessions:   session.NewMemoryManager(),
-		services:   make(map[string]*serviceInfo),
-		shutdownCh: make(chan struct{}),
-		updateHub:  newUpdateHub(),
+		dispatcher:          newDispatcher(),
+		authKeys:            crypto.NewMemoryAuthKeyManager(),
+		serverKeys:          crypto.NewMemoryServerKeyManager(),
+		store:               session.NewMemoryStore(),
+		services:            make(map[string]*serviceInfo),
+		shutdownCh:          make(chan struct{}),
+		stopDone:            make(chan struct{}),
+		listeners:           make(map[*ownedListener]struct{}),
+		connections:         make(map[*ownedConn]struct{}),
+		reliabilitySessions: DefaultReliabilitySessionCapacity,
+		reliabilityMessages: DefaultReliabilityMessageCapacity,
+		reliabilityTTL:      DefaultReliabilityTTL,
 	}
-	s.registerDefaultConstructors()
 	for _, opt := range opts {
 		opt(s)
 	}
-	return s
-}
-
-func (s *Server) registerDefaultConstructors() {
-	// Built-in TL primitives.
-	for id, ctor := range types.GetBaseConstructors() {
-		c := ctor
-		s.RegisterConstructor(id, func() TLObject { return c() })
+	s.runtimePushes = newRuntimePushRegistry(s)
+	if s.maxConcurrentStreams > 0 {
+		s.handlerSlots = make(chan struct{}, s.maxConcurrentStreams)
 	}
-
-	// MTProto envelope/control objects.
-	s.RegisterConstructor(mtprototl.MsgContainerID, func() TLObject { return &mtprototl.MsgContainer{} })
-	s.RegisterConstructor(mtprototl.MsgsAckID, func() TLObject { return &mtprototl.MsgsAck{} })
-	s.RegisterConstructor(mtprototl.GzipPackedID, func() TLObject { return &mtprototl.GzipPacked{} })
-	s.RegisterConstructor(mtprototl.RPCResultID, func() TLObject { return &mtprototl.RPCResult{} })
-	s.RegisterConstructor(mtprototl.RPCErrorID, func() TLObject { return &mtprototl.RPCError{} })
-	s.RegisterConstructor(mtprototl.NewSessionCreatedID, func() TLObject { return &mtprototl.NewSessionCreated{} })
-	s.RegisterConstructor(mtprototl.GetFutureSaltsID, func() TLObject { return &mtprototl.GetFutureSaltsRequest{} })
-	s.RegisterConstructor(mtprototl.FutureSaltsID, func() TLObject { return &mtprototl.FutureSalts{} })
-	s.RegisterConstructor(mtprototl.BadMsgNotificationID, func() TLObject { return &mtprototl.BadMsgNotification{} })
-	s.RegisterConstructor(mtprototl.BadServerSaltID, func() TLObject { return &mtprototl.BadServerSalt{} })
-	s.RegisterConstructor(mtprototl.MsgResendReqID, func() TLObject { return &mtprototl.MsgResendReq{} })
-	s.RegisterConstructor(mtprototl.MsgsStateReqID, func() TLObject { return &mtprototl.MsgsStateReq{} })
-	s.RegisterConstructor(mtprototl.MsgsStateInfoID, func() TLObject { return &mtprototl.MsgsStateInfo{} })
-	s.RegisterConstructor(mtprototl.InvokeAfterMsgID, func() TLObject { return &mtprototl.InvokeAfterMsg{} })
-	s.RegisterConstructor(mtprototl.InvokeAfterMsgsID, func() TLObject { return &mtprototl.InvokeAfterMsgs{} })
-	s.RegisterConstructor(mtprototl.InitConnectionID, func() TLObject { return &mtprototl.InitConnection{} })
-	s.RegisterConstructor(mtprototl.InvokeWithLayerID, func() TLObject { return &mtprototl.InvokeWithLayer{} })
-	s.RegisterConstructor(mtprototl.InvokeWithoutUpdatesID, func() TLObject { return &mtprototl.InvokeWithoutUpdates{} })
-}
-
-// RegisterConstructor registers a TL constructor in the server dispatcher.
-func (s *Server) RegisterConstructor(id uint32, ctor func() TLObject) {
-	s.dispatcher.RegisterConstructor(id, ctor)
-}
-
-// RegisterMethod registers a method handler in the server dispatcher.
-func (s *Server) RegisterMethod(id uint32, h func(context.Context, TLObject) (interface{}, error)) {
-	s.dispatcher.RegisterMethod(id, h)
+	s.runtimeLeases = runtimev2.NewSessionLeaseRegistry(s.store)
+	var err error
+	s.runtimeReliability, err = runtimev2.NewReliabilityRegistry(runtimev2.ReliabilityRegistryConfig{
+		MaxSessions: s.reliabilitySessions, MessageCapacity: s.reliabilityMessages, TTL: s.reliabilityTTL,
+	})
+	if err != nil {
+		panic(err)
+	}
+	s.runtimeHandshake, err = handshakev2.New(handshakev2.Config{
+		AuthKeys: s.authKeys, ServerKeys: s.serverKeys,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
 
 // RegisterService registers a service implementation with the server.
@@ -105,86 +141,89 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 	if desc.ServiceName == "" {
 		panic("service name is required")
 	}
+	if desc.HandlerType == nil {
+		panic(fmt.Sprintf("service %q handler type is required", desc.ServiceName))
+	}
+	if len(desc.Methods) == 0 {
+		panic(fmt.Sprintf("service %q must declare at least one method", desc.ServiceName))
+	}
 	if impl == nil {
 		panic("implementation cannot be nil")
 	}
 	if _, exists := s.services[desc.ServiceName]; exists {
 		panic(fmt.Sprintf("service %s already registered", desc.ServiceName))
 	}
-
-	if desc.HandlerType != nil {
-		handlerType := reflect.TypeOf(desc.HandlerType)
-		implType := reflect.TypeOf(impl)
-		if handlerType.Kind() == reflect.Ptr && handlerType.Elem().Kind() == reflect.Interface {
-			if !implType.Implements(handlerType.Elem()) {
-				panic(fmt.Sprintf("implementation %T does not satisfy handler type %v", impl, handlerType.Elem()))
-			}
-		}
+	if s.schemaLayerSet && s.schemaLayer != desc.SchemaLayer {
+		panic(fmt.Sprintf("service %q schema layer %d conflicts with server schema layer %d", desc.ServiceName, desc.SchemaLayer, s.schemaLayer))
 	}
 
+	handlerType := reflect.TypeOf(desc.HandlerType)
+	if handlerType.Kind() != reflect.Ptr || handlerType.Elem().Kind() != reflect.Interface {
+		panic(fmt.Sprintf("service %q handler type must be a pointer to an interface", desc.ServiceName))
+	}
+	implType := reflect.TypeOf(impl)
+	if !implType.Implements(handlerType.Elem()) {
+		panic(fmt.Sprintf("implementation %T does not satisfy handler type %v", impl, handlerType.Elem()))
+	}
+
+	type registration struct {
+		method  MethodDesc
+		invoker func(context.Context, TLObject) (interface{}, error)
+	}
+	registrations := make([]registration, 0, len(desc.Methods))
+	methodIDs := make(map[uint32]string, len(desc.Methods))
+	methodNames := make(map[string]struct{}, len(desc.Methods))
 	for _, method := range desc.Methods {
-		methodID := method.ConstructorID
-		newReq := method.NewRequest
-
-		// Backward-compatible inference for descriptors that don't populate NewRequest/ConstructorID.
-		if inferredID, inferredReq, ok := inferMethodRequestFromHandler(method.Handler); ok {
-			if methodID == 0 {
-				methodID = inferredID
-			}
-			if newReq == nil {
-				newReq = inferredReq
-			}
+		if method.MethodName == "" {
+			panic(fmt.Sprintf("service %q has a method with no name", desc.ServiceName))
 		}
-
-		if methodID == 0 {
+		if _, exists := methodNames[method.MethodName]; exists {
+			panic(fmt.Sprintf("service %q has duplicate method name %q", desc.ServiceName, method.MethodName))
+		}
+		methodNames[method.MethodName] = struct{}{}
+		if method.ConstructorID == 0 {
 			panic(fmt.Sprintf("method %q is missing constructor ID", method.MethodName))
 		}
-		if newReq == nil {
+		if method.NewRequest == nil {
 			panic(fmt.Sprintf("method %q is missing request constructor", method.MethodName))
 		}
-		if _, exists := s.dispatcher.LookupMethod(methodID); exists {
-			panic(fmt.Sprintf("duplicate method constructor ID 0x%08x for %q", methodID, method.MethodName))
+		if method.Handler == nil {
+			panic(fmt.Sprintf("method %q is missing handler", method.MethodName))
 		}
-		if _, exists := s.dispatcher.LookupConstructor(methodID); exists {
-			panic(fmt.Sprintf("duplicate request constructor ID 0x%08x for %q", methodID, method.MethodName))
+		if previous, exists := methodIDs[method.ConstructorID]; exists {
+			panic(fmt.Sprintf("duplicate method constructor ID 0x%08x for %q and %q", method.ConstructorID, previous, method.MethodName))
 		}
+		methodIDs[method.ConstructorID] = method.MethodName
 
 		invoker, err := bindServiceMethodHandler(impl, method.Handler)
 		if err != nil {
 			panic(fmt.Sprintf("method %q handler bind failed: %v", method.MethodName, err))
 		}
+		request := method.NewRequest()
+		if request == nil {
+			panic(fmt.Sprintf("method %q request constructor returned nil", method.MethodName))
+		}
+		if request.ConstructorID() != method.ConstructorID {
+			panic(fmt.Sprintf("method %q request constructor ID 0x%08x does not match descriptor ID 0x%08x", method.MethodName, request.ConstructorID(), method.ConstructorID))
+		}
+		if _, exists := s.dispatcher.LookupMethod(method.ConstructorID); exists {
+			panic(fmt.Sprintf("duplicate method constructor ID 0x%08x for %q", method.ConstructorID, method.MethodName))
+		}
+		if _, exists := s.dispatcher.LookupConstructor(method.ConstructorID); exists {
+			panic(fmt.Sprintf("duplicate request constructor ID 0x%08x for %q", method.ConstructorID, method.MethodName))
+		}
 
-		s.dispatcher.RegisterConstructor(methodID, newReq)
-		s.dispatcher.RegisterMethod(methodID, invoker)
+		registrations = append(registrations, registration{method: method, invoker: invoker})
 	}
 
+	for _, registration := range registrations {
+		s.dispatcher.RegisterConstructor(registration.method.ConstructorID, registration.method.NewRequest)
+		s.dispatcher.RegisterMethod(registration.method.ConstructorID, registration.invoker)
+	}
+
+	s.schemaLayer = desc.SchemaLayer
+	s.schemaLayerSet = true
 	s.services[desc.ServiceName] = &serviceInfo{desc: desc, impl: impl}
-}
-
-func inferMethodRequestFromHandler(handler interface{}) (uint32, func() TLObject, bool) {
-	handlerValue := reflect.ValueOf(handler)
-	if !handlerValue.IsValid() || handlerValue.Kind() != reflect.Func {
-		return 0, nil, false
-	}
-
-	handlerType := handlerValue.Type()
-	if handlerType.NumIn() < 3 {
-		return 0, nil, false
-	}
-	reqType := handlerType.In(2)
-	if reqType.Kind() != reflect.Ptr {
-		return 0, nil, false
-	}
-
-	reqValue := reflect.New(reqType.Elem())
-	reqObj, ok := reqValue.Interface().(TLObject)
-	if !ok {
-		return 0, nil, false
-	}
-
-	return reqObj.ConstructorID(), func() TLObject {
-		return reflect.New(reqType.Elem()).Interface().(TLObject)
-	}, true
 }
 
 func bindServiceMethodHandler(impl interface{}, handler interface{}) (func(context.Context, TLObject) (interface{}, error), error) {
@@ -231,76 +270,165 @@ func bindServiceMethodHandler(impl interface{}, handler interface{}) (func(conte
 
 // Serve starts serving on the given listener
 func (s *Server) Serve(lis net.Listener) error {
-	for {
-		select {
-		case <-s.shutdownCh:
-			return nil
-		default:
-		}
+	owned, ok := s.registerListener(lis)
+	if !ok {
+		return nil
+	}
+	defer s.unregisterListener(owned)
 
+	for {
 		conn, err := lis.Accept()
 		if err != nil {
+			if s.stopped() {
+				return nil
+			}
 			return err
 		}
-		h := &connHandler{
-			server: s,
-			conn:   transport.NewMTProtoConn(conn, transport.NegotiatorConfig{AllowObfuscation: true}),
+		controlled := s.controlConn(
+			transport.NewMTProtoConn(conn, transport.NegotiatorConfig{AllowObfuscation: true}),
+		)
+		if !s.serveConn(controlled) {
+			return nil
 		}
-		go func() {
-			_ = h.run()
-		}()
 	}
 }
 
 // ServeTransport starts serving on a transport.Listener.
 func (s *Server) ServeTransport(lis transport.Listener) error {
-	for {
-		select {
-		case <-s.shutdownCh:
-			return nil
-		default:
-		}
+	owned, ok := s.registerListener(lis)
+	if !ok {
+		return nil
+	}
+	defer s.unregisterListener(owned)
 
+	for {
 		conn, err := lis.Accept()
 		if err != nil {
+			if s.stopped() {
+				return nil
+			}
 			return err
 		}
-		h := &connHandler{
-			server: s,
-			conn:   conn,
+		if !s.serveConn(s.controlConn(conn)) {
+			return nil
 		}
-		go func() {
-			_ = h.run()
-		}()
 	}
 }
 
 // Stop stops the server
 func (s *Server) Stop() error {
+	s.stopOnce.Do(func() {
+		s.lifecycleMu.Lock()
+		close(s.shutdownCh)
+		listeners := make([]*ownedListener, 0, len(s.listeners))
+		for lis := range s.listeners {
+			listeners = append(listeners, lis)
+		}
+		connections := make([]*ownedConn, 0, len(s.connections))
+		for conn := range s.connections {
+			connections = append(connections, conn)
+		}
+		s.lifecycleMu.Unlock()
+
+		for _, lis := range listeners {
+			_ = lis.close()
+		}
+		for _, conn := range connections {
+			_ = conn.close()
+		}
+		s.connectionWG.Wait()
+		close(s.stopDone)
+	})
+	<-s.stopDone
+	return nil
+}
+
+func (s *Server) registerListener(lis closer) (*ownedListener, bool) {
+	owned := &ownedListener{closer: lis}
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+	if s.stoppedLocked() {
+		return nil, false
+	}
+	s.listeners[owned] = struct{}{}
+	return owned, true
+}
+
+func (s *Server) unregisterListener(lis *ownedListener) {
+	s.lifecycleMu.Lock()
+	delete(s.listeners, lis)
+	s.lifecycleMu.Unlock()
+}
+
+func (s *Server) serveConn(conn transport.Conn) bool {
+	owned := &ownedConn{conn: conn}
+	s.lifecycleMu.Lock()
+	if s.stoppedLocked() {
+		s.lifecycleMu.Unlock()
+		_ = owned.close()
+		return false
+	}
+	s.connections[owned] = struct{}{}
+	s.connectionWG.Add(1)
+	s.lifecycleMu.Unlock()
+
+	application := newRuntimeApplicationDispatcher(s)
+	runtimeConn, err := runtimev2.NewConnection(runtimev2.ConnectionConfig{
+		Conn: conn, AuthKeys: s.authKeys, Handshake: s.runtimeHandshake,
+		Leases: s.runtimeLeases, Reliability: s.runtimeReliability,
+		Application: application, MaxPayloadBytes: s.maxMessageSize,
+		MaxDecodedPayload: s.maxMessageSize, ActiveRequests: s.maxConcurrentStreams,
+		SchemaLayer: s.schemaLayer, Transport: runtimeTransportMode(conn),
+		Presence: s.runtimePushes,
+	})
+	if err != nil || application.setupErr != nil {
+		s.lifecycleMu.Lock()
+		delete(s.connections, owned)
+		s.connectionWG.Done()
+		s.lifecycleMu.Unlock()
+		_ = owned.close()
+		return false
+	}
+
+	go func() {
+		defer func() {
+			_ = owned.close()
+			s.lifecycleMu.Lock()
+			delete(s.connections, owned)
+			s.lifecycleMu.Unlock()
+			s.connectionWG.Done()
+		}()
+		if runErr := runtimeConn.Run(context.Background()); runErr != nil && !s.stopped() && s.logger != nil {
+			s.logger.Error("connection runtime stopped", "error", runErr)
+		}
+	}()
+	return true
+}
+
+func runtimeTransportMode(conn transport.Conn) string {
+	if provider, ok := conn.(interface{ TransportMode() string }); ok {
+		return provider.TransportMode()
+	}
+	return ""
+}
+
+func (s *Server) stopped() bool {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+	return s.stoppedLocked()
+}
+
+func (s *Server) stoppedLocked() bool {
 	select {
 	case <-s.shutdownCh:
+		return true
 	default:
-		close(s.shutdownCh)
+		return false
 	}
-	return nil
 }
 
 // ServerOption represents server configuration options
 type ServerOption func(*Server)
-
-// WithMaxLayer sets the maximum supported layer version
-func WithMaxLayer(layer int) ServerOption {
-	return func(s *Server) {
-		s.maxLayer = layer
-	}
-}
-
-// WithLayers sets the supported layer versions
-func WithLayers(layers ...int) ServerOption {
-	return func(s *Server) {
-		s.layers = append([]int(nil), layers...)
-	}
-}
 
 // WithUnaryInterceptor adds a unary interceptor to the server (gRPC-like).
 func WithUnaryInterceptor(i UnaryInterceptor) ServerOption {
@@ -309,25 +437,13 @@ func WithUnaryInterceptor(i UnaryInterceptor) ServerOption {
 	}
 }
 
-// WithInterceptor adapts a legacy interceptor to a unary interceptor chain.
-func WithInterceptor(i Interceptor) ServerOption {
+// WithSessionStore sets the detached durable Runtime v2 session store.
+func WithSessionStore(store session.Store) ServerOption {
 	return func(s *Server) {
-		if i == nil {
-			return
+		if store == nil {
+			panic("tlrpc: session store is required")
 		}
-		s.unaryInterceptors = append(s.unaryInterceptors, func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (interface{}, error) {
-			wrapped := i(func(ctx context.Context, req interface{}) (interface{}, error) {
-				return handler(ctx, req)
-			})
-			return wrapped(ctx, req)
-		})
-	}
-}
-
-// WithSessionStore sets the session store for the server
-func WithSessionStore(store session.SessionStore) ServerOption {
-	return func(s *Server) {
-		s.sessions = session.NewSessionAdapter(store)
+		s.store = store
 	}
 }
 
@@ -356,15 +472,6 @@ func WithServerKeyManager(manager crypto.ServerKeyManager) ServerOption {
 	}
 }
 
-// WithSessionManager sets the session manager.
-func WithSessionManager(manager session.Manager) ServerOption {
-	return func(s *Server) {
-		if manager != nil {
-			s.sessions = manager
-		}
-	}
-}
-
 // WithOnSessionBound registers a hook called when a session is bound to a connection.
 func WithOnSessionBound(fn OnSessionBoundHook) ServerOption {
 	return func(s *Server) {
@@ -379,37 +486,62 @@ func WithOnSessionUnbound(fn OnSessionUnboundHook) ServerOption {
 	}
 }
 
-// WithUnknownConstructorHandler registers a callback for unknown constructor IDs.
-func WithUnknownConstructorHandler(fn UnknownConstructorHandler) ServerOption {
+// WithReliabilityLimits configures strict server-wide session and per-session
+// message bounds for MTProto acknowledgement, state, and resend tracking.
+// All values must be positive; invalid configuration panics during setup.
+func WithReliabilityLimits(sessionCapacity, messageCapacity int, ttl time.Duration) ServerOption {
+	if sessionCapacity <= 0 {
+		panic("tlrpc: reliability session capacity must be positive")
+	}
+	if messageCapacity <= 0 {
+		panic("tlrpc: reliability message capacity must be positive")
+	}
+	if ttl <= 0 {
+		panic("tlrpc: reliability TTL must be positive")
+	}
 	return func(s *Server) {
-		s.unknownConstructorHandler = fn
+		s.reliabilitySessions = sessionCapacity
+		s.reliabilityMessages = messageCapacity
+		s.reliabilityTTL = ttl
 	}
 }
 
 // WithMaxMessageSize sets the maximum message size in bytes.
 func WithMaxMessageSize(size int) ServerOption {
 	return func(s *Server) {
-		// TODO: implement max message size
+		if size <= 0 {
+			panic("tlrpc: maximum message size must be positive")
+		}
+		s.maxMessageSize = size
 	}
 }
 
 // WithMaxConcurrentStreams sets the maximum number of concurrent streams.
 func WithMaxConcurrentStreams(n int) ServerOption {
 	return func(s *Server) {
-		// TODO: implement concurrent stream limiting
+		if n <= 0 {
+			panic("tlrpc: maximum concurrent streams must be positive")
+		}
+		s.maxConcurrentStreams = n
 	}
 }
 
 // WithReadTimeout sets the read timeout for connections.
 func WithReadTimeout(timeout time.Duration) ServerOption {
 	return func(s *Server) {
-		// TODO: implement read timeout
+		if timeout <= 0 {
+			panic("tlrpc: read timeout must be positive")
+		}
+		s.readTimeout = timeout
 	}
 }
 
 // WithWriteTimeout sets the write timeout for connections.
 func WithWriteTimeout(timeout time.Duration) ServerOption {
 	return func(s *Server) {
-		// TODO: implement write timeout
+		if timeout <= 0 {
+			panic("tlrpc: write timeout must be positive")
+		}
+		s.writeTimeout = timeout
 	}
 }

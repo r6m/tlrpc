@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"hash/crc32"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,6 +37,141 @@ userEmpty#d3bc4b7c = User;`
 	assert.Equal(t, uint32(0xd3bc4b7c), ctor.ID)
 	assert.Len(t, ctor.Params, 0)
 	assert.Equal(t, "User", ctor.ResultType.Name)
+}
+
+func TestParser_ParseBuiltinDeclarations(t *testing.T) {
+	input := `int ? = Int;
+long ? = Long;
+double ? = Double;
+string ? = String;
+bytes = Bytes;
+int256 = Int256;`
+
+	schema, err := NewParser(input).ParseWithLayer(228)
+	require.NoError(t, err)
+	require.Len(t, schema.Constructors, 6)
+
+	tests := []struct {
+		name      string
+		result    string
+		canonical string
+	}{
+		{name: "int", result: "Int", canonical: "int ? = Int"},
+		{name: "long", result: "Long", canonical: "long ? = Long"},
+		{name: "double", result: "Double", canonical: "double ? = Double"},
+		{name: "string", result: "String", canonical: "string ? = String"},
+		{name: "bytes", result: "Bytes", canonical: "bytes = Bytes"},
+		{name: "int256", result: "Int256", canonical: "int256 = Int256"},
+	}
+
+	for i, tt := range tests {
+		ctor := schema.Constructors[i]
+		assert.Equal(t, tt.name, ctor.Name)
+		assert.Equal(t, tt.result, ctor.ResultType.Name)
+		assert.Equal(t, crc32.ChecksumIEEE([]byte(tt.canonical)), ctor.ID)
+		assert.True(t, ctor.IsBuiltin)
+		assert.Empty(t, ctor.Params)
+	}
+}
+
+func TestParser_RejectsMalformedBuiltinDeclarations(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		errMsg string
+	}{
+		{
+			name:   "missing primitive marker",
+			input:  "int = Int;",
+			errMsg: "expected ? after builtin constructor name int",
+		},
+		{
+			name:   "unexpected primitive marker",
+			input:  "bytes ? = Bytes;",
+			errMsg: "unexpected ? after builtin constructor name bytes",
+		},
+		{
+			name:   "missing equals",
+			input:  "long ? Long;",
+			errMsg: "expected = after builtin constructor long",
+		},
+		{
+			name:   "missing result type",
+			input:  "double ? = ;",
+			errMsg: "expected identifier",
+		},
+		{
+			name:   "wrong result type",
+			input:  "string ? = Bytes;",
+			errMsg: "builtin constructor string must return String",
+		},
+		{
+			name:   "marker on ordinary constructor",
+			input:  "user ? = User;",
+			errMsg: "expected # after constructor name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewParser(tt.input).Parse()
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.errMsg)
+		})
+	}
+}
+
+func TestParser_ComputesImplicitFunctionIDs(t *testing.T) {
+	input := `---functions---
+test.useConfigSimple = help.ConfigSimple;
+test.parseInputAppEvent event:InputAppEvent = InputAppEvent;`
+
+	schema, err := NewParser(input).ParseWithLayer(228)
+	require.NoError(t, err)
+	require.Len(t, schema.Functions, 2)
+
+	assert.Equal(t,
+		crc32.ChecksumIEEE([]byte("test.useConfigSimple = help.ConfigSimple")),
+		schema.Functions[0].ID,
+	)
+	assert.Equal(t,
+		crc32.ChecksumIEEE([]byte("test.parseInputAppEvent event:InputAppEvent = InputAppEvent")),
+		schema.Functions[1].ID,
+	)
+}
+
+func TestParser_AllowsRepeatedSectionMarkers(t *testing.T) {
+	input := `---types---
+first#01020304 = First;
+---functions---
+first.get#05060708 = First;
+---types---
+second#11121314 = Second;
+---functions---
+second.get#15161718 = Second;`
+
+	schema, err := NewParser(input).Parse()
+	require.NoError(t, err)
+	assert.Len(t, schema.Constructors, 2)
+	assert.Len(t, schema.Functions, 2)
+}
+
+func TestParser_MarksSerializerPrefixHelpers(t *testing.T) {
+	input := `---functions---
+invokeWithScopePrefix#01020304 scope:string = Error;
+ordinaryPrefix#05060708 value:int = Bool;
+invokeWithScope#01020304 {X:Type} scope:string query:!X = X;
+---types---
+error#090a0b0c = Error;
+boolTrue#997275b5 = Bool;`
+
+	schema, err := NewParser(input).Parse()
+	require.NoError(t, err)
+	require.Len(t, schema.Functions, 3)
+	assert.True(t, schema.Functions[0].IsHelper)
+	assert.False(t, schema.Functions[1].IsHelper)
+	assert.True(t, schema.Functions[2].IsTemplate)
+	require.NoError(t, NewValidator(schema).Validate())
 }
 
 func TestParser_ParseConstructorWithParams(t *testing.T) {

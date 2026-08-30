@@ -2,6 +2,7 @@
 package tlrpc
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -85,11 +86,6 @@ func NewRPCError(code int32, message string) *RPCError {
 	}
 }
 
-// NewStatus creates a new RPC error (for backward compatibility with gRPC-like API).
-func NewStatus(code Code, msg string) *RPCError {
-	return NewRPCError(int32(code), msg)
-}
-
 // SerializeTL implements TL serialization for RPC errors.
 func (e *RPCError) SerializeTL(w TLWriter) error {
 	if err := w.WriteUint32(e.ConstructorID()); err != nil {
@@ -153,16 +149,7 @@ var (
 	ErrUnavailable      = NewRPCError(503, "UNAVAILABLE")
 	ErrUnknown          = NewRPCError(520, "UNKNOWN")
 
-	// Legacy gRPC-style aliases for backward compatibility
-	ErrInvalidArgument    = ErrBadRequest
-	ErrPermissionDenied   = ErrForbidden
-	ErrResourceExhausted  = ErrFlood
-	ErrFailedPrecondition = ErrBadRequest
-	ErrAborted            = ErrInternal
-	ErrOutOfRange         = ErrBadRequest
-	ErrUnimplemented      = NewRPCError(501, "NOT_IMPLEMENTED")
-	ErrDataLoss           = ErrInternal
-	ErrUnauthenticated    = ErrUnauthorized
+	ErrUnimplemented = NewRPCError(501, "NOT_IMPLEMENTED")
 )
 
 // Errorf creates a new RPC error with formatted message.
@@ -175,7 +162,8 @@ func FromError(err error) *RPCError {
 	if err == nil {
 		return NewRPCError(0, "")
 	}
-	if rpcErr, ok := err.(*RPCError); ok {
+	var rpcErr *RPCError
+	if errors.As(err, &rpcErr) {
 		return rpcErr
 	}
 	return NewRPCError(int32(Unknown), err.Error())
@@ -183,10 +171,8 @@ func FromError(err error) *RPCError {
 
 // IsRPCError checks if error is an RPCError.
 func IsRPCError(err error) (*RPCError, bool) {
-	if rpcErr, ok := err.(*RPCError); ok {
-		return rpcErr, true
-	}
-	return nil, false
+	var rpcErr *RPCError
+	return rpcErr, errors.As(err, &rpcErr)
 }
 
 // Helper functions for common MTProto error patterns

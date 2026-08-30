@@ -7,6 +7,8 @@ import (
 	"github.com/r6m/tlrpc/mtproto"
 )
 
+const MaxContainerMessages = 8192
+
 // Message corresponds to message msg_id:long seqno:int bytes:int body:Object = Message;
 type Message struct {
 	MsgID   int64
@@ -57,8 +59,7 @@ func (m *Message) DeserializeTL(r io.Reader) error {
 	if m.Bytes < 0 {
 		return fmt.Errorf("negative message bytes: %d", m.Bytes)
 	}
-	m.BodyRaw = make([]byte, int(m.Bytes))
-	_, err = io.ReadFull(r, m.BodyRaw)
+	m.BodyRaw, err = mtproto.ReadSizedBytes(r, int(m.Bytes))
 	return err
 }
 
@@ -93,7 +94,7 @@ func (c *MsgContainer) DeserializeTL(r io.Reader) error {
 		return fmt.Errorf("wrong constructor: got %08x, want %08x", ctor, c.ConstructorID())
 	}
 	messages := make([]Message, 0, 2)
-	if err := mtproto.ReadVector(r, func() error {
+	if err := mtproto.ReadVectorBounded(r, MaxContainerMessages, func() error {
 		var m Message
 		if err := m.DeserializeTL(r); err != nil {
 			return err

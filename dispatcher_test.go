@@ -110,44 +110,6 @@ func TestDispatcherLookupMethodNotFound(t *testing.T) {
 	}
 }
 
-func TestGlobalRegisterConstructor(t *testing.T) {
-	constructorID := uint32(0xabcdef12)
-	constructor := func() TLObject {
-		return &mockTLObject{id: constructorID}
-	}
-
-	RegisterConstructor(constructorID, constructor)
-
-	// Verify constructor was registered globally
-	retrieved, ok := globalDispatcher.LookupConstructor(constructorID)
-	if !ok {
-		t.Error("global constructor not found after registration")
-	}
-
-	if retrieved == nil {
-		t.Error("retrieved global constructor is nil")
-	}
-}
-
-func TestGlobalRegisterMethod(t *testing.T) {
-	methodID := uint32(0x21fedcba)
-	method := func(ctx context.Context, req TLObject) (interface{}, error) {
-		return "global_test_response", nil
-	}
-
-	RegisterMethod(methodID, method)
-
-	// Verify method was registered globally
-	retrieved, ok := globalDispatcher.LookupMethod(methodID)
-	if !ok {
-		t.Error("global method not found after registration")
-	}
-
-	if retrieved == nil {
-		t.Error("retrieved global method is nil")
-	}
-}
-
 func TestDispatcherConcurrency(t *testing.T) {
 	d := newDispatcher()
 	const numGoroutines = 10

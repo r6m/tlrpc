@@ -66,7 +66,7 @@ func (c *wsMTProtoConn) ensureNegotiated() error {
 	return nil
 }
 
-func (c *wsMTProtoConn) ReadMessage() ([]byte, error) {
+func (c *wsMTProtoConn) ReadMessage(maxPayloadBytes int) ([]byte, error) {
 	c.readMu.Lock()
 	defer c.readMu.Unlock()
 
@@ -74,7 +74,7 @@ func (c *wsMTProtoConn) ReadMessage() ([]byte, error) {
 		return nil, err
 	}
 	for {
-		payload, quickAck, err := c.codec.ReadPacket(c.r)
+		payload, quickAck, err := c.codec.ReadPacket(c.r, maxPayloadBytes)
 		if err != nil {
 			if err == mtprotocodec.ErrQuickAck && quickAck != nil {
 				continue
@@ -110,7 +110,13 @@ func (c *wsMTProtoConn) Close() error                  { return c.base.Close() }
 func (c *wsMTProtoConn) LocalAddr() net.Addr           { return c.base.LocalAddr() }
 func (c *wsMTProtoConn) RemoteAddr() net.Addr          { return c.base.RemoteAddr() }
 func (c *wsMTProtoConn) SetDeadline(t time.Time) error { return c.base.SetDeadline(t) }
-func (c *wsMTProtoConn) Context() context.Context      { return c.base.Context() }
+func (c *wsMTProtoConn) SetReadDeadline(t time.Time) error {
+	return c.base.SetReadDeadline(t)
+}
+func (c *wsMTProtoConn) SetWriteDeadline(t time.Time) error {
+	return c.base.SetWriteDeadline(t)
+}
+func (c *wsMTProtoConn) Context() context.Context { return c.base.Context() }
 
 func (c *wsMTProtoConn) TransportMode() string {
 	if c.codec == nil {

@@ -92,6 +92,9 @@ func (v *Validator) validateUniqueFunctionIDs() {
 	// Check for duplicates
 	for id, fns := range idMap {
 		if len(fns) > 1 {
+			if len(fns) == 2 && ((fns[0].IsHelper && !fns[1].IsHelper) || (!fns[0].IsHelper && fns[1].IsHelper)) {
+				continue
+			}
 			for _, fn := range fns {
 				v.addError(0, 0,
 					fmt.Sprintf("duplicate function ID 0x%08x used by %s", id, fn.Name),

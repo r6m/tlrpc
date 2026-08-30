@@ -161,6 +161,14 @@ func (c *wsConn) SetDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
 }
 
+func (c *wsConn) SetReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
+}
+
+func (c *wsConn) SetWriteDeadline(t time.Time) error {
+	return c.conn.SetWriteDeadline(t)
+}
+
 // Context returns a context canceled on close.
 func (c *wsConn) Context() context.Context {
 	return c.ctx

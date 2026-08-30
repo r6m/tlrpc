@@ -15,6 +15,9 @@ func (c *Client) ReadOne(ctx context.Context) (tlrpc.TLObject, error) {
 	if c.conn == nil {
 		return nil, errors.New("compat client: missing connection")
 	}
+	if object := c.popPush(); object != nil {
+		return object, nil
+	}
 	if deadline, ok := ctx.Deadline(); ok {
 		if err := c.conn.SetDeadline(deadline); err != nil {
 			return nil, err
@@ -27,7 +30,7 @@ func (c *Client) ReadOne(ctx context.Context) (tlrpc.TLObject, error) {
 	}
 
 	for {
-		packet, err := c.conn.ReadMessage()
+		packet, err := c.conn.ReadMessage(0)
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Timeout() && ctx.Err() != nil {
 				return nil, ctx.Err()

@@ -73,7 +73,7 @@ func writeUnencrypted(conn connIO, msgID int64, body []byte) error {
 }
 
 func readUnencrypted(conn connIO) (*mtproto.UnencryptedMessage, error) {
-	raw, err := conn.ReadMessage()
+	raw, err := conn.ReadMessage(0)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func readUnencrypted(conn connIO) (*mtproto.UnencryptedMessage, error) {
 }
 
 type connIO interface {
-	ReadMessage() ([]byte, error)
+	ReadMessage(maxPayloadBytes int) ([]byte, error)
 	WriteMessage([]byte) error
 }
 

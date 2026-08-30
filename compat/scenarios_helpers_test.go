@@ -28,8 +28,9 @@ type scenarioServer struct {
 	tcpAddr  string
 	wsURL    string
 	authKeys crypto.AuthKeyManager
-	sessions session.Manager
+	store    session.Store
 	updates  *updateStore
+	unbound  chan tlrpc.Binding
 }
 
 func startScenarioServer(t *testing.T) *scenarioServer {
@@ -42,20 +43,21 @@ func startScenarioServer(t *testing.T) *scenarioServer {
 	serverKeys.AddKey(compatKey)
 
 	authKeys := crypto.NewMemoryAuthKeyManager()
-	sessions := session.NewMemoryManager()
+	store := session.NewMemoryStore()
 	updates := newUpdateStore()
+	unbound := make(chan tlrpc.Binding, 16)
 
 	srv := tlrpc.NewServer(
 		tlrpc.WithAuthKeyManager(authKeys),
-		tlrpc.WithSessionManager(sessions),
+		tlrpc.WithSessionStore(store),
 		tlrpc.WithServerKeyManager(serverKeys),
-		tlrpc.WithMaxLayer(217),
+		tlrpc.WithOnSessionUnbound(func(binding tlrpc.Binding) { unbound <- binding }),
 	)
 
 	gen.RegisterHelpServer(srv, &scenarioHelpService{})
-	registerAuthHandlers(srv)
-	registerUsersGetUsers(srv)
-	registerUpdatesHandlers(srv, updates)
+	gen.RegisterAuthServer(srv, &scenarioAuthService{})
+	gen.RegisterUsersServer(srv, &scenarioUsersService{})
+	gen.RegisterUpdatesServer(srv, &scenarioUpdatesService{updates: updates})
 
 	tcpLis, err := (&transport.TCPTransport{AllowObfuscation: true}).Listen("127.0.0.1:0")
 	if err != nil {
@@ -82,8 +84,9 @@ func startScenarioServer(t *testing.T) *scenarioServer {
 		tcpAddr:  tcpLis.Addr().String(),
 		wsURL:    fmt.Sprintf("ws://%s:%d/", addr.IP.String(), addr.Port),
 		authKeys: authKeys,
-		sessions: sessions,
+		store:    store,
 		updates:  updates,
+		unbound:  unbound,
 	}
 
 	t.Cleanup(func() {
@@ -93,6 +96,22 @@ func startScenarioServer(t *testing.T) *scenarioServer {
 	})
 
 	return s
+}
+
+func (s *scenarioServer) waitUnbound(t *testing.T, info client.SessionInfo) {
+	t.Helper()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case binding := <-s.unbound:
+			if binding.AuthKeyID == int64(info.AuthKeyID) && binding.SessionID == info.SessionID {
+				return
+			}
+		case <-timer.C:
+			t.Fatalf("session %d/%d was not unbound", info.AuthKeyID, info.SessionID)
+		}
+	}
 }
 
 func newScenarioClient(t *testing.T, tcpAddr, wsURL string, useWS bool) *client.Client {
@@ -579,66 +598,54 @@ func (s *scenarioHelpService) GetConfig(context.Context, *gen.HelpGetConfigReque
 	}, nil
 }
 
-func registerAuthHandlers(srv *tlrpc.Server) {
-	sendCodeID := (&gen.AuthSendCodeRequest{}).ConstructorID()
-	srv.RegisterConstructor(sendCodeID, func() tlrpc.TLObject { return &gen.AuthSendCodeRequest{} })
-	srv.RegisterMethod(sendCodeID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		_ = obj.(*gen.AuthSendCodeRequest)
-		timeout := int32(60)
-		return &gen.AuthSentCode{
-			Type_:         &gen.AuthSentCodeTypeApp{Length: 5},
-			PhoneCodeHash: "compat-phone-code-hash",
-			Timeout:       &timeout,
-		}, nil
-	})
+type scenarioAuthService struct{ gen.UnimplementedAuthServer }
 
-	signInID := (&gen.AuthSignInRequest{}).ConstructorID()
-	srv.RegisterConstructor(signInID, func() tlrpc.TLObject { return &gen.AuthSignInRequest{} })
-	srv.RegisterMethod(signInID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		_ = obj.(*gen.AuthSignInRequest)
-		userID := int64(1)
-		if sess := tlrpc.SessionFromContext(ctx); sess != nil {
-			sess.UserID = userID
-		}
-		return &gen.AuthAuthorization{User: &gen.UserEmpty{ID: userID}}, nil
-	})
+func (*scenarioAuthService) SendCode(context.Context, *gen.AuthSendCodeRequest) (gen.AuthSentCodeType, error) {
+	timeout := int32(60)
+	return &gen.AuthSentCode{
+		Type_:         &gen.AuthSentCodeTypeApp{Length: 5},
+		PhoneCodeHash: "compat-phone-code-hash",
+		Timeout:       &timeout,
+	}, nil
 }
 
-func registerUsersGetUsers(srv *tlrpc.Server) {
-	constructor := (&gen.UsersGetUsersRequest{}).ConstructorID()
-	srv.RegisterConstructor(constructor, func() tlrpc.TLObject { return &gen.UsersGetUsersRequest{} })
-	srv.RegisterMethod(constructor, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		_ = obj.(*gen.UsersGetUsersRequest)
-		userID := tlrpc.UserIDFromContext(ctx)
-		if userID == 0 {
-			userID = 1
-		}
-		return &userVector{Items: []gen.UserType{&gen.UserEmpty{ID: userID}}}, nil
-	})
+func (*scenarioAuthService) SignIn(ctx context.Context, _ *gen.AuthSignInRequest) (gen.AuthAuthorizationType, error) {
+	const userID = int64(1)
+	if err := tlrpc.BindSessionUser(ctx, userID); err != nil {
+		return nil, err
+	}
+	return &gen.AuthAuthorization{User: &gen.UserEmpty{ID: userID}}, nil
 }
 
-func registerUpdatesHandlers(srv *tlrpc.Server, updates *updateStore) {
-	getStateID := (&gen.UpdatesGetStateRequest{}).ConstructorID()
-	srv.RegisterConstructor(getStateID, func() tlrpc.TLObject { return &gen.UpdatesGetStateRequest{} })
-	srv.RegisterMethod(getStateID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		_ = obj.(*gen.UpdatesGetStateRequest)
-		userID := tlrpc.UserIDFromContext(ctx)
-		if userID == 0 {
-			userID = 1
-		}
-		return updates.snapshot(userID), nil
-	})
+type scenarioUsersService struct{ gen.UnimplementedUsersServer }
 
-	getDiffID := (&gen.UpdatesGetDifferenceRequest{}).ConstructorID()
-	srv.RegisterConstructor(getDiffID, func() tlrpc.TLObject { return &gen.UpdatesGetDifferenceRequest{} })
-	srv.RegisterMethod(getDiffID, func(ctx context.Context, obj tlrpc.TLObject) (interface{}, error) {
-		req := obj.(*gen.UpdatesGetDifferenceRequest)
-		userID := tlrpc.UserIDFromContext(ctx)
-		if userID == 0 {
-			userID = 1
-		}
-		return updates.difference(userID, req), nil
-	})
+func (*scenarioUsersService) GetUsers(ctx context.Context, _ *gen.UsersGetUsersRequest) ([]gen.UserType, error) {
+	userID := tlrpc.UserIDFromContext(ctx)
+	if userID == 0 {
+		userID = 1
+	}
+	return []gen.UserType{&gen.UserEmpty{ID: userID}}, nil
+}
+
+type scenarioUpdatesService struct {
+	gen.UnimplementedUpdatesServer
+	updates *updateStore
+}
+
+func (s *scenarioUpdatesService) GetState(ctx context.Context, _ *gen.UpdatesGetStateRequest) (*gen.UpdatesState, error) {
+	userID := tlrpc.UserIDFromContext(ctx)
+	if userID == 0 {
+		userID = 1
+	}
+	return s.updates.snapshot(userID), nil
+}
+
+func (s *scenarioUpdatesService) GetDifference(ctx context.Context, req *gen.UpdatesGetDifferenceRequest) (gen.UpdatesDifferenceType, error) {
+	userID := tlrpc.UserIDFromContext(ctx)
+	if userID == 0 {
+		userID = 1
+	}
+	return s.updates.difference(userID, req), nil
 }
 
 func extractAuthUserID(t *testing.T, resp tlrpc.TLObject) int64 {

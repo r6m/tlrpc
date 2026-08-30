@@ -8,13 +8,14 @@ import (
 )
 
 func TestDecodeTLObject_MsgsAck(t *testing.T) {
-	s := NewServer()
+	decoder := newDispatcher()
+	decoder.RegisterConstructor(mtprototl.MsgsAckID, func() TLObject { return &mtprototl.MsgsAck{} })
 	ack := &mtprototl.MsgsAck{MsgIDs: []int64{11, 22}}
 	buf := &bytes.Buffer{}
 	if err := ack.SerializeTL(buf); err != nil {
 		t.Fatalf("serialize ack: %v", err)
 	}
-	obj, _, err := decodeTLObject(s.dispatcher, buf.Bytes())
+	obj, _, err := decodeTLObject(decoder, buf.Bytes())
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}

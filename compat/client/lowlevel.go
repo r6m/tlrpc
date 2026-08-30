@@ -21,12 +21,19 @@ func (c *Client) EncryptMessage(msgID int64, seqNo int32, payload []byte) ([]byt
 
 // EncryptMessageWithSalt encrypts a payload using an explicit server salt.
 func (c *Client) EncryptMessageWithSalt(salt int64, msgID int64, seqNo int32, payload []byte) ([]byte, error) {
+	return c.EncryptMessageWithSession(salt, c.sessionID, msgID, seqNo, payload)
+}
+
+// EncryptMessageWithSession encrypts a payload using explicit envelope
+// parameters. It is intended for conformance tests that exercise session
+// validation without mutating the client's normal session state.
+func (c *Client) EncryptMessageWithSession(salt, sessionID, msgID int64, seqNo int32, payload []byte) ([]byte, error) {
 	if c.authKeyID == 0 {
 		return nil, errors.New("compat client: missing auth key")
 	}
 	inner := &mtproto.InnerData{
 		Salt:      salt,
-		SessionID: c.sessionID,
+		SessionID: sessionID,
 		MsgID:     msgID,
 		SeqNo:     seqNo,
 		Data:      payload,

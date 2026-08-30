@@ -2,6 +2,7 @@ package mtproto
 
 import (
 	"bytes"
+	stdaes "crypto/aes"
 	"crypto/rand"
 	"errors"
 	"io"
@@ -72,8 +73,8 @@ func (m *UnencryptedMessage) Deserialize(data []byte) error {
 	if length < 0 {
 		return ErrInvalidMessageLength
 	}
-	msgData := make([]byte, length)
-	if _, err := io.ReadFull(reader, msgData); err != nil {
+	msgData, err := ReadSizedBytes(reader, int(length))
+	if err != nil {
 		return err
 	}
 	m.MsgID = msgID
@@ -82,6 +83,9 @@ func (m *UnencryptedMessage) Deserialize(data []byte) error {
 }
 
 func (m *EncryptedMessage) decryptWithDirection(key crypto.AuthKey, fromClient bool) (*InnerData, error) {
+	if len(m.EncryptedData) == 0 || len(m.EncryptedData)%stdaes.BlockSize != 0 {
+		return nil, ErrInvalidMessageLength
+	}
 	aesKey, aesIV := crypto.ComputeKDF(key[:], m.MsgKey, fromClient)
 	block := crypto.NewAESIGEDecrypt(aesKey, aesIV)
 	plaintext := make([]byte, len(m.EncryptedData))
@@ -114,8 +118,8 @@ func (m *EncryptedMessage) decryptWithDirection(key crypto.AuthKey, fromClient b
 	if dataLen < 0 {
 		return nil, ErrInvalidMessageLength
 	}
-	inner.Data = make([]byte, dataLen)
-	if _, err := io.ReadFull(reader, inner.Data); err != nil {
+	inner.Data, err = ReadSizedBytes(reader, int(dataLen))
+	if err != nil {
 		return nil, err
 	}
 	return inner, nil

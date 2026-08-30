@@ -21,8 +21,9 @@ func (g *SeqNoGenerator) Next(contentRelated bool) int32 {
 	defer g.mu.Unlock()
 
 	if contentRelated {
+		value := g.seq*2 + 1
 		g.seq++
-		return g.seq*2 + 1
+		return value
 	}
 	return g.seq * 2
 }

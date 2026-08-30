@@ -20,6 +20,11 @@ func normalizeResponse(resp interface{}) (TLObject, error) {
 	switch v := resp.(type) {
 	case TLObject:
 		return v, nil
+	case bool:
+		if v {
+			return &types.BoolTrue{}, nil
+		}
+		return &types.BoolFalse{}, nil
 	case []byte:
 		bytes := types.Bytes(v)
 		return &bytes, nil
@@ -98,7 +103,11 @@ func writeVectorItem(w io.Writer, item interface{}) error {
 	}
 	switch v := item.(type) {
 	case TLObject:
-		return v.(interface{ SerializeTL(io.Writer) error }).SerializeTL(w)
+		serializer, ok := v.(interface{ SerializeTL(io.Writer) error })
+		if !ok {
+			return NewInternalError(fmt.Sprintf("vector item %T does not implement SerializeTL", v))
+		}
+		return serializer.SerializeTL(w)
 	case string:
 		return mtproto.WriteString(w, v)
 	case []byte:

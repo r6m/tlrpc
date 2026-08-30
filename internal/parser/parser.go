@@ -52,8 +52,26 @@ func (p *Parser) ParseWithLayer(layer int) (*Schema, error) {
 			}
 		}
 	}
+	markSerializerPrefixHelpers(schema)
 
 	return schema, nil
+}
+
+func markSerializerPrefixHelpers(schema *Schema) {
+	byName := make(map[string]*FuncDecl, len(schema.Functions))
+	for i := range schema.Functions {
+		byName[schema.Functions[i].Name] = &schema.Functions[i]
+	}
+	for i := range schema.Functions {
+		helper := &schema.Functions[i]
+		if !strings.HasSuffix(helper.Name, "Prefix") || helper.ResultType.FullName() != "Error" {
+			continue
+		}
+		base := byName[strings.TrimSuffix(helper.Name, "Prefix")]
+		if base != nil && base.ID == helper.ID && base.IsTemplate {
+			helper.IsHelper = true
+		}
+	}
 }
 
 // parseTypesSection parses a ---types--- section.
@@ -69,9 +87,9 @@ func (p *Parser) parseTypesSectionWithoutMarker(schema *Schema) error {
 	return p.parseConstructors(schema)
 }
 
-// parseConstructors parses constructor declarations until ---functions--- or EOF.
+// parseConstructors parses constructor declarations until a section marker or EOF.
 func (p *Parser) parseConstructors(schema *Schema) error {
-	for p.cur.Type != TokenEOF && p.cur.Type != TokenFunctions {
+	for p.cur.Type != TokenEOF && p.cur.Type != TokenFunctions && p.cur.Type != TokenTypes {
 		ctor, err := p.parseConstructor()
 		if err != nil {
 			return err
@@ -167,7 +185,7 @@ func (p *Parser) parseFunctionsSection(schema *Schema) error {
 	p.expect(TokenFunctions)
 	p.skipNewlines()
 
-	for p.cur.Type != TokenEOF {
+	for p.cur.Type != TokenEOF && p.cur.Type != TokenTypes && p.cur.Type != TokenFunctions {
 		fn, err := p.parseFunction()
 		if err != nil {
 			return err
@@ -196,6 +214,11 @@ func (p *Parser) parseConstructor() (*Constructor, error) {
 	}
 
 	if p.cur.Type != TokenHash {
+		if !isBare {
+			if ctor, ok, err := p.parseBuiltinConstructor(name); ok || err != nil {
+				return ctor, err
+			}
+		}
 		return nil, p.errorf("expected # after constructor name")
 	}
 	p.nextToken() // consume #
@@ -275,6 +298,64 @@ func (p *Parser) parseConstructor() (*Constructor, error) {
 	}, nil
 }
 
+type builtinDeclaration struct {
+	result       string
+	questionMark bool
+}
+
+var builtinDeclarations = map[string]builtinDeclaration{
+	"int":    {result: "Int", questionMark: true},
+	"long":   {result: "Long", questionMark: true},
+	"double": {result: "Double", questionMark: true},
+	"string": {result: "String", questionMark: true},
+	"bytes":  {result: "Bytes"},
+	"int256": {result: "Int256"},
+}
+
+// parseBuiltinConstructor parses Telegram's primitive pseudo-declarations,
+// such as "int ? = Int" and "bytes = Bytes". These declarations have no
+// explicit constructor ID; Telegram derives it from the canonical declaration.
+func (p *Parser) parseBuiltinConstructor(name string) (*Constructor, bool, error) {
+	declaration, ok := builtinDeclarations[name]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if declaration.questionMark {
+		if p.cur.Type != TokenQuestion {
+			return nil, true, p.errorf("expected ? after builtin constructor name %s", name)
+		}
+		p.nextToken()
+	} else if p.cur.Type == TokenQuestion {
+		return nil, true, p.errorf("unexpected ? after builtin constructor name %s", name)
+	}
+
+	if p.cur.Type != TokenEquals {
+		return nil, true, p.errorf("expected = after builtin constructor %s", name)
+	}
+	p.nextToken()
+
+	resultType, err := p.parseTypeRef()
+	if err != nil {
+		return nil, true, err
+	}
+	if resultType.FullName() != declaration.result || resultType.Optional || resultType.IsVector || resultType.GenericArg != "" {
+		return nil, true, p.errorf("builtin constructor %s must return %s", name, declaration.result)
+	}
+
+	format := name + " = " + declaration.result
+	if declaration.questionMark {
+		format = name + " ? = " + declaration.result
+	}
+
+	return &Constructor{
+		Name:       name,
+		ID:         computeCRC32(format),
+		ResultType: resultType,
+		IsBuiltin:  true,
+	}, true, nil
+}
+
 // parseFunction parses a function declaration.
 func (p *Parser) parseFunction() (*FuncDecl, error) {
 	name, err := p.parseIdent()
@@ -282,14 +363,14 @@ func (p *Parser) parseFunction() (*FuncDecl, error) {
 		return nil, err
 	}
 
-	if p.cur.Type != TokenHash {
-		return nil, p.errorf("expected # after function name")
-	}
-	p.nextToken() // consume #
-
-	id, err := p.parseHexID()
-	if err != nil {
-		return nil, err
+	var id uint32
+	explicitID := p.cur.Type == TokenHash
+	if explicitID {
+		p.nextToken() // consume #
+		id, err = p.parseHexID()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// NEW: Parse optional generic params {X:Type}
@@ -323,6 +404,10 @@ func (p *Parser) parseFunction() (*FuncDecl, error) {
 		p.nextToken()
 	}
 
+	if !explicitID {
+		id = computeCRC32(p.computeFunctionFormat(name, params, resultType))
+	}
+
 	// Check if this is a template function (return type is a generic param)
 	isTemplate := false
 	for _, gp := range genericParams {
@@ -340,6 +425,20 @@ func (p *Parser) parseFunction() (*FuncDecl, error) {
 		ResultType:    resultType,
 		IsTemplate:    isTemplate,
 	}, nil
+}
+
+func (p *Parser) computeFunctionFormat(name string, params []Parameter, resultType TypeRef) string {
+	var b strings.Builder
+	b.WriteString(name)
+	for _, param := range params {
+		b.WriteString(" ")
+		b.WriteString(param.Name)
+		b.WriteString(":")
+		b.WriteString(param.Type.String())
+	}
+	b.WriteString(" = ")
+	b.WriteString(resultType.String())
+	return b.String()
 }
 
 // parseIdent parses an identifier (possibly namespaced), or the special "#" type.

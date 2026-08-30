@@ -9,9 +9,14 @@ import (
 )
 
 var (
-	ErrInvalidLength = errors.New("transport: invalid packet length")
-	ErrQuickAck      = errors.New("transport: quick ack")
+	ErrInvalidLength   = errors.New("transport: invalid packet length")
+	ErrPayloadTooLarge = errors.New("transport: packet payload exceeds limit")
+	ErrQuickAck        = errors.New("transport: quick ack")
 )
+
+// MaxPacketPayloadBytes is the framework hard ceiling applied before packet
+// allocation even when the caller does not configure a smaller limit.
+const MaxPacketPayloadBytes = 1 << 24
 
 type TransportError struct {
 	Code int32
@@ -22,9 +27,23 @@ func (e TransportError) Error() string {
 }
 
 type Codec interface {
-	ReadPacket(r io.Reader) (payload []byte, quickAck *uint32, err error)
+	ReadPacket(r io.Reader, maxPayloadBytes int) (payload []byte, quickAck *uint32, err error)
 	WritePacket(w io.Writer, payload []byte) error
 	ProtocolTag() uint32
+}
+
+func checkedPayloadLength(declared uint64, maxPayloadBytes int) (int, error) {
+	limit := uint64(MaxPacketPayloadBytes)
+	if maxPayloadBytes > 0 && uint64(maxPayloadBytes) < limit {
+		limit = uint64(maxPayloadBytes)
+	}
+	if declared == 0 {
+		return 0, ErrInvalidLength
+	}
+	if declared > limit {
+		return 0, ErrPayloadTooLarge
+	}
+	return int(declared), nil
 }
 
 func readTransportError(payload []byte) error {

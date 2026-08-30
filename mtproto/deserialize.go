@@ -12,7 +12,10 @@ import (
 var (
 	ErrInvalidBool   = errors.New("mtproto: invalid bool value")
 	ErrStringTooLong = errors.New("mtproto: string too long")
+	ErrVectorTooLong = errors.New("mtproto: vector element count exceeds limit")
 )
+
+const MaxVectorElements = 1 << 20
 
 // ReadInt32 reads an int32 in little-endian.
 func ReadInt32(r io.Reader) (int32, error) {
@@ -114,8 +117,8 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 		return nil, ErrStringTooLong
 	}
 
-	data := make([]byte, length)
-	if _, err := io.ReadFull(r, data); err != nil {
+	data, err := ReadSizedBytes(r, length)
+	if err != nil {
 		return nil, err
 	}
 
@@ -127,6 +130,24 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 		}
 	}
 
+	return data, nil
+}
+
+// ReadSizedBytes reads exactly length bytes while rejecting a declaration that
+// exceeds the known remaining input before allocating it. Runtime decoders use
+// bounded in-memory readers, so malformed nested lengths fail at this boundary
+// rather than turning an attacker-controlled declaration into an allocation.
+func ReadSizedBytes(r io.Reader, length int) ([]byte, error) {
+	if length < 0 {
+		return nil, ErrInvalidMessageLength
+	}
+	if remaining, ok := r.(interface{ Len() int }); ok && length > remaining.Len() {
+		return nil, io.ErrUnexpectedEOF
+	}
+	data := make([]byte, length)
+	if _, err := io.ReadFull(r, data); err != nil {
+		return nil, err
+	}
 	return data, nil
 }
 
@@ -145,8 +166,20 @@ func ReadBool(r io.Reader) (bool, error) {
 	return false, ErrInvalidBool
 }
 
-// ReadVector reads a TL vector and calls fn for each element.
+// ReadVector reads a TL vector under the framework hard element ceiling.
+// Protocol-specific decoders should use ReadVectorBounded with a tighter
+// semantic limit when one exists.
 func ReadVector(r io.Reader, fn func() error) error {
+	return ReadVectorBounded(r, MaxVectorElements, fn)
+}
+
+// ReadVectorBounded validates the declared element count before invoking fn.
+// It prevents an attacker-controlled count from causing unbounded loops or
+// aggregate slice growth even when every individual element is small.
+func ReadVectorBounded(r io.Reader, maxElements int, fn func() error) error {
+	if maxElements < 0 {
+		return fmt.Errorf("%w: invalid limit %d", ErrVectorTooLong, maxElements)
+	}
 	ctor, err := ReadUint32(r)
 	if err != nil {
 		return err
@@ -160,6 +193,9 @@ func ReadVector(r io.Reader, fn func() error) error {
 	}
 	if count < 0 {
 		return fmt.Errorf("mtproto: invalid vector length: %d", count)
+	}
+	if int64(count) > int64(maxElements) {
+		return fmt.Errorf("%w: got %d, limit %d", ErrVectorTooLong, count, maxElements)
 	}
 	for i := int32(0); i < count; i++ {
 		if err := fn(); err != nil {

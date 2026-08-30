@@ -71,18 +71,8 @@ func TestHarnessLocalPushDelivery(t *testing.T) {
 		t.Fatalf("help.getConfig: %v", err)
 	}
 
-	info := cli.Session()
-	sess, err := srv.Sessions.Get(info.AuthKeyID)
-	if err != nil {
-		t.Fatalf("load session: %v", err)
-	}
-	sess.UserID = 1
-	if err := srv.Sessions.Save(sess); err != nil {
-		t.Fatalf("save session: %v", err)
-	}
-
-	if _, err := cli.InvokeWrapped(ctx, 217, defaultInitParams(), &gen.HelpGetConfigRequest{}, false); err != nil {
-		t.Fatalf("help.getConfig: %v", err)
+	if _, err := cli.InvokeWrapped(ctx, 217, defaultInitParams(), &gen.AuthSignInRequest{}, false); err != nil {
+		t.Fatalf("auth.signIn: %v", err)
 	}
 
 	if err := srv.Server.Publish(1, &pushPing{Value: 42}); err != nil {
