@@ -200,6 +200,12 @@ active subscribed sessions bound to that user. It is process-local and
 best-effort. Durable update history, recipient choice, transactional outbox,
 and missed-update recovery remain application responsibilities.
 
+`Server.PublishExcept(userID, binding, object)` has the same delivery behavior
+but skips the one active session whose `(AuthKeyID, SessionID)` equals the
+supplied immutable binding. This supports application workflows that publish a
+committed update to a user's other devices without echoing it to the request's
+own protocol session.
+
 ## Extension points
 
 The final architecture intentionally keeps a small set of extensions:

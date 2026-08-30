@@ -191,6 +191,8 @@ func (*Server) Serve(net.Listener) error
 func (*Server) ServeTransport(transport.Listener) error
 func (*Server) Publish(userID int64, object TLObject) error
 func (*Server) PublishContext(context.Context, userID int64, object TLObject) error
+func (*Server) PublishExcept(userID int64, excluded Binding, object TLObject) error
+func (*Server) PublishExceptContext(context.Context, userID int64, excluded Binding, object TLObject) error
 func (*Server) Stop() error
 ```
 
@@ -280,9 +282,19 @@ err := server.Publish(userID, update)
 
 // Use PublishContext when delivery should inherit a deadline or cancellation.
 err = server.PublishContext(ctx, userID, update)
+
+// Publish to the user's other local sessions, excluding the exact protocol
+// session that originated the change.
+binding, ok := tlrpc.BindingFromContext(ctx)
+if ok {
+	err = server.PublishExceptContext(ctx, userID, binding, update)
+}
 ```
 
-Both paths submit semantic push to Runtime v2's single writer. The application
+Publish exclusion compares only `Binding.AuthKeyID` and `Binding.SessionID`.
+Sessions that share just one of those values are still included.
+
+All publish paths submit semantic push to Runtime v2's single writer. The application
 does not allocate IDs, wrap containers, encrypt, or write transport frames.
 
 `invokeWithoutUpdates` is connection-local. For that wrapped invocation,

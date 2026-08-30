@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/r6m/tlrpc/crypto"
 	runtimev2 "github.com/r6m/tlrpc/internal/runtime"
 	"github.com/r6m/tlrpc/session"
 )
@@ -92,13 +93,24 @@ func (r *runtimePushRegistry) removeUserLocked(key session.SessionKey, binding r
 }
 
 func (r *runtimePushRegistry) Publish(ctx context.Context, userID int64, body []byte) error {
+	return r.publish(ctx, userID, nil, body)
+}
+
+func (r *runtimePushRegistry) PublishExcept(ctx context.Context, userID int64, excluded session.SessionKey, body []byte) error {
+	return r.publish(ctx, userID, &excluded, body)
+}
+
+func (r *runtimePushRegistry) publish(ctx context.Context, userID int64, excluded *session.SessionKey, body []byte) error {
 	if r == nil || userID <= 0 {
 		return nil
 	}
 	r.mu.RLock()
 	bindings := r.byUser[userID]
 	senders := make([]runtimev2.Sender, 0, len(bindings))
-	for _, sender := range bindings {
+	for key, sender := range bindings {
+		if excluded != nil && key == *excluded {
+			continue
+		}
 		senders = append(senders, sender)
 	}
 	r.mu.RUnlock()
@@ -119,6 +131,28 @@ func (s *Server) Publish(userID int64, update TLObject) error {
 
 // PublishContext is Publish with caller-controlled cancellation and deadlines.
 func (s *Server) PublishContext(ctx context.Context, userID int64, update TLObject) error {
+	return s.publishContext(ctx, userID, nil, update)
+}
+
+// PublishExcept sends one schema-defined server push to every active session
+// bound to userID except the session identified by excluded's exact
+// (AuthKeyID, SessionID) pair.
+func (s *Server) PublishExcept(userID int64, excluded Binding, update TLObject) error {
+	return s.PublishExceptContext(context.Background(), userID, excluded, update)
+}
+
+// PublishExceptContext is PublishExcept with caller-controlled cancellation
+// and deadlines. Only excluded.AuthKeyID and excluded.SessionID identify the
+// excluded session; the other Binding fields are ignored.
+func (s *Server) PublishExceptContext(ctx context.Context, userID int64, excluded Binding, update TLObject) error {
+	key := session.SessionKey{
+		AuthKeyID: crypto.KeyID(excluded.AuthKeyID),
+		SessionID: excluded.SessionID,
+	}
+	return s.publishContext(ctx, userID, &key, update)
+}
+
+func (s *Server) publishContext(ctx context.Context, userID int64, excluded *session.SessionKey, update TLObject) error {
 	if s == nil || s.runtimePushes == nil {
 		return nil
 	}
@@ -131,6 +165,9 @@ func (s *Server) PublishContext(ctx context.Context, userID int64, update TLObje
 	}
 	if ctx == nil {
 		ctx = context.Background()
+	}
+	if excluded != nil {
+		return s.runtimePushes.PublishExcept(ctx, userID, *excluded, body)
 	}
 	return s.runtimePushes.Publish(ctx, userID, body)
 }
