@@ -36,7 +36,7 @@ internal/handshake  server-owned MTProto authorization-key handshake
 mtproto             envelope, crypto-adjacent, and protocol helpers
 mtproto/tl          runtime-owned wrappers and control objects
 session             detached snapshots and persistence contract
-internal/runtime    Runtime v2 leases, routing, validation, reliability, writer
+internal/runtime    Runtime v2 connections, sessions, writers, and frame sink
 root tlrpc package  Server, service registration, context, binding, and push API
 ```
 
@@ -72,12 +72,13 @@ semantics between layers.
 bounded frame
   -> handshake or encrypted envelope decode
   -> auth-key lookup
-  -> acquire composite session lease
-  -> inbound validation and snapshot transition
-  -> wrapper/container normalization
-  -> protocol-control router OR generated application dispatcher
+  -> pin physical connection to one auth key
+  -> select or acquire same-auth composite session
+  -> per-session validation and snapshot transition
+  -> per-session wrapper/container normalization and routing
   -> explicit outbound intents and session mutations
-  -> per-connection single writer
+  -> per-session writer
+  -> connection-owned serialized frame sink
   -> encoded/encrypted frame
 ```
 
@@ -102,19 +103,26 @@ Dispatchers produce semantic intents: an RPC result correlated to an inbound
 message, a protocol response, an acknowledgement, a resend/state response, a
 server push, or an intentional batch. They never write a socket.
 
-One writer per connection exclusively owns:
+Each composite session has one writer that exclusively owns that session's:
 
 - outbound ordering;
 - server message-ID and sequence-number allocation;
 - `rpc_result` correlation;
 - container construction and batching;
-- encryption and physical transport writes;
+- encryption;
 - exact sent-packet retention and acknowledgement/resend state;
 - persistence of outbound session progress.
 
-The commit order prevents another component from observing or reusing
-partially committed protocol progress. A fatal or ambiguous outcome retires
-the connection and its lease.
+All session writers submit complete encrypted frames to one connection-owned
+sink, which serializes physical transport writes. The sink's `Close` is a no-op
+for session writers: only connection shutdown closes the transport. This
+physical serialization does not merge protocol ordering, message IDs, sequence
+numbers, reliability, or persistence across sessions.
+
+Request admission is bounded across the physical connection. The per-session
+commit order prevents another component from observing or reusing partially
+committed protocol progress. A fatal session outcome retires that session;
+failure of the shared transport or frame sink retires the connection.
 
 ## State model
 
@@ -134,10 +142,17 @@ A protocol session is identified by:
 ```
 
 Runtime v2 acquires one exclusive lease for that key. A reconnect retires the
-previous owner before the replacement may allocate outbound IDs or sequence
-numbers. Runtime code mutates its lease-local state; persistence crosses the
-application boundary only as detached `session.Snapshot` values through
-`session.Store`.
+previous owner of that matching composite key before the replacement may
+allocate outbound IDs or sequence numbers. Other sessions on the old owner's
+physical connection are not retired. Runtime code mutates its lease-local
+state; persistence crosses the application boundary only as detached
+`session.Snapshot` values through `session.Store`.
+
+A physical connection is pinned to the first encrypted auth key it accepts. It
+may host a bounded map of composite sessions for that same auth key—16 by
+default—but never a session for another auth key. Each mapped session owns its
+lease, validator, reliability state, router, active-request registry, writer,
+and push subscription independently.
 
 Snapshots contain named protocol state: identity, server salt, negotiated
 layer, immutable client metadata, user binding, independent inbound/outbound
@@ -159,8 +174,8 @@ application state nor a protocol session.
 
 Runtime v2 tracks bounded, expiring sent-message records by composite session.
 The writer records exact encrypted output for acknowledgement, state queries,
-and resend. Reconnect may recover retained protocol reliability state without
-creating a second writer owner.
+and resend for its session. Reconnect may recover retained protocol reliability
+state without creating a second writer owner for that composite key.
 
 ## Generated dispatch
 
@@ -185,15 +200,16 @@ publishing binding presence. The user ID is opaque application identity.
 
 `SenderFromContext` returns a semantic `Sender` that accepts a schema-defined
 TL object. `Sender` does not reveal the transport, message IDs, sequence
-numbers, encryption, or batching. Its push enters the same single writer as
-RPC and control output.
+numbers, encryption, or batching. Its push enters the current session's writer,
+the same ordering boundary as that session's RPC and control output.
 
 ## Push subscriptions and publish
 
-`invokeWithoutUpdates` changes only the current connection's asynchronous-push
-subscription. The wrapped request still executes and receives its correlated
-result, while handler sends and user-targeted local publish are suppressed for
-that connection. Other sessions for the same auth key or user are unaffected.
+`invokeWithoutUpdates` changes only the current composite session's
+asynchronous-push subscription. The wrapped request still executes and receives
+its correlated result, while handler sends and user-targeted local publish are
+suppressed for that session. Other sessions on the same physical connection or
+for the same auth key or user are unaffected.
 
 `Server.Publish(userID, object)` sends a schema-defined object to locally
 active subscribed sessions bound to that user. It is process-local and
@@ -219,7 +235,8 @@ The final architecture intentionally keeps a small set of extensions:
 - logger, limits, deadlines, and reliability configuration.
 
 None of these extensions may bypass generated dispatch, expose mutable runtime
-state, or perform a physical write outside the single writer.
+state, or perform a physical write outside the connection-owned serialized
+frame sink.
 
 ## Framework/application split
 

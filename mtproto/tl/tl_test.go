@@ -38,6 +38,9 @@ func TestMsgContainerRoundTrip(t *testing.T) {
 	if got := bytesToUint32(buf.Bytes()[:4]); got != MsgContainerID {
 		t.Fatalf("constructor id: got %08x want %08x", got, MsgContainerID)
 	}
+	if got := bytesToUint32(buf.Bytes()[4:8]); got != 1 {
+		t.Fatalf("bare message count: got %d want 1", got)
+	}
 
 	out := &MsgContainer{}
 	if err := out.DeserializeTL(bytes.NewReader(buf.Bytes())); err != nil {
@@ -183,7 +186,7 @@ func TestNestedContainerDecodingSafety(t *testing.T) {
 	if err := mtproto.WriteUint32(buf, MsgContainerID); err != nil {
 		t.Fatalf("write container constructor: %v", err)
 	}
-	if err := mtproto.WriteVectorHeader(buf, 1); err != nil {
+	if err := mtproto.WriteInt32(buf, 1); err != nil {
 		t.Fatalf("write message vector: %v", err)
 	}
 	if err := mtproto.WriteInt64(buf, 1); err != nil {

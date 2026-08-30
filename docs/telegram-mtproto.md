@@ -115,10 +115,16 @@ acquires the session identified by `(AuthKeyID, SessionID)`. Message IDs are
 directional and time-related. Sequence numbers distinguish content-related
 messages; client and server sequence progress are independent.
 
+The first encrypted auth key pins the physical connection. That connection may
+host a bounded map of composite sessions for the same auth key—16 by default—
+but encrypted traffic for another auth key is rejected.
+
 One exclusive lease owns a composite session at a time. On reconnect, the old
-owner is retired before the new connection can allocate server IDs or sequence
-numbers. Durable state crosses `session.Store` as detached snapshots, including
-salt, layer, client metadata, binding, replay history, and directional progress.
+owner of that matching session is retired before the replacement can allocate
+server IDs or sequence numbers. Other sessions on the physical connection are
+unaffected. Durable state crosses `session.Store` as detached snapshots,
+including salt, layer, client metadata, binding, replay history, and directional
+progress.
 
 Application authentication may bind a user ID to the protocol session through
 `BindSessionUser`. This opaque binding does not replace either auth-key or
@@ -132,29 +138,35 @@ Runtime v2 normalizes Telegram MTProto wrappers before application dispatch:
 - `initConnection` records immutable client metadata and invokes its query;
 - `invokeAfterMsg` and `invokeAfterMsgs` express ordering dependencies;
 - `invokeWithoutUpdates` invokes its query and disables asynchronous push for
-  that connection;
+  that composite session;
 - `gzip_packed` expands a bounded compressed body and resumes decoding.
 
 Wrappers can be nested only within configured/hard depth and decode budgets.
 They are runtime behavior, not services that an application implements.
 
-`invokeWithoutUpdates` is connection-local subscription state for the wrapped
-invocation. It does not disable RPC results, acknowledgements, or protocol
-controls, and it does not alter another connection sharing the auth key or user
-binding. The next application request re-evaluates that connection's local
-subscription.
+`invokeWithoutUpdates` is composite-session-local subscription state for the
+wrapped invocation. It does not disable RPC results, acknowledgements, or
+protocol controls, and it does not alter another session on the same physical
+connection or sharing the auth key or user binding.
 
-## Containers, correlation, and the single writer
+## Containers, correlation, and outbound ordering
 
 `msg_container` carries multiple inner messages. Each callable child has its
 own message ID and receives an `rpc_result` correlated to that child ID; the
 outer container ID is not used as a synthetic request ID.
 
 Application handlers and protocol controls return outbound intents. The
-per-connection writer alone allocates server message IDs and sequence numbers,
-wraps correlated results, constructs intentional containers, encrypts, writes,
-records reliability state, and persists outbound progress. A concurrent push
-therefore enters the same ordering boundary as RPC and control traffic.
+per-session writer alone allocates that session's server message IDs and
+sequence numbers, wraps correlated results, constructs intentional containers,
+encrypts, records reliability state, and persists outbound progress. A
+concurrent push therefore enters the same session ordering boundary as RPC and
+control traffic.
+
+Every session writer submits complete encrypted frames to one connection-owned
+sink. The sink serializes physical writes across the connection but does not
+share protocol ordering or sequence state between sessions. Closing one session
+writer never closes the transport; physical transport closure belongs to
+connection shutdown. Request admission is bounded connection-wide.
 
 ## Protocol controls and reliability
 
@@ -182,9 +194,9 @@ Telegram update delivery has two layers:
   `updates.getState`, and `updates.getDifference`.
 
 TLRPC supplies only the generic live-delivery edge. `Sender.Send` targets the
-current subscribed connection; `Server.Publish` targets locally active
+current subscribed composite session; `Server.Publish` targets locally active
 subscribed sessions bound to an opaque user ID. Both submit schema-defined
-objects to the single writer.
+objects to each target session's writer.
 
 A Telegram application such as `tgserver` must choose recipients, commit the
 durable update log/outbox first, implement difference semantics, and treat

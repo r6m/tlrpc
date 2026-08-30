@@ -40,10 +40,15 @@ The current architecture provides:
 - bounded TCP and WebSocket framing and bounded nested MTProto decoding;
 - server-owned handshake, auth-key lookup, encryption, validation, wrappers,
   containers, and protocol controls;
-- exclusive `(AuthKeyID, SessionID)` leases over detached `session.Snapshot`
-  values stored through `session.Store`;
-- one writer per connection for outbound ordering, IDs, sequence numbers,
-  correlation, batching, encryption, reliability, and persistence;
+- one auth key per physical connection and a bounded same-auth composite-session
+  map, with a default capacity of 16;
+- independent per-session leases, validation, reliability, routing,
+  active-request registries, writers, and push subscriptions over detached
+  `session.Snapshot` values stored through `session.Store`;
+- per-session protocol ordering, IDs, sequence numbers, correlation, batching,
+  encryption, reliability, and persistence, followed by one connection-owned
+  serialized frame sink for physical writes;
+- connection-wide request admission and matching-session-only lease retirement;
 - immutable request metadata, explicit user-binding mutations, semantic
   `Sender`, and process-local `Server.Publish`.
 

@@ -6,10 +6,15 @@ implements those services, and registers them with a TLRPC server. The public
 wire protocol remains TL/MTProto—protobuf and gRPC are not involved.
 
 Runtime v2 provides the reusable protocol edge: bounded TCP and WebSocket
-framing, MTProto authorization-key handshake and encryption, composite session
-leases backed by detached snapshots, wrapper and control handling, and one
-per-connection writer that owns outbound ordering, message IDs, sequence
-numbers, correlation, reliability, encryption, and persistence.
+framing, MTProto authorization-key handshake and encryption, and wrapper and
+control handling. Each physical connection is pinned to one auth key and hosts
+a bounded map of same-auth composite sessions (16 by default). Every session
+independently owns its lease, validation, reliability, routing, active-request
+registry, writer, and push subscription. Session writers own protocol ordering,
+message IDs, sequence numbers, correlation, encryption, and persistence; one
+connection-owned, serialized frame sink performs physical writes without
+letting a session writer close the transport. Request admission is bounded
+across the connection, and lease replacement retires only the matching session.
 
 The application owns its schema, service behavior, authorization policy,
 durable domain state, and deployment configuration. Telegram layer 228 is a

@@ -3,11 +3,13 @@ package runtime
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/internal/handshake"
 	"github.com/r6m/tlrpc/mtproto"
 	"github.com/r6m/tlrpc/mtproto/protocol"
@@ -15,7 +17,10 @@ import (
 	"github.com/r6m/tlrpc/session"
 )
 
-const DefaultActiveRequestCapacity = 1024
+const (
+	DefaultActiveRequestCapacity     = 1024
+	DefaultConnectionSessionCapacity = 16
+)
 
 var (
 	ErrConnectionConfig         = errors.New("runtime: incomplete connection configuration")
@@ -23,6 +28,16 @@ var (
 	ErrHandshakeAuthKeyMismatch = errors.New("runtime: encrypted auth key differs from completed handshake")
 	ErrUnknownSessionProgress   = errors.New("runtime: unknown session starts after its initial sequence")
 )
+
+// ConnectionSessionCapacityError reports that a physical transport already
+// owns the maximum number of independently leased MTProto sessions.
+type ConnectionSessionCapacityError struct {
+	Capacity int
+}
+
+func (e *ConnectionSessionCapacityError) Error() string {
+	return fmt.Sprintf("runtime: connection session capacity reached: %d", e.Capacity)
+}
 
 // FrameConnection is the transport-neutral message boundary consumed by
 // Runtime v2. TCP and WebSocket adapters both satisfy this contract.
@@ -46,6 +61,7 @@ type ConnectionConfig struct {
 	MaxPayloadBytes   int
 	MaxDecodedPayload int
 	ActiveRequests    int
+	SessionCapacity   int
 	Transport         string
 	SchemaLayer       int
 	Now               func() time.Time
@@ -65,19 +81,13 @@ type Connection struct {
 	config     ConnectionConfig
 	messageIDs MessageIDSource
 	now        func() time.Time
+	frameSink  *connectionFrameSink
 
-	mu                sync.Mutex
-	lease             *SessionLease
-	reliability       *ReliabilityHandle
-	validator         *SessionValidator
-	writer            *Writer
-	router            *Router
-	active            *ActiveRequestRegistry
-	sender            *requestSender
-	requestWG         sync.WaitGroup
-	outcomeMu         sync.Mutex
-	acceptsPush       bool
-	receivedEncrypted bool
+	mu            sync.Mutex
+	sessions      map[session.SessionKey]*connectionSession
+	authKeyID     crypto.KeyID
+	authKeyPinned bool
+	admission     *connectionRequestAdmission
 
 	handshakeSession *handshake.Session
 	authorization    *handshake.Result
@@ -94,6 +104,12 @@ func NewConnection(config ConnectionConfig) (*Connection, error) {
 	if config.ActiveRequests < 0 {
 		return nil, ErrConnectionConfig
 	}
+	if config.SessionCapacity == 0 {
+		config.SessionCapacity = DefaultConnectionSessionCapacity
+	}
+	if config.SessionCapacity < 0 {
+		return nil, ErrConnectionConfig
+	}
 	messageIDs := config.MessageIDs
 	if messageIDs == nil {
 		messageIDs = mtproto.NewMsgIDGenerator()
@@ -102,7 +118,27 @@ func NewConnection(config ConnectionConfig) (*Connection, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Connection{config: config, messageIDs: messageIDs, now: now}, nil
+	return &Connection{
+		config:     config,
+		messageIDs: &lockedMessageIDSource{source: messageIDs},
+		now:        now,
+		frameSink:  newConnectionFrameSink(config.Conn),
+		sessions:   make(map[session.SessionKey]*connectionSession, config.SessionCapacity),
+		admission:  newConnectionRequestAdmission(config.ActiveRequests),
+	}, nil
+}
+
+// lockedMessageIDSource preserves the existing MessageIDSource contract while
+// allowing independent session writers to allocate through it concurrently.
+type lockedMessageIDSource struct {
+	mu     sync.Mutex
+	source MessageIDSource
+}
+
+func (s *lockedMessageIDSource) Next() int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.source.Next()
 }
 
 func (c *Connection) Run(ctx context.Context) (runErr error) {
@@ -137,7 +173,7 @@ func (c *Connection) Run(ctx context.Context) (runErr error) {
 
 func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.UnencryptedMessage) error {
 	c.mu.Lock()
-	bound := c.lease != nil
+	bound := len(c.sessions) != 0 || c.authKeyPinned
 	c.mu.Unlock()
 	if bound || c.authorization != nil {
 		return ErrConnectionProtocol
@@ -179,335 +215,48 @@ func (c *Connection) handleEncrypted(ctx context.Context, decoded DecodedFrame) 
 	if c.authorization != nil && c.authorization.AuthKeyID != decoded.AuthKeyID {
 		return ErrHandshakeAuthKeyMismatch
 	}
-	c.mu.Lock()
-	existingLease := c.lease
-	existingWriter := c.writer
-	c.mu.Unlock()
-	if existingLease != nil && existingLease.Key() != (session.SessionKey{AuthKeyID: decoded.AuthKeyID, SessionID: inner.SessionID}) {
-		if existingLease.Key().AuthKeyID != decoded.AuthKeyID {
-			return ErrConnectionProtocol
-		}
-		bad := &protocol.BadMessageError{
-			MessageID: inner.MsgID, SequenceNo: inner.SeqNo,
-			Code: protocol.CodeSessionIDMismatch, Cause: protocol.ErrSessionIDMismatch,
-		}
-		intent, err := badMessageIntent(bad)
-		if err != nil {
-			return err
-		}
-		return existingWriter.Submit(ctx, intent)
-	}
-	if err := c.bind(ctx, decoded); err != nil {
-		return err
-	}
-
-	c.mu.Lock()
-	validator := c.validator
-	lease := c.lease
-	ledger := c.reliability.inboundLedger()
-	writer := c.writer
-	router := c.router
-	active := c.active
-	firstEncrypted := !c.receivedEncrypted
-	c.receivedEncrypted = true
-	c.mu.Unlock()
-	if firstEncrypted && lease.Created() && inner.SeqNo > 1 {
-		bad := &protocol.BadMessageError{
-			MessageID: inner.MsgID, SequenceNo: inner.SeqNo,
-			Code: protocol.CodeSessionIDMismatch, Cause: protocol.ErrSessionIDMismatch,
-		}
-		intent, err := badMessageIntent(bad)
-		if err != nil {
-			return err
-		}
-		if err := writer.Submit(ctx, intent); err != nil {
-			return err
-		}
-		return lease.Delete(ctx)
-	}
-
-	snapshot, err := lease.Snapshot()
+	actor, err := c.sessionFor(ctx, decoded)
 	if err != nil {
 		return err
 	}
-	validated, err := validator.Validate(snapshot, inner)
-	if err != nil {
-		var bad *protocol.BadMessageError
-		if errors.As(err, &bad) {
-			intent, encodeErr := badMessageIntent(bad)
-			if encodeErr != nil {
-				return encodeErr
-			}
-			return writer.Submit(ctx, intent)
-		}
-		return err
-	}
-	if err := lease.Commit(ctx, validated.Snapshot); err != nil {
-		return err
-	}
-	if err := c.recordValidated(ledger, validated); err != nil {
-		return err
-	}
-	for _, message := range validated.Messages {
-		if message.ContentRelated {
-			if err := c.ensureNewSessionCreated(ctx, message.MessageID); err != nil {
-				return err
-			}
-			break
-		}
-	}
-
-	for _, message := range validated.Messages {
-		current := message
-		snapshot, err := lease.Snapshot()
-		if err != nil {
-			return err
-		}
-		request := Request{Message: current, Info: c.requestInfo(snapshot)}
-		request, wrapperMutations, err := NormalizeRequest(request, WrapperConfig{
-			SchemaLayer: c.config.SchemaLayer, MaxDecodedPayload: c.config.MaxDecodedPayload,
-		})
-		if err != nil {
-			return err
-		}
-		if len(wrapperMutations) != 0 {
-			if err := c.applyMutations(ctx, wrapperMutations); err != nil {
-				return err
-			}
-			snapshot, err = lease.Snapshot()
-			if err != nil {
-				return err
-			}
-			request.Info = c.requestInfo(snapshot)
-		}
-		current = request.Message
-		request.Info.Sender = &requestSender{writer: writer, suppress: current.SuppressPush}
-		outcome, handled, err := router.RouteControl(ctx, request)
-		if err != nil {
-			return err
-		}
-		if handled {
-			if err := c.applyOutcome(ctx, current, outcome); err != nil {
-				return err
-			}
-			continue
-		}
-		if !current.SuppressPush {
-			if err := c.subscribeForPush(); err != nil {
-				return err
-			}
-		}
-		handlerCtx, complete, err := active.Begin(ctx, current.MessageID)
-		if err != nil {
-			return err
-		}
-		c.requestWG.Add(1)
-		go func() {
-			defer c.requestWG.Done()
-			defer complete()
-			outcome, dispatchErr := router.DispatchApplication(handlerCtx, request)
-			if dispatchErr == nil {
-				dispatchErr = c.applyOutcome(handlerCtx, current, outcome)
-			}
-			if dispatchErr != nil && !errors.Is(dispatchErr, context.Canceled) {
-				lease.Retire(dispatchErr)
-			}
-		}()
-	}
-	return nil
+	return actor.handleEncrypted(ctx, inner)
 }
 
-func (c *Connection) bind(ctx context.Context, decoded DecodedFrame) error {
+func (c *Connection) sessionFor(ctx context.Context, decoded DecodedFrame) (*connectionSession, error) {
+	inner := decoded.Encrypted
+	if inner == nil {
+		return nil, ErrConnectionProtocol
+	}
+	key := session.SessionKey{AuthKeyID: decoded.AuthKeyID, SessionID: inner.SessionID}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	inner := decoded.Encrypted
-	key := session.SessionKey{AuthKeyID: decoded.AuthKeyID, SessionID: inner.SessionID}
-	if c.lease != nil {
-		if c.lease.Key() != key {
-			return ErrConnectionProtocol
-		}
-		return nil
+	if c.authKeyPinned && c.authKeyID != decoded.AuthKeyID {
+		return nil, ErrConnectionProtocol
 	}
-
-	salt := inner.Salt
-	if c.authorization != nil {
-		salt = c.authorization.InitialServerSalt
+	if actor := c.sessions[key]; actor != nil {
+		return actor, nil
 	}
-	now := c.now().UTC()
-	initial := session.Snapshot{
-		AuthKeyID: decoded.AuthKeyID, SessionID: inner.SessionID,
-		ServerSalt: salt, CreatedAt: now, LastActivity: now,
+	if len(c.sessions) >= c.config.SessionCapacity {
+		return nil, &ConnectionSessionCapacityError{Capacity: c.config.SessionCapacity}
 	}
-	lease, err := c.config.Leases.Acquire(ctx, key, initial)
+	actor, err := newConnectionSession(ctx, c, decoded)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	snapshot, err := lease.Snapshot()
-	if err != nil {
-		lease.Release()
-		return err
-	}
-	validator, err := NewSessionValidator(snapshot, c.now)
-	if err != nil {
-		lease.Release()
-		return err
-	}
-	reliabilityHandle, err := c.config.Reliability.Acquire(key)
-	if err != nil {
-		lease.Release()
-		return err
-	}
-	active, err := NewActiveRequestRegistry(c.config.ActiveRequests)
-	if err != nil {
-		reliabilityHandle.Release()
-		lease.Release()
-		return err
-	}
-	writer, err := NewWriter(lease.Context(), WriterConfig{
-		Lease: lease, AuthKey: decoded.AuthKey,
-		Sink:       &connectionFrameSink{connection: c.config.Conn},
-		MessageIDs: c.messageIDs, Reliability: reliabilityHandle.outboundStore(), Now: c.now,
-	})
-	if err != nil {
-		reliabilityHandle.Release()
-		lease.Release()
-		return err
-	}
-	controls, err := NewMTProtoControlRouter(MTProtoControlConfig{
-		Outbound: writer, Inbound: reliabilityHandle.inboundLedger(), Active: active, Now: c.now,
-	})
-	if err != nil {
-		lease.Retire(err)
-		reliabilityHandle.Release()
-		lease.Release()
-		return err
-	}
-	router, err := NewRouter(controls, c.config.Application)
-	if err != nil {
-		lease.Retire(err)
-		reliabilityHandle.Release()
-		lease.Release()
-		return err
-	}
-	c.lease = lease
-	c.reliability = reliabilityHandle
-	c.validator = validator
-	c.writer = writer
-	c.sender = &requestSender{writer: writer}
-	c.router = router
-	c.active = active
-	if c.config.Presence != nil {
-		c.config.Presence.Update(snapshot, c.sender, false)
-	}
-	return nil
+	c.authKeyID = decoded.AuthKeyID
+	c.authKeyPinned = true
+	c.sessions[key] = actor
+	actor.start()
+	return actor, nil
 }
 
-func (c *Connection) subscribeForPush() error {
-	c.outcomeMu.Lock()
-	defer c.outcomeMu.Unlock()
-	if c.acceptsPush {
-		return nil
+func (c *Connection) removeSession(key session.SessionKey, actor *connectionSession) {
+	c.mu.Lock()
+	if c.sessions[key] == actor {
+		delete(c.sessions, key)
 	}
-	snapshot, err := c.lease.Snapshot()
-	if err != nil {
-		return err
-	}
-	c.acceptsPush = true
-	if c.config.Presence != nil {
-		c.config.Presence.Update(snapshot, c.sender, true)
-	}
-	return nil
-}
-
-func (c *Connection) recordValidated(ledger *InboundStateLedger, validated ValidatedInbound) error {
-	if validated.Envelope.ConstructorID == mtprototl.MsgContainerID {
-		if err := ledger.Record(validated.Envelope); err != nil {
-			return err
-		}
-	}
-	for _, message := range validated.Messages {
-		if err := ledger.Record(message); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Connection) ensureNewSessionCreated(ctx context.Context, firstMessageID int64) error {
-	c.outcomeMu.Lock()
-	defer c.outcomeMu.Unlock()
-	snapshot, err := c.lease.Snapshot()
-	if err != nil || snapshot.NewSessionCreated {
-		return err
-	}
-	next, err := ApplySessionMutations(snapshot, []SessionMutation{MarkNewSessionCreated{FirstMessageID: firstMessageID}})
-	if err != nil {
-		return err
-	}
-	if err := c.lease.Commit(ctx, next); err != nil {
-		return err
-	}
-	body, err := serializeRuntimeTL(&mtprototl.NewSessionCreated{
-		FirstMsgID: firstMessageID, UniqueID: c.now().UnixNano(), ServerSalt: snapshot.ServerSalt,
-	})
-	if err != nil {
-		return err
-	}
-	return c.writer.Submit(ctx, ProtocolReply{Body: body, Unsolicited: true})
-}
-
-func (c *Connection) applyOutcome(ctx context.Context, message InboundMessage, outcome Outcome) error {
-	c.outcomeMu.Lock()
-	defer c.outcomeMu.Unlock()
-	if err := ValidateOutcome(outcome); err != nil {
-		return err
-	}
-	if message.SuppressPush {
-		outcome.Intents = suppressPushIntents(outcome.Intents)
-	}
-	if len(outcome.Mutations) != 0 {
-		if err := c.applyMutationsLocked(ctx, outcome.Mutations); err != nil {
-			return err
-		}
-	}
-	for _, intent := range outcome.Intents {
-		if err := c.writer.Submit(ctx, intent); err != nil {
-			return err
-		}
-	}
-	acknowledged := false
-	if message.ContentRelated {
-		if err := c.writer.Submit(ctx, Acknowledge{MessageIDs: []int64{message.MessageID}}); err != nil {
-			return err
-		}
-		acknowledged = true
-	}
-	c.reliability.inboundLedger().Complete([]int64{message.MessageID}, acknowledged, len(outcome.Intents) != 0)
-	return nil
-}
-
-func (c *Connection) applyMutations(ctx context.Context, mutations []SessionMutation) error {
-	c.outcomeMu.Lock()
-	defer c.outcomeMu.Unlock()
-	return c.applyMutationsLocked(ctx, mutations)
-}
-
-func (c *Connection) applyMutationsLocked(ctx context.Context, mutations []SessionMutation) error {
-	snapshot, err := c.lease.Snapshot()
-	if err != nil {
-		return err
-	}
-	next, err := ApplySessionMutations(snapshot, mutations)
-	if err != nil {
-		return err
-	}
-	if err := c.lease.Commit(ctx, next); err != nil {
-		return err
-	}
-	if c.config.Presence != nil {
-		c.config.Presence.Update(next, c.sender, c.acceptsPush)
-	}
-	return nil
+	c.mu.Unlock()
 }
 
 func (c *Connection) requestInfo(snapshot session.Snapshot) RequestInfo {
@@ -538,27 +287,14 @@ func (c *Connection) nextResponseMessageID() int64 {
 
 func (c *Connection) shutdown(cause error) {
 	c.mu.Lock()
-	active := c.active
-	lease := c.lease
-	reliabilityHandle := c.reliability
-	sender := c.sender
+	actors := make([]*connectionSession, 0, len(c.sessions))
+	for _, actor := range c.sessions {
+		actors = append(actors, actor)
+	}
 	handshakeSession := c.handshakeSession
 	c.mu.Unlock()
-	if c.config.Presence != nil && lease != nil && sender != nil {
-		c.config.Presence.Remove(lease.Key(), sender)
-	}
-	if active != nil {
-		active.CancelAll(cause)
-	}
-	if lease != nil {
-		lease.Retire(cause)
-	}
-	c.requestWG.Wait()
-	if lease != nil {
-		lease.Release()
-	}
-	if reliabilityHandle != nil {
-		reliabilityHandle.Release()
+	for _, actor := range actors {
+		actor.shutdown(cause)
 	}
 	if handshakeSession != nil {
 		handshakeSession.Close()
@@ -581,19 +317,6 @@ func badMessageIntent(bad *protocol.BadMessageError) (ProtocolReply, error) {
 	body, err := serializeRuntimeTL(value)
 	return ProtocolReply{Body: body}, err
 }
-
-type connectionFrameSink struct{ connection FrameConnection }
-
-func (s *connectionFrameSink) WriteFrame(ctx context.Context, frame []byte) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	return s.connection.WriteMessage(frame)
-}
-
-func (s *connectionFrameSink) Close() error { return s.connection.Close() }
-
-var _ FrameSink = (*connectionFrameSink)(nil)
 
 type requestSender struct {
 	writer   *Writer

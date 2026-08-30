@@ -23,9 +23,14 @@ The following are current, not roadmap proposals:
 - server-owned authorization-key handshake and encryption;
 - detached `session.Store` snapshots and exclusive composite-session leases;
 - explicit inbound/outbound runtime contracts;
-- one per-connection writer owning IDs, sequences, correlation, batching,
-  encryption, reliability, physical writes, and outbound persistence;
-- wrappers and controls, including connection-local
+- one auth key per physical connection and a bounded same-auth composite-session
+  map, with a default capacity of 16;
+- independent per-session validation, routing, active requests, reliability,
+  writer, push subscription, and outbound persistence;
+- per-session protocol ordering behind one connection-owned serialized,
+  non-closing physical frame sink, with connection-wide request admission;
+- matching-session-only retirement when a lease is replaced;
+- wrappers and controls, including composite-session-local
   `invokeWithoutUpdates` subscription;
 - immutable request metadata, explicit user binding, semantic `Sender`, and
   process-local `Server.Publish`;
@@ -46,7 +51,7 @@ The following are current, not roadmap proposals:
    parallelism.
 5. Keep architecture checks that reject raw registration, mutable sessions,
    direct connection access, old runtime files, and physical writes outside
-   the single writer.
+   the connection-owned frame sink.
 
 Gate: all documented Runtime v2 behavior has current, specific evidence and no
 test depends on a removed compatibility path.
@@ -119,8 +124,9 @@ These items may follow the first release when driven by concrete consumers:
 
 - additional MTProto-compatible carriers behind the bounded transport
   contract;
-- richer observability around leases, writer pressure, reliability retention,
-  and protocol failures without exposing secrets;
+- richer observability around leases, per-session writer pressure,
+  connection-wide admission, reliability retention, and protocol failures
+  without exposing secrets;
 - clearer process-local delivery reports;
 - performance profiling and allocation budgets against production-shaped
   schemas and traffic.

@@ -98,3 +98,20 @@ func TestReadVectorBoundedRejectsCountBeforeDecodingElements(t *testing.T) {
 		t.Fatalf("element decoder calls = %d, want 0", calls)
 	}
 }
+
+func TestReadBareVectorBoundedReadsCountWithoutConstructor(t *testing.T) {
+	var buffer bytes.Buffer
+	if err := WriteInt32(&buffer, 2); err != nil {
+		t.Fatal(err)
+	}
+	calls := 0
+	if err := ReadBareVectorBounded(&buffer, 2, func() error {
+		calls++
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 {
+		t.Fatalf("element decoder calls = %d, want 2", calls)
+	}
+}

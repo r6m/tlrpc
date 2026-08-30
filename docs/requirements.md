@@ -54,15 +54,26 @@ Telegram schema or service set.
 - Own the MTProto authorization-key handshake, encryption/decryption, salt and
   session validation, message validation, wrappers, containers, controls,
   acknowledgements, and resend/state behavior.
+- Pin each physical connection to one auth key and reject encrypted traffic for
+  a different auth key on that connection.
+- Host a bounded map of same-auth composite sessions on each physical
+  connection, with a default capacity of 16.
 - Identify a protocol session by the complete `(AuthKeyID, SessionID)` key.
 - Acquire one exclusive active lease per composite key so reconnect cannot
   create two outbound sequence owners.
 - Persist detached snapshots through a context-aware `session.Store`.
-- Use exactly one writer per connection to own outbound ordering, message IDs,
-  sequence numbers, RPC correlation, batching, encryption, reliability state,
-  physical writes, and outbound snapshot progress.
-- Retire a connection when a write or persistence outcome makes safe continued
-  allocation impossible.
+- Give each composite session independent lease, validator, reliability,
+  router, active-request registry, writer, and push-subscription state.
+- Use one writer per composite session to own that session's outbound ordering,
+  message IDs, sequence numbers, RPC correlation, batching, encryption,
+  reliability state, and outbound snapshot progress.
+- Serialize complete physical frame writes through one connection-owned sink;
+  closing a session writer must not close the physical transport.
+- Bound request admission across the physical connection, not independently per
+  session.
+- Retire only the matching session when its lease is replaced. Retire the
+  physical connection when its transport or shared write boundary cannot
+  continue safely.
 - Propagate disconnect and shutdown cancellation to handlers and writers.
 
 ### Application-facing runtime behavior
@@ -74,9 +85,9 @@ Telegram schema or service set.
 - Provide `Sender` for semantic schema-defined push from a handler.
 - Provide `Server.Publish` for best-effort process-local delivery to active
   sessions bound to an application user.
-- Treat `invokeWithoutUpdates` as a connection-local subscription choice:
+- Treat `invokeWithoutUpdates` as a composite-session subscription choice:
   requests and responses continue normally while asynchronous pushes are
-  suppressed for that connection.
+  suppressed for that session.
 - Keep live delivery distinct from durable application update recovery.
 
 ### Entry points and operations
@@ -122,7 +133,7 @@ Applications own policy and durable product behavior:
 - Test protocol behavior with malformed inputs and an independent client.
 - Prove arbitrary-schema generation independently of Telegram compatibility.
 - Run protocol compatibility over both TCP and WebSocket.
-- Keep physical writes behind the single writer.
+- Keep physical writes behind the connection-owned serialized frame sink.
 
 ## Explicit non-goals
 

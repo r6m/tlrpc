@@ -172,6 +172,15 @@ framing. WebSocket is treated as a continuous byte stream, requires the
 `binary` subprotocol and obfuscated2, and feeds the same Runtime v2 framing and
 decode path.
 
+Each accepted physical connection is pinned to one auth key and admits up to
+16 same-auth composite sessions by default. Every session has independent
+lease, validator, reliability, router, active-request registry, writer, and
+push-subscription state. Request admission is connection-wide. Session writers
+own per-session protocol ordering and sequence progress, then submit complete
+frames through one serialized connection-owned sink. Closing or replacing one
+session retires only that session and never closes the shared transport;
+connection shutdown owns transport closure.
+
 `transport.Conn.ReadMessage(maxPayloadBytes)` is the bounded packet-read
 contract. Framing codecs check declared lengths and configured/hard ceilings
 before allocation. Nested encrypted, TL, vector, container, and compressed
@@ -294,13 +303,16 @@ if ok {
 Publish exclusion compares only `Binding.AuthKeyID` and `Binding.SessionID`.
 Sessions that share just one of those values are still included.
 
-All publish paths submit semantic push to Runtime v2's single writer. The application
-does not allocate IDs, wrap containers, encrypt, or write transport frames.
+All publish paths submit semantic push to the target composite session's
+writer. That writer owns the session's protocol ordering and submits complete
+encrypted frames through the connection-owned serialized frame sink. The
+application does not allocate IDs, wrap containers, encrypt, or write transport
+frames.
 
-`invokeWithoutUpdates` is connection-local. For that wrapped invocation,
-asynchronous push is suppressed on the connection while RPC execution and its
-correlated response continue. The connection's next application request
-re-evaluates its local subscription; other connections are never affected.
+`invokeWithoutUpdates` is composite-session-local. For that wrapped invocation,
+asynchronous push is suppressed for the session while RPC execution and its
+correlated response continue. Other sessions on the same physical connection
+or elsewhere are never affected.
 
 `Server.Publish` is process-local and best-effort. It is not a durable update
 log, recipient engine, outbox, or cross-node fanout service. Commit application
@@ -322,7 +334,7 @@ Framework changes should verify these axes separately:
   cancellation, and shutdown tests;
 - run independent gotd compatibility where required;
 - run architecture checks that reject legacy APIs and physical writes outside
-  the Runtime v2 writer.
+  the Runtime v2 connection frame sink.
 
 Run broad Go verification sequentially (for example with `go test -p=1`) to
 avoid creating competing compiler fleets on development machines.

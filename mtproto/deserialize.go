@@ -204,3 +204,28 @@ func ReadVectorBounded(r io.Reader, maxElements int, fn func() error) error {
 	}
 	return nil
 }
+
+// ReadBareVectorBounded reads a bare vector count followed by its elements.
+// MTProto uses this encoding for vector<%Message> in msg_container: unlike a
+// boxed TL vector, no 0x1cb5c415 constructor precedes the count.
+func ReadBareVectorBounded(r io.Reader, maxElements int, fn func() error) error {
+	if maxElements < 0 {
+		return fmt.Errorf("%w: invalid limit %d", ErrVectorTooLong, maxElements)
+	}
+	count, err := ReadInt32(r)
+	if err != nil {
+		return err
+	}
+	if count < 0 {
+		return fmt.Errorf("mtproto: invalid vector length: %d", count)
+	}
+	if int64(count) > int64(maxElements) {
+		return fmt.Errorf("%w: got %d, limit %d", ErrVectorTooLong, count, maxElements)
+	}
+	for i := int32(0); i < count; i++ {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

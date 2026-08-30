@@ -74,7 +74,9 @@ func (c *MsgContainer) SerializeTL(w io.Writer) error {
 	if err := mtproto.WriteUint32(w, c.ConstructorID()); err != nil {
 		return err
 	}
-	if err := mtproto.WriteVectorHeader(w, len(c.Messages)); err != nil {
+	// msg_container declares vector<%Message>: this is a bare vector whose
+	// count follows the container constructor directly.
+	if err := mtproto.WriteInt32(w, int32(len(c.Messages))); err != nil {
 		return err
 	}
 	for i := range c.Messages {
@@ -94,7 +96,7 @@ func (c *MsgContainer) DeserializeTL(r io.Reader) error {
 		return fmt.Errorf("wrong constructor: got %08x, want %08x", ctor, c.ConstructorID())
 	}
 	messages := make([]Message, 0, 2)
-	if err := mtproto.ReadVectorBounded(r, MaxContainerMessages, func() error {
+	if err := mtproto.ReadBareVectorBounded(r, MaxContainerMessages, func() error {
 		var m Message
 		if err := m.DeserializeTL(r); err != nil {
 			return err
