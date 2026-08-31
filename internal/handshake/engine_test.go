@@ -180,6 +180,79 @@ func TestAuthorizationResultCorrectness(t *testing.T) {
 	}
 }
 
+func TestShortAuthKeyRequestsDHRetry(t *testing.T) {
+	engine, authKeys := newTestEngine(t, 1, time.Minute, time.Now)
+	session, err := engine.NewSession()
+	if err != nil {
+		t.Fatalf("new session: %v", err)
+	}
+	var nonce [16]byte
+	var serverNonce [16]byte
+	var newNonce [32]byte
+	for index := range nonce {
+		nonce[index] = byte(index + 1)
+		serverNonce[index] = byte(index + 17)
+	}
+	for index := range newNonce {
+		newNonce[index] = byte(index + 33)
+	}
+	tempKey, tempIV := crypto.DeriveTempKeyIV(newNonce, serverNonce)
+	session.nonce = nonce
+	session.serverNonce = serverNonce
+	session.dh = &dhState{
+		newNonce: newNonce,
+		privateA: big.NewInt(1),
+		tempKey:  tempKey,
+		tempIV:   tempIV,
+	}
+	session.stage = stageDHIssued
+
+	shortKey := new(big.Int).Lsh(big.NewInt(1), 2032)
+	shortBytes := shortKey.Bytes()
+	if len(shortBytes) != 255 {
+		t.Fatalf("short auth key length = %d, want 255", len(shortBytes))
+	}
+	retry, err := session.Handle(context.Background(), 0, encodeClientDHAttempt(
+		nonce, serverNonce, newNonce, 0, shortKey,
+	))
+	if err != nil {
+		t.Fatalf("short set_client_DH_params: %v", err)
+	}
+	if retry.Result != nil {
+		t.Fatal("short auth key unexpectedly completed authorization")
+	}
+	verifyDHGenRetry(t, retry.Response, nonce, serverNonce,
+		crypto.ComputeNewNonceHash2Auth(newNonce, shortBytes))
+	if session.stage != stageDHIssued || session.dh == nil {
+		t.Fatal("dh_gen_retry did not preserve final DH state")
+	}
+	if _, err := authKeys.Get(crypto.KeyID(crypto.ComputeAuthKeyID(shortBytes))); err == nil {
+		t.Fatal("short auth key was stored")
+	}
+
+	fullKey := new(big.Int).Lsh(big.NewInt(1), 2040)
+	fullBytes := fullKey.Bytes()
+	if len(fullBytes) != 256 {
+		t.Fatalf("full auth key length = %d, want 256", len(fullBytes))
+	}
+	authHash := sha1.Sum(shortBytes)
+	retryID := int64(binary.LittleEndian.Uint64(authHash[:8]))
+	completed, err := session.Handle(context.Background(), 0, encodeClientDHAttempt(
+		nonce, serverNonce, newNonce, retryID, fullKey,
+	))
+	if err != nil {
+		t.Fatalf("retried set_client_DH_params: %v", err)
+	}
+	if completed.Result == nil {
+		t.Fatal("full auth key retry did not complete authorization")
+	}
+	var expected crypto.AuthKey
+	copy(expected[:], fullBytes)
+	if completed.Result.AuthKeyID != expected.ID() {
+		t.Fatalf("retried auth key ID = %d, want %d", completed.Result.AuthKeyID, expected.ID())
+	}
+}
+
 type deterministicReader struct {
 	seed    byte
 	counter uint64
@@ -310,8 +383,13 @@ func advanceToClientDH(t *testing.T, session *Session, seed byte) clientDHState 
 	b := new(big.Int).SetBytes(bytes.Repeat([]byte{seed + 0x40}, 256))
 	gb := new(big.Int).Exp(crypto.DHGenerator, b, crypto.DHPrime)
 	authKeyBig := new(big.Int).Exp(ga, b, crypto.DHPrime)
+	for len(authKeyBig.Bytes()) != 256 {
+		b.Add(b, big.NewInt(1))
+		gb.Exp(crypto.DHGenerator, b, crypto.DHPrime)
+		authKeyBig.Exp(ga, b, crypto.DHPrime)
+	}
 	var expectedKey crypto.AuthKey
-	copy(expectedKey[:], leftPad256(authKeyBig))
+	authKeyBig.FillBytes(expectedKey[:])
 
 	clientInner := &bytes.Buffer{}
 	_ = mtproto.WriteUint32(clientInner, clientDHInnerDataID)
@@ -437,6 +515,38 @@ func encodeSetClientDH(nonce, serverNonce [16]byte, encrypted []byte) []byte {
 	_ = mtproto.WriteInt128(buffer, serverNonce)
 	_ = mtproto.WriteBytes(buffer, encrypted)
 	return buffer.Bytes()
+}
+
+func encodeClientDHAttempt(nonce, serverNonce [16]byte, newNonce [32]byte, retryID int64, gb *big.Int) []byte {
+	inner := &bytes.Buffer{}
+	_ = mtproto.WriteUint32(inner, clientDHInnerDataID)
+	_ = mtproto.WriteInt128(inner, nonce)
+	_ = mtproto.WriteInt128(inner, serverNonce)
+	_ = mtproto.WriteInt64(inner, retryID)
+	_ = mtproto.WriteBytes(inner, gb.Bytes())
+	plain := withSHA1AndPadding(inner.Bytes())
+	tempKey, tempIV := crypto.DeriveTempKeyIV(newNonce, serverNonce)
+	encrypted := make([]byte, len(plain))
+	crypto.NewAESIGE(tempKey, tempIV).CryptBlocks(encrypted, plain)
+	return encodeSetClientDH(nonce, serverNonce, encrypted)
+}
+
+func verifyDHGenRetry(t *testing.T, data []byte, nonce, serverNonce, wantHash [16]byte) {
+	t.Helper()
+	r := bytes.NewReader(data)
+	constructor, err := mtproto.ReadUint32(r)
+	if err != nil || constructor != dhGenRetryID {
+		t.Fatalf("dh_gen_retry constructor = %08x, err %v", constructor, err)
+	}
+	gotNonce, _ := mtproto.ReadInt128(r)
+	gotServerNonce, _ := mtproto.ReadInt128(r)
+	gotHash, err := mtproto.ReadInt128(r)
+	if err != nil || r.Len() != 0 {
+		t.Fatalf("read dh_gen_retry hash: %v", err)
+	}
+	if gotNonce != nonce || gotServerNonce != serverNonce || gotHash != wantHash {
+		t.Fatal("dh_gen_retry payload mismatch")
+	}
 }
 
 func verifyDHGenOK(t *testing.T, data []byte, client clientDHState, keyID crypto.KeyID) {

@@ -9,6 +9,18 @@ documentation define future framework behavior.
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-09-01
+
+### Fixed
+
+- Return `dh_gen_retry` when a Diffie-Hellman exchange produces a short
+  minimal shared secret, preserving the temporary exchange state and enforcing
+  the retry ID before accepting a full 2048-bit authorization key.
+- Accept future even non-content sequence numbers without advancing durable
+  content progress, allowing acknowledgements to arrive ahead of content sent
+  through another connection in the same MTProto session.
+- Prevent the compatibility client from proposing short authorization keys.
+
 ## [0.12.0] - 2026-08-31
 
 Production Readiness for the generic TL-schema-first framework. The

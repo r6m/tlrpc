@@ -24,6 +24,7 @@ const (
 	serverDHParamsOKID       = uint32(0xd0e8075c)
 	setClientDHParamsID      = uint32(0xf5045f1f)
 	dhGenOKID                = uint32(0x3bcbf734)
+	dhGenRetryID             = uint32(0x46dc1fb9)
 	pqInnerDataID            = uint32(0x83c95aec)
 	pqInnerDataDCID          = uint32(0xa9f55f95)
 	pqInnerDataTempDCID      = uint32(0x56fddf88)
@@ -62,6 +63,7 @@ type dhState struct {
 	privateA *big.Int
 	tempKey  []byte
 	tempIV   []byte
+	retryID  int64
 }
 
 // Session contains all mutable handshake state for exactly one accepted
@@ -132,7 +134,8 @@ func (s *Session) Handle(ctx context.Context, messageID int64, data []byte) (Out
 			err = ErrInvalidHandshake
 			break
 		}
-		// Final DH state is one-shot, including malformed attempts.
+		// A malformed final attempt is terminal. A valid dh_gen_retry response
+		// explicitly restores the issued state from handleSetClientDHParams.
 		dh := s.dh
 		s.dh = nil
 		s.stage = stageClosed
@@ -352,13 +355,34 @@ func (s *Session) handleSetClientDHParams(data []byte, dh *dhState) (Output, err
 	if inner.nonce != nonce || inner.serverNonce != serverNonce {
 		return Output{}, ErrInvalidHandshake
 	}
+	if inner.retryID != dh.retryID {
+		return Output{}, ErrInvalidHandshake
+	}
 	gb := new(big.Int).SetBytes(inner.gb)
 	if err := validateDHPublicValue(gb, crypto.DHPrime); err != nil {
 		return Output{}, err
 	}
 
 	authKeyBig := new(big.Int).Exp(gb, dh.privateA, crypto.DHPrime)
-	authKeyBytes := leftPad256(authKeyBig)
+	authKeyBytes := authKeyBig.Bytes()
+	if len(authKeyBytes) != len(crypto.AuthKey{}) {
+		authHash := sha1.Sum(authKeyBytes)
+		dh.retryID = int64(binary.LittleEndian.Uint64(authHash[:8]))
+		response, err := encodeDHGenResponse(
+			dhGenRetryID,
+			nonce,
+			serverNonce,
+			crypto.ComputeNewNonceHash2Auth(dh.newNonce, authKeyBytes),
+		)
+		if err != nil {
+			return Output{}, err
+		}
+		// MTProto auth keys are exactly 2048 bits. Clients retry with a new
+		// exponent when the minimal big-endian shared secret is shorter.
+		s.dh = dh
+		s.stage = stageDHIssued
+		return Output{Response: response}, nil
+	}
 	var authKey crypto.AuthKey
 	copy(authKey[:], authKeyBytes)
 	authKeyID := authKey.ID()
@@ -367,27 +391,35 @@ func (s *Session) handleSetClientDHParams(data []byte, dh *dhState) (Output, err
 	}
 	serverSalt := computeServerSalt(dh.newNonce, serverNonce)
 
-	response := &bytes.Buffer{}
-	if err := mtproto.WriteUint32(response, dhGenOKID); err != nil {
-		return Output{}, err
-	}
-	if err := mtproto.WriteInt128(response, nonce); err != nil {
-		return Output{}, err
-	}
-	if err := mtproto.WriteInt128(response, serverNonce); err != nil {
-		return Output{}, err
-	}
 	nonceHash := crypto.ComputeNewNonceHash1Auth(dh.newNonce, authKeyBytes)
-	if err := mtproto.WriteInt128(response, nonceHash); err != nil {
+	response, err := encodeDHGenResponse(dhGenOKID, nonce, serverNonce, nonceHash)
+	if err != nil {
 		return Output{}, err
 	}
 	return Output{
-		Response: response.Bytes(),
+		Response: response,
 		Result: &Result{
 			AuthKeyID:         authKeyID,
 			InitialServerSalt: serverSalt,
 		},
 	}, nil
+}
+
+func encodeDHGenResponse(constructor uint32, nonce, serverNonce, nonceHash [16]byte) ([]byte, error) {
+	response := &bytes.Buffer{}
+	if err := mtproto.WriteUint32(response, constructor); err != nil {
+		return nil, err
+	}
+	if err := mtproto.WriteInt128(response, nonce); err != nil {
+		return nil, err
+	}
+	if err := mtproto.WriteInt128(response, serverNonce); err != nil {
+		return nil, err
+	}
+	if err := mtproto.WriteInt128(response, nonceHash); err != nil {
+		return nil, err
+	}
+	return response.Bytes(), nil
 }
 
 func (s *Session) generatePrivateExponent() (*big.Int, error) {
@@ -489,6 +521,7 @@ func parsePQInnerData(data []byte) (pqInnerData, error) {
 type clientDHInnerData struct {
 	nonce       [16]byte
 	serverNonce [16]byte
+	retryID     int64
 	gb          []byte
 }
 
@@ -509,7 +542,7 @@ func parseClientDHInnerData(data []byte) (clientDHInnerData, error) {
 		if inner.serverNonce, err = mtproto.ReadInt128(r); err != nil {
 			continue
 		}
-		if _, err = mtproto.ReadInt64(r); err != nil {
+		if inner.retryID, err = mtproto.ReadInt64(r); err != nil {
 			continue
 		}
 		if inner.gb, err = mtproto.ReadBytes(r); err != nil {
@@ -554,12 +587,6 @@ func validateDHPublicValue(value, prime *big.Int) error {
 
 func equalBigEndian(a, b []byte) bool {
 	return new(big.Int).SetBytes(a).Cmp(new(big.Int).SetBytes(b)) == 0
-}
-
-func leftPad256(value *big.Int) []byte {
-	result := make([]byte, 256)
-	value.FillBytes(result)
-	return result
 }
 
 func computeServerSalt(newNonce [32]byte, serverNonce [16]byte) int64 {

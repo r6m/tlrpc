@@ -349,13 +349,21 @@ func ComputeAuthKeyID(authKey []byte) int64 {
 	return int64(binary.LittleEndian.Uint64(sum[len(sum)-8:]))
 }
 
-// ComputeNewNonceHash1Auth computes new_nonce_hash1 for MTProto 2.0:
-// new_nonce_hash1 = SHA1(new_nonce + 1 + SHA1(auth_key)[0:8])[4:20]
+// ComputeNewNonceHash1Auth computes new_nonce_hash1 for MTProto 2.0.
 func ComputeNewNonceHash1Auth(newNonce [32]byte, authKey []byte) [16]byte {
+	return computeNewNonceHashAuth(newNonce, authKey, 1)
+}
+
+// ComputeNewNonceHash2Auth computes new_nonce_hash2 for an MTProto DH retry.
+func ComputeNewNonceHash2Auth(newNonce [32]byte, authKey []byte) [16]byte {
+	return computeNewNonceHashAuth(newNonce, authKey, 2)
+}
+
+func computeNewNonceHashAuth(newNonce [32]byte, authKey []byte, marker byte) [16]byte {
 	authHash := sha1.Sum(authKey)
 	buf := make([]byte, 0, 32+1+8)
 	buf = append(buf, newNonce[:]...)
-	buf = append(buf, 1)
+	buf = append(buf, marker)
 	buf = append(buf, authHash[:8]...)
 	sum := sha1.Sum(buf)
 	var out [16]byte

@@ -274,8 +274,10 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 	minGB := new(big.Int).Lsh(big.NewInt(1), uint(dhPrime.BitLen()-64))
 	maxGB := new(big.Int).Sub(dhPrime, minGB)
 	var (
-		b  *big.Int
-		gb *big.Int
+		b            *big.Int
+		gb           *big.Int
+		authKey      *big.Int
+		authKeyBytes []byte
 	)
 	for {
 		b, err = rand.Int(rand.Reader, dhPrime)
@@ -283,12 +285,12 @@ func (c *Client) performHandshake(ctx context.Context) (*SessionInfo, error) {
 			return nil, err
 		}
 		gb = new(big.Int).Exp(g, b, dhPrime)
-		if gb.Cmp(minGB) > 0 && gb.Cmp(maxGB) < 0 {
+		authKey = new(big.Int).Exp(gA, b, dhPrime)
+		authKeyBytes = authKey.Bytes()
+		if gb.Cmp(minGB) > 0 && gb.Cmp(maxGB) < 0 && len(authKeyBytes) == len(c.authKey) {
 			break
 		}
 	}
-	authKey := new(big.Int).Exp(gA, b, dhPrime)
-	authKeyBytes := padTo256(authKey)
 	c.authKeyID = crypto.KeyID(crypto.ComputeAuthKeyID(authKeyBytes))
 	copy(c.authKey[:], authKeyBytes)
 
@@ -403,14 +405,4 @@ func parseServerDHInnerData(data []byte) (*bytes.Reader, error) {
 		}
 	}
 	return nil, errors.New("compat client: unexpected server_DH_inner_data ctor")
-}
-
-func padTo256(n *big.Int) []byte {
-	data := n.Bytes()
-	if len(data) < 256 {
-		padded := make([]byte, 256)
-		copy(padded[256-len(data):], data)
-		return padded
-	}
-	return data[len(data)-256:]
 }

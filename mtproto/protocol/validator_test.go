@@ -205,7 +205,7 @@ func TestValidatorSequenceNumberRules(t *testing.T) {
 		{name: "content must be odd", kind: ContentRelated, sequenceNo: 2, want: ErrExpectedContentSequence, code: CodeExpectedOddSequenceNo, wantState: 2},
 		{name: "expected non-content", kind: NonContentRelated, sequenceNo: 2, wantState: 2},
 		{name: "late non-content", kind: NonContentRelated, sequenceNo: 0, wantState: 2},
-		{name: "future non-content", kind: NonContentRelated, sequenceNo: 4, want: ErrSequenceNoTooHigh, code: CodeSequenceNoTooHigh, wantState: 2},
+		{name: "future non-content", kind: NonContentRelated, sequenceNo: 8, wantState: 2},
 		{name: "non-content must be even", kind: NonContentRelated, sequenceNo: 3, want: ErrExpectedNonContentSequence, code: CodeExpectedEvenSequenceNo, wantState: 2},
 		{name: "negative", kind: NonContentRelated, sequenceNo: -2, want: ErrSequenceNoTooLow, code: CodeSequenceNoTooLow, wantState: 2},
 	}
