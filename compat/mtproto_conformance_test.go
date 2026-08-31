@@ -121,6 +121,9 @@ func TestEncryptedSessionReconnectContinuesWithSameAuthKeyAndSession(t *testing.
 	runServer(t, h.server, lis)
 
 	base := client.NextMsgID()
+	sessionInfo := client.SessionInfo{
+		AuthKeyID: h.keyID, AuthKey: h.key, ServerSalt: h.salt, SessionID: h.session,
+	}
 	invoke := func(msgID int64, value int32) {
 		t.Helper()
 		conn, err := (&transport.TCPTransport{Protocol: transport.ProtocolIntermediate}).Dial(lis.Addr().String())
@@ -133,7 +136,7 @@ func TestEncryptedSessionReconnectContinuesWithSameAuthKeyAndSession(t *testing.
 				pingRespID: func() tlrpc.TLObject { return &pingResp{} },
 			}),
 		)
-		cli.SetSession(h.keyID, h.key, h.salt, h.session)
+		cli.SetSessionInfo(sessionInfo)
 		resp, err := cli.Invoke(context.Background(), &pingReq{Value: value})
 		if err != nil {
 			_ = cli.Close()
@@ -142,6 +145,7 @@ func TestEncryptedSessionReconnectContinuesWithSameAuthKeyAndSession(t *testing.
 		if got := resp.(*pingResp).Value; got != value+1 {
 			t.Fatalf("response value = %d, want %d", got, value+1)
 		}
+		sessionInfo = cli.Session()
 		if err := cli.Close(); err != nil {
 			t.Fatalf("close: %v", err)
 		}

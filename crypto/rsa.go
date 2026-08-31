@@ -10,13 +10,15 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"os"
 )
 
 var (
-	ErrInvalidKeyFormat = errors.New("crypto: invalid RSA key format")
-	ErrKeyNotFound      = errors.New("crypto: RSA key not found")
+	ErrInvalidKeyFormat     = errors.New("crypto: invalid RSA key format")
+	ErrKeyNotFound          = errors.New("crypto: RSA key not found")
+	ErrUnsafeKeyPermissions = errors.New("crypto: private key file has unsafe permissions")
 )
 
 type ServerKey struct {
@@ -118,7 +120,19 @@ func writeFingerprintTLBytes(dst *bytes.Buffer, value []byte) {
 }
 
 func LoadPEMPrivateKey(path string) (*ServerKey, error) {
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("read key file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("stat key file: %w", err)
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
+		return nil, fmt.Errorf("%w: mode %04o", ErrUnsafeKeyPermissions, info.Mode().Perm())
+	}
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("read key file: %w", err)
 	}
@@ -159,13 +173,31 @@ func parseRSAPrivateKey(data []byte) (*rsa.PrivateKey, error) {
 	return key, nil
 }
 
-func SavePEMPrivateKey(path string, key *ServerKey) error {
+func SavePEMPrivateKey(path string, key *ServerKey) (returnErr error) {
 	data := x509.MarshalPKCS1PrivateKey(key.Key)
 	block := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: data,
 	}
-	return os.WriteFile(path, pem.EncodeToMemory(block), 0600)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return fmt.Errorf("open key file: %w", err)
+	}
+	defer func() {
+		if closeErr := file.Close(); returnErr == nil && closeErr != nil {
+			returnErr = fmt.Errorf("close key file: %w", closeErr)
+		}
+	}()
+	if err := file.Chmod(0600); err != nil {
+		return fmt.Errorf("secure key file permissions: %w", err)
+	}
+	if err := file.Truncate(0); err != nil {
+		return fmt.Errorf("truncate key file: %w", err)
+	}
+	if _, err := file.Write(pem.EncodeToMemory(block)); err != nil {
+		return fmt.Errorf("write key file: %w", err)
+	}
+	return nil
 }
 
 func rsaDecrypt(key *rsa.PrivateKey, data []byte) ([]byte, error) {

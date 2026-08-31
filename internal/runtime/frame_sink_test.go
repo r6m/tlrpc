@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -73,6 +74,115 @@ func TestSessionWriterShutdownDoesNotClosePhysicalConnection(t *testing.T) {
 	}
 	if got := connection.closeCount.Load(); got != 0 {
 		t.Fatalf("physical closes after second writer submit = %d, want 0", got)
+	}
+}
+
+func TestConnectionFrameSinkCanceledWriterLeavesBehindStalledWriter(t *testing.T) {
+	connection := newStalledFrameConnection()
+	sink := newConnectionFrameSink(connection, FrameSinkPolicy{QueueCapacity: 1, WriteTimeout: time.Second})
+	firstDone := make(chan error, 1)
+	go func() { firstDone <- sink.WriteFrame(context.Background(), []byte{1}) }()
+	<-connection.started
+
+	ctx, cancel := context.WithCancel(context.Background())
+	secondDone := make(chan error, 1)
+	go func() { secondDone <- sink.WriteFrame(ctx, []byte{2}) }()
+	waitForFrameSinkQueue(t, sink, 2)
+	cancel()
+	select {
+	case err := <-secondDone:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("canceled writer error = %v", err)
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("canceled writer remained blocked behind physical writer")
+	}
+
+	close(connection.release)
+	if err := <-firstDone; err != nil {
+		t.Fatalf("first write: %v", err)
+	}
+}
+
+func TestConnectionFrameSinkBoundsWaitingWriters(t *testing.T) {
+	connection := newStalledFrameConnection()
+	sink := newConnectionFrameSink(connection, FrameSinkPolicy{QueueCapacity: 1, WriteTimeout: time.Second})
+	firstDone := make(chan error, 1)
+	go func() { firstDone <- sink.WriteFrame(context.Background(), []byte{1}) }()
+	<-connection.started
+
+	secondCtx, cancelSecond := context.WithCancel(context.Background())
+	secondDone := make(chan error, 1)
+	go func() { secondDone <- sink.WriteFrame(secondCtx, []byte{2}) }()
+	waitForFrameSinkQueue(t, sink, 2)
+
+	thirdCtx, cancelThird := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancelThird()
+	started := time.Now()
+	err := sink.WriteFrame(thirdCtx, []byte{3})
+	if !errors.Is(err, ErrPhysicalWriteQueueFull) || !errors.Is(err, os.ErrDeadlineExceeded) {
+		t.Fatalf("bounded queue error = %v", err)
+	}
+	if elapsed := time.Since(started); elapsed > 200*time.Millisecond {
+		t.Fatalf("bounded queue rejection took %v", elapsed)
+	}
+
+	cancelSecond()
+	if err := <-secondDone; !errors.Is(err, context.Canceled) {
+		t.Fatalf("second writer error = %v", err)
+	}
+	close(connection.release)
+	if err := <-firstDone; err != nil {
+		t.Fatalf("first write: %v", err)
+	}
+}
+
+func TestConnectionFrameSinkDeadlineCoversPhysicalWrite(t *testing.T) {
+	connection := &deadlineFrameConnection{}
+	sink := newConnectionFrameSink(connection, FrameSinkPolicy{QueueCapacity: 1, WriteTimeout: 20 * time.Millisecond})
+	started := time.Now()
+	err := sink.WriteFrame(context.Background(), []byte{1})
+	if !errors.Is(err, os.ErrDeadlineExceeded) {
+		t.Fatalf("physical write error = %v, want deadline", err)
+	}
+	if elapsed := time.Since(started); elapsed > 200*time.Millisecond {
+		t.Fatalf("physical deadline took %v", elapsed)
+	}
+}
+
+func TestConnectionFrameSinkCancellationInterruptsActivePhysicalWrite(t *testing.T) {
+	left, right := net.Pipe()
+	defer func() { _ = left.Close() }()
+	defer func() { _ = right.Close() }()
+	connection := &pipeFrameConnection{Conn: left}
+	sink := newConnectionFrameSink(connection, FrameSinkPolicy{QueueCapacity: 1, WriteTimeout: time.Second})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- sink.WriteFrame(ctx, make([]byte, 1024)) }()
+	time.Sleep(10 * time.Millisecond)
+	started := time.Now()
+	cancel()
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Fatal("canceled active write unexpectedly succeeded")
+		}
+		if elapsed := time.Since(started); elapsed > 200*time.Millisecond {
+			t.Fatalf("active cancellation took %v", elapsed)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("active physical write ignored cancellation")
+	}
+}
+
+func waitForFrameSinkQueue(t *testing.T, sink *connectionFrameSink, want int) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for len(sink.queueSlots) != want {
+		if time.Now().After(deadline) {
+			t.Fatalf("queue slots = %d, want %d", len(sink.queueSlots), want)
+		}
+		time.Sleep(time.Millisecond)
 	}
 }
 
@@ -154,8 +264,76 @@ func (c *concurrencyCheckingFrameConnection) Close() error {
 	return nil
 }
 
+func (*concurrencyCheckingFrameConnection) SetWriteDeadline(time.Time) error { return nil }
+
 func (*concurrencyCheckingFrameConnection) Context() context.Context { return context.Background() }
 func (*concurrencyCheckingFrameConnection) LocalAddr() net.Addr      { return nil }
 func (*concurrencyCheckingFrameConnection) RemoteAddr() net.Addr     { return nil }
 
 var _ FrameConnection = (*concurrencyCheckingFrameConnection)(nil)
+
+type stalledFrameConnection struct {
+	started chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func newStalledFrameConnection() *stalledFrameConnection {
+	return &stalledFrameConnection{started: make(chan struct{}), release: make(chan struct{})}
+}
+
+func (*stalledFrameConnection) ReadMessage(int) ([]byte, error) {
+	return nil, errors.New("not implemented")
+}
+func (c *stalledFrameConnection) WriteMessage([]byte) error {
+	c.once.Do(func() { close(c.started) })
+	<-c.release
+	return nil
+}
+func (*stalledFrameConnection) Close() error                     { return nil }
+func (*stalledFrameConnection) SetWriteDeadline(time.Time) error { return nil }
+func (*stalledFrameConnection) Context() context.Context         { return context.Background() }
+func (*stalledFrameConnection) LocalAddr() net.Addr              { return nil }
+func (*stalledFrameConnection) RemoteAddr() net.Addr             { return nil }
+
+type deadlineFrameConnection struct {
+	mu       sync.Mutex
+	deadline time.Time
+}
+
+func (*deadlineFrameConnection) ReadMessage(int) ([]byte, error) {
+	return nil, errors.New("not implemented")
+}
+func (c *deadlineFrameConnection) WriteMessage([]byte) error {
+	c.mu.Lock()
+	deadline := c.deadline
+	c.mu.Unlock()
+	if deadline.IsZero() {
+		return errors.New("write deadline was not installed")
+	}
+	timer := time.NewTimer(time.Until(deadline))
+	defer timer.Stop()
+	<-timer.C
+	return os.ErrDeadlineExceeded
+}
+func (*deadlineFrameConnection) Close() error             { return nil }
+func (*deadlineFrameConnection) Context() context.Context { return context.Background() }
+func (*deadlineFrameConnection) LocalAddr() net.Addr      { return nil }
+func (*deadlineFrameConnection) RemoteAddr() net.Addr     { return nil }
+func (c *deadlineFrameConnection) SetWriteDeadline(deadline time.Time) error {
+	c.mu.Lock()
+	c.deadline = deadline
+	c.mu.Unlock()
+	return nil
+}
+
+type pipeFrameConnection struct{ net.Conn }
+
+func (*pipeFrameConnection) ReadMessage(int) ([]byte, error) {
+	return nil, errors.New("not implemented")
+}
+func (c *pipeFrameConnection) WriteMessage(frame []byte) error {
+	_, err := c.Write(frame)
+	return err
+}
+func (c *pipeFrameConnection) Context() context.Context { return context.Background() }

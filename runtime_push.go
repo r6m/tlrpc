@@ -39,7 +39,8 @@ func (r *runtimePushRegistry) Update(snapshot session.Snapshot, sender runtimev2
 	}
 	key := snapshot.Key()
 	binding := Binding{
-		AuthKeyID: int64(snapshot.AuthKeyID), SessionID: snapshot.SessionID,
+		ConnectionID: connectionIDFromRuntimeSender(sender),
+		AuthKeyID:    int64(snapshot.AuthKeyID), SessionID: snapshot.SessionID,
 		ServerSalt: snapshot.ServerSalt, UserID: snapshot.UserID, Layer: snapshot.Layer,
 	}
 	r.mu.Lock()
@@ -71,9 +72,17 @@ func (r *runtimePushRegistry) Update(snapshot session.Snapshot, sender runtimev2
 	}
 	r.mu.Unlock()
 	bindingChanged := !existed || previous.binding != binding
-	if bindingChanged && r.server != nil && r.server.onSessionBound != nil {
-		r.server.onSessionBound(binding, runtimeSender{sender: sender})
+	if bindingChanged && r.server != nil {
+		r.server.handleObservedSessionBound(binding)
 	}
+}
+
+func connectionIDFromRuntimeSender(sender runtimev2.Sender) uint64 {
+	identified, ok := sender.(interface{ ConnectionID() uint64 })
+	if !ok {
+		return 0
+	}
+	return identified.ConnectionID()
 }
 
 func (r *runtimePushRegistry) Remove(key session.SessionKey, sender runtimev2.Sender) {
@@ -102,8 +111,8 @@ func (r *runtimePushRegistry) Remove(key session.SessionKey, sender runtimev2.Se
 		r.removeUserLocked(key, binding)
 	}
 	r.mu.Unlock()
-	if exists && r.server != nil && r.server.onSessionUnbound != nil {
-		r.server.onSessionUnbound(binding.binding)
+	if exists && r.server != nil {
+		r.server.handleObservedSessionUnbound(binding.binding)
 	}
 }
 

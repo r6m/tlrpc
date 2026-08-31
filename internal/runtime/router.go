@@ -18,14 +18,15 @@ var (
 // RequestInfo is immutable framework metadata supplied to protocol and
 // application dispatch. It contains no mutable session pointer or raw transport.
 type RequestInfo struct {
-	AuthKeyID  crypto.KeyID
-	SessionID  int64
-	ServerSalt int64
-	UserID     int64
-	Layer      int
-	Client     session.ClientMetadata
-	Peer       PeerInfo
-	Sender     Sender
+	ConnectionID uint64
+	AuthKeyID    crypto.KeyID
+	SessionID    int64
+	ServerSalt   int64
+	UserID       int64
+	Layer        int
+	Client       session.ClientMetadata
+	Peer         PeerInfo
+	Sender       Sender
 }
 
 // Sender is the only application-visible route for asynchronous server push.

@@ -115,3 +115,102 @@ func TestReadBareVectorBoundedReadsCountWithoutConstructor(t *testing.T) {
 		t.Fatalf("element decoder calls = %d, want 2", calls)
 	}
 }
+
+func TestDecodeBudgetBoundsIndependentDimensions(t *testing.T) {
+	budget, err := NewDecodeBudget(DecodeLimits{
+		MaxDecodedBytes:   8,
+		MaxWrappers:       1,
+		MaxContainers:     1,
+		MaxVectorElements: 2,
+		MaxObjectNodes:    2,
+		MaxObjectDepth:    1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := NewBudgetReader(bytes.NewReader(make([]byte, 12)), budget)
+	if _, err := io.ReadAll(reader); !errors.Is(err, ErrDecodedBytesLimit) {
+		t.Fatalf("decoded byte error = %v, want ErrDecodedBytesLimit", err)
+	}
+	if err := ConsumeWrapper(reader); err != nil {
+		t.Fatal(err)
+	}
+	if err := ConsumeWrapper(reader); !errors.Is(err, ErrWrapperCountLimit) {
+		t.Fatalf("wrapper error = %v", err)
+	}
+	if err := ConsumeContainer(reader); err != nil {
+		t.Fatal(err)
+	}
+	if err := ConsumeContainer(reader); !errors.Is(err, ErrContainerCountLimit) {
+		t.Fatalf("container error = %v", err)
+	}
+	leave, err := EnterObject(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := EnterObject(reader); !errors.Is(err, ErrObjectDepthLimit) {
+		t.Fatalf("depth error = %v", err)
+	}
+	leave()
+	leave, err = EnterObject(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	leave()
+	if _, err := EnterObject(reader); !errors.Is(err, ErrObjectNodeLimit) {
+		t.Fatalf("node error = %v", err)
+	}
+}
+
+func TestDecodeBudgetAggregatesVectorElements(t *testing.T) {
+	budget, err := NewDecodeBudget(DecodeLimits{MaxVectorElements: 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var encoded bytes.Buffer
+	for range 2 {
+		if err := WriteVectorHeader(&encoded, 2); err != nil {
+			t.Fatal(err)
+		}
+	}
+	reader := NewBudgetReader(bytes.NewReader(encoded.Bytes()), budget)
+	if err := ReadVector(reader, func() error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if err := ReadVector(reader, func() error { return nil }); !errors.Is(err, ErrVectorCountLimit) {
+		t.Fatalf("second vector error = %v, want ErrVectorCountLimit", err)
+	}
+}
+
+func TestPrependReaderPreservesBudgetWithoutDoubleCharging(t *testing.T) {
+	budget, err := NewDecodeBudget(DecodeLimits{MaxDecodedBytes: 4})
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := NewBudgetReader(bytes.NewReader([]byte{5, 6, 7, 8}), budget)
+	reader := PrependReader([]byte{1, 2, 3, 4}, parent)
+	got, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, []byte{1, 2, 3, 4, 5, 6, 7, 8}) {
+		t.Fatalf("read = %v", got)
+	}
+	if budget.decodedBytes != 4 {
+		t.Fatalf("charged bytes = %d, want 4", budget.decodedBytes)
+	}
+}
+
+func TestReadBytesHugeDeclarationDoesNotAllocatePayload(t *testing.T) {
+	input := []byte{0xfe, 0xff, 0xff, 0x7f}
+	allocations := testing.AllocsPerRun(100, func() {
+		budget, err := NewDecodeBudget(DecodeLimits{MaxDecodedBytes: 64})
+		if err != nil {
+			panic(err)
+		}
+		_, _ = ReadBytes(NewBudgetReader(bytes.NewReader(input), budget))
+	})
+	if allocations > 6 {
+		t.Fatalf("allocations = %.1f, want at most 6", allocations)
+	}
+}

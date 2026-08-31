@@ -2,8 +2,15 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
+	"time"
+)
+
+var (
+	ErrInvokeAfterFailed  = errors.New("runtime: invoke-after dependency failed")
+	ErrInvokeAfterTimeout = errors.New("runtime: invoke-after dependency timed out")
 )
 
 // InvalidActiveRequestCapacityError reports an unusable registry capacity.
@@ -54,6 +61,12 @@ const (
 
 type activeRequest struct {
 	cancel context.CancelCauseFunc
+	ended  bool
+}
+
+type activeRequestRegistration struct {
+	Context  context.Context
+	Complete func(bool)
 }
 
 // ActiveRequestRegistry owns the cancellation lifetimes of running inbound RPCs.
@@ -61,9 +74,12 @@ type activeRequest struct {
 // Dropped and completed requests are removed. Consequently, a repeated drop is
 // deterministically reported as DropStatusUnknown.
 type ActiveRequestRegistry struct {
-	mu       sync.Mutex
-	capacity int
-	active   map[int64]*activeRequest
+	mu             sync.Mutex
+	capacity       int
+	active         map[int64]*activeRequest
+	completed      map[int64]bool
+	completedOrder []int64
+	changed        chan struct{}
 }
 
 // NewActiveRequestRegistry constructs a bounded active-request registry.
@@ -73,8 +89,10 @@ func NewActiveRequestRegistry(capacity int) (*ActiveRequestRegistry, error) {
 	}
 
 	return &ActiveRequestRegistry{
-		capacity: capacity,
-		active:   make(map[int64]*activeRequest, capacity),
+		capacity:  capacity,
+		active:    make(map[int64]*activeRequest, capacity),
+		completed: make(map[int64]bool, capacity),
+		changed:   make(chan struct{}),
 	}, nil
 }
 
@@ -83,43 +101,102 @@ func NewActiveRequestRegistry(capacity int) (*ActiveRequestRegistry, error) {
 // exact registration created by this call, so it cannot remove a later request
 // that reuses the same message ID.
 func (r *ActiveRequestRegistry) Begin(parentCtx context.Context, id int64) (context.Context, func(), error) {
-	if id == 0 {
-		return nil, nil, &InvalidActiveRequestIDError{ID: id}
+	registrations, err := r.beginBatch(parentCtx, []int64{id})
+	if err != nil {
+		return nil, nil, err
 	}
+	return registrations[0].Context, func() { registrations[0].Complete(true) }, nil
+}
+
+// beginBatch atomically registers a complete container's content requests.
+// Either every ID receives a handler lifetime or the registry remains unchanged.
+func (r *ActiveRequestRegistry) beginBatch(parentCtx context.Context, ids []int64) ([]activeRequestRegistration, error) {
 	if parentCtx == nil {
 		parentCtx = context.Background()
 	}
-
-	handlerCtx, cancel := context.WithCancelCause(parentCtx)
-	request := &activeRequest{cancel: cancel}
+	seen := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			return nil, &InvalidActiveRequestIDError{ID: id}
+		}
+		if _, duplicate := seen[id]; duplicate {
+			return nil, &DuplicateActiveRequestError{ID: id}
+		}
+		seen[id] = struct{}{}
+	}
 
 	r.mu.Lock()
-	if _, exists := r.active[id]; exists {
-		r.mu.Unlock()
-		cancel(context.Canceled)
-		return nil, nil, &DuplicateActiveRequestError{ID: id}
+	defer r.mu.Unlock()
+	if len(r.active)+len(ids) > r.capacity {
+		return nil, &ActiveRequestCapacityError{Capacity: r.capacity}
 	}
-	if len(r.active) >= r.capacity {
-		r.mu.Unlock()
-		cancel(context.Canceled)
-		return nil, nil, &ActiveRequestCapacityError{Capacity: r.capacity}
+	for _, id := range ids {
+		if _, exists := r.active[id]; exists {
+			return nil, &DuplicateActiveRequestError{ID: id}
+		}
 	}
-	r.active[id] = request
-	r.mu.Unlock()
 
-	var once sync.Once
-	complete := func() {
-		once.Do(func() {
-			r.mu.Lock()
-			if r.active[id] == request {
-				delete(r.active, id)
+	registrations := make([]activeRequestRegistration, 0, len(ids))
+	for _, id := range ids {
+		handlerCtx, cancel := context.WithCancelCause(parentCtx)
+		request := &activeRequest{cancel: cancel}
+		r.active[id] = request
+		var once sync.Once
+		complete := func(success bool) {
+			once.Do(func() {
+				r.mu.Lock()
+				r.finishLocked(id, request, success)
+				r.mu.Unlock()
+				cancel(context.Canceled)
+			})
+		}
+		registrations = append(registrations, activeRequestRegistration{Context: handlerCtx, Complete: complete})
+	}
+	r.notifyLocked()
+	return registrations, nil
+}
+
+// WaitDependencies waits for all referenced requests to complete successfully.
+// Completion history is bounded by the registry capacity. Unknown references
+// wait for an earlier out-of-order request to arrive until timeout.
+func (r *ActiveRequestRegistry) WaitDependencies(ctx context.Context, ids []int64, timeout time.Duration) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if timeout <= 0 {
+		return ErrInvokeAfterTimeout
+	}
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	for {
+		allComplete := true
+		r.mu.Lock()
+		for _, id := range ids {
+			if success, ok := r.completed[id]; ok {
+				if !success {
+					r.mu.Unlock()
+					return ErrInvokeAfterFailed
+				}
+				continue
 			}
-			r.mu.Unlock()
-			cancel(context.Canceled)
-		})
+			allComplete = false
+		}
+		changed := r.changed
+		r.mu.Unlock()
+		if allComplete {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timer.C:
+			return ErrInvokeAfterTimeout
+		case <-changed:
+		}
 	}
-
-	return handlerCtx, complete, nil
 }
 
 // Drop cancels and removes a running request atomically.
@@ -127,7 +204,7 @@ func (r *ActiveRequestRegistry) Drop(id int64) DropStatus {
 	r.mu.Lock()
 	request, exists := r.active[id]
 	if exists {
-		delete(r.active, id)
+		r.finishLocked(id, request, false)
 	}
 	r.mu.Unlock()
 
@@ -149,11 +226,43 @@ func (r *ActiveRequestRegistry) CancelAll(cause error) {
 	requests := make([]*activeRequest, 0, len(r.active))
 	for id, request := range r.active {
 		requests = append(requests, request)
-		delete(r.active, id)
+		r.finishLocked(id, request, false)
 	}
 	r.mu.Unlock()
 
 	for _, request := range requests {
 		request.cancel(cause)
 	}
+}
+
+func (r *ActiveRequestRegistry) finishLocked(id int64, request *activeRequest, success bool) {
+	if request == nil || request.ended {
+		return
+	}
+	request.ended = true
+	if r.active[id] == request {
+		delete(r.active, id)
+	}
+	if _, exists := r.completed[id]; exists {
+		for index, completedID := range r.completedOrder {
+			if completedID == id {
+				copy(r.completedOrder[index:], r.completedOrder[index+1:])
+				r.completedOrder = r.completedOrder[:len(r.completedOrder)-1]
+				break
+			}
+		}
+	}
+	r.completed[id] = success
+	r.completedOrder = append(r.completedOrder, id)
+	if len(r.completedOrder) > r.capacity {
+		oldest := r.completedOrder[0]
+		r.completedOrder = r.completedOrder[1:]
+		delete(r.completed, oldest)
+	}
+	r.notifyLocked()
+}
+
+func (r *ActiveRequestRegistry) notifyLocked() {
+	close(r.changed)
+	r.changed = make(chan struct{})
 }

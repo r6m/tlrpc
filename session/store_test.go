@@ -12,7 +12,10 @@ func TestMemoryStoreUsesDetachedSnapshotsAndAtomicLoadOrCreate(t *testing.T) {
 	ctx := context.Background()
 	store := NewMemoryStore()
 	key := SessionKey{AuthKeyID: crypto.KeyID(7), SessionID: 9}
-	initial := Snapshot{AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSeqNo: 3, RecentClientMsgIDs: []int64{1}}
+	initial := Snapshot{
+		AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSeqNo: 3,
+		ClientMsgIDFloor: 1, RecentClientMsgIDs: []int64{5}, RecentClientSeqNos: []int32{1},
+	}
 
 	created, wasCreated, err := store.LoadOrCreate(ctx, key, initial)
 	if err != nil {
@@ -23,6 +26,7 @@ func TestMemoryStoreUsesDetachedSnapshotsAndAtomicLoadOrCreate(t *testing.T) {
 	}
 	created.ServerSeqNo = 99
 	created.RecentClientMsgIDs[0] = 99
+	created.RecentClientSeqNos[0] = 99
 
 	existing, wasCreated, err := store.LoadOrCreate(ctx, key, Snapshot{AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSeqNo: 100})
 	if err != nil {
@@ -31,7 +35,7 @@ func TestMemoryStoreUsesDetachedSnapshotsAndAtomicLoadOrCreate(t *testing.T) {
 	if wasCreated {
 		t.Fatal("existing LoadOrCreate incorrectly reported creation")
 	}
-	if existing.ServerSeqNo != 3 || existing.RecentClientMsgIDs[0] != 1 {
+	if existing.ServerSeqNo != 3 || existing.ClientMsgIDFloor != 1 || existing.RecentClientMsgIDs[0] != 5 || existing.RecentClientSeqNos[0] != 1 {
 		t.Fatalf("stored snapshot was aliased or reset: %+v", existing)
 	}
 

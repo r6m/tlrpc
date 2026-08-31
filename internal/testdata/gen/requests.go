@@ -34,6 +34,11 @@ func (r *CatalogResolveRequest) SerializeTL(w io.Writer) error {
 }
 
 func (r *CatalogResolveRequest) DeserializeTL(rd io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(rd)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(rd)
 	if err != nil {
 		return err
@@ -93,6 +98,11 @@ func (r *CatalogSearchRequest) SerializeTL(w io.Writer) error {
 }
 
 func (r *CatalogSearchRequest) DeserializeTL(rd io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(rd)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(rd)
 	if err != nil {
 		return err
@@ -152,6 +162,11 @@ func (r *WorkflowRejectRequest) SerializeTL(w io.Writer) error {
 }
 
 func (r *WorkflowRejectRequest) DeserializeTL(rd io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(rd)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(rd)
 	if err != nil {
 		return err
@@ -216,6 +231,11 @@ func (r *WorkflowSubmitRequest) SerializeTL(w io.Writer) error {
 }
 
 func (r *WorkflowSubmitRequest) DeserializeTL(rd io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(rd)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(rd)
 	if err != nil {
 		return err
@@ -249,7 +269,7 @@ func (r *WorkflowSubmitRequest) DeserializeTL(rd io.Reader) error {
 		if err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {
 			return err
 		}
-		if err := value.DeserializeTL(io.MultiReader(&boxedCtor, rd)); err != nil {
+		if err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), rd)); err != nil {
 			return err
 		}
 		r.Asset = value

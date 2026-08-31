@@ -93,6 +93,15 @@ func TestWriterBuildsContainerChildrenInsideOneSequenceBoundary(t *testing.T) {
 	if first.SeqNo != 1 || second.SeqNo != 3 || first.MsgID >= second.MsgID || second.MsgID >= outer.MsgID {
 		t.Fatalf("child/outer order = (%d,%d) (%d,%d) outer %d", first.MsgID, first.SeqNo, second.MsgID, second.SeqNo, outer.MsgID)
 	}
+	for _, message := range []mtprototl.Message{first, second} {
+		retained, ok := h.reliability.LookupForResend(message.MsgID)
+		if !ok {
+			t.Fatalf("container child %d is unknown to reliability state", message.MsgID)
+		}
+		if retained.SequenceNumber != message.SeqNo || !bytes.Equal(retained.Payload, frames[0]) {
+			t.Fatalf("container child %d retained wrong frame metadata", message.MsgID)
+		}
+	}
 }
 
 func TestWriterPersistenceFailureWritesNothingAndRetiresLease(t *testing.T) {
@@ -131,6 +140,27 @@ func TestWriterAmbiguousWriteFailureRetainsPacketAndRetiresLease(t *testing.T) {
 	}
 	if !errors.Is(context.Cause(h.lease.Context()), wantErr) {
 		t.Fatalf("lease cause = %v, want write failure", context.Cause(h.lease.Context()))
+	}
+}
+
+func TestWriterRejectsOversizedResponseBeforePersistenceOrEncryption(t *testing.T) {
+	h := newWriterHarnessWithMaxEncodedBytes(t, session.NewMemoryStore(), &recordingFrameSink{}, 32)
+	err := h.writer.Submit(context.Background(), Push{Body: make([]byte, 33)})
+	if !errors.Is(err, ErrEncodedPayloadTooLarge) {
+		t.Fatalf("submit error = %v, want ErrEncodedPayloadTooLarge", err)
+	}
+	if got := len(h.sink.snapshot()); got != 0 {
+		t.Fatalf("written frames = %d, want 0", got)
+	}
+	if h.reliability.Len() != 0 {
+		t.Fatalf("retained messages = %d, want 0", h.reliability.Len())
+	}
+	stored, loadErr := h.store.Load(context.Background(), h.key)
+	if loadErr != nil {
+		t.Fatal(loadErr)
+	}
+	if stored.ServerSeqNo != 0 {
+		t.Fatalf("persisted server sequence = %d, want 0", stored.ServerSeqNo)
 	}
 }
 
@@ -238,6 +268,10 @@ type writerHarness struct {
 }
 
 func newWriterHarness(t *testing.T, store session.Store, sink *recordingFrameSink) *writerHarness {
+	return newWriterHarnessWithMaxEncodedBytes(t, store, sink, 0)
+}
+
+func newWriterHarnessWithMaxEncodedBytes(t *testing.T, store session.Store, sink *recordingFrameSink, maxEncodedBytes int) *writerHarness {
 	t.Helper()
 	var authKey crypto.AuthKey
 	for index := range authKey {
@@ -256,12 +290,13 @@ func newWriterHarness(t *testing.T, store session.Store, sink *recordingFrameSin
 		t.Fatalf("new reliability store: %v", err)
 	}
 	writer, err := NewWriter(context.Background(), WriterConfig{
-		Lease:       lease,
-		AuthKey:     authKey,
-		Sink:        sink,
-		MessageIDs:  &fixedMessageIDs{next: 100},
-		Reliability: retained,
-		Now:         func() time.Time { return now },
+		Lease:           lease,
+		AuthKey:         authKey,
+		Sink:            sink,
+		MessageIDs:      &fixedMessageIDs{next: 100},
+		Reliability:     retained,
+		Now:             func() time.Time { return now },
+		MaxEncodedBytes: maxEncodedBytes,
 	})
 	if err != nil {
 		t.Fatalf("new writer: %v", err)

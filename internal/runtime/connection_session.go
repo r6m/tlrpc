@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/r6m/tlrpc/mtproto"
 	"github.com/r6m/tlrpc/mtproto/protocol"
@@ -35,6 +36,8 @@ type connectionSession struct {
 	requestWG    sync.WaitGroup
 	shutdownOnce sync.Once
 }
+
+const invokeAfterWaitTimeout = 500 * time.Millisecond
 
 func newConnectionSession(ctx context.Context, owner *Connection, decoded DecodedFrame) (*connectionSession, error) {
 	inner := decoded.Encrypted
@@ -69,7 +72,7 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 	if err != nil {
 		return nil, err
 	}
-	validator, err := NewSessionValidator(snapshot, owner.now)
+	validator, err := NewSessionValidatorWithLimits(snapshot, owner.now, owner.config.DecodeLimits)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +92,13 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 		return nil, err
 	}
 	writer, err := NewWriter(lease.Context(), WriterConfig{
-		Lease:       lease,
-		AuthKey:     decoded.AuthKey,
-		Sink:        owner.frameSink,
-		MessageIDs:  owner.messageIDs,
-		Reliability: reliability.outboundStore(),
-		Now:         owner.now,
+		Lease:           lease,
+		AuthKey:         decoded.AuthKey,
+		Sink:            owner.frameSink,
+		MessageIDs:      owner.messageIDs,
+		Reliability:     reliability.outboundStore(),
+		Now:             owner.now,
+		MaxEncodedBytes: owner.config.MaxEncodedBytes,
 	})
 	if err != nil {
 		return nil, err
@@ -127,7 +131,7 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 		router:      router,
 		active:      active,
 	}
-	actor.sender = &requestSender{writer: writer}
+	actor.sender = &requestSender{writer: writer, connectionID: owner.config.ConnectionID}
 	if owner.config.Presence != nil {
 		owner.config.Presence.Update(snapshot, actor.sender, false)
 	}
@@ -163,15 +167,38 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 		}
 		return err
 	}
+	contentMessageIDs := make([]int64, 0, len(validated.Messages))
+	for _, message := range validated.Messages {
+		if message.ContentRelated && !isRuntimeControlConstructor(message.ConstructorID) {
+			contentMessageIDs = append(contentMessageIDs, message.MessageID)
+		}
+	}
+	reservations, err := s.beginRequests(ctx, contentMessageIDs)
+	if err != nil {
+		var capacity *ActiveRequestCapacityError
+		if errors.As(err, &capacity) {
+			return s.rejectOverloaded(ctx, contentMessageIDs)
+		}
+		return err
+	}
+	releaseReservations := func() {
+		for messageID, reservation := range reservations {
+			reservation.Complete(false)
+			delete(reservations, messageID)
+		}
+	}
 	if err := s.lease.Commit(ctx, validated.Snapshot); err != nil {
+		releaseReservations()
 		return err
 	}
 	if err := recordValidated(s.reliability.inboundLedger(), validated); err != nil {
+		releaseReservations()
 		return err
 	}
 	for _, message := range validated.Messages {
 		if message.ContentRelated {
 			if err := s.ensureNewSessionCreated(ctx, message.MessageID); err != nil {
+				releaseReservations()
 				return err
 			}
 			break
@@ -179,14 +206,29 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 	}
 
 	for _, message := range validated.Messages {
-		if err := s.routeMessage(ctx, message); err != nil {
+		reservation := reservations[message.MessageID]
+		if reservation != nil {
+			delete(reservations, message.MessageID)
+		}
+		if err := s.routeMessage(ctx, message, reservation); err != nil {
+			if reservation != nil {
+				reservation.Complete(false)
+			}
+			releaseReservations()
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *connectionSession) routeMessage(ctx context.Context, message InboundMessage) error {
+func (s *connectionSession) routeMessage(ctx context.Context, message InboundMessage, reservation *activeRequestRegistration) error {
+	if reservation != nil {
+		defer func() {
+			if reservation != nil {
+				reservation.Complete(false)
+			}
+		}()
+	}
 	snapshot, err := s.lease.Snapshot()
 	if err != nil {
 		return err
@@ -210,7 +252,7 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 		request.Info = s.owner.requestInfo(snapshot)
 	}
 	current := request.Message
-	request.Info.Sender = &requestSender{writer: s.writer, suppress: current.SuppressPush}
+	request.Info.Sender = &requestSender{writer: s.writer, suppress: current.SuppressPush, connectionID: s.owner.config.ConnectionID}
 	outcome, handled, err := s.router.RouteControl(ctx, request)
 	if err != nil {
 		return err
@@ -223,15 +265,31 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 			return err
 		}
 	}
-	handlerCtx, complete, err := s.beginRequest(ctx, current.MessageID)
-	if err != nil {
-		return err
+	if reservation == nil {
+		return ErrConnectionProtocol
 	}
+	handlerCtx, complete := reservation.Context, reservation.Complete
+	reservation = nil
 	go func() {
-		defer complete()
+		succeeded := false
+		defer func() { complete(succeeded) }()
+		if dependencyErr := s.active.WaitDependencies(handlerCtx, current.Dependencies, invokeAfterWaitTimeout); dependencyErr != nil {
+			if errors.Is(dependencyErr, context.Canceled) {
+				return
+			}
+			message := "MSG_WAIT_FAILED"
+			if errors.Is(dependencyErr, ErrInvokeAfterTimeout) {
+				message = "MSG_WAIT_TIMEOUT"
+			}
+			if submitErr := s.writer.Submit(handlerCtx, RPCError{RequestMessageID: current.MessageID, Code: 500, Message: message}); submitErr != nil && !errors.Is(submitErr, context.Canceled) {
+				s.lease.Retire(submitErr)
+			}
+			return
+		}
 		outcome, dispatchErr := s.router.DispatchApplication(handlerCtx, request)
 		if dispatchErr == nil {
 			dispatchErr = s.applyOutcome(handlerCtx, current, outcome)
+			succeeded = dispatchErr == nil && requestOutcomeSucceeded(outcome, current.MessageID)
 		}
 		if dispatchErr != nil && !errors.Is(dispatchErr, context.Canceled) {
 			s.lease.Retire(dispatchErr)
@@ -240,30 +298,83 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 	return nil
 }
 
-func (s *connectionSession) beginRequest(ctx context.Context, messageID int64) (context.Context, func(), error) {
+func (s *connectionSession) beginRequests(ctx context.Context, messageIDs []int64) (map[int64]*activeRequestRegistration, error) {
 	s.lifecycleMu.Lock()
 	defer s.lifecycleMu.Unlock()
 	if s.closing {
-		return nil, nil, ErrSessionLeaseInactive
+		return nil, ErrSessionLeaseInactive
 	}
-	if !s.owner.admission.acquire() {
-		return nil, nil, &ActiveRequestCapacityError{Capacity: s.owner.config.ActiveRequests}
+	if !s.owner.admission.acquire(len(messageIDs)) {
+		return nil, &ActiveRequestCapacityError{Capacity: s.owner.config.ActiveRequests}
 	}
-	handlerCtx, completeActive, err := s.active.Begin(ctx, messageID)
+	registrations, err := s.active.beginBatch(ctx, messageIDs)
 	if err != nil {
-		s.owner.admission.release()
-		return nil, nil, err
+		s.owner.admission.release(len(messageIDs))
+		return nil, err
 	}
-	s.requestWG.Add(1)
-	var once sync.Once
-	complete := func() {
-		once.Do(func() {
-			completeActive()
-			s.owner.admission.release()
-			s.requestWG.Done()
-		})
+	s.requestWG.Add(len(registrations))
+	reserved := make(map[int64]*activeRequestRegistration, len(registrations))
+	for index, registration := range registrations {
+		registration := registration
+		var once sync.Once
+		complete := func(success bool) {
+			once.Do(func() {
+				registration.Complete(success)
+				s.owner.admission.release(1)
+				s.requestWG.Done()
+			})
+		}
+		reserved[messageIDs[index]] = &activeRequestRegistration{Context: registration.Context, Complete: complete}
 	}
-	return handlerCtx, complete, nil
+	return reserved, nil
+}
+
+func requestOutcomeSucceeded(outcome Outcome, requestMessageID int64) bool {
+	result := false
+	failed := false
+	var inspect func([]Intent)
+	inspect = func(intents []Intent) {
+		for _, intent := range intents {
+			switch value := intent.(type) {
+			case RPCResult:
+				if value.RequestMessageID == requestMessageID {
+					result = true
+				}
+			case RPCError:
+				if value.RequestMessageID == requestMessageID {
+					failed = true
+				}
+			case Batch:
+				inspect(value.Items)
+			}
+		}
+	}
+	inspect(outcome.Intents)
+	return result && !failed
+}
+
+func (s *connectionSession) rejectOverloaded(ctx context.Context, messageIDs []int64) error {
+	intents := make([]Intent, 0, len(messageIDs))
+	for _, messageID := range messageIDs {
+		intents = append(intents, RPCError{RequestMessageID: messageID, Code: 500, Message: "SERVER_BUSY"})
+	}
+	if len(intents) == 0 {
+		return nil
+	}
+	if len(intents) == 1 {
+		return s.writer.Submit(ctx, intents[0])
+	}
+	return s.writer.Submit(ctx, Batch{Items: intents})
+}
+
+func isRuntimeControlConstructor(constructorID uint32) bool {
+	switch constructorID {
+	case mtprototl.MsgsAckID, mtprototl.MsgsStateReqID, mtprototl.MsgResendReqID,
+		mtprototl.RPCDropAnswerID, mtprototl.GetFutureSaltsID:
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *connectionSession) subscribeForPush() error {
@@ -400,22 +511,30 @@ func recordValidated(ledger *InboundStateLedger, validated ValidatedInbound) err
 // connectionRequestAdmission keeps MaxInFlightRequests connection-wide even
 // though duplicate lookup and rpc_drop_answer remain session-local.
 type connectionRequestAdmission struct {
-	slots chan struct{}
+	mu       sync.Mutex
+	capacity int
+	inUse    int
 }
 
 func newConnectionRequestAdmission(capacity int) *connectionRequestAdmission {
-	return &connectionRequestAdmission{slots: make(chan struct{}, capacity)}
+	return &connectionRequestAdmission{capacity: capacity}
 }
 
-func (a *connectionRequestAdmission) acquire() bool {
-	select {
-	case a.slots <- struct{}{}:
-		return true
-	default:
+func (a *connectionRequestAdmission) acquire(count int) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if count < 0 || a.inUse+count > a.capacity {
 		return false
 	}
+	a.inUse += count
+	return true
 }
 
-func (a *connectionRequestAdmission) release() {
-	<-a.slots
+func (a *connectionRequestAdmission) release(count int) {
+	a.mu.Lock()
+	a.inUse -= count
+	if a.inUse < 0 {
+		panic("runtime: released more request admission slots than acquired")
+	}
+	a.mu.Unlock()
 }

@@ -7,6 +7,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+
+	"github.com/r6m/tlrpc/mtproto"
 )
 
 var (
@@ -22,6 +24,8 @@ type InboundMessage struct {
 	SequenceNo     int32
 	ConstructorID  uint32
 	Body           []byte
+	Dependencies   []int64
+	DecodeBudget   *mtproto.DecodeBudget
 	ContentRelated bool
 	SuppressPush   bool
 }
@@ -29,6 +33,11 @@ type InboundMessage struct {
 func (m InboundMessage) Validate() error {
 	if m.MessageID == 0 || m.ConstructorID == 0 || len(m.Body) < 4 || binary.LittleEndian.Uint32(m.Body[:4]) != m.ConstructorID {
 		return ErrInvalidInbound
+	}
+	for _, dependency := range m.Dependencies {
+		if dependency == 0 || dependency >= m.MessageID {
+			return ErrInvalidInbound
+		}
 	}
 	return nil
 }

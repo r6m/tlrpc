@@ -41,6 +41,8 @@ func TestNewValidatorValidatesAndCopiesConfig(t *testing.T) {
 	for _, config := range []Config{
 		{RecentMessageIDLimit: -1},
 		{RecentMessageIDLimit: MaxRecentMessageIDLimit + 1},
+		{ContentSequenceLimit: -1},
+		{ContentSequenceLimit: MaxContentSequenceLimit + 1},
 		{SequenceNo: -2},
 		{SequenceNo: 1},
 	} {
@@ -150,12 +152,35 @@ func TestValidatorRejectsRecentReplayAndBoundsWindow(t *testing.T) {
 	}
 	assertIDs(t, validator.Snapshot().RecentMessageIDs, ids[1:])
 
-	// Once evicted from the explicitly bounded replay window, an otherwise
-	// valid out-of-order message ID can be accepted again.
-	if err := validator.Validate(contentMessage(ids[0], 1)); err != nil {
-		t.Fatalf("evicted id should no longer be considered recent: %v", err)
+	// Eviction advances a durable floor, so bounded storage never turns an old
+	// accepted request back into an executable request.
+	replay = contentMessage(ids[0], 1)
+	_ = assertBadMessage(t, validator.Validate(replay), ErrReplayMessageID, CodeReplayMessageID, replay.MessageID, replay.SequenceNo)
+	if got := validator.Snapshot().MessageIDFloor; got != ids[0] {
+		t.Fatalf("message ID floor = %d, want %d", got, ids[0])
 	}
-	assertIDs(t, validator.Snapshot().RecentMessageIDs, []int64{ids[2], ids[3], ids[0]})
+}
+
+func TestValidatorRejectsFullWindowReplayAfterMoreThan64LaterIDsAcrossRestart(t *testing.T) {
+	validator := newTestValidator(t, Config{SessionID: testSession})
+	firstID := clientMessageID(testNowSeconds, 4)
+	for index := 0; index < DefaultRecentMessageIDLimit+1; index++ {
+		messageID := clientMessageID(testNowSeconds, uint32((index+1)*4))
+		if err := validator.Validate(contentMessage(messageID, int32(index*2+1))); err != nil {
+			t.Fatalf("validate message %d: %v", index, err)
+		}
+	}
+	state := validator.Snapshot()
+	if state.MessageIDFloor != firstID {
+		t.Fatalf("message ID floor = %d, want %d", state.MessageIDFloor, firstID)
+	}
+	restored := newTestValidator(t, Config{
+		SessionID: testSession, SequenceNo: state.SequenceNo,
+		HighestMessageID: state.HighestMessageID, MessageIDFloor: state.MessageIDFloor,
+		RecentMessageIDs: state.RecentMessageIDs, RecentSequenceNos: state.RecentSequenceNos,
+	})
+	replay := contentMessage(firstID, 1)
+	_ = assertBadMessage(t, restored.Validate(replay), ErrReplayMessageID, CodeReplayMessageID, replay.MessageID, replay.SequenceNo)
 }
 
 func TestValidatorRejectsRestoredHighWaterMessageID(t *testing.T) {
@@ -206,6 +231,28 @@ func TestValidatorSequenceNumberRules(t *testing.T) {
 				t.Fatalf("sequence state = %d, want %d", got, test.wantState)
 			}
 		})
+	}
+}
+
+func TestValidatorRejectsMateriallyStaleAndArbitraryContentSequenceNumbers(t *testing.T) {
+	validator := newTestValidator(t, Config{SessionID: testSession, SequenceNo: 200, ContentSequenceLimit: 8})
+	if err := validator.Validate(contentMessage(clientMessageID(testNowSeconds, 4), 199)); err != nil {
+		t.Fatalf("valid reordered sequence: %v", err)
+	}
+	duplicateSequence := contentMessage(clientMessageID(testNowSeconds, 8), 199)
+	_ = assertBadMessage(t, validator.Validate(duplicateSequence), ErrSequenceNoTooLow, CodeSequenceNoTooLow, duplicateSequence.MessageID, duplicateSequence.SequenceNo)
+	stale := contentMessage(clientMessageID(testNowSeconds, 12), 183)
+	_ = assertBadMessage(t, validator.Validate(stale), ErrSequenceNoTooLow, CodeSequenceNoTooLow, stale.MessageID, stale.SequenceNo)
+	farAhead := contentMessage(clientMessageID(testNowSeconds, 16), 219)
+	_ = assertBadMessage(t, validator.Validate(farAhead), ErrSequenceNoTooHigh, CodeSequenceNoTooHigh, farAhead.MessageID, farAhead.SequenceNo)
+}
+
+func TestValidatorRejectsContentSequenceThatWouldOverflowDurableState(t *testing.T) {
+	validator := newTestValidator(t, Config{SessionID: testSession})
+	message := contentMessage(clientMessageID(testNowSeconds, 4), int32(1<<31-1))
+	_ = assertBadMessage(t, validator.Validate(message), ErrSequenceNoTooHigh, CodeSequenceNoTooHigh, message.MessageID, message.SequenceNo)
+	if got := validator.Snapshot().SequenceNo; got != 0 {
+		t.Fatalf("overflowing sequence mutated state to %d", got)
 	}
 }
 
@@ -284,7 +331,7 @@ func TestValidatorRejectsInvalidMessageClassificationWithoutMutation(t *testing.
 
 func TestValidatorConcurrentUse(t *testing.T) {
 	const count = 256
-	validator := newTestValidator(t, Config{SessionID: testSession, RecentMessageIDLimit: count})
+	validator := newTestValidator(t, Config{SessionID: testSession, RecentMessageIDLimit: count, ContentSequenceLimit: count})
 	start := make(chan struct{})
 	errorsFound := make(chan error, count)
 	var wait sync.WaitGroup

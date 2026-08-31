@@ -60,20 +60,27 @@ func newRuntimeApplicationDispatcher(server *Server) *runtimeApplicationDispatch
 	return adapter
 }
 
-func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, request runtimev2.Request) (runtimev2.Outcome, error) {
+func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, request runtimev2.Request) (outcome runtimev2.Outcome, err error) {
+	requestMessageID := request.Message.MessageID
+	defer func() {
+		if recover() != nil {
+			outcome = runtimeApplicationFailure(requestMessageID, genericInternalError())
+			err = nil
+		}
+	}()
+
 	if a == nil {
 		return runtimev2.Outcome{}, fmt.Errorf("tlrpc: nil Runtime v2 application dispatcher")
 	}
 	if a.setupErr != nil {
 		return runtimev2.Outcome{}, a.setupErr
 	}
-	requestMessageID := request.Message.MessageID
 	method, ok := a.methods[request.Message.ConstructorID]
 	if !ok {
 		return runtimeApplicationFailure(requestMessageID, NewNotFoundError("METHOD_NOT_FOUND")), nil
 	}
 
-	decoded, remaining, err := decodeTLObject(a.decoder, request.Message.Body)
+	decoded, remaining, err := decodeTLObjectWithBudget(a.decoder, request.Message.Body, request.Message.DecodeBudget)
 	if err != nil {
 		return runtimeApplicationFailure(requestMessageID, NewBadRequestError("REQUEST_DECODE_FAILED")), nil
 	}
@@ -91,7 +98,13 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 	}
 	defer a.server.releaseHandler()
 
-	handler := func(callCtx context.Context, value interface{}) (interface{}, error) {
+	handler := func(callCtx context.Context, value interface{}) (response interface{}, err error) {
+		defer func() {
+			if recover() != nil {
+				response = nil
+				err = genericInternalError()
+			}
+		}()
 		object, valid := value.(TLObject)
 		if !valid {
 			return nil, NewInternalError("INVALID_INTERCEPTOR_REQUEST")
@@ -127,7 +140,7 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 	if object == nil {
 		return runtimeApplicationFailure(requestMessageID, NewInternalError("NIL_RESPONSE")), nil
 	}
-	body, err := encodeTLObject(object)
+	body, err := encodeTLObjectWithLimits(object, EncodeLimits{MaxEncodedBytes: a.server.maxEncodedResponseBytes})
 	if err != nil {
 		return runtimeApplicationFailure(requestMessageID, NewInternalError("RESPONSE_ENCODE_FAILED")), nil
 	}
@@ -177,7 +190,8 @@ func runtimeApplicationHandlerContext(ctx context.Context, request runtimev2.Req
 	ctx = withUserID(ctx, request.Info.UserID)
 	ctx = withLayer(ctx, request.Info.Layer)
 	ctx = withBinding(ctx, Binding{
-		AuthKeyID: int64(request.Info.AuthKeyID), SessionID: request.Info.SessionID,
+		ConnectionID: request.Info.ConnectionID,
+		AuthKeyID:    int64(request.Info.AuthKeyID), SessionID: request.Info.SessionID,
 		ServerSalt: request.Info.ServerSalt, UserID: request.Info.UserID, Layer: request.Info.Layer,
 	})
 	ctx = withClientMetadata(ctx, request.Info.Client)

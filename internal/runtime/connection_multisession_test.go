@@ -10,6 +10,7 @@ import (
 
 	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
+	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 	"github.com/r6m/tlrpc/session"
 )
 
@@ -205,9 +206,9 @@ func TestConnectionSessionMapIsBounded(t *testing.T) {
 	}
 }
 
-func TestConnectionInFlightLimitIsSharedAcrossSessions(t *testing.T) {
+func TestConnectionAdmissionSaturationReturnsCorrelatedRetryableErrorAcrossSessions(t *testing.T) {
 	now := time.Unix(inboundNowSeconds, 0).UTC()
-	application := &connectionApplicationStub{block: true, started: make(chan struct{})}
+	application := &concurrentSessionsApplicationStub{started: make(chan int64, 2), release: make(chan struct{})}
 	harness := newConnectionHarness(t, now, application, 100, nil)
 	harness.connection.config.ActiveRequests = 1
 	harness.connection.admission = newConnectionRequestAdmission(1)
@@ -223,22 +224,119 @@ func TestConnectionInFlightLimitIsSharedAcrossSessions(t *testing.T) {
 		t.Fatalf("first session request: %v", err)
 	}
 	select {
-	case <-application.started:
+	case sessionID := <-application.started:
+		if sessionID != inboundSessionID {
+			t.Fatalf("started session = %d, want %d", sessionID, inboundSessionID)
+		}
 	case <-time.After(time.Second):
 		t.Fatal("first session handler did not start")
 	}
 
 	const sessionB = int64(0x3344556677889900)
-	err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+	secondFrame := DecodedFrame{
 		Encrypted: &mtproto.InnerData{
 			Salt: inboundSalt, SessionID: sessionB,
 			MsgID: inboundMessageID(8), SeqNo: 1, Data: constructorBody(0x73737373),
 		},
 		AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+	}
+	if err := harness.connection.handleEncrypted(context.Background(), secondFrame); err != nil {
+		t.Fatalf("saturated request: %v", err)
+	}
+	waitForWrittenFrames(t, harness.transport, 2)
+	foundOverload := false
+	for _, frame := range harness.transport.writtenFrames() {
+		inner := decryptWriterFrame(t, harness.authKey, frame)
+		if inner.SessionID != sessionB || binaryConstructor(inner.Data) != mtprototl.RPCResultID {
+			continue
+		}
+		result := &mtprototl.RPCResult{}
+		if err := decodeControl(inner.Data, result); err != nil {
+			t.Fatal(err)
+		}
+		rpcErr := &mtprototl.RPCError{}
+		if err := decodeControl(result.ResultRaw, rpcErr); err != nil {
+			t.Fatal(err)
+		}
+		foundOverload = result.ReqMsgID == secondFrame.Encrypted.MsgID && rpcErr.ErrorCode == 500 && rpcErr.ErrorMessage == "SERVER_BUSY"
+	}
+	if !foundOverload {
+		t.Fatal("saturated request did not receive correlated SERVER_BUSY")
+	}
+	snapshot := loadConnectionSessionSnapshot(t, harness.store, harness.authKey.ID(), sessionB)
+	if snapshot.SeqNo != 0 || snapshot.LastClientMsgID != 0 || len(snapshot.RecentClientMsgIDs) != 0 {
+		t.Fatalf("saturated request consumed durable inbound state: %+v", snapshot)
+	}
+
+	close(application.release)
+	waitForWrittenFrames(t, harness.transport, 4)
+	if err := harness.connection.handleEncrypted(context.Background(), secondFrame); err != nil {
+		t.Fatalf("retry same request: %v", err)
+	}
+	select {
+	case sessionID := <-application.started:
+		if sessionID != sessionB {
+			t.Fatalf("retried session = %d, want %d", sessionID, sessionB)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("retryable saturated request did not execute")
+	}
+}
+
+func TestConnectionContainerAdmissionIsAtomicAndCorrelated(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	application := &multisessionApplicationStub{}
+	harness := newConnectionHarness(t, now, application, 100, nil)
+	harness.connection.config.ActiveRequests = 1
+	harness.connection.admission = newConnectionRequestAdmission(1)
+	defer harness.connection.shutdown(io.EOF)
+
+	firstID := inboundMessageID(4)
+	secondID := inboundMessageID(8)
+	body := serializeInboundContainer(t, []mtprototl.Message{
+		{MsgID: firstID, SeqNo: 1, BodyRaw: constructorBody(0x74747474)},
+		{MsgID: secondID, SeqNo: 3, BodyRaw: constructorBody(0x75757575)},
 	})
-	var capacityErr *ActiveRequestCapacityError
-	if !errors.As(err, &capacityErr) || capacityErr.Capacity != 1 {
-		t.Fatalf("second session request error = %v, want shared capacity 1", err)
+	if err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: inboundMessageID(20), SeqNo: 4, Data: body,
+		},
+		AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+	}); err != nil {
+		t.Fatalf("saturated container: %v", err)
+	}
+	waitForWrittenFrames(t, harness.transport, 1)
+	if got := application.sessionIDs(); len(got) != 0 {
+		t.Fatalf("container executed a prefix: %v", got)
+	}
+	snapshot := loadConnectionSessionSnapshot(t, harness.store, harness.authKey.ID(), inboundSessionID)
+	if snapshot.SeqNo != 0 || snapshot.LastClientMsgID != 0 || len(snapshot.RecentClientMsgIDs) != 0 {
+		t.Fatalf("saturated container consumed durable inbound state: %+v", snapshot)
+	}
+
+	frames := harness.transport.writtenFrames()
+	inner := decryptWriterFrame(t, harness.authKey, frames[0])
+	container := &mtprototl.MsgContainer{}
+	if err := decodeControl(inner.Data, container); err != nil {
+		t.Fatalf("decode overload container: %v", err)
+	}
+	if len(container.Messages) != 2 {
+		t.Fatalf("overload result count = %d, want 2", len(container.Messages))
+	}
+	wantIDs := []int64{firstID, secondID}
+	for index, child := range container.Messages {
+		result := &mtprototl.RPCResult{}
+		if err := decodeControl(child.BodyRaw, result); err != nil {
+			t.Fatalf("decode result %d: %v", index, err)
+		}
+		rpcErr := &mtprototl.RPCError{}
+		if err := decodeControl(result.ResultRaw, rpcErr); err != nil {
+			t.Fatalf("decode rpc error %d: %v", index, err)
+		}
+		if result.ReqMsgID != wantIDs[index] || rpcErr.ErrorCode != 500 || rpcErr.ErrorMessage != "SERVER_BUSY" {
+			t.Fatalf("overload result %d = req %d error %+v", index, result.ReqMsgID, rpcErr)
+		}
 	}
 }
 

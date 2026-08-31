@@ -204,6 +204,8 @@ func TestConnectionRPCDropCancelsRunningGeneratedHandler(t *testing.T) {
 		{Salt: inboundSalt, SessionID: inboundSessionID, MsgID: requestID, SeqNo: 1, Data: constructorBody(0x30303030)},
 		{Salt: inboundSalt, SessionID: inboundSessionID, MsgID: dropID, SeqNo: 3, Data: dropBody},
 	})
+	harness.connection.config.ActiveRequests = 1
+	harness.connection.admission = newConnectionRequestAdmission(1)
 
 	err := harness.connection.Run(context.Background())
 	if !errors.Is(err, io.EOF) {
@@ -477,6 +479,8 @@ func (c *scriptedFrameConnection) WriteMessage(frame []byte) error {
 	}
 	return nil
 }
+
+func (*scriptedFrameConnection) SetWriteDeadline(time.Time) error { return nil }
 
 func (c *scriptedFrameConnection) Close() error {
 	c.cancel()

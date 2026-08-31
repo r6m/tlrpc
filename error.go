@@ -163,10 +163,14 @@ func FromError(err error) *RPCError {
 		return NewRPCError(0, "")
 	}
 	var rpcErr *RPCError
-	if errors.As(err, &rpcErr) {
+	if errors.As(err, &rpcErr) && rpcErr != nil {
 		return rpcErr
 	}
-	return NewRPCError(int32(Unknown), err.Error())
+	return genericInternalError()
+}
+
+func genericInternalError() *RPCError {
+	return NewRPCError(int32(Internal), "INTERNAL")
 }
 
 // IsRPCError checks if error is an RPCError.

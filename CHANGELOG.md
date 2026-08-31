@@ -4,8 +4,129 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Released entries are historical records; the Unreleased section and current
+documentation define future framework behavior.
 
 ## [Unreleased]
+
+## [0.12.0] - 2026-08-31
+
+Production Readiness for the generic TL-schema-first framework. The
+features below are schema-neutral; Telegram layer 228 and `tgserver` are
+compatibility consumers, not framework dependencies.
+
+### Added
+
+- Execute `invokeAfterMsg` and `invokeAfterMsgs` as real per-session ordering
+  dependencies. Dependencies must be outermost, valid earlier message IDs, are
+  deduplicated and capped at 64, and wait at most 500 ms. Successful
+  dependencies release dispatch; failed dependencies return
+  `500 MSG_WAIT_FAILED`; unresolved dependencies return
+  `500 MSG_WAIT_TIMEOUT`.
+- Persist a monotonic client message-ID replay floor and recent content
+  sequence numbers in `session.Snapshot`. The floor advances as the bounded
+  exact-ID window evicts its minimum, so old IDs cannot execute again after
+  reconnect or restart when the configured store durably preserves the full
+  snapshot.
+- Add one shared logical-request decode budget covering aggregate decoded
+  bytes, wrappers, containers, vector elements, generated object nodes/depth,
+  gzip expansion ratio, and decompression work.
+- Bound generated response serialization before encryption with
+  `MaxEncodedResponseBytes`, and bound the connection-owned physical write
+  queue with one end-to-end write deadline.
+- Extend `ResourceLimits` with decoded-object, gzip, response, physical queue,
+  global connection, per-IP, per-auth-key, and per-connection session limits.
+- Add `WithObserver` and typed connection, handshake, session, RPC, admission,
+  writer, store, and gauge events. Delivery is non-blocking through a bounded
+  internal queue and observer panics are isolated from Runtime v2.
+- Add `WebSocketOriginPolicy` with same-origin defaults, explicit allowlists,
+  missing-origin policy, and explicit `AllowAny`; also bound WebSocket upgrade
+  admission, HTTP header size, header-read timeout, and idle timeout.
+- Add RSA private-key file protections: loading rejects non-regular or
+  group/world-accessible files, and saving enforces mode `0600`.
+
+### Changed
+
+- Make inbound container validation and active-request reservation atomic: all
+  children are accepted or none start, and overload returns correlated
+  `500 SERVER_BUSY` responses without consuming the candidate protocol
+  snapshot.
+- Share decode budgets across nested wrapper, container, gzip, constructor
+  replay, and generated object decoding instead of granting each layer a new
+  allowance.
+- Use one connection-owned frame sink as the sole serialized, bounded physical
+  writer after handshake; session writers retain independent protocol ordering.
+- Treat panic recovery as a mandatory runtime boundary. The recovery
+  interceptor no longer exposes the former customization shape; unknown and
+  panic errors are sanitized while intentional structured RPC errors survive.
+- Define WebSocket upgrades as `GET` requests requiring the `binary`
+  subprotocol and obfuscated2. Cross-origin browser deployments must configure
+  an explicit allowlist.
+- Remove synchronous `WithOnSessionBound` and `WithOnSessionUnbound` callbacks.
+  Typed non-blocking `SessionEvent` observation is the only lifecycle
+  notification surface, so user callbacks cannot stall connection shutdown.
+
+### Security
+
+- Prevent replay-window eviction from reopening old client message IDs when a
+  durable store round-trips the new snapshot fields.
+- Prevent decompression bombs, aggregate nested allocation escape, oversized
+  generated responses, unbounded physical write backlog, and excessive
+  connection/session admission through independent limits.
+- Prevent accidental loading of private RSA keys from unsafe file types or
+  group/world-readable paths and prevent framework saves from retaining a
+  permissive existing mode.
+
+### Documentation
+
+- Reframe TLRPC consistently as a generic framework driven by an
+  application-owned TL schema; `tgserver` is a consumer and layer 228 is a
+  fixture.
+- State explicitly that layer differences are resolved only during generation
+  and Runtime v2 never translates API layers.
+- Consolidate requirements, architecture, concrete implementation/defaults,
+  Telegram behavior, and unfinished roadmap work into non-overlapping pages.
+
+## [0.11.2] - 2026-08-31
+
+### Fixed
+
+- Classify `gzip_packed` requests as content-related so sequence validation
+  matches the wrapped application request.
+
+## [0.11.1] - 2026-08-31
+
+### Fixed
+
+- Accept the already-advanced first content sequence number of a restored
+  session that has no persisted client progress.
+
+## [0.11.0] - 2026-08-31
+
+### Added
+
+- Support multiple same-auth composite MTProto sessions on one physical
+  connection with independent session ownership and writers.
+
+## [0.10.2] - 2026-08-31
+
+### Fixed
+
+- Retain all parallel session subscribers instead of replacing another
+  session's live-push registration.
+
+## [0.10.1] - 2026-08-31
+
+### Fixed
+
+- Preserve `invokeWithoutUpdates` subscription state correctly.
+
+## [0.10.0] - 2026-08-30
+
+### Added
+
+- Add process-local publish that can exclude the exact originating composite
+  session.
 
 ## [0.9.0] - 2026-08-30
 
@@ -64,7 +185,8 @@ legacy contracts rather than preserving backward compatibility.
 
 ### Changed
 - Code generator now emits unified/sum types as interfaces (no pointer-to-interface). RPC methods return the interface directly for sum types, and pointers only for concrete struct results. Vectors of concrete types now use slices of pointers.
-- Documentation is consolidated into six canonical pages covering requirements, Telegram TL/MTProto, architecture, implementation, and the staged `tgserver` adoption roadmap, with current behavior separated from production requirements.
+- Consolidate documentation into canonical requirements, Telegram/MTProto,
+  architecture, implementation, and roadmap pages.
 - Incoming `msgs_ack` is consumed without acknowledgement-of-acknowledgement;
   content classification and sequence validation now follow MTProto rules.
 - The generated compatibility package is tracked so downstream `go mod tidy`

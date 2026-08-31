@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/r6m/tlrpc/crypto"
@@ -169,6 +170,71 @@ func TestRuntimeApplicationDispatcherMapsHandlerRPCError(t *testing.T) {
 	rpcErr := requireRuntimeApplicationError(t, outcome)
 	if rpcErr.RequestMessageID != 102 || rpcErr.Code != 403 || rpcErr.Message != "CUSTOM_DENIED" {
 		t.Fatalf("RPC error = %#v", rpcErr)
+	}
+}
+
+func TestRuntimeApplicationDispatcherIsolatesHandlerPanicAndRemainsUsable(t *testing.T) {
+	const secret = "sentinel-handler-panic-secret"
+	calls := 0
+	server := NewServer()
+	registerRuntimeApplicationTestService(server, &runtimeApplicationTestServiceImpl{
+		call: func(_ context.Context, request *runtimeApplicationTestRequest) (*runtimeApplicationTestResponse, error) {
+			calls++
+			if calls == 1 {
+				panic(secret)
+			}
+			return &runtimeApplicationTestResponse{Value: "response:" + request.Value}, nil
+		},
+	})
+	dispatcher := newRuntimeApplicationDispatcher(server)
+
+	outcome, err := dispatcher.DispatchApplication(context.Background(), runtimeApplicationRequest(t, 108, "panic"))
+	if err != nil {
+		t.Fatalf("dispatch panicking handler: %v", err)
+	}
+	rpcErr := requireRuntimeApplicationError(t, outcome)
+	if rpcErr.Code != int32(Internal) || rpcErr.Message != "INTERNAL" {
+		t.Fatalf("panic RPC error = %#v, want 500 INTERNAL", rpcErr)
+	}
+	if strings.Contains(rpcErr.Message, secret) {
+		t.Fatal("panic value was exposed in RPC output")
+	}
+
+	outcome, err = dispatcher.DispatchApplication(context.Background(), runtimeApplicationRequest(t, 109, "after"))
+	if err != nil {
+		t.Fatalf("dispatch after panic: %v", err)
+	}
+	result := requireRuntimeApplicationResult(t, outcome)
+	response := &runtimeApplicationTestResponse{}
+	if err := response.DeserializeTL(bytes.NewReader(result.Body)); err != nil {
+		t.Fatalf("decode response after panic: %v", err)
+	}
+	if response.Value != "response:after" {
+		t.Fatalf("response after panic = %q", response.Value)
+	}
+}
+
+func TestRuntimeApplicationDispatcherRedactsUnknownHandlerError(t *testing.T) {
+	const secret = "sentinel-handler-error-secret"
+	server := NewServer()
+	registerRuntimeApplicationTestService(server, &runtimeApplicationTestServiceImpl{
+		call: func(context.Context, *runtimeApplicationTestRequest) (*runtimeApplicationTestResponse, error) {
+			return nil, fmt.Errorf("database failed with password %s", secret)
+		},
+	})
+
+	outcome, err := newRuntimeApplicationDispatcher(server).DispatchApplication(
+		context.Background(), runtimeApplicationRequest(t, 110, "error"),
+	)
+	if err != nil {
+		t.Fatalf("dispatch application: %v", err)
+	}
+	rpcErr := requireRuntimeApplicationError(t, outcome)
+	if rpcErr.Code != int32(Internal) || rpcErr.Message != "INTERNAL" {
+		t.Fatalf("unknown RPC error = %#v, want 500 INTERNAL", rpcErr)
+	}
+	if strings.Contains(rpcErr.Message, secret) {
+		t.Fatal("unknown handler error was exposed in RPC output")
 	}
 }
 

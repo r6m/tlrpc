@@ -1,162 +1,121 @@
 # Requirements
 
+This page defines the v0.12.0 framework contract. Concrete APIs and defaults
+are documented in [implementation.md](./implementation.md).
+
 ## Product goal
 
-TLRPC must make a TL RPC server feel familiar to Go developers who have used
-gRPC while remaining TL-native on the wire. Any application must be able to:
+TLRPC must let any Go project define a server API in TL, generate typed service
+contracts, implement those contracts, and serve them through a reusable
+TL/MTProto runtime. The programming model may feel familiar to gRPC users, but
+protobuf and gRPC are not part of the architecture.
 
-1. provide its own valid TL schema;
-2. generate typed objects, codecs, and service contracts;
-3. implement and register the generated service servers; and
-4. serve those services through the reusable Runtime v2 protocol edge.
+The framework must remain schema-neutral. Telegram schemas and `tgserver` are
+compatibility consumers, not framework dependencies.
 
-The schema defines the application API. TLRPC must not define a mandatory
-Telegram schema or service set.
+## Schema and generation
 
-## Framework requirements
+- The application-owned TL schema is the API and compatibility source of truth.
+- Generation must preserve constructor IDs, field shapes, flags, vectors,
+  unions, functions, and declared result types.
+- Generated output must include typed objects and codecs, service interfaces,
+  unimplemented stubs, static descriptors, and `Register*Server` helpers.
+- Output and provenance must be deterministic for the same selected schema.
+- Optional layer differences must resolve only during generation from one
+  labeled base, ordered differences, and one selected target.
+- A same-name declaration replaces the earlier declaration, a new name adds
+  one, and exact `@tlrpc remove` directives remove declarations.
+- Runtime v2 must not translate API layers, constructor IDs, object shapes, or
+  method semantics. One generated package represents one resolved layer.
 
-### Schema and generation
+## Service model
 
-- Accept an application-owned schema as the compatibility source of truth.
-- Preserve constructor IDs, TL field shapes, flags, vectors, unions, requests,
-  and declared result types.
-- Generate deterministic Go code, constructor factories, codecs, service
-  interfaces, unimplemented stubs, descriptors, and registration helpers.
-- Accept a base schema labeled by `--base-layer`, zero or more repeatable and
-  ordered `--layer-diff=<layer>:<path>` inputs, and one target `--layer`.
-- Treat delta files as ordinary TL fragments: a same-name declaration replaces
-  the prior declaration, a new declaration adds one, and the exact directives
-  `// @tlrpc remove constructor NAME` and `// @tlrpc remove function NAME`
-  remove declarations from their respective domains.
-- Apply layer differences through the target in command-line order and record
-  the target layer in generated metadata.
-- Resolve all layer differences during generation. Runtime v2 must never
-  convert objects, declarations, or method semantics between layers.
-- Keep generated packages independent of Telegram product code and `tgserver`.
+- Generated registration is the only application method-registration path.
+- Dispatch must use TL method constructor IDs and typed request/result shapes.
+- Handlers receive `context.Context`, immutable request metadata, optional
+  unary interception, and explicit semantic capabilities.
+- Handlers must not receive raw transports or mutable protocol-session state.
+- Runtime-owned wrappers, containers, controls, acknowledgements, and errors
+  must not become generated application services.
+- Panics and unknown internal errors must cross the wire only as sanitized
+  internal RPC errors; intentional structured RPC errors must remain intact.
 
-### Service model
+## Runtime v2
 
-- Generated `Register*Server` helpers and complete generated descriptors are
-  the only application registration path.
-- Dispatch API calls by their TL method constructor IDs.
-- Give handlers typed requests, typed results, `context.Context`, unary
-  interceptors, and structured `rpc_error` conversion.
-- Keep MTProto wrappers and protocol controls inside Runtime v2 rather than
-  generating them as application services.
-- Expose immutable request metadata and explicit semantic capabilities; do not
-  expose mutable protocol state or a transport connection.
+- TCP and WebSocket carriers must enter the same Runtime v2 connection path.
+- Each physical connection must pin to one auth key and may host only a bounded
+  number of sessions for that same key.
+- A protocol session is identified by `(AuthKeyID, SessionID)` and must have one
+  active lease so reconnect cannot create concurrent outbound sequence owners.
+- Each session owns independent validation, replay state, reliability, routing,
+  active requests, writer ordering, and live-push subscription state.
+- One connection-owned sink must serialize complete physical writes across its
+  sessions; a session writer must not directly own or close the transport.
+- Request admission must be atomic for a whole container and bounded across the
+  physical connection. Rejected work must not consume durable protocol state.
+- Shutdown and disconnect cancellation must reach handlers and writers.
 
-### Runtime v2
+## Replay and ordering
 
-- Use one connection runtime for TCP and WebSocket carriers.
-- Validate configured and hard frame limits before allocating payloads.
-- Bound ciphertext, TL bytes, vectors, containers, and compressed expansion.
-- Own the MTProto authorization-key handshake, encryption/decryption, salt and
-  session validation, message validation, wrappers, containers, controls,
-  acknowledgements, and resend/state behavior.
-- Pin each physical connection to one auth key and reject encrypted traffic for
-  a different auth key on that connection.
-- Host a bounded map of same-auth composite sessions on each physical
-  connection, with a default capacity of 16.
-- Identify a protocol session by the complete `(AuthKeyID, SessionID)` key.
-- Acquire one exclusive active lease per composite key so reconnect cannot
-  create two outbound sequence owners.
-- Persist detached snapshots through a context-aware `session.Store`.
-- Give each composite session independent lease, validator, reliability,
-  router, active-request registry, writer, and push-subscription state.
-- Use one writer per composite session to own that session's outbound ordering,
-  message IDs, sequence numbers, RPC correlation, batching, encryption,
-  reliability state, and outbound snapshot progress.
-- Serialize complete physical frame writes through one connection-owned sink;
-  closing a session writer must not close the physical transport.
-- Bound request admission across the physical connection, not independently per
-  session.
-- Retire only the matching session when its lease is replaced. Retire the
-  physical connection when its transport or shared write boundary cannot
-  continue safely.
-- Propagate disconnect and shutdown cancellation to handlers and writers.
+- Validation must atomically accept an outer envelope and all container
+  children or reject the whole input without committing a partial snapshot.
+- Duplicate client message IDs must remain rejected after the bounded recent-ID
+  window evicts entries. The monotonic client message-ID floor is therefore a
+  required durable snapshot field.
+- Recent client message IDs and recent content sequence numbers must also be
+  detached, persisted protocol state.
+- A durable `session.Store` implementation must round-trip every
+  `session.Snapshot` field, including `ClientMsgIDFloor`,
+  `RecentClientMsgIDs`, and `RecentClientSeqNos`.
+- `invokeAfterMsg` and `invokeAfterMsgs` must wait for successful completion of
+  their referenced earlier requests, fail after a failed dependency, and time
+  out rather than wait indefinitely for an unknown dependency.
 
-### Application-facing runtime behavior
+## Resource and security boundaries
 
-- Make layer, auth-key ID, client metadata, user ID, and composite binding
-  available as immutable context values.
-- Apply user bind/unbind requests as explicit mutations after successful
-  handler completion and persist them before exposing the new binding.
-- Provide `Sender` for semantic schema-defined push from a handler.
-- Provide `Server.Publish` for best-effort process-local delivery to active
-  sessions bound to an application user.
-- Treat `invokeWithoutUpdates` as a composite-session subscription choice:
-  requests and responses continue normally while asynchronous pushes are
-  suppressed for that session.
-- Keep live delivery distinct from durable application update recovery.
+- Declared frame sizes must be checked before payload allocation.
+- One logical inbound request must share aggregate limits across nested
+  wrappers, containers, vectors, generated object nodes/depth, decoded bytes,
+  and gzip expansion/work. Nested decoding must not receive fresh budgets.
+- Application responses must be bounded while being serialized, before
+  encryption or physical write queueing.
+- Physical write queues and end-to-end write deadlines must be bounded.
+- Connection admission must support global, remote-IP, and auth-key quotas;
+  sessions per connection and active handlers must also be bounded.
+- WebSocket upgrades must require GET and the `binary` subprotocol, enforce an
+  explicit origin policy, and bound upgrade admission and HTTP headers/timeouts.
+- RSA private-key loaders must reject non-regular or group/world-accessible
+  files. Framework-written private keys must use mode `0600`.
 
-### Entry points and operations
+## Observability
 
-- Support MTProto over TCP and WebSocket.
-- Keep carrier/framing details behind transport interfaces.
-- Bound connection work, handler concurrency, reliability retention, message
-  size, deadlines, handshake state, and shutdown lifetime.
-- Close listeners and active connections and wait for owned goroutines during
-  shutdown.
-- Permit future carriers without changing generated service contracts.
-- Treat an HTTP/JSON Telegram Bot API as a separate application adapter, not an
-  MTProto framing mode.
+- Observation must not execute application callbacks on the protocol path.
+- Events must be typed and cover connection, handshake, session, RPC,
+  admission, physical writer, session store, and gauges.
+- Event fields and error classifications must not expose auth-key material,
+  plaintext payloads, private keys, or raw internal error strings.
+- Slow or panicking observers must not block or crash Runtime v2. Applications
+  must tolerate dropped events and derive authoritative business state from
+  their own durable stores.
 
-## Responsibility boundary
+## Application responsibilities
 
-TLRPC owns reusable mechanics:
+TLRPC intentionally does not provide:
 
-- parsing, validation, generation, and generated registration;
-- framing, handshake, cryptography, envelopes, wrappers, controls, reliability,
-  and connection lifecycle;
-- protocol-session snapshot and lease semantics;
-- semantic local sender/publish capabilities and lifecycle observations.
+- product users, authentication policy, dialogs, messages, media, or bots;
+- durable application update logs, difference APIs, recipient selection, or
+  cross-process fanout;
+- databases, queues, object stores, migrations, or retention policy;
+- an HTTP/JSON Bot API or arbitrary HTTP RPC gateway; or
+- deployment topology and tenant-specific limits.
 
-Applications own policy and durable product behavior:
+`Sender` and `Server.Publish` are process-local live-delivery tools. An
+application must commit durable product state before treating live delivery as
+an optimization.
 
-- schema selection and generated package versioning;
-- service implementations and authorization rules;
-- durable auth-key and session-store adapters and key-at-rest protection;
-- users, contacts, dialogs, messages, media, bots, and other domain state;
-- recipient selection, transactional outboxes, durable update logs,
-  `pts`/`qts`/`seq`, difference APIs, and missed-update recovery;
-- databases, queues, object stores, rate policy, and multi-node routing.
+## v0.12.0 acceptance
 
-## Security and quality requirements
-
-- Never log auth-key material, nonces, or decrypted payloads.
-- Bound and expire temporary handshake and reliability state.
-- Reject malformed sizes and protocol structures without panic or untrusted
-  allocation.
-- Persist replay, sequence, salt, layer, client metadata, and binding progress
-  as protocol correctness state rather than best-effort telemetry.
-- Test protocol behavior with malformed inputs and an independent client.
-- Prove arbitrary-schema generation independently of Telegram compatibility.
-- Run protocol compatibility over both TCP and WebSocket.
-- Keep physical writes behind the connection-owned serialized frame sink.
-
-## Explicit non-goals
-
-- A complete Telegram backend or a fixed Telegram API package.
-- Protobuf or gRPC as a public protocol.
-- Runtime semantic conversion between historical layers.
-- A mutable public session or application-controlled wire state.
-- Built-in databases, event buses, distributed presence, or durable fanout.
-- Treating process-local push as missed-update recovery.
-- Retaining unreleased APIs or the old runtime for backward compatibility.
-
-## Acceptance criteria
-
-Framework acceptance requires a non-Telegram schema to generate and compile,
-register multiple typed services, dispatch encrypted requests, and return typed
-results and RPC errors through public APIs.
-
-Telegram compatibility is a separate axis. The exact layer-228 fixture must
-generate deterministically and Runtime v2 must pass MTProto handshake,
-validation, wrapper, control, reconnect, reliability, push, TCP, WebSocket, and
-independent-client tests. Passing this axis does not make Telegram TLRPC's
-product definition.
-
-`tgserver` adoption is a separate consumer gate. It must preserve its own product
-semantics and durable update recovery while replacing its protocol gateway
-with released TLRPC APIs.
+The release requires deterministic custom-schema and Telegram layer-228
+generation, focused malformed-input and resource-limit tests, Runtime v2 tests,
+TCP and WebSocket conformance, replay/reconnect evidence, race checks, vet,
+builds, and architecture guards with sequential Go package compilation.

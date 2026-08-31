@@ -33,6 +33,26 @@ type scenarioServer struct {
 	unbound  chan tlrpc.Binding
 }
 
+type scenarioObserver struct {
+	unbound chan<- tlrpc.Binding
+}
+
+func (o scenarioObserver) ObserveTLRPC(event tlrpc.Event) {
+	sessionEvent, ok := event.(tlrpc.SessionEvent)
+	if !ok || sessionEvent.Action != "released" {
+		return
+	}
+	binding := tlrpc.Binding{
+		ConnectionID: sessionEvent.ConnectionID,
+		AuthKeyID:    sessionEvent.AuthKeyID,
+		SessionID:    sessionEvent.SessionID,
+	}
+	select {
+	case o.unbound <- binding:
+	default:
+	}
+}
+
 func startScenarioServer(t *testing.T) *scenarioServer {
 	t.Helper()
 	compatKey, err := compatkeys.ServerKey()
@@ -51,7 +71,7 @@ func startScenarioServer(t *testing.T) *scenarioServer {
 		tlrpc.WithAuthKeyManager(authKeys),
 		tlrpc.WithSessionStore(store),
 		tlrpc.WithServerKeyManager(serverKeys),
-		tlrpc.WithOnSessionUnbound(func(binding tlrpc.Binding) { unbound <- binding }),
+		tlrpc.WithObserver(scenarioObserver{unbound: unbound}),
 	)
 
 	gen.RegisterHelpServer(srv, &scenarioHelpService{})

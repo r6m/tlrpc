@@ -17,7 +17,9 @@ type Snapshot struct {
 	SeqNo              int32
 	ServerSeqNo        int32
 	LastClientMsgID    int64
+	ClientMsgIDFloor   int64
 	RecentClientMsgIDs []int64
+	RecentClientSeqNos []int32
 	Client             ClientMetadata
 	NewSessionCreated  bool
 	FirstClientMsgID   int64
@@ -46,5 +48,6 @@ func (s Snapshot) Key() SessionKey {
 func (s Snapshot) Clone() Snapshot {
 	clone := s
 	clone.RecentClientMsgIDs = append([]int64(nil), s.RecentClientMsgIDs...)
+	clone.RecentClientSeqNos = append([]int32(nil), s.RecentClientSeqNos...)
 	return clone
 }

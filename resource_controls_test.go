@@ -5,11 +5,11 @@ import (
 	"errors"
 	"io"
 	"net"
-	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
 )
 
@@ -103,48 +103,6 @@ func TestControlledConnUsesIndependentOperationDeadlines(t *testing.T) {
 	}
 }
 
-func TestControlledConnSerializesWritesAndBoundsLockWait(t *testing.T) {
-	base := newResourceTestConn()
-	base.writeStarted = make(chan struct{}, 1)
-	base.writeBlock = make(chan struct{})
-	limits := testResourceLimits()
-	limits.WriteTimeout = 100 * time.Millisecond
-	conn := NewServer(WithResourceLimits(limits)).controlConn(base)
-
-	firstDone := make(chan error, 1)
-	go func() { firstDone <- conn.WriteMessage([]byte{1}) }()
-	select {
-	case <-base.writeStarted:
-	case <-time.After(time.Second):
-		t.Fatal("first write did not start")
-	}
-
-	started := time.Now()
-	err := conn.WriteMessage([]byte{2})
-	if !errors.Is(err, os.ErrDeadlineExceeded) {
-		t.Fatalf("queued write error = %v, want deadline exceeded", err)
-	}
-	if elapsed := time.Since(started); elapsed < 50*time.Millisecond || elapsed > 500*time.Millisecond {
-		t.Fatalf("queued write waited %v, want bounded wait near configured timeout", elapsed)
-	}
-	base.mu.Lock()
-	if base.maxActiveWrites != 1 {
-		base.mu.Unlock()
-		t.Fatalf("maximum concurrent underlying writes = %d, want 1", base.maxActiveWrites)
-	}
-	base.mu.Unlock()
-
-	close(base.writeBlock)
-	select {
-	case err := <-firstDone:
-		if err != nil {
-			t.Fatalf("first write: %v", err)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("first write did not finish")
-	}
-}
-
 func TestMaxInFlightRequestsBoundsApplicationHandlers(t *testing.T) {
 	limits := testResourceLimits()
 	limits.MaxInFlightRequests = 1
@@ -217,12 +175,67 @@ func TestHandlerAdmissionIsCanceledByShutdown(t *testing.T) {
 	s.releaseHandler()
 }
 
+func TestAdmitConnectionRejectsGlobalConnectionLimit(t *testing.T) {
+	limits := testResourceLimits()
+	limits.MaxConnections = 1
+	s := NewServer(WithResourceLimits(limits))
+
+	firstOwned := &ownedConn{conn: s.controlConn(newResourceTestConn())}
+	s.connections[firstOwned] = struct{}{}
+	if _, ok := s.admitConnection(firstOwned, firstOwned.conn); !ok {
+		t.Fatal("first connection was rejected")
+	}
+
+	secondOwned := &ownedConn{conn: s.controlConn(newResourceTestConn())}
+	s.connections[secondOwned] = struct{}{}
+	if _, ok := s.admitConnection(secondOwned, secondOwned.conn); ok {
+		t.Fatal("second connection was admitted past the global limit")
+	}
+}
+
+func TestAuthenticatedConnectionQuotaUsesExplicitConnectionIdentity(t *testing.T) {
+	limits := testResourceLimits()
+	limits.MaxConnectionsPerAuthKey = 1
+	s := NewServer(WithResourceLimits(limits))
+
+	firstBase := newResourceTestConn()
+	firstOwned := &ownedConn{conn: s.controlConn(firstBase)}
+	firstState := &connectionState{owner: firstOwned, id: 1, acceptedAt: time.Now(), activeSessions: make(map[session.SessionKey]bool)}
+	secondBase := newResourceTestConn()
+	secondOwned := &ownedConn{conn: s.controlConn(secondBase)}
+	secondState := &connectionState{owner: secondOwned, id: 2, acceptedAt: time.Now(), activeSessions: make(map[session.SessionKey]bool)}
+	s.connectionByID[1] = firstState
+	s.connectionByID[2] = secondState
+	s.connectionStates[firstOwned] = firstState
+	s.connectionStates[secondOwned] = secondState
+
+	s.handleObservedSessionBound(Binding{ConnectionID: 1, AuthKeyID: 77, SessionID: 101})
+	s.handleObservedSessionBound(Binding{ConnectionID: 2, AuthKeyID: 77, SessionID: 102})
+	select {
+	case <-secondBase.Context().Done():
+	case <-time.After(time.Second):
+		t.Fatal("second connection was not closed at the per-auth-key limit")
+	}
+	if got := s.activeConnectionsByAuth[77]; got != 1 {
+		t.Fatalf("active connections for auth key = %d, want 1", got)
+	}
+	if s.activeSessions != 1 || firstState.activeSessionsOnConnection != 1 {
+		t.Fatalf("session gauges = global %d connection %d", s.activeSessions, firstState.activeSessionsOnConnection)
+	}
+
+	s.handleObservedSessionUnbound(Binding{ConnectionID: 1, AuthKeyID: 77, SessionID: 101})
+	if s.activeSessions != 0 || firstState.activeSessionsOnConnection != 0 {
+		t.Fatalf("released session gauges = global %d connection %d", s.activeSessions, firstState.activeSessionsOnConnection)
+	}
+}
+
 func testResourceLimits() ResourceLimits {
 	return ResourceLimits{
-		MaxPayloadBytes:     1 << 20,
-		MaxInFlightRequests: 8,
-		ReadTimeout:         time.Second,
-		WriteTimeout:        time.Second,
+		MaxPayloadBytes:          1 << 20,
+		MaxInFlightRequests:      8,
+		MaxSessionsPerConnection: 16,
+		ReadTimeout:              time.Second,
+		WriteTimeout:             time.Second,
 	}
 }
 

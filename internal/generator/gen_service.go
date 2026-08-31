@@ -378,6 +378,9 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) DeserializeTL(rd io.Reader) error {\n", reqBaseName); err != nil {
 		return err
 	}
+	if _, err := io.WriteString(g.out, "\tleaveDecode, err := mtproto.EnterObject(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer leaveDecode()\n"); err != nil {
+		return err
+	}
 	if _, err := io.WriteString(g.out, "\tctorID, err := mtproto.ReadUint32(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
 		return err
 	}
@@ -525,7 +528,7 @@ func (g *ServiceGenerator) writeRequestDeserializeValue(t parser.TypeRef, target
 		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(io.MultiReader(&boxedCtor, rd)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), rd)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
 			return err
 		}
 		if _, err := fmt.Fprintf(g.out, "%s\t%s = value\n", indent, target); err != nil {

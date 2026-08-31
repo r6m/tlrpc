@@ -20,3 +20,15 @@ func TestWrappedRPCErrorPreservesStatus(t *testing.T) {
 		t.Fatal("wrapped error lost errors.Is identity")
 	}
 }
+
+func TestFromErrorRedactsUnknownError(t *testing.T) {
+	const secret = "sentinel-database-password"
+
+	got := FromError(errors.New(secret))
+	if got.ErrorCode != int32(Internal) || got.ErrorMessage != "INTERNAL" {
+		t.Fatalf("FromError = %#v, want 500 INTERNAL", got)
+	}
+	if got.ErrorMessage == secret {
+		t.Fatal("unknown error text was exposed in RPC output")
+	}
+}

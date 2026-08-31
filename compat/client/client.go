@@ -276,6 +276,9 @@ type SessionInfo struct {
 	AuthKey    crypto.AuthKey
 	ServerSalt int64
 	SessionID  int64
+	// SeqNo is the count of content-related messages sent by this client. It is
+	// durable session state and must be restored when reconnecting a session.
+	SeqNo int32
 }
 
 // InitParams describes initConnection fields.

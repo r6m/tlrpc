@@ -34,6 +34,11 @@ func (r *EchoEchoRequest) SerializeTL(w io.Writer) error {
 }
 
 func (r *EchoEchoRequest) DeserializeTL(rd io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(rd)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(rd)
 	if err != nil {
 		return err

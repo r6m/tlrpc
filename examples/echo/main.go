@@ -23,14 +23,7 @@ func (s *echoServer) Echo(ctx context.Context, req *echo.EchoEchoRequest) (*echo
 func main() {
 	tcp := &transport.TCPTransport{}
 	ws := &transport.WebSocketTransport{}
-	srv := tlrpc.NewServer(
-		tlrpc.WithOnSessionBound(func(binding tlrpc.Binding, _ tlrpc.Sender) {
-			log.Printf("session bound: auth_key_id=%d user_id=%d", binding.AuthKeyID, binding.UserID)
-		}),
-		tlrpc.WithOnSessionUnbound(func(binding tlrpc.Binding) {
-			log.Printf("session unbound: auth_key_id=%d user_id=%d", binding.AuthKeyID, binding.UserID)
-		}),
-	)
+	srv := tlrpc.NewServer()
 	echo.RegisterEchoServer(srv, &echoServer{})
 
 	tcpLis, err := tcp.Listen(":9000")

@@ -1,28 +1,24 @@
 # Implementation
 
-This guide documents the current public application model. Planned work is
-listed only in [Roadmap](./roadmap.md).
+This page documents the current v0.12.0 code surface. Requirements are in
+[requirements.md](./requirements.md); ownership and flow are in
+[architecture.md](./architecture.md).
 
-## 1. Define and generate a schema
+## Generator
 
-An application starts with its own TL schema:
-
-```tl
----types---
-echo.response#9f57e1e8 message:string = echo.Response;
-
----functions---
-echo.echo#5e1f91a2 message:string = echo.Response;
-```
-
-Install and run the generator:
+Generate a package from any application-owned schema:
 
 ```bash
-go install github.com/r6m/tlrpc/cmd/tlrpc-gen@latest
 tlrpc-gen --schema=./schema.tl --out=./gen --package=gen
 ```
 
-An application may also generate one target from a layered schema history:
+Generated files contain concrete and union types, TL codecs, constructor
+factories, request wrappers, service interfaces, unimplemented service stubs,
+static descriptors, registration helpers, `SchemaLayer`, and provenance with
+the schema digest.
+
+Layer-difference mode accepts one base, strictly increasing differences, and a
+target equal to either the base layer or one supplied difference:
 
 ```bash
 tlrpc-gen \
@@ -35,312 +31,197 @@ tlrpc-gen \
   --package=gen
 ```
 
-The inputs have distinct roles:
-
-- `--schema` is the base schema file.
-- `--base-layer` labels the layer represented by that base schema.
-- `--layer-diff=<layer>:<path>` adds a layer delta. The flag is repeatable,
-  and deltas are applied in the order they appear on the command line.
-- `--layer` selects the target layer represented by the generated package.
-
-Delta files contain ordinary TL declarations and section markers. A
-constructor or function with the same declaration name replaces the previous
-declaration in that domain; a previously unseen name adds a declaration. Use
-only these exact comment directives for removals:
+Differences are normal TL fragments. Same-name constructors/functions replace
+earlier declarations and new names append. Removals use exact directives:
 
 ```tl
-// @tlrpc remove constructor NAME
-// @tlrpc remove function NAME
+// @tlrpc remove constructor old.constructor
+// @tlrpc remove function old.function
 ```
 
-The generator applies the ordered deltas through the requested target,
-validates the resolved schema, and records the target as generated
-`SchemaLayer` metadata. Layer resolution ends at generation. Runtime v2 never
-loads delta files or rewrites objects, fields, constructor IDs, requests,
-responses, or method semantics between layers.
+Differences after the selected target are not applied. Generation validates
+duplicate domains and removal targets. Runtime dispatch remains constructor
+driven and does not select layers.
 
-Generation produces schema-derived files for:
-
-- concrete TL objects and union interfaces;
-- function request objects;
-- constructor constants and factories;
-- serialization/deserialization codecs;
-- typed server interfaces and unimplemented stubs;
-- static service/method descriptors and `Register*Server` helpers.
-
-No generated service is mandatory. A custom schema can be unlayered, use its
-own version numbering, and contain no Telegram declarations.
-
-## 2. Implement and register generated services
+## Registration and handlers
 
 ```go
-type EchoService struct {
-	gen.UnimplementedEchoServer
-}
-
-func (s *EchoService) Echo(
-	ctx context.Context,
-	req *gen.EchoEchoRequest,
-) (*gen.EchoResponse, error) {
-	if req.Message == "" {
-		return nil, tlrpc.NewBadRequestError("MESSAGE_EMPTY")
-	}
-	return &gen.EchoResponse{Message: req.Message}, nil
-}
-
-server := tlrpc.NewServer(
-	tlrpc.WithUnaryInterceptor(loggingInterceptor),
-)
-gen.RegisterEchoServer(server, &EchoService{})
+server := tlrpc.NewServer(options...)
+gen.RegisterEchoServer(server, echoService)
+err := server.Serve(listener)
 ```
 
-Generated registration calls `Server.RegisterService` with a complete static
-descriptor. Application code does not register raw method IDs, constructor
-factories, or fallback callbacks. Runtime-owned MTProto controls and wrappers
-also do not appear as generated services.
+Generated registration installs complete `ServiceDesc`/`MethodDesc` metadata.
+Runtime v2 looks up the request constructor, decodes the generated request,
+runs unary interceptors, invokes the typed method, and encodes its declared TL
+result. Generated unimplemented stubs return structured unimplemented errors.
 
-Unary interceptors are appropriate for logging, metrics, panic recovery,
-coarse authorization, and request policy. Product workflows remain in service
-implementations.
+Request context exposes immutable values such as layer, auth-key ID, client
+metadata, user binding, and semantic sender. `BindSessionUser` and
+`UnbindSessionUser` request named post-handler mutations; successful mutations
+are persisted by Runtime v2. No handler API exposes the raw connection.
 
-Handler errors implementing `RPCError`, or errors built with TLRPC helpers,
-are encoded as correlated TL `rpc_error` results. Other errors are normalized
-through the framework error conversion path.
+Panics are always recovered at the application boundary. Unknown errors become
+sanitized `500 INTERNAL` responses; explicit `RPCError` values, including
+wrapped values, preserve their intentional code and message.
 
-## 3. Configure persistence and keys
+## Session storage
 
-```go
-server := tlrpc.NewServer(
-	tlrpc.WithAuthKeyManager(authKeys),
-	tlrpc.WithServerKeyManager(serverKeys),
-	tlrpc.WithSessionStore(sessionStore),
-)
-```
+`session.Store` loads, creates, saves, and deletes detached snapshots keyed by
+`session.SessionKey{AuthKeyID, SessionID}`. A production store must preserve all
+fields, including:
 
-`crypto.AuthKeyManager` stores permanent authorization keys.
-`crypto.ServerKeyManager` supplies RSA keys used by the handshake.
-`session.Store` persists detached Runtime v2 snapshots:
+- salt, layer, user binding, client metadata, and timestamps;
+- independent client/server sequence progress and session notification state;
+- highest/first client message IDs;
+- `ClientMsgIDFloor` and `RecentClientMsgIDs`; and
+- `RecentClientSeqNos`.
 
-```go
-type Store interface {
-	Load(context.Context, session.SessionKey) (session.Snapshot, error)
-	LoadOrCreate(
-		context.Context,
-		session.SessionKey,
-		session.Snapshot,
-	) (snapshot session.Snapshot, created bool, err error)
-	Save(context.Context, session.SessionKey, session.Snapshot) error
-	Delete(context.Context, session.SessionKey) error
-}
-```
+Slices must be copied on store boundaries. The included memory store is useful
+for tests and single-process development; it does not make replay state durable
+across process restart.
 
-The key is the complete `(AuthKeyID, SessionID)` identity. Store methods must
-be concurrency-safe, context-aware, and durably complete before returning
-success. Values must be detached: retaining a mutable runtime pointer is not a
-valid persistence implementation.
+## Resource limits
 
-`session.Snapshot` contains named protocol fields for salt, layer, client
-metadata, user binding, independent inbound/outbound sequence progress,
-replay-window message IDs, new-session progress, and timestamps. Persist every
-field. Application domain data belongs in a separate application store.
+`NewServer` has bounded defaults:
 
-`session.NewMemoryStore` is suitable for tests and single-process development,
-not durable production operation. Auth-key material must be encrypted at rest
-and never logged.
+| Boundary | Default |
+| --- | ---: |
+| MTProto payload | 16 MiB |
+| in-flight application requests | 1024 |
+| connections | 4096 |
+| connections per remote IP | 64 |
+| connections per auth key | 4 |
+| sessions per physical connection | 16 |
+| decoded bytes per logical request | 16 MiB |
+| wrappers | 16 |
+| containers | 64 |
+| aggregate vector elements | 65,536 |
+| generated object nodes | 262,144 |
+| generated object depth | 128 |
+| gzip expansion ratio | 128x |
+| gzip work | 32 MiB |
+| encoded TL response | 16 MiB |
+| read timeout | 2 minutes |
+| write timeout | 30 seconds |
 
-## 4. Serve TCP and WebSocket
-
-```go
-tcp := &transport.TCPTransport{AllowObfuscation: true}
-tcpListener, err := tcp.Listen(":9000")
-if err != nil {
-	return err
-}
-
-ws := &transport.WebSocketTransport{}
-wsListener, err := ws.Listen(":9001")
-if err != nil {
-	return err
-}
-
-go func() { _ = server.ServeTransport(tcpListener) }()
-go func() { _ = server.ServeTransport(wsListener) }()
-```
-
-TCP supports abridged, intermediate, padded-intermediate, and full MTProto
-framing. WebSocket is treated as a continuous byte stream, requires the
-`binary` subprotocol and obfuscated2, and feeds the same Runtime v2 framing and
-decode path.
-
-Each accepted physical connection is pinned to one auth key and admits up to
-16 same-auth composite sessions by default. Every session has independent
-lease, validator, reliability, router, active-request registry, writer, and
-push-subscription state. Request admission is connection-wide. Session writers
-own per-session protocol ordering and sequence progress, then submit complete
-frames through one serialized connection-owned sink. Closing or replacing one
-session retires only that session and never closes the shared transport;
-connection shutdown owns transport closure.
-
-`transport.Conn.ReadMessage(maxPayloadBytes)` is the bounded packet-read
-contract. Framing codecs check declared lengths and configured/hard ceilings
-before allocation. Nested encrypted, TL, vector, container, and compressed
-inputs are bounded again during protocol decoding.
-
-`Server.Stop` closes owned listeners and active connections, cancels work, and
-waits for owned connection goroutines. Repeated calls are safe.
-
-## 5. Server configuration
-
-The current server surface is intentionally narrow:
-
-```go
-func NewServer(...ServerOption) *Server
-func (*Server) RegisterService(ServiceDesc, interface{})
-func (*Server) Serve(net.Listener) error
-func (*Server) ServeTransport(transport.Listener) error
-func (*Server) Publish(userID int64, object TLObject) error
-func (*Server) PublishContext(context.Context, userID int64, object TLObject) error
-func (*Server) PublishExcept(userID int64, excluded Binding, object TLObject) error
-func (*Server) PublishExceptContext(context.Context, userID int64, excluded Binding, object TLObject) error
-func (*Server) Stop() error
-```
-
-Current options are:
-
-```text
-WithUnaryInterceptor
-WithSessionStore
-WithAuthKeyManager
-WithServerKeyManager
-WithLogger
-WithOnSessionBound
-WithOnSessionUnbound
-WithReliabilityLimits
-WithResourceLimits
-```
-
-`WithResourceLimits` accepts one Runtime v2 policy rather than separate
-gRPC-shaped message, stream, and timeout knobs:
+The physical write queue also has a bounded Runtime v2 default. Configure the
+policy as one TL-native unit:
 
 ```go
 tlrpc.WithResourceLimits(tlrpc.ResourceLimits{
-	MaxPayloadBytes:     16 << 20,
-	MaxInFlightRequests: 1024,
-	ReadTimeout:         2 * time.Minute,
-	WriteTimeout:        30 * time.Second,
+	MaxPayloadBytes:          16 << 20,
+	MaxInFlightRequests:      1024,
+	MaxConnections:           4096,
+	MaxConnectionsPerIP:      64,
+	MaxConnectionsPerAuthKey: 4,
+	MaxSessionsPerConnection: 16,
+	ReadTimeout:              2 * time.Minute,
+	WriteTimeout:             30 * time.Second,
+	ShutdownGracePeriod:      15 * time.Second,
 })
 ```
 
-Every supplied field must be positive; invalid policies panic during
-configuration. Payload size is enforced before transport allocation and before
-protocol decode. Request admission, reliability capacity/TTL, and directional
-deadlines are bounded. `NewServer` applies the values shown above by default;
-the option replaces that complete policy. Custom `transport.Conn`
-implementations must expose independent `SetReadDeadline` and
-`SetWriteDeadline` operations.
+When `WithResourceLimits` is supplied, payload, in-flight request, read
+timeout, and write timeout values must be positive. Negative values are invalid
+for every optional dimension. Zero selects safe defaults for decode,
+decompression, response encoding, and physical write queue dimensions; zero
+means unlimited for connection/IP/auth-key quotas; zero session capacity keeps
+the default; and zero shutdown grace means immediate forced shutdown after
+listener cancellation.
 
-There is no compatibility runtime selector or deprecated option family.
+One `mtproto.DecodeBudget` is shared through the complete logical inbound
+decode. Generated `DeserializeTL` methods charge object nodes/depth, vector
+readers charge aggregate elements, wrapper/container parsers charge their
+counts, and `gzip_packed` charges decoded bytes, expansion ratio, and work.
+Response serialization writes through a bounded writer before encryption.
 
-## 6. Handler context and binding
+`WithReliabilityLimits` separately controls the bounded session/message
+retention and TTL used by MTProto ACK/state/resend behavior.
 
-Handlers can read immutable runtime metadata:
+## `invokeAfter` behavior
+
+Runtime v2 supports `invokeAfterMsg` and `invokeAfterMsgs` as outermost wrappers
+with at most 64 valid earlier dependency IDs. Completion outcomes are retained
+per session in a history bounded by active-request capacity.
+
+- all dependencies successful: dispatch the wrapped method;
+- any dependency failed or was canceled: return `500 MSG_WAIT_FAILED`;
+- unknown dependency still unresolved after 500 ms: return
+  `500 MSG_WAIT_TIMEOUT`; and
+- dependent request canceled: stop waiting and do not dispatch.
+
+Application success means Runtime v2 produced a correlated `RPCResult` and no
+correlated `RPCError` for the request.
+
+## Observer
+
+Configure typed observation with `tlrpc.WithObserver(observer)`. An observer
+implements:
 
 ```go
-layer := tlrpc.LayerFromContext(ctx)
-authKeyID := tlrpc.AuthKeyIDFromContext(ctx)
-userID := tlrpc.UserIDFromContext(ctx)
-client, hasClient := tlrpc.ClientMetadataFromContext(ctx)
-binding, bound := tlrpc.BindingFromContext(ctx)
-```
-
-`Binding` contains the auth-key ID, session ID, server salt, user ID, and layer
-observed for the request. It is a value snapshot, not a mutable protocol
-object.
-
-An authentication service requests a user-binding mutation explicitly:
-
-```go
-if err := tlrpc.BindSessionUser(ctx, userID); err != nil {
-	return nil, err
+type Observer interface {
+	ObserveTLRPC(tlrpc.Event)
 }
 ```
 
-`UnbindSessionUser(ctx)` clears the application user binding. Runtime v2
-persists a successful mutation before publishing the changed presence. Failed
-handlers do not commit collected binding mutations.
+The event variants are `ConnectionEvent`, `HandshakeEvent`, `SessionEvent`,
+`RPCEvent`, `AdmissionEvent`, `WriterEvent`, `StoreEvent`, and `GaugeEvent`.
+They report stable identifiers, classifications, durations, counts, and error
+codes rather than payloads or secret material.
 
-Handlers cannot retrieve a mutable session or raw network connection. That
-boundary prevents application code from changing sequence numbers, salts,
-message IDs, encryption, reliability records, or write ordering.
+Delivery is asynchronous through an internal 256-event channel. Emission is
+non-blocking: a full channel drops the new event. Observer callback panics are
+recovered. Observers should return quickly and export metrics/logs elsewhere;
+they must eventually return and must not be used to make protocol correctness
+decisions. A callback that never returns violates the observer contract; it
+cannot block Runtime v2 or server shutdown, but its observer worker cannot be
+reclaimed by Go while user code remains blocked.
 
-## 7. Semantic server push
+## WebSocket transport
 
-Send a schema-defined object on the current request's connection:
+`transport.WebSocketTransport` requires:
+
+- an HTTP `GET` upgrade;
+- `Sec-WebSocket-Protocol: binary`;
+- obfuscated2 over the WebSocket byte stream; and
+- bounded upgrade admission, header size, header-read timeout, and idle timeout.
+
+`WebSocketOriginPolicy` controls browser origins:
 
 ```go
-sender, ok := tlrpc.SenderFromContext(ctx)
-if ok {
-	err := sender.Send(ctx, update)
+transport.WebSocketOriginPolicy{
+	AllowedOrigins: []string{"https://app.example"},
+	AllowMissing:   false,
 }
 ```
 
-Send to every locally active subscribed session bound to an application user:
+Origins are canonicalized to lower-case scheme and host. With a non-empty
+allowlist, only listed origins are accepted and a missing `Origin` is accepted
+only when `AllowMissing` is true. With an empty policy, browser origins must be
+same-origin and missing origins are accepted for non-browser clients.
+`AllowAny` explicitly accepts every origin. A custom Gorilla
+`Upgrader.CheckOrigin` takes precedence over the framework policy.
 
-```go
-err := server.Publish(userID, update)
+Defaults are an accept/upgrade capacity of 64, a 5-second header-read timeout,
+a 30-second idle timeout, and 8 KiB maximum HTTP headers.
 
-// Use PublishContext when delivery should inherit a deadline or cancellation.
-err = server.PublishContext(ctx, userID, update)
+## RSA server keys
 
-// Publish to the user's other local sessions, excluding the exact protocol
-// session that originated the change.
-binding, ok := tlrpc.BindingFromContext(ctx)
-if ok {
-	err = server.PublishExceptContext(ctx, userID, binding, update)
-}
-```
+`crypto.LoadPEMPrivateKey` accepts RSA PKCS#1 and PKCS#8 PEM only after opening
+and statting the path. It rejects non-regular files and any group/world
+permission bits (`mode & 0077 != 0`) with `ErrUnsafeKeyPermissions`.
 
-Publish exclusion compares only `Binding.AuthKeyID` and `Binding.SessionID`.
-Sessions that share just one of those values are still included.
+`crypto.SavePEMPrivateKey` writes PKCS#1 PEM, opens with `0600`, explicitly
+chmods to `0600`, truncates, and writes. Operators must still protect the
+parent directory, backups, process memory, and key rotation procedure.
 
-All publish paths submit semantic push to the target composite session's
-writer. That writer owns the session's protocol ordering and submits complete
-encrypted frames through the connection-owned serialized frame sink. The
-application does not allocate IDs, wrap containers, encrypt, or write transport
-frames.
+## Shutdown and delivery
 
-`invokeWithoutUpdates` is composite-session-local. For that wrapped invocation,
-asynchronous push is suppressed for the session while RPC execution and its
-correlated response continue. Other sessions on the same physical connection
-or elsewhere are never affected.
+`Serve` owns accepted listeners and connections. Shutdown closes listeners,
+cancels connection/session work, waits for the configured grace period, and
+then closes remaining transports. Read and write deadlines bound stalled I/O.
 
-`Server.Publish` is process-local and best-effort. It is not a durable update
-log, recipient engine, outbox, or cross-node fanout service. Commit application
-update state before attempting live delivery.
-
-Lifecycle hooks observe immutable binding values. The bound hook also receives
-a semantic `Sender`; it does not receive a raw connection.
-
-## 8. Verification
-
-Framework changes should verify these axes separately:
-
-- generate, compile, register, and dispatch the custom non-Telegram acceptance
-  schema;
-- deterministically generate the exact Telegram layer-228 fixture;
-- run malformed framing/decode and Runtime v2 unit tests;
-- run TCP and WebSocket handshake/encrypted conformance;
-- run reconnect, mixed push/RPC/control, ACK, state, resend, drop-answer,
-  cancellation, and shutdown tests;
-- run independent gotd compatibility where required;
-- run architecture checks that reject legacy APIs and physical writes outside
-  the Runtime v2 connection frame sink.
-
-Run broad Go verification sequentially (for example with `go test -p=1`) to
-avoid creating competing compiler fleets on development machines.
-
-## 9. Current limitations
-
-- Local publish is not durable or distributed.
-- v0.8.0 is published and `tgserver` verifies its source cutover against that
-  module without a workspace replacement.
+`Sender.Send`, `Server.Publish`, and exclusion variants perform semantic,
+process-local live delivery through session writers. They are not a durable or
+distributed update system.

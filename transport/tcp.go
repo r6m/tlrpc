@@ -7,8 +7,6 @@ import (
 
 // TCPTransport implements MTProto framing over TCP.
 type TCPTransport struct {
-	ReadTimeout        time.Duration
-	WriteTimeout       time.Duration
 	Protocol           Protocol
 	AllowObfuscation   bool
 	RequireObfuscation bool

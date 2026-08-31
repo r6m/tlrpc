@@ -112,16 +112,15 @@ func ChainUnaryInterceptors(interceptors ...UnaryInterceptor) UnaryInterceptor {
 	}
 }
 
-// RecoveryInterceptor recovers panics and uses errorFactory to build errors.
-func RecoveryInterceptor(errorFactory func(message string) error) UnaryInterceptor {
+// RecoveryInterceptor recovers interceptor panics as a generic internal error.
+// Generated application handlers are protected independently at the mandatory
+// runtime application boundary, so installing this interceptor is optional.
+func RecoveryInterceptor() UnaryInterceptor {
 	return func(ctx context.Context, req interface{}, info *UnaryServerInfo, handler UnaryHandler) (resp interface{}, err error) {
 		defer func() {
-			if r := recover(); r != nil {
-				if errorFactory != nil {
-					err = errorFactory(fmt.Sprintf("panic: %v", r))
-					return
-				}
-				err = fmt.Errorf("panic: %v", r)
+			if recover() != nil {
+				resp = nil
+				err = genericInternalError()
 			}
 		}()
 		return handler(ctx, req)

@@ -44,6 +44,7 @@ func (e *ConnectionSessionCapacityError) Error() string {
 type FrameConnection interface {
 	ReadMessage(maxPayloadBytes int) ([]byte, error)
 	WriteMessage(frame []byte) error
+	SetWriteDeadline(time.Time) error
 	Close() error
 	Context() context.Context
 	LocalAddr() net.Addr
@@ -51,6 +52,7 @@ type FrameConnection interface {
 }
 
 type ConnectionConfig struct {
+	ConnectionID      uint64
 	Conn              FrameConnection
 	AuthKeys          AuthKeySource
 	Handshake         *handshake.Engine
@@ -60,6 +62,9 @@ type ConnectionConfig struct {
 	MessageIDs        MessageIDSource
 	MaxPayloadBytes   int
 	MaxDecodedPayload int
+	DecodeLimits      mtproto.DecodeLimits
+	MaxEncodedBytes   int
+	FrameSinkPolicy   FrameSinkPolicy
 	ActiveRequests    int
 	SessionCapacity   int
 	Transport         string
@@ -110,6 +115,12 @@ func NewConnection(config ConnectionConfig) (*Connection, error) {
 	if config.SessionCapacity < 0 {
 		return nil, ErrConnectionConfig
 	}
+	if _, err := mtproto.NewDecodeBudget(config.DecodeLimits); err != nil {
+		return nil, ErrConnectionConfig
+	}
+	if config.MaxEncodedBytes < 0 || config.FrameSinkPolicy.QueueCapacity < 0 || config.FrameSinkPolicy.WriteTimeout < 0 {
+		return nil, ErrConnectionConfig
+	}
 	messageIDs := config.MessageIDs
 	if messageIDs == nil {
 		messageIDs = mtproto.NewMsgIDGenerator()
@@ -122,7 +133,7 @@ func NewConnection(config ConnectionConfig) (*Connection, error) {
 		config:     config,
 		messageIDs: &lockedMessageIDSource{source: messageIDs},
 		now:        now,
-		frameSink:  newConnectionFrameSink(config.Conn),
+		frameSink:  newConnectionFrameSink(config.Conn, config.FrameSinkPolicy),
 		sessions:   make(map[session.SessionKey]*connectionSession, config.SessionCapacity),
 		admission:  newConnectionRequestAdmission(config.ActiveRequests),
 	}, nil
@@ -267,7 +278,8 @@ func (c *Connection) requestInfo(snapshot session.Snapshot) RequestInfo {
 		}
 	}
 	info := RequestInfo{
-		AuthKeyID: snapshot.AuthKeyID, SessionID: snapshot.SessionID,
+		ConnectionID: c.config.ConnectionID,
+		AuthKeyID:    snapshot.AuthKeyID, SessionID: snapshot.SessionID,
 		ServerSalt: snapshot.ServerSalt, UserID: snapshot.UserID, Layer: snapshot.Layer,
 		Client: snapshot.Client,
 		Peer:   PeerInfo{Transport: transportMode},
@@ -319,8 +331,16 @@ func badMessageIntent(bad *protocol.BadMessageError) (ProtocolReply, error) {
 }
 
 type requestSender struct {
-	writer   *Writer
-	suppress bool
+	writer       *Writer
+	suppress     bool
+	connectionID uint64
+}
+
+func (s *requestSender) ConnectionID() uint64 {
+	if s == nil {
+		return 0
+	}
+	return s.connectionID
 }
 
 func (s *requestSender) Push(ctx context.Context, body []byte) error {

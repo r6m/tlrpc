@@ -11,10 +11,13 @@ import (
 )
 
 type recordingRuntimeSender struct {
-	pushes      int
-	err         error
-	lastContext context.Context
+	pushes       int
+	err          error
+	lastContext  context.Context
+	connectionID uint64
 }
+
+func (s *recordingRuntimeSender) ConnectionID() uint64 { return s.connectionID }
 
 func (s *recordingRuntimeSender) Push(ctx context.Context, _ []byte) error {
 	s.pushes++
@@ -23,27 +26,23 @@ func (s *recordingRuntimeSender) Push(ctx context.Context, _ []byte) error {
 }
 
 func TestRuntimePushRegistryTracksBindingAndConnectionSubscription(t *testing.T) {
-	var bound []Binding
-	var unbound []Binding
-	server := &Server{
-		onSessionBound:   func(binding Binding, _ Sender) { bound = append(bound, binding) },
-		onSessionUnbound: func(binding Binding) { unbound = append(unbound, binding) },
-	}
+	observer := newRecordingObserver()
+	server := NewServer(WithObserver(observer))
+	t.Cleanup(func() { _ = server.Stop() })
 	registry := newRuntimePushRegistry(server)
-	sender := &recordingRuntimeSender{}
+	sender := &recordingRuntimeSender{connectionID: 44}
 	snapshot := session.Snapshot{AuthKeyID: crypto.KeyID(11), SessionID: 22, Layer: 228}
 
 	registry.Update(snapshot, sender, true)
+	firstBound := waitSessionEvent(t, observer)
 	snapshot.UserID = 33
 	registry.Update(snapshot, sender, true)
-	if len(bound) != 2 || bound[1].UserID != 33 {
-		t.Fatalf("bound hooks = %#v", bound)
+	secondBound := waitSessionEvent(t, observer)
+	if firstBound.ConnectionID != 44 || secondBound.ConnectionID != 44 || secondBound.AuthKeyID != 11 {
+		t.Fatalf("bound events = %#v, %#v", firstBound, secondBound)
 	}
 
 	registry.Update(snapshot, sender, false)
-	if len(bound) != 2 {
-		t.Fatalf("subscription change emitted binding hook: %#v", bound)
-	}
 	if err := registry.Publish(context.Background(), 33, []byte{1, 2, 3, 4}); err != nil {
 		t.Fatal(err)
 	}
@@ -60,8 +59,9 @@ func TestRuntimePushRegistryTracksBindingAndConnectionSubscription(t *testing.T)
 	}
 
 	registry.Remove(snapshot.Key(), sender)
-	if len(unbound) != 1 || unbound[0].UserID != 33 {
-		t.Fatalf("unbound hooks = %#v", unbound)
+	unbound := waitSessionEvent(t, observer)
+	if unbound.Action != "released" || unbound.ConnectionID != 44 {
+		t.Fatalf("unbound event = %#v", unbound)
 	}
 }
 

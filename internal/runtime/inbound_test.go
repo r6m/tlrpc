@@ -149,6 +149,36 @@ func TestSessionValidatorReturnsCanonicalBadMessageErrors(t *testing.T) {
 	}
 }
 
+func TestSessionValidatorPersistsFullWindowReplayStateAcrossRestart(t *testing.T) {
+	snapshot := inboundSnapshot()
+	validator := newInboundValidator(t, snapshot)
+	firstID := inboundMessageID(4)
+	for index := 0; index < protocol.DefaultRecentMessageIDLimit+1; index++ {
+		messageID := inboundMessageID(uint32((index + 1) * 4))
+		validated, err := validator.Validate(snapshot, &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: messageID, SeqNo: int32(index*2 + 1), Data: constructorBody(0x01020304),
+		})
+		if err != nil {
+			t.Fatalf("validate message %d: %v", index, err)
+		}
+		snapshot = validated.Snapshot
+	}
+	if snapshot.ClientMsgIDFloor != firstID || len(snapshot.RecentClientSeqNos) == 0 {
+		t.Fatalf("durable replay state = %+v", snapshot)
+	}
+
+	restored := newInboundValidator(t, snapshot)
+	_, err := restored.Validate(snapshot, &mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: firstID, SeqNo: 1, Data: constructorBody(0x01020304),
+	})
+	var bad *protocol.BadMessageError
+	if !errors.As(err, &bad) || bad.Code != protocol.CodeReplayMessageID {
+		t.Fatalf("replay after restart error = %v", err)
+	}
+}
+
 func inboundSnapshot() session.Snapshot {
 	return session.Snapshot{
 		SessionID: inboundSessionID, ServerSalt: inboundSalt,

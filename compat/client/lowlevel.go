@@ -58,6 +58,17 @@ func (c *Client) SetSession(authKeyID crypto.KeyID, authKey crypto.AuthKey, serv
 	c.sessionID = sessionID
 }
 
+// SetSessionInfo restores a complete client session, including the content
+// sequence counter that must remain monotonic when the same MTProto session is
+// reconnected.
+func (c *Client) SetSessionInfo(info SessionInfo) {
+	c.authKeyID = info.AuthKeyID
+	c.authKey = info.AuthKey
+	c.serverSalt = info.ServerSalt
+	c.sessionID = info.SessionID
+	c.seqNo = info.SeqNo
+}
+
 // Session returns a snapshot of the current session state.
 func (c *Client) Session() SessionInfo {
 	return SessionInfo{
@@ -65,5 +76,6 @@ func (c *Client) Session() SessionInfo {
 		AuthKey:    c.authKey,
 		ServerSalt: c.serverSalt,
 		SessionID:  c.sessionID,
+		SeqNo:      c.seqNo,
 	}
 }

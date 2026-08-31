@@ -64,6 +64,11 @@ func (v *AssetDocument) SerializeTL(w io.Writer) error {
 }
 
 func (v *AssetDocument) DeserializeTL(r io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(r)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(r)
 	if err != nil {
 		return err
@@ -174,6 +179,11 @@ func (v *AssetLink) SerializeTL(w io.Writer) error {
 }
 
 func (v *AssetLink) DeserializeTL(r io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(r)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(r)
 	if err != nil {
 		return err
@@ -276,6 +286,11 @@ func (v *CatalogPage) SerializeTL(w io.Writer) error {
 }
 
 func (v *CatalogPage) DeserializeTL(r io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(r)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(r)
 	if err != nil {
 		return err
@@ -313,7 +328,7 @@ func (v *CatalogPage) DeserializeTL(r io.Reader) error {
 				if err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {
 					return err
 				}
-				if err := value.DeserializeTL(io.MultiReader(&boxedCtor, r)); err != nil {
+				if err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), r)); err != nil {
 					return err
 				}
 				item = value
@@ -370,6 +385,11 @@ func (v *JobQueued) SerializeTL(w io.Writer) error {
 }
 
 func (v *JobQueued) DeserializeTL(r io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(r)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(r)
 	if err != nil {
 		return err
@@ -402,7 +422,7 @@ func (v *JobQueued) DeserializeTL(r io.Reader) error {
 		if err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {
 			return err
 		}
-		if err := value.DeserializeTL(io.MultiReader(&boxedCtor, r)); err != nil {
+		if err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), r)); err != nil {
 			return err
 		}
 		v.Asset = value
@@ -451,6 +471,11 @@ func (v *JobRejected) SerializeTL(w io.Writer) error {
 }
 
 func (v *JobRejected) DeserializeTL(r io.Reader) error {
+	leaveDecode, err := mtproto.EnterObject(r)
+	if err != nil {
+		return err
+	}
+	defer leaveDecode()
 	ctorID, err := mtproto.ReadUint32(r)
 	if err != nil {
 		return err

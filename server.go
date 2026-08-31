@@ -14,6 +14,7 @@ import (
 	"github.com/r6m/tlrpc/crypto"
 	handshakev2 "github.com/r6m/tlrpc/internal/handshake"
 	runtimev2 "github.com/r6m/tlrpc/internal/runtime"
+	"github.com/r6m/tlrpc/mtproto"
 	"github.com/r6m/tlrpc/session"
 	"github.com/r6m/tlrpc/transport"
 )
@@ -24,42 +25,61 @@ const (
 	DefaultReliabilityTTL             = 10 * time.Minute
 	DefaultMaxPayloadBytes            = 16 << 20
 	DefaultMaxInFlightRequests        = 1024
+	DefaultMaxConnections             = 4096
+	DefaultMaxConnectionsPerIP        = 64
+	DefaultMaxConnectionsPerAuthKey   = 4
 	DefaultReadTimeout                = 2 * time.Minute
 	DefaultWriteTimeout               = 30 * time.Second
 )
 
 // Server represents an RPC server
 type Server struct {
-	authKeys            crypto.AuthKeyManager
-	serverKeys          crypto.ServerKeyManager
-	store               session.Store
-	runtimeLeases       *runtimev2.SessionLeaseRegistry
-	runtimeReliability  *runtimev2.ReliabilityRegistry
-	runtimeHandshake    *handshakev2.Engine
-	runtimePushes       *runtimePushRegistry
-	dispatcher          *dispatcher
-	schemaLayer         int
-	schemaLayerSet      bool
-	unaryInterceptors   []UnaryInterceptor
-	logger              Logger
-	services            map[string]*serviceInfo
-	shutdownCh          chan struct{}
-	onSessionBound      OnSessionBoundHook
-	onSessionUnbound    OnSessionUnboundHook
-	reliabilitySessions int
-	reliabilityMessages int
-	reliabilityTTL      time.Duration
-	maxPayloadBytes     int
-	maxInFlightRequests int
-	readTimeout         time.Duration
-	writeTimeout        time.Duration
-	handlerSlots        chan struct{}
-	lifecycleMu         sync.Mutex
-	listeners           map[*ownedListener]struct{}
-	connections         map[*ownedConn]struct{}
-	connectionWG        sync.WaitGroup
-	stopOnce            sync.Once
-	stopDone            chan struct{}
+	authKeys                   crypto.AuthKeyManager
+	serverKeys                 crypto.ServerKeyManager
+	store                      session.Store
+	runtimeLeases              *runtimev2.SessionLeaseRegistry
+	runtimeReliability         *runtimev2.ReliabilityRegistry
+	runtimeHandshake           *handshakev2.Engine
+	runtimePushes              *runtimePushRegistry
+	dispatcher                 *dispatcher
+	schemaLayer                int
+	schemaLayerSet             bool
+	unaryInterceptors          []UnaryInterceptor
+	logger                     Logger
+	services                   map[string]*serviceInfo
+	shutdownCh                 chan struct{}
+	observer                   Observer
+	observerSink               *observerSink
+	reliabilitySessions        int
+	reliabilityMessages        int
+	reliabilityTTL             time.Duration
+	maxPayloadBytes            int
+	maxInFlightRequests        int
+	decodeLimits               mtproto.DecodeLimits
+	maxEncodedResponseBytes    int
+	physicalWriteQueueCapacity int
+	maxConnections             int
+	maxConnectionsPerIP        int
+	maxConnectionsPerAuthKey   int
+	maxSessionsPerConnection   int
+	readTimeout                time.Duration
+	writeTimeout               time.Duration
+	shutdownGracePeriod        time.Duration
+	handlerSlots               chan struct{}
+	activeHandlers             int
+	lifecycleMu                sync.Mutex
+	listeners                  map[*ownedListener]struct{}
+	connections                map[*ownedConn]struct{}
+	connectionStates           map[*ownedConn]*connectionState
+	connectionByID             map[uint64]*connectionState
+	activeConnectionsByIP      map[string]int
+	activeConnectionsByAuth    map[int64]int
+	activeSessions             int
+	pendingSessionAcquire      map[session.SessionKey]bool
+	nextConnectionID           uint64
+	connectionWG               sync.WaitGroup
+	stopOnce                   sync.Once
+	stopDone                   chan struct{}
 }
 
 type closer interface {
@@ -101,26 +121,38 @@ type serviceInfo struct {
 // NewServer creates a new RPC server with the given options
 func NewServer(opts ...ServerOption) *Server {
 	s := &Server{
-		dispatcher:          newDispatcher(),
-		authKeys:            crypto.NewMemoryAuthKeyManager(),
-		serverKeys:          crypto.NewMemoryServerKeyManager(),
-		store:               session.NewMemoryStore(),
-		services:            make(map[string]*serviceInfo),
-		shutdownCh:          make(chan struct{}),
-		stopDone:            make(chan struct{}),
-		listeners:           make(map[*ownedListener]struct{}),
-		connections:         make(map[*ownedConn]struct{}),
-		reliabilitySessions: DefaultReliabilitySessionCapacity,
-		reliabilityMessages: DefaultReliabilityMessageCapacity,
-		reliabilityTTL:      DefaultReliabilityTTL,
-		maxPayloadBytes:     DefaultMaxPayloadBytes,
-		maxInFlightRequests: DefaultMaxInFlightRequests,
-		readTimeout:         DefaultReadTimeout,
-		writeTimeout:        DefaultWriteTimeout,
+		dispatcher:                 newDispatcher(),
+		authKeys:                   crypto.NewMemoryAuthKeyManager(),
+		serverKeys:                 crypto.NewMemoryServerKeyManager(),
+		store:                      session.NewMemoryStore(),
+		services:                   make(map[string]*serviceInfo),
+		shutdownCh:                 make(chan struct{}),
+		stopDone:                   make(chan struct{}),
+		listeners:                  make(map[*ownedListener]struct{}),
+		connections:                make(map[*ownedConn]struct{}),
+		connectionStates:           make(map[*ownedConn]*connectionState),
+		connectionByID:             make(map[uint64]*connectionState),
+		activeConnectionsByIP:      make(map[string]int),
+		activeConnectionsByAuth:    make(map[int64]int),
+		reliabilitySessions:        DefaultReliabilitySessionCapacity,
+		reliabilityMessages:        DefaultReliabilityMessageCapacity,
+		reliabilityTTL:             DefaultReliabilityTTL,
+		maxPayloadBytes:            DefaultMaxPayloadBytes,
+		maxInFlightRequests:        DefaultMaxInFlightRequests,
+		maxConnections:             DefaultMaxConnections,
+		maxConnectionsPerIP:        DefaultMaxConnectionsPerIP,
+		maxConnectionsPerAuthKey:   DefaultMaxConnectionsPerAuthKey,
+		decodeLimits:               mtproto.DecodeLimits{},
+		maxEncodedResponseBytes:    DefaultMaxEncodedTLBytes,
+		physicalWriteQueueCapacity: runtimev2.DefaultPhysicalWriteQueueCapacity,
+		maxSessionsPerConnection:   runtimev2.DefaultConnectionSessionCapacity,
+		readTimeout:                DefaultReadTimeout,
+		writeTimeout:               DefaultWriteTimeout,
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
+	s.setupObserver()
 	s.runtimePushes = newRuntimePushRegistry(s)
 	if s.maxInFlightRequests > 0 {
 		s.handlerSlots = make(chan struct{}, s.maxInFlightRequests)
@@ -341,10 +373,27 @@ func (s *Server) Stop() error {
 		for _, lis := range listeners {
 			_ = lis.close()
 		}
+		if s.shutdownGracePeriod > 0 {
+			done := make(chan struct{})
+			go func() {
+				s.connectionWG.Wait()
+				close(done)
+			}()
+			timer := time.NewTimer(s.shutdownGracePeriod)
+			select {
+			case <-done:
+				timer.Stop()
+				s.closeObserver()
+				close(s.stopDone)
+				return
+			case <-timer.C:
+			}
+		}
 		for _, conn := range connections {
 			_ = conn.close()
 		}
 		s.connectionWG.Wait()
+		s.closeObserver()
 		close(s.stopDone)
 	})
 	<-s.stopDone
@@ -379,35 +428,61 @@ func (s *Server) serveConn(conn transport.Conn) bool {
 	s.connections[owned] = struct{}{}
 	s.connectionWG.Add(1)
 	s.lifecycleMu.Unlock()
-
+	state, ok := s.admitConnection(owned, conn)
+	if !ok {
+		_ = owned.close()
+		s.lifecycleMu.Lock()
+		delete(s.connections, owned)
+		delete(s.connectionStates, owned)
+		s.lifecycleMu.Unlock()
+		s.connectionWG.Done()
+		return true
+	}
 	application := newRuntimeApplicationDispatcher(s)
 	runtimeConn, err := runtimev2.NewConnection(runtimev2.ConnectionConfig{
-		Conn: conn, AuthKeys: s.authKeys, Handshake: s.runtimeHandshake,
+		ConnectionID: state.id, Conn: conn, AuthKeys: s.authKeys, Handshake: s.runtimeHandshake,
 		Leases: s.runtimeLeases, Reliability: s.runtimeReliability,
 		Application: application, MaxPayloadBytes: s.maxPayloadBytes,
 		MaxDecodedPayload: s.maxPayloadBytes, ActiveRequests: s.maxInFlightRequests,
-		SchemaLayer: s.schemaLayer, Transport: runtimeTransportMode(conn),
+		DecodeLimits: s.decodeLimits, MaxEncodedBytes: s.maxEncodedResponseBytes,
+		FrameSinkPolicy: runtimev2.FrameSinkPolicy{
+			QueueCapacity: s.physicalWriteQueueCapacity, WriteTimeout: s.writeTimeout,
+			Observe: func(bytes int, outcome string, err error, duration time.Duration) {
+				s.emitWriterEvent(state, bytes, outcome, classifyWriterError(err), duration)
+			},
+		},
+		SessionCapacity: s.maxSessionsPerConnection,
+		SchemaLayer:     s.schemaLayer, Transport: runtimeTransportMode(conn),
 		Presence: s.runtimePushes,
 	})
 	if err != nil || application.setupErr != nil {
+		reason := "setup_failed"
+		s.finishConnection(owned, state, reason)
 		s.lifecycleMu.Lock()
 		delete(s.connections, owned)
-		s.connectionWG.Done()
 		s.lifecycleMu.Unlock()
+		s.connectionWG.Done()
 		_ = owned.close()
 		return false
 	}
 
 	go func() {
+		reason := "closed"
 		defer func() {
 			_ = owned.close()
+			s.finishConnection(owned, state, reason)
 			s.lifecycleMu.Lock()
 			delete(s.connections, owned)
 			s.lifecycleMu.Unlock()
 			s.connectionWG.Done()
 		}()
-		if runErr := runtimeConn.Run(context.Background()); runErr != nil && !s.stopped() && s.logger != nil {
-			s.logger.Error("connection runtime stopped", "error", runErr)
+		if runErr := runtimeConn.Run(context.Background()); runErr != nil {
+			reason = classifyConnectionClose(runErr, s.stopped())
+			if !s.stopped() && s.logger != nil {
+				s.logger.Error("connection runtime stopped", "error", runErr)
+			}
+		} else if s.stopped() {
+			reason = "shutdown"
 		}
 	}()
 	return true
@@ -480,20 +555,6 @@ func WithServerKeyManager(manager crypto.ServerKeyManager) ServerOption {
 	}
 }
 
-// WithOnSessionBound registers a hook called when a session is bound to a connection.
-func WithOnSessionBound(fn OnSessionBoundHook) ServerOption {
-	return func(s *Server) {
-		s.onSessionBound = fn
-	}
-}
-
-// WithOnSessionUnbound registers a hook called when a connection is unbound/closed.
-func WithOnSessionUnbound(fn OnSessionUnboundHook) ServerOption {
-	return func(s *Server) {
-		s.onSessionUnbound = fn
-	}
-}
-
 // WithReliabilityLimits configures strict server-wide session and per-session
 // message bounds for MTProto acknowledgement, state, and resend tracking.
 // All values must be positive; invalid configuration panics during setup.
@@ -515,12 +576,29 @@ func WithReliabilityLimits(sessionCapacity, messageCapacity int, ttl time.Durati
 }
 
 // ResourceLimits configures the bounded Runtime v2 connection and application
-// execution policy. Every field must be positive when the policy is supplied.
+// execution policy. Zero selects framework defaults for decode, response, and
+// writer bounds; zero connection quotas are unlimited; zero shutdown grace
+// closes active connections immediately. Negative values are invalid.
 type ResourceLimits struct {
-	MaxPayloadBytes     int
-	MaxInFlightRequests int
-	ReadTimeout         time.Duration
-	WriteTimeout        time.Duration
+	MaxPayloadBytes            int
+	MaxInFlightRequests        int
+	MaxDecodedBytes            int64
+	MaxWrappers                int
+	MaxContainers              int
+	MaxVectorElements          int64
+	MaxObjectNodes             int64
+	MaxObjectDepth             int
+	MaxGzipExpansionRatio      int64
+	MaxGzipWorkBytes           int64
+	MaxEncodedResponseBytes    int
+	PhysicalWriteQueueCapacity int
+	MaxConnections             int
+	MaxConnectionsPerIP        int
+	MaxConnectionsPerAuthKey   int
+	MaxSessionsPerConnection   int
+	ReadTimeout                time.Duration
+	WriteTimeout               time.Duration
+	ShutdownGracePeriod        time.Duration
 }
 
 // WithResourceLimits applies one TL-native resource policy to Runtime v2.
@@ -532,15 +610,63 @@ func WithResourceLimits(limits ResourceLimits) ServerOption {
 		if limits.MaxInFlightRequests <= 0 {
 			panic("tlrpc: maximum in-flight requests must be positive")
 		}
+		decodeLimits := mtproto.DecodeLimits{
+			MaxDecodedBytes: limits.MaxDecodedBytes, MaxWrappers: limits.MaxWrappers,
+			MaxContainers: limits.MaxContainers, MaxVectorElements: limits.MaxVectorElements,
+			MaxObjectNodes: limits.MaxObjectNodes, MaxObjectDepth: limits.MaxObjectDepth,
+			MaxGzipRatio: limits.MaxGzipExpansionRatio, MaxGzipWorkBytes: limits.MaxGzipWorkBytes,
+		}
+		if _, err := mtproto.NewDecodeBudget(decodeLimits); err != nil {
+			panic(err)
+		}
+		encodedLimit := limits.MaxEncodedResponseBytes
+		if encodedLimit < 0 {
+			panic("tlrpc: maximum encoded response bytes cannot be negative")
+		}
+		if encodedLimit == 0 {
+			encodedLimit = DefaultMaxEncodedTLBytes
+		}
+		queueCapacity := limits.PhysicalWriteQueueCapacity
+		if queueCapacity < 0 {
+			panic("tlrpc: physical write queue capacity cannot be negative")
+		}
+		if queueCapacity == 0 {
+			queueCapacity = runtimev2.DefaultPhysicalWriteQueueCapacity
+		}
+		if limits.MaxConnections < 0 {
+			panic("tlrpc: maximum connections cannot be negative")
+		}
+		if limits.MaxConnectionsPerIP < 0 {
+			panic("tlrpc: maximum connections per IP cannot be negative")
+		}
+		if limits.MaxConnectionsPerAuthKey < 0 {
+			panic("tlrpc: maximum connections per auth key cannot be negative")
+		}
+		if limits.MaxSessionsPerConnection < 0 {
+			panic("tlrpc: maximum sessions per connection cannot be negative")
+		}
 		if limits.ReadTimeout <= 0 {
 			panic("tlrpc: read timeout must be positive")
 		}
 		if limits.WriteTimeout <= 0 {
 			panic("tlrpc: write timeout must be positive")
 		}
+		if limits.ShutdownGracePeriod < 0 {
+			panic("tlrpc: shutdown grace period cannot be negative")
+		}
 		s.maxPayloadBytes = limits.MaxPayloadBytes
 		s.maxInFlightRequests = limits.MaxInFlightRequests
+		s.decodeLimits = decodeLimits
+		s.maxEncodedResponseBytes = encodedLimit
+		s.physicalWriteQueueCapacity = queueCapacity
+		s.maxConnections = limits.MaxConnections
+		s.maxConnectionsPerIP = limits.MaxConnectionsPerIP
+		s.maxConnectionsPerAuthKey = limits.MaxConnectionsPerAuthKey
+		if limits.MaxSessionsPerConnection > 0 {
+			s.maxSessionsPerConnection = limits.MaxSessionsPerConnection
+		}
 		s.readTimeout = limits.ReadTimeout
 		s.writeTimeout = limits.WriteTimeout
+		s.shutdownGracePeriod = limits.ShutdownGracePeriod
 	}
 }

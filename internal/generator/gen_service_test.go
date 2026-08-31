@@ -119,6 +119,15 @@ users.getUsers#0d91a548 id:Vector<InputUser> = Vector<User>;
 	if !strings.Contains(content, "GetStaticConstructors()[ctorID]") {
 		t.Fatalf("expected constructor dispatch in request vector decode")
 	}
+	if !strings.Contains(content, "mtproto.EnterObject(rd)") {
+		t.Fatalf("expected generated request decode budget entry")
+	}
+	if !strings.Contains(content, "mtproto.PrependReader(boxedCtor.Bytes(), rd)") {
+		t.Fatalf("expected request constructor replay to preserve decode budget")
+	}
+	if strings.Contains(content, "io.MultiReader(&boxedCtor, rd)") {
+		t.Fatalf("expected request constructor replay not to hide decode budget")
+	}
 	if strings.Contains(content, "var item InputUserType\n\t\tif err := item.DeserializeTL(rd); err != nil {") {
 		t.Fatalf("expected to avoid direct nil-interface DeserializeTL call in vectors")
 	}

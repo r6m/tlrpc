@@ -3,6 +3,7 @@ package protocol
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 )
@@ -25,6 +26,8 @@ const (
 
 	DefaultRecentMessageIDLimit = 64
 	MaxRecentMessageIDLimit     = 4096
+	DefaultContentSequenceLimit = 64
+	MaxContentSequenceLimit     = 4096
 )
 
 const (
@@ -89,18 +92,23 @@ type Config struct {
 	ServerSalt           int64
 	SequenceNo           int32
 	HighestMessageID     int64
+	MessageIDFloor       int64
 	RecentMessageIDs     []int64
 	RecentMessageIDLimit int
+	RecentSequenceNos    []int32
+	ContentSequenceLimit int
 	Clock                func() time.Time
 }
 
 // Snapshot is a race-safe copy of the validator's current protocol state.
 type Snapshot struct {
-	SessionID        int64
-	ServerSalt       int64
-	SequenceNo       int32
-	HighestMessageID int64
-	RecentMessageIDs []int64
+	SessionID         int64
+	ServerSalt        int64
+	SequenceNo        int32
+	HighestMessageID  int64
+	MessageIDFloor    int64
+	RecentMessageIDs  []int64
+	RecentSequenceNos []int32
 }
 
 // BadMessageError maps a validation failure to an MTProto protocol response.
@@ -123,10 +131,11 @@ func (e *BadMessageError) Unwrap() error { return e.Cause }
 // Validator owns the bounded receive state for one MTProto session. Its
 // methods are safe for concurrent use.
 type Validator struct {
-	mu    sync.Mutex
-	clock func() time.Time
-	limit int
-	state validatorState
+	mu             sync.Mutex
+	clock          func() time.Time
+	messageIDLimit int
+	sequenceLimit  int
+	state          validatorState
 }
 
 type validatorState struct {
@@ -134,8 +143,11 @@ type validatorState struct {
 	serverSalt       int64
 	sequenceNo       int32
 	highestMessageID int64
+	messageIDFloor   int64
 	recentIDs        []int64
 	recentSet        map[int64]struct{}
+	recentSeqNos     []int32
+	recentSeqSet     map[int32]struct{}
 }
 
 // NewValidator creates a validator with bounded duplicate-detection state.
@@ -147,6 +159,13 @@ func NewValidator(config Config) (*Validator, error) {
 	if limit < 1 || limit > MaxRecentMessageIDLimit {
 		return nil, fmt.Errorf("%w: recent message id limit must be between 1 and %d", ErrInvalidConfig, MaxRecentMessageIDLimit)
 	}
+	sequenceLimit := config.ContentSequenceLimit
+	if sequenceLimit == 0 {
+		sequenceLimit = DefaultContentSequenceLimit
+	}
+	if sequenceLimit < 1 || sequenceLimit > MaxContentSequenceLimit {
+		return nil, fmt.Errorf("%w: content sequence limit must be between 1 and %d", ErrInvalidConfig, MaxContentSequenceLimit)
+	}
 	if config.SequenceNo < 0 || config.SequenceNo&1 != 0 {
 		return nil, fmt.Errorf("%w: sequence number must be a non-negative even value", ErrInvalidConfig)
 	}
@@ -155,30 +174,39 @@ func NewValidator(config Config) (*Validator, error) {
 		clock = time.Now
 	}
 
-	recent := config.RecentMessageIDs
-	if len(recent) > limit {
-		recent = recent[len(recent)-limit:]
-	}
 	state := validatorState{
 		sessionID:        config.SessionID,
 		serverSalt:       config.ServerSalt,
 		sequenceNo:       config.SequenceNo,
 		highestMessageID: config.HighestMessageID,
+		messageIDFloor:   config.MessageIDFloor,
 		recentIDs:        make([]int64, 0, limit),
-		recentSet:        make(map[int64]struct{}, len(recent)),
+		recentSet:        make(map[int64]struct{}, min(len(config.RecentMessageIDs), limit)),
+		recentSeqNos:     make([]int32, 0, sequenceLimit),
+		recentSeqSet:     make(map[int32]struct{}, min(len(config.RecentSequenceNos), sequenceLimit)),
 	}
-	for _, id := range recent {
+	for _, id := range config.RecentMessageIDs {
+		if id <= state.messageIDFloor {
+			continue
+		}
 		if _, exists := state.recentSet[id]; exists {
 			continue
 		}
-		state.recentIDs = append(state.recentIDs, id)
-		state.recentSet[id] = struct{}{}
+		state.rememberMessageID(id, limit)
 		if id > state.highestMessageID {
 			state.highestMessageID = id
 		}
 	}
+	for _, sequenceNo := range config.RecentSequenceNos {
+		minimum := state.sequenceNo - int32(sequenceLimit*2) + 1
+		if sequenceNo < minimum || sequenceNo&1 == 0 || sequenceNo >= state.sequenceNo+1 {
+			continue
+		}
+		state.rememberSequenceNo(sequenceNo, sequenceLimit)
+	}
+	state.pruneSequenceNos(sequenceLimit)
 
-	return &Validator{clock: clock, limit: limit, state: state}, nil
+	return &Validator{clock: clock, messageIDLimit: limit, sequenceLimit: sequenceLimit, state: state}, nil
 }
 
 // Validate validates message and atomically advances state. For containers,
@@ -241,7 +269,7 @@ func (v *Validator) validateOne(state *validatorState, metadata messageMetadata,
 	if err := v.validateMessageID(state, metadata); err != nil {
 		return err
 	}
-	if err := validateSequenceNo(state, metadata, kind); err != nil {
+	if err := v.validateSequenceNo(state, metadata, kind); err != nil {
 		return err
 	}
 	if metadata.messageID > state.highestMessageID {
@@ -250,7 +278,11 @@ func (v *Validator) validateOne(state *validatorState, metadata messageMetadata,
 	if kind == ContentRelated && metadata.sequenceNo >= state.sequenceNo+1 {
 		state.sequenceNo = metadata.sequenceNo + 1
 	}
-	state.remember(metadata.messageID, v.limit)
+	if kind == ContentRelated {
+		state.pruneSequenceNos(v.sequenceLimit)
+		state.rememberSequenceNo(metadata.sequenceNo, v.sequenceLimit)
+	}
+	state.rememberMessageID(metadata.messageID, v.messageIDLimit)
 	return nil
 }
 
@@ -267,13 +299,13 @@ func (v *Validator) validateMessageID(state *validatorState, metadata messageMet
 		return badMessage(metadata, CodeMessageIDTooHigh, state.serverSalt, ErrMessageIDTooHigh)
 	}
 	_, recentReplay := state.recentSet[metadata.messageID]
-	if metadata.messageID == state.highestMessageID || recentReplay {
+	if metadata.messageID <= state.messageIDFloor || metadata.messageID == state.highestMessageID || recentReplay {
 		return badMessage(metadata, CodeReplayMessageID, state.serverSalt, ErrReplayMessageID)
 	}
 	return nil
 }
 
-func validateSequenceNo(state *validatorState, metadata messageMetadata, kind MessageKind) error {
+func (v *Validator) validateSequenceNo(state *validatorState, metadata messageMetadata, kind MessageKind) error {
 	if metadata.sequenceNo < 0 {
 		return badMessage(metadata, CodeSequenceNoTooLow, state.serverSalt, ErrSequenceNoTooLow)
 	}
@@ -285,6 +317,9 @@ func validateSequenceNo(state *validatorState, metadata messageMetadata, kind Me
 	}
 
 	contentRelated := kind == ContentRelated
+	if contentRelated && metadata.sequenceNo == math.MaxInt32 {
+		return badMessage(metadata, CodeSequenceNoTooHigh, state.serverSalt, ErrSequenceNoTooHigh)
+	}
 	expected := state.sequenceNo
 	if contentRelated {
 		expected++
@@ -301,10 +336,27 @@ func validateSequenceNo(state *validatorState, metadata messageMetadata, kind Me
 	if metadata.sequenceNo&1 == 0 && contentRelated {
 		return badMessage(metadata, CodeExpectedOddSequenceNo, state.serverSalt, ErrExpectedContentSequence)
 	}
-	// Content-related requests can be delivered out of order by concurrent
-	// client senders. Preserve a high-water mark while replay state rejects an
-	// exact duplicate.
 	if contentRelated {
+		// A restored session with no client progress may legitimately begin at an
+		// already advanced odd value. Once established, sequence reordering is
+		// bounded and duplicate sequence numbers cannot execute under fresh IDs.
+		if state.sequenceNo == 0 && len(state.recentSeqNos) == 0 {
+			return nil
+		}
+		if _, duplicate := state.recentSeqSet[metadata.sequenceNo]; duplicate {
+			return badMessage(metadata, CodeSequenceNoTooLow, state.serverSalt, ErrSequenceNoTooLow)
+		}
+		minimum := int64(state.sequenceNo) - int64(v.sequenceLimit)*2 + 1
+		if minimum < 1 {
+			minimum = 1
+		}
+		if int64(metadata.sequenceNo) < minimum {
+			return badMessage(metadata, CodeSequenceNoTooLow, state.serverSalt, ErrSequenceNoTooLow)
+		}
+		maximum := int64(state.sequenceNo) + int64(v.sequenceLimit)*2 + 1
+		if int64(metadata.sequenceNo) > maximum {
+			return badMessage(metadata, CodeSequenceNoTooHigh, state.serverSalt, ErrSequenceNoTooHigh)
+		}
 		return nil
 	}
 	if metadata.sequenceNo < expected {
@@ -333,18 +385,61 @@ func (state validatorState) clone() validatorState {
 	for _, id := range state.recentIDs {
 		state.recentSet[id] = struct{}{}
 	}
+	state.recentSeqNos = append([]int32(nil), state.recentSeqNos...)
+	state.recentSeqSet = make(map[int32]struct{}, len(state.recentSeqNos))
+	for _, sequenceNo := range state.recentSeqNos {
+		state.recentSeqSet[sequenceNo] = struct{}{}
+	}
 	return state
 }
 
-func (state *validatorState) remember(messageID int64, limit int) {
+func (state *validatorState) rememberMessageID(messageID int64, limit int) {
 	if len(state.recentIDs) == limit {
-		oldest := state.recentIDs[0]
-		delete(state.recentSet, oldest)
-		copy(state.recentIDs, state.recentIDs[1:])
+		minimumIndex := 0
+		for index := 1; index < len(state.recentIDs); index++ {
+			if state.recentIDs[index] < state.recentIDs[minimumIndex] {
+				minimumIndex = index
+			}
+		}
+		minimum := state.recentIDs[minimumIndex]
+		delete(state.recentSet, minimum)
+		copy(state.recentIDs[minimumIndex:], state.recentIDs[minimumIndex+1:])
 		state.recentIDs = state.recentIDs[:limit-1]
+		if minimum > state.messageIDFloor {
+			state.messageIDFloor = minimum
+		}
+	}
+	if messageID <= state.messageIDFloor {
+		return
 	}
 	state.recentIDs = append(state.recentIDs, messageID)
 	state.recentSet[messageID] = struct{}{}
+}
+
+func (state *validatorState) rememberSequenceNo(sequenceNo int32, limit int) {
+	if _, exists := state.recentSeqSet[sequenceNo]; exists {
+		return
+	}
+	if len(state.recentSeqNos) == limit {
+		delete(state.recentSeqSet, state.recentSeqNos[0])
+		copy(state.recentSeqNos, state.recentSeqNos[1:])
+		state.recentSeqNos = state.recentSeqNos[:limit-1]
+	}
+	state.recentSeqNos = append(state.recentSeqNos, sequenceNo)
+	state.recentSeqSet[sequenceNo] = struct{}{}
+}
+
+func (state *validatorState) pruneSequenceNos(limit int) {
+	minimum := state.sequenceNo - int32(limit*2) + 1
+	kept := state.recentSeqNos[:0]
+	for _, sequenceNo := range state.recentSeqNos {
+		if sequenceNo < minimum {
+			delete(state.recentSeqSet, sequenceNo)
+			continue
+		}
+		kept = append(kept, sequenceNo)
+	}
+	state.recentSeqNos = kept
 }
 
 // Snapshot returns a defensive copy of the current protocol state.
@@ -355,11 +450,13 @@ func (v *Validator) Snapshot() Snapshot {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	return Snapshot{
-		SessionID:        v.state.sessionID,
-		ServerSalt:       v.state.serverSalt,
-		SequenceNo:       v.state.sequenceNo,
-		HighestMessageID: v.state.highestMessageID,
-		RecentMessageIDs: append([]int64(nil), v.state.recentIDs...),
+		SessionID:         v.state.sessionID,
+		ServerSalt:        v.state.serverSalt,
+		SequenceNo:        v.state.sequenceNo,
+		HighestMessageID:  v.state.highestMessageID,
+		MessageIDFloor:    v.state.messageIDFloor,
+		RecentMessageIDs:  append([]int64(nil), v.state.recentIDs...),
+		RecentSequenceNos: append([]int32(nil), v.state.recentSeqNos...),
 	}
 }
 

@@ -3,44 +3,80 @@ package transport
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
+const (
+	defaultWebSocketAcceptQueue   = 64
+	defaultWebSocketReadTimeout   = 5 * time.Second
+	defaultWebSocketIdleTimeout   = 30 * time.Second
+	defaultWebSocketMaxHeaderSize = 8 << 10
+)
+
 // WebSocketTransport implements MTProto messages over WebSocket.
 type WebSocketTransport struct {
-	Upgrader websocket.Upgrader
-	Protocol Protocol
-	Secret   []byte
+	Upgrader            websocket.Upgrader
+	Protocol            Protocol
+	Secret              []byte
+	OriginPolicy        WebSocketOriginPolicy
+	AcceptQueueCapacity int
+	ReadTimeout         time.Duration
+	IdleTimeout         time.Duration
+	MaxHeaderBytes      int
+}
+
+type WebSocketOriginPolicy struct {
+	AllowAny       bool
+	AllowMissing   bool
+	AllowedOrigins []string
 }
 
 // Listen starts a WebSocket listener.
 func (t *WebSocketTransport) Listen(addr string) (Listener, error) {
+	if err := t.validateOriginPolicy(); err != nil {
+		return nil, err
+	}
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 
 	upgrader := t.Upgrader
-	if upgrader.CheckOrigin == nil {
-		upgrader.CheckOrigin = func(_ *http.Request) bool { return true }
-	}
+	upgrader.CheckOrigin = t.upgradeOriginChecker()
 	upgrader.Subprotocols = ensureSubprotocol(upgrader.Subprotocols, "binary")
+	queueCapacity := t.AcceptQueueCapacity
+	if queueCapacity <= 0 {
+		queueCapacity = defaultWebSocketAcceptQueue
+	}
 
 	wsListener := &wsListener{
 		listener: ln,
 		upgrader: upgrader,
-		conns:    make(chan Conn, 32),
+		conns:    make(chan Conn, queueCapacity),
 		errors:   make(chan error, 1),
 	}
 
 	wsListener.server = &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "websocket upgrade requires GET", http.StatusMethodNotAllowed)
+			return
+		}
 		if !hasSubprotocol(r.Header.Get("Sec-WebSocket-Protocol"), "binary") {
 			http.Error(w, "missing Sec-WebSocket-Protocol: binary", http.StatusBadRequest)
+			return
+		}
+		select {
+		case wsListener.admission <- struct{}{}:
+			defer func() { <-wsListener.admission }()
+		default:
+			http.Error(w, "websocket listener is saturated", http.StatusServiceUnavailable)
 			return
 		}
 		conn, err := wsListener.upgrader.Upgrade(w, r, nil)
@@ -58,9 +94,14 @@ func (t *WebSocketTransport) Listen(addr string) (Listener, error) {
 		case <-wsListener.ctx.Done():
 			_ = mt.Close()
 		}
-	})}
+	}),
+		ReadHeaderTimeout: resolveWebSocketReadTimeout(t.ReadTimeout),
+		IdleTimeout:       resolveWebSocketIdleTimeout(t.IdleTimeout),
+		MaxHeaderBytes:    resolveWebSocketMaxHeaderBytes(t.MaxHeaderBytes),
+	}
 
 	wsListener.ctx, wsListener.cancel = context.WithCancel(context.Background())
+	wsListener.admission = make(chan struct{}, queueCapacity)
 	go func() {
 		if err := wsListener.server.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			wsListener.errors <- err
@@ -68,6 +109,17 @@ func (t *WebSocketTransport) Listen(addr string) (Listener, error) {
 	}()
 
 	return wsListener, nil
+}
+
+func (t *WebSocketTransport) validateOriginPolicy() error {
+	for _, origin := range t.OriginPolicy.AllowedOrigins {
+		parsed, err := url.Parse(origin)
+		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" ||
+			parsed.User != nil || (parsed.Path != "" && parsed.Path != "/") || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return fmt.Errorf("transport: invalid WebSocket allowed origin %q", origin)
+		}
+	}
+	return nil
 }
 
 // Dial connects to a WebSocket server.
@@ -94,13 +146,14 @@ func (t *WebSocketTransport) Dial(addr string) (Conn, error) {
 }
 
 type wsListener struct {
-	listener net.Listener
-	server   *http.Server
-	upgrader websocket.Upgrader
-	conns    chan Conn
-	errors   chan error
-	ctx      context.Context
-	cancel   context.CancelFunc
+	listener  net.Listener
+	server    *http.Server
+	upgrader  websocket.Upgrader
+	conns     chan Conn
+	errors    chan error
+	ctx       context.Context
+	cancel    context.CancelFunc
+	admission chan struct{}
 }
 
 func (l *wsListener) Accept() (Conn, error) {
@@ -116,10 +169,15 @@ func (l *wsListener) Accept() (Conn, error) {
 
 func (l *wsListener) Close() error {
 	l.cancel()
-	if err := l.server.Close(); err != nil {
-		return err
+	serverErr := l.server.Close()
+	listenerErr := l.listener.Close()
+	if errors.Is(serverErr, net.ErrClosed) {
+		serverErr = nil
 	}
-	return l.listener.Close()
+	if errors.Is(listenerErr, net.ErrClosed) {
+		listenerErr = nil
+	}
+	return errors.Join(serverErr, listenerErr)
 }
 
 func (l *wsListener) Addr() net.Addr {
@@ -190,4 +248,80 @@ func hasSubprotocol(headerValue, subprotocol string) bool {
 		}
 	}
 	return false
+}
+
+func (t *WebSocketTransport) originChecker() func(*http.Request) bool {
+	policy := t.OriginPolicy
+	if policy.AllowAny {
+		return func(_ *http.Request) bool { return true }
+	}
+	allowed := make(map[string]struct{}, len(policy.AllowedOrigins))
+	for _, origin := range policy.AllowedOrigins {
+		if canonical := canonicalOrigin(origin); canonical != "" {
+			allowed[canonical] = struct{}{}
+		}
+	}
+	allowMissing := policy.AllowMissing || len(allowed) == 0
+	return func(r *http.Request) bool {
+		origin := canonicalOrigin(r.Header.Get("Origin"))
+		if origin == "" {
+			return allowMissing
+		}
+		if len(allowed) != 0 {
+			_, ok := allowed[origin]
+			return ok
+		}
+		return sameOrigin(origin, r)
+	}
+}
+
+func (t *WebSocketTransport) upgradeOriginChecker() func(*http.Request) bool {
+	policyCheckOrigin := t.originChecker()
+	customCheckOrigin := t.Upgrader.CheckOrigin
+	return func(r *http.Request) bool {
+		return policyCheckOrigin(r) && (customCheckOrigin == nil || customCheckOrigin(r))
+	}
+}
+
+func canonicalOrigin(origin string) string {
+	if origin == "" {
+		return ""
+	}
+	parsed, err := url.Parse(origin)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return ""
+	}
+	return strings.ToLower(parsed.Scheme + "://" + parsed.Host)
+}
+
+func sameOrigin(origin string, r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	return origin == strings.ToLower(scheme+"://"+r.Host)
+}
+
+func resolveWebSocketReadTimeout(value time.Duration) time.Duration {
+	if value > 0 {
+		return value
+	}
+	return defaultWebSocketReadTimeout
+}
+
+func resolveWebSocketIdleTimeout(value time.Duration) time.Duration {
+	if value > 0 {
+		return value
+	}
+	return defaultWebSocketIdleTimeout
+}
+
+func resolveWebSocketMaxHeaderBytes(value int) int {
+	if value > 0 {
+		return value
+	}
+	return defaultWebSocketMaxHeaderSize
 }

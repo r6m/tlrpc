@@ -105,6 +105,35 @@ func TestServerStopOwnsTransportLifecycleAndIsConcurrentSafe(t *testing.T) {
 	assertLifecycleDrained(t, s)
 }
 
+func TestServerStopHonorsShutdownGracePeriodBeforeForcingClose(t *testing.T) {
+	lis := newLifecycleListener()
+	conn := newLifecycleConn()
+	s := NewServer(WithResourceLimits(ResourceLimits{
+		MaxPayloadBytes:          1024,
+		MaxInFlightRequests:      8,
+		MaxSessionsPerConnection: 16,
+		ReadTimeout:              time.Second,
+		WriteTimeout:             time.Second,
+		ShutdownGracePeriod:      75 * time.Millisecond,
+	}))
+	go func() { _ = s.ServeTransport(lis) }()
+
+	lis.accepts <- conn
+	select {
+	case <-conn.readStarted:
+	case <-time.After(time.Second):
+		t.Fatal("accepted connection handler did not start")
+	}
+
+	started := time.Now()
+	if err := s.Stop(); err != nil {
+		t.Fatalf("stop: %v", err)
+	}
+	if elapsed := time.Since(started); elapsed < 50*time.Millisecond {
+		t.Fatalf("Stop returned in %v, want it to wait for the configured grace period", elapsed)
+	}
+}
+
 func waitForOwnedConnections(t *testing.T, s *Server, want int) {
 	t.Helper()
 	deadline := time.Now().Add(time.Second)

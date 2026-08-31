@@ -311,10 +311,15 @@ func TestWithUnaryInterceptor(t *testing.T) {
 
 func TestWithResourceLimits(t *testing.T) {
 	s := NewServer(WithResourceLimits(ResourceLimits{
-		MaxPayloadBytes:     1024,
-		MaxInFlightRequests: 10,
-		ReadTimeout:         time.Second,
-		WriteTimeout:        2 * time.Second,
+		MaxPayloadBytes:          1024,
+		MaxInFlightRequests:      10,
+		MaxConnections:           11,
+		MaxConnectionsPerIP:      3,
+		MaxConnectionsPerAuthKey: 2,
+		MaxSessionsPerConnection: 7,
+		ReadTimeout:              time.Second,
+		WriteTimeout:             2 * time.Second,
+		ShutdownGracePeriod:      3 * time.Second,
 	}))
 	if s.maxPayloadBytes != 1024 {
 		t.Fatalf("max payload bytes = %d, want 1024", s.maxPayloadBytes)
@@ -322,11 +327,22 @@ func TestWithResourceLimits(t *testing.T) {
 	if cap(s.handlerSlots) != 10 {
 		t.Fatalf("handler capacity = %d, want 10", cap(s.handlerSlots))
 	}
+	if s.maxConnections != 11 || s.maxConnectionsPerIP != 3 || s.maxConnectionsPerAuthKey != 2 {
+		t.Fatalf("connection limits = %+v", ResourceLimits{
+			MaxConnections: s.maxConnections, MaxConnectionsPerIP: s.maxConnectionsPerIP, MaxConnectionsPerAuthKey: s.maxConnectionsPerAuthKey,
+		})
+	}
+	if s.maxSessionsPerConnection != 7 {
+		t.Fatalf("max sessions per connection = %d, want 7", s.maxSessionsPerConnection)
+	}
 	if s.readTimeout != time.Second {
 		t.Fatalf("read timeout = %v, want 1s", s.readTimeout)
 	}
 	if s.writeTimeout != 2*time.Second {
 		t.Fatalf("write timeout = %v, want 2s", s.writeTimeout)
+	}
+	if s.shutdownGracePeriod != 3*time.Second {
+		t.Fatalf("shutdown grace period = %v, want 3s", s.shutdownGracePeriod)
 	}
 }
 
@@ -344,19 +360,27 @@ func TestNewServerUsesBoundedResourceDefaults(t *testing.T) {
 	if s.writeTimeout != DefaultWriteTimeout {
 		t.Fatalf("write timeout = %v, want %v", s.writeTimeout, DefaultWriteTimeout)
 	}
+	if s.maxSessionsPerConnection != 16 {
+		t.Fatalf("max sessions per connection = %d, want 16", s.maxSessionsPerConnection)
+	}
 }
 
 func TestResourceLimitsRejectInvalidValues(t *testing.T) {
-	valid := ResourceLimits{MaxPayloadBytes: 1024, MaxInFlightRequests: 10, ReadTimeout: time.Second, WriteTimeout: time.Second}
+	valid := ResourceLimits{MaxPayloadBytes: 1024, MaxInFlightRequests: 10, MaxSessionsPerConnection: 1, ReadTimeout: time.Second, WriteTimeout: time.Second}
 	tests := map[string]ResourceLimits{
-		"payload zero":           {MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
-		"payload negative":       {MaxPayloadBytes: -1, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
-		"requests zero":          {MaxPayloadBytes: valid.MaxPayloadBytes, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
-		"requests negative":      {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: -1, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
-		"read timeout zero":      {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, WriteTimeout: valid.WriteTimeout},
-		"read timeout negative":  {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: -time.Second, WriteTimeout: valid.WriteTimeout},
-		"write timeout zero":     {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout},
-		"write timeout negative": {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, ReadTimeout: valid.ReadTimeout, WriteTimeout: -time.Second},
+		"payload zero":                   {MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"payload negative":               {MaxPayloadBytes: -1, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"requests zero":                  {MaxPayloadBytes: valid.MaxPayloadBytes, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"requests negative":              {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: -1, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"connections negative":           {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxConnections: -1, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"per ip negative":                {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxConnectionsPerIP: -1, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"per auth negative":              {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxConnectionsPerAuthKey: -1, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"sessions negative":              {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: -1, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout},
+		"read timeout zero":              {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, WriteTimeout: valid.WriteTimeout},
+		"read timeout negative":          {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: -time.Second, WriteTimeout: valid.WriteTimeout},
+		"write timeout zero":             {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout},
+		"write timeout negative":         {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: -time.Second},
+		"shutdown grace period negative": {MaxPayloadBytes: valid.MaxPayloadBytes, MaxInFlightRequests: valid.MaxInFlightRequests, MaxSessionsPerConnection: valid.MaxSessionsPerConnection, ReadTimeout: valid.ReadTimeout, WriteTimeout: valid.WriteTimeout, ShutdownGracePeriod: -time.Second},
 	}
 	for name, limits := range tests {
 		t.Run(name, func(t *testing.T) {

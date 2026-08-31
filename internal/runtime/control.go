@@ -8,6 +8,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/r6m/tlrpc/mtproto"
 	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 )
 
@@ -53,7 +54,7 @@ func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request
 	switch request.Message.ConstructorID {
 	case mtprototl.MsgsAckID:
 		message := &mtprototl.MsgsAck{}
-		if err := decodeControl(request.Message.Body, message); err != nil {
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
 			return Outcome{}, true, err
 		}
 		if err := r.outbound.AcknowledgeOutbound(ctx, message.MsgIDs); err != nil {
@@ -63,7 +64,7 @@ func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request
 
 	case mtprototl.MsgsStateReqID:
 		message := &mtprototl.MsgsStateReq{}
-		if err := decodeControl(request.Message.Body, message); err != nil {
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
 			return Outcome{}, true, err
 		}
 		body, err := serializeRuntimeTL(&mtprototl.MsgsStateInfo{
@@ -77,7 +78,7 @@ func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request
 
 	case mtprototl.MsgResendReqID:
 		message := &mtprototl.MsgResendReq{}
-		if err := decodeControl(request.Message.Body, message); err != nil {
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
 			return Outcome{}, true, err
 		}
 		if len(message.MsgIDs) == 0 {
@@ -118,7 +119,7 @@ func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request
 
 	case mtprototl.RPCDropAnswerID:
 		message := &mtprototl.RPCDropAnswer{}
-		if err := decodeControl(request.Message.Body, message); err != nil {
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
 			return Outcome{}, true, err
 		}
 		var answer interface{ SerializeTL(io.Writer) error } = &mtprototl.RPCAnswerUnknown{}
@@ -136,7 +137,7 @@ func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request
 
 	case mtprototl.GetFutureSaltsID:
 		message := &mtprototl.GetFutureSaltsRequest{}
-		if err := decodeControl(request.Message.Body, message); err != nil {
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
 			return Outcome{}, true, err
 		}
 		count := int(message.Num)
@@ -168,7 +169,18 @@ func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request
 }
 
 func decodeControl(body []byte, value interface{ DeserializeTL(io.Reader) error }) error {
-	reader := bytes.NewReader(body)
+	return decodeControlBudget(body, value, nil)
+}
+
+func decodeControlBudget(body []byte, value interface{ DeserializeTL(io.Reader) error }, budget *mtproto.DecodeBudget) error {
+	base := bytes.NewReader(body)
+	var reader interface {
+		io.Reader
+		Len() int
+	} = base
+	if budget != nil {
+		reader = mtproto.NewBudgetReader(base, budget)
+	}
 	if err := value.DeserializeTL(reader); err != nil {
 		return err
 	}

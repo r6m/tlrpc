@@ -3,7 +3,7 @@ package tlrpc
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -64,14 +64,8 @@ func TestChainUnaryInterceptors(t *testing.T) {
 }
 
 func TestRecoveryInterceptor(t *testing.T) {
-	panicMsg := "test panic"
-
-	// Test with custom error factory
-	errorFactory := func(message string) error {
-		return fmt.Errorf("custom error: %s", message)
-	}
-
-	interceptor := RecoveryInterceptor(errorFactory)
+	const panicMsg = "sentinel-panic-secret"
+	interceptor := RecoveryInterceptor()
 
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		panic(panicMsg)
@@ -84,37 +78,17 @@ func TestRecoveryInterceptor(t *testing.T) {
 		t.Error("expected error from recovery interceptor")
 	}
 
-	expectedErrMsg := fmt.Sprintf("custom error: panic: %s", panicMsg)
-	if err.Error() != expectedErrMsg {
-		t.Errorf("wrong error message: got %v, want %v", err.Error(), expectedErrMsg)
+	rpcErr, ok := IsRPCError(err)
+	if !ok || rpcErr.ErrorCode != int32(Internal) || rpcErr.ErrorMessage != "INTERNAL" {
+		t.Fatalf("recovery error = %v, want 500 INTERNAL", err)
 	}
-}
-
-func TestRecoveryInterceptorDefault(t *testing.T) {
-	panicMsg := "test panic"
-
-	// Test with nil error factory (should use default)
-	interceptor := RecoveryInterceptor(nil)
-
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		panic(panicMsg)
-	}
-
-	info := &UnaryServerInfo{FullMethod: "test.method"}
-	_, err := interceptor(context.Background(), "request", info, handler)
-
-	if err == nil {
-		t.Error("expected error from recovery interceptor")
-	}
-
-	expectedErrMsg := fmt.Sprintf("panic: %s", panicMsg)
-	if err.Error() != expectedErrMsg {
-		t.Errorf("wrong error message: got %v, want %v", err.Error(), expectedErrMsg)
+	if strings.Contains(err.Error(), panicMsg) {
+		t.Fatal("panic value was exposed by recovery interceptor")
 	}
 }
 
 func TestRecoveryInterceptorNoPanic(t *testing.T) {
-	interceptor := RecoveryInterceptor(nil)
+	interceptor := RecoveryInterceptor()
 
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return "success", nil

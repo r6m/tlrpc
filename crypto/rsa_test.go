@@ -3,6 +3,7 @@ package crypto_test
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"os"
 	"testing"
 
@@ -76,5 +77,46 @@ func TestLoadPEMPrivateKeyAcceptsPKCS1AndPKCS8(t *testing.T) {
 				t.Fatalf("fingerprint = %d, want %d", loaded.ID, key.ID)
 			}
 		})
+	}
+}
+
+func TestLoadPEMPrivateKeyRejectsUnsafePermissions(t *testing.T) {
+	key, err := tlrpccrypto.GenerateServerKey()
+	if err != nil {
+		t.Fatalf("generate server key: %v", err)
+	}
+	path := t.TempDir() + "/server.pem"
+	contents := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key.Key)})
+	if err := os.WriteFile(path, contents, 0644); err != nil {
+		t.Fatalf("write key: %v", err)
+	}
+
+	_, err = tlrpccrypto.LoadPEMPrivateKey(path)
+	if !errors.Is(err, tlrpccrypto.ErrUnsafeKeyPermissions) {
+		t.Fatalf("load error = %v, want ErrUnsafeKeyPermissions", err)
+	}
+}
+
+func TestSavePEMPrivateKeyCorrectsExistingPermissions(t *testing.T) {
+	key, err := tlrpccrypto.GenerateServerKey()
+	if err != nil {
+		t.Fatalf("generate server key: %v", err)
+	}
+	path := t.TempDir() + "/server.pem"
+	if err := os.WriteFile(path, []byte("old contents"), 0644); err != nil {
+		t.Fatalf("seed key file: %v", err)
+	}
+	if err := tlrpccrypto.SavePEMPrivateKey(path, key); err != nil {
+		t.Fatalf("save server key: %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat key file: %v", err)
+	}
+	if got := info.Mode().Perm(); got != 0600 {
+		t.Fatalf("key mode = %04o, want 0600", got)
+	}
+	if _, err := tlrpccrypto.LoadPEMPrivateKey(path); err != nil {
+		t.Fatalf("load secured key: %v", err)
 	}
 }

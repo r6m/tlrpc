@@ -475,6 +475,9 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 	if _, err := fmt.Fprintf(g.out, "func (v *%s) DeserializeTL(r io.Reader) error {\n", name); err != nil {
 		return err
 	}
+	if _, err := io.WriteString(g.out, "\tleaveDecode, err := mtproto.EnterObject(r)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer leaveDecode()\n"); err != nil {
+		return err
+	}
 	if !ctor.IsBare {
 		if _, err := io.WriteString(g.out, "\tctorID, err := mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
 			return err
@@ -627,7 +630,7 @@ func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent s
 		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(io.MultiReader(&boxedCtor, r)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), r)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
 			return err
 		}
 		if _, err := fmt.Fprintf(g.out, "%s\t%s = value\n", indent, target); err != nil {

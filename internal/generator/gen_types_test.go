@@ -119,6 +119,15 @@ func TestTypeGenerator_UnionFieldDeserializeUsesConstructorDispatch(t *testing.T
 	if !strings.Contains(content, "GetStaticConstructors()[ctorID]") {
 		t.Fatalf("expected union constructor dispatch in DeserializeTL")
 	}
+	if !strings.Contains(content, "mtproto.EnterObject(r)") {
+		t.Fatalf("expected generated object decode budget entry")
+	}
+	if !strings.Contains(content, "mtproto.PrependReader(boxedCtor.Bytes(), r)") {
+		t.Fatalf("expected union constructor replay to preserve decode budget")
+	}
+	if strings.Contains(content, "io.MultiReader(&boxedCtor, r)") {
+		t.Fatalf("expected union constructor replay not to hide decode budget")
+	}
 	if strings.Contains(content, "if err := v.User.DeserializeTL(r); err != nil {") {
 		t.Fatalf("expected union field to avoid direct interface DeserializeTL call")
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 func newActiveRequestRegistryForTest(t *testing.T, capacity int) *ActiveRequestRegistry {
@@ -14,6 +15,49 @@ func newActiveRequestRegistryForTest(t *testing.T, capacity int) *ActiveRequestR
 		t.Fatalf("NewActiveRequestRegistry() error = %v", err)
 	}
 	return registry
+}
+
+func TestActiveRequestRegistryWaitDependenciesTracksSuccessAndFailure(t *testing.T) {
+	registry := newActiveRequestRegistryForTest(t, 4)
+	registrations, err := registry.beginBatch(context.Background(), []int64{4, 8})
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() {
+		done <- registry.WaitDependencies(context.Background(), []int64{4, 8}, time.Second)
+	}()
+	registrations[0].Complete(true)
+	select {
+	case err := <-done:
+		t.Fatalf("wait returned before every dependency completed: %v", err)
+	case <-time.After(10 * time.Millisecond):
+	}
+	registrations[1].Complete(true)
+	if err := <-done; err != nil {
+		t.Fatalf("successful dependencies: %v", err)
+	}
+
+	failed, err := registry.beginBatch(context.Background(), []int64{12})
+	if err != nil {
+		t.Fatal(err)
+	}
+	failed[0].Complete(false)
+	if err := registry.WaitDependencies(context.Background(), []int64{12}, time.Second); !errors.Is(err, ErrInvokeAfterFailed) {
+		t.Fatalf("failed dependency error = %v", err)
+	}
+}
+
+func TestActiveRequestRegistryWaitDependenciesBoundsUnknownReference(t *testing.T) {
+	registry := newActiveRequestRegistryForTest(t, 1)
+	started := time.Now()
+	err := registry.WaitDependencies(context.Background(), []int64{4}, 10*time.Millisecond)
+	if !errors.Is(err, ErrInvokeAfterTimeout) {
+		t.Fatalf("unknown dependency error = %v", err)
+	}
+	if time.Since(started) > time.Second {
+		t.Fatal("unknown dependency wait was not bounded")
+	}
 }
 
 func TestActiveRequestRegistryDropCancelsRunningRequest(t *testing.T) {
@@ -59,6 +103,27 @@ func TestActiveRequestRegistryEnforcesCapacity(t *testing.T) {
 	var capacity *ActiveRequestCapacityError
 	if !errors.As(err, &capacity) {
 		t.Fatalf("second Begin() error = %v, want *ActiveRequestCapacityError", err)
+	}
+}
+
+func TestActiveRequestRegistryContainerAdmissionIsAtomic(t *testing.T) {
+	registry := newActiveRequestRegistryForTest(t, 2)
+	_, complete, err := registry.Begin(context.Background(), 4)
+	if err != nil {
+		t.Fatalf("occupy slot: %v", err)
+	}
+	defer complete()
+
+	_, err = registry.beginBatch(context.Background(), []int64{8, 12})
+	var capacity *ActiveRequestCapacityError
+	if !errors.As(err, &capacity) {
+		t.Fatalf("beginBatch() error = %v, want *ActiveRequestCapacityError", err)
+	}
+	if status := registry.Drop(8); status != DropStatusUnknown {
+		t.Fatalf("first batch ID was partially registered: %v", status)
+	}
+	if status := registry.Drop(12); status != DropStatusUnknown {
+		t.Fatalf("second batch ID was partially registered: %v", status)
 	}
 }
 

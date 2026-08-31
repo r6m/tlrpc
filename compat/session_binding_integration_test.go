@@ -73,7 +73,7 @@ func TestHandlerUserBindingIsPersistedBeforeReconnect(t *testing.T) {
 
 	reconnected := dialClientTCP(t, lis.Addr().String(), client.CodecAbridged, serverKey)
 	defer func() { _ = reconnected.Close() }()
-	reconnected.SetSession(canonicalAuthKeyID, info.AuthKey, info.ServerSalt, info.SessionID)
+	reconnected.SetSessionInfo(info)
 	if _, err := reconnected.Invoke(context.Background(), &gen.HelpGetConfigRequest{}); err != nil {
 		t.Fatalf("invoke after reconnect: %v", err)
 	}

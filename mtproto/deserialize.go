@@ -1,21 +1,302 @@
 package mtproto
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"math/big"
+	"sync"
 )
 
 var (
-	ErrInvalidBool   = errors.New("mtproto: invalid bool value")
-	ErrStringTooLong = errors.New("mtproto: string too long")
-	ErrVectorTooLong = errors.New("mtproto: vector element count exceeds limit")
+	ErrInvalidBool         = errors.New("mtproto: invalid bool value")
+	ErrStringTooLong       = errors.New("mtproto: string too long")
+	ErrVectorTooLong       = errors.New("mtproto: vector element count exceeds limit")
+	ErrDecodedBytesLimit   = errors.New("mtproto: aggregate decoded byte budget exceeded")
+	ErrWrapperCountLimit   = errors.New("mtproto: wrapper budget exceeded")
+	ErrContainerCountLimit = errors.New("mtproto: container budget exceeded")
+	ErrVectorCountLimit    = errors.New("mtproto: aggregate vector element budget exceeded")
+	ErrObjectNodeLimit     = errors.New("mtproto: aggregate object node budget exceeded")
+	ErrObjectDepthLimit    = errors.New("mtproto: object depth budget exceeded")
 )
 
-const MaxVectorElements = 1 << 20
+const (
+	MaxVectorElements = 1 << 20
+
+	DefaultMaxDecodedBytes   = 16 << 20
+	DefaultMaxWrappers       = 16
+	DefaultMaxContainers     = 64
+	DefaultMaxVectorElements = 1 << 16
+	DefaultMaxObjectNodes    = 1 << 18
+	DefaultMaxObjectDepth    = 128
+)
+
+// DecodeLimits bounds independent dimensions of one logical TL decode. A
+// zero-valued field selects its safe framework default. Negative values are
+// invalid and are rejected by NewDecodeBudget.
+type DecodeLimits struct {
+	MaxDecodedBytes   int64
+	MaxWrappers       int
+	MaxContainers     int
+	MaxVectorElements int64
+	MaxObjectNodes    int64
+	MaxObjectDepth    int
+	MaxGzipRatio      int64
+	MaxGzipWorkBytes  int64
+}
+
+// DecodeBudget is shared by every reader and nested object participating in
+// one logical decode. Counter access is synchronized, while LockDecode lets
+// callers serialize complete sibling decodes so object depth remains
+// path-accurate when container children dispatch concurrently.
+type DecodeBudget struct {
+	operationMu sync.Mutex
+	mu          sync.Mutex
+	limits      DecodeLimits
+
+	decodedBytes   int64
+	wrapperCount   int
+	containerCount int
+	vectorElements int64
+	objectNodes    int64
+	objectDepth    int
+	gzipWorkBytes  int64
+}
+
+// LockDecode serializes one complete decode operation using this budget.
+func (b *DecodeBudget) LockDecode() func() {
+	if b == nil {
+		return func() {}
+	}
+	b.operationMu.Lock()
+	return b.operationMu.Unlock
+}
+
+// NewDecodeBudget validates limits and applies safe framework defaults.
+func NewDecodeBudget(limits DecodeLimits) (*DecodeBudget, error) {
+	normalized, err := normalizeDecodeLimits(limits)
+	if err != nil {
+		return nil, err
+	}
+	return &DecodeBudget{limits: normalized}, nil
+}
+
+func normalizeDecodeLimits(limits DecodeLimits) (DecodeLimits, error) {
+	if limits.MaxDecodedBytes < 0 || limits.MaxWrappers < 0 || limits.MaxContainers < 0 ||
+		limits.MaxVectorElements < 0 || limits.MaxObjectNodes < 0 || limits.MaxObjectDepth < 0 ||
+		limits.MaxGzipRatio < 0 || limits.MaxGzipWorkBytes < 0 {
+		return DecodeLimits{}, errors.New("mtproto: decode limits must not be negative")
+	}
+	if limits.MaxDecodedBytes == 0 {
+		limits.MaxDecodedBytes = DefaultMaxDecodedBytes
+	}
+	if limits.MaxWrappers == 0 {
+		limits.MaxWrappers = DefaultMaxWrappers
+	}
+	if limits.MaxContainers == 0 {
+		limits.MaxContainers = DefaultMaxContainers
+	}
+	if limits.MaxVectorElements == 0 {
+		limits.MaxVectorElements = DefaultMaxVectorElements
+	}
+	if limits.MaxObjectNodes == 0 {
+		limits.MaxObjectNodes = DefaultMaxObjectNodes
+	}
+	if limits.MaxObjectDepth == 0 {
+		limits.MaxObjectDepth = DefaultMaxObjectDepth
+	}
+	if limits.MaxGzipRatio == 0 {
+		limits.MaxGzipRatio = DefaultMaxGzipExpansionRatio
+	}
+	if limits.MaxGzipWorkBytes == 0 {
+		limits.MaxGzipWorkBytes = DefaultMaxGzipWorkBytes
+	}
+	return limits, nil
+}
+
+// BudgetReader wraps r so all bytes read count against budget. Nested readers
+// should be derived with PrependReader to preserve the same budget.
+type BudgetReader struct {
+	reader io.Reader
+	budget *DecodeBudget
+}
+
+func NewBudgetReader(r io.Reader, budget *DecodeBudget) *BudgetReader {
+	if budget == nil {
+		budget, _ = NewDecodeBudget(DecodeLimits{})
+	}
+	return &BudgetReader{reader: r, budget: budget}
+}
+
+func (r *BudgetReader) Read(p []byte) (int, error) {
+	if r == nil || r.reader == nil {
+		return 0, io.EOF
+	}
+	if sized, ok := r.reader.(interface{ Len() int }); ok && sized.Len() == 0 {
+		return 0, io.EOF
+	}
+	if r.budget == nil {
+		return r.reader.Read(p)
+	}
+	r.budget.mu.Lock()
+	remaining := r.budget.limits.MaxDecodedBytes - r.budget.decodedBytes
+	if remaining <= 0 {
+		r.budget.mu.Unlock()
+		return 0, ErrDecodedBytesLimit
+	}
+	if int64(len(p)) > remaining {
+		p = p[:remaining]
+	}
+	reserved := int64(len(p))
+	r.budget.decodedBytes += reserved
+	r.budget.mu.Unlock()
+	n, err := r.reader.Read(p)
+	r.budget.mu.Lock()
+	r.budget.decodedBytes -= reserved - int64(n)
+	r.budget.mu.Unlock()
+	return n, err
+}
+
+func (r *BudgetReader) DecodeBudget() *DecodeBudget { return r.budget }
+
+// Len preserves bounded-reader allocation checks without exposing bytes.Reader.
+func (r *BudgetReader) Len() int {
+	if r == nil || r.budget == nil {
+		if r != nil {
+			if sized, ok := r.reader.(interface{ Len() int }); ok {
+				return sized.Len()
+			}
+		}
+		return 0
+	}
+	sizedLength := -1
+	if sized, ok := r.reader.(interface{ Len() int }); ok {
+		sizedLength = sized.Len()
+	}
+	r.budget.mu.Lock()
+	remaining := r.budget.limits.MaxDecodedBytes - r.budget.decodedBytes
+	r.budget.mu.Unlock()
+	if remaining < 0 {
+		remaining = 0
+	}
+	if sizedLength >= 0 && int64(sizedLength) < remaining {
+		return sizedLength
+	}
+	return int(remaining)
+}
+
+type budgetProvider interface {
+	DecodeBudget() *DecodeBudget
+}
+
+func budgetFromReader(r io.Reader) *DecodeBudget {
+	if provider, ok := r.(budgetProvider); ok {
+		return provider.DecodeBudget()
+	}
+	return nil
+}
+
+// EnterObject accounts one generated TL object and its nesting depth. The
+// returned leave function must be deferred by generated DeserializeTL methods.
+func EnterObject(r io.Reader) (func(), error) {
+	budget := budgetFromReader(r)
+	if budget == nil {
+		return func() {}, nil
+	}
+	budget.mu.Lock()
+	defer budget.mu.Unlock()
+	if budget.objectNodes >= budget.limits.MaxObjectNodes {
+		return nil, ErrObjectNodeLimit
+	}
+	if budget.objectDepth >= budget.limits.MaxObjectDepth {
+		return nil, ErrObjectDepthLimit
+	}
+	budget.objectNodes++
+	budget.objectDepth++
+	return func() {
+		budget.mu.Lock()
+		budget.objectDepth--
+		budget.mu.Unlock()
+	}, nil
+}
+
+func ConsumeWrapper(r io.Reader) error {
+	budget := budgetFromReader(r)
+	if budget == nil {
+		return nil
+	}
+	budget.mu.Lock()
+	defer budget.mu.Unlock()
+	if budget.wrapperCount >= budget.limits.MaxWrappers {
+		return ErrWrapperCountLimit
+	}
+	budget.wrapperCount++
+	return nil
+}
+
+func ConsumeContainer(r io.Reader) error {
+	budget := budgetFromReader(r)
+	if budget == nil {
+		return nil
+	}
+	budget.mu.Lock()
+	defer budget.mu.Unlock()
+	if budget.containerCount >= budget.limits.MaxContainers {
+		return ErrContainerCountLimit
+	}
+	budget.containerCount++
+	return nil
+}
+
+func consumeVectorElements(r io.Reader, count int32) error {
+	budget := budgetFromReader(r)
+	if budget == nil {
+		return nil
+	}
+	budget.mu.Lock()
+	defer budget.mu.Unlock()
+	if int64(count) > budget.limits.MaxVectorElements-budget.vectorElements {
+		return ErrVectorCountLimit
+	}
+	budget.vectorElements += int64(count)
+	return nil
+}
+
+type prependedBudgetReader struct {
+	prefix *bytes.Reader
+	reader io.Reader
+	budget *DecodeBudget
+}
+
+func (r *prependedBudgetReader) Read(p []byte) (int, error) {
+	if r.prefix.Len() > 0 {
+		return r.prefix.Read(p)
+	}
+	return r.reader.Read(p)
+}
+
+func (r *prependedBudgetReader) DecodeBudget() *DecodeBudget { return r.budget }
+
+func (r *prependedBudgetReader) Len() int {
+	length := r.prefix.Len()
+	if sized, ok := r.reader.(interface{ Len() int }); ok {
+		length += sized.Len()
+	}
+	return length
+}
+
+// PrependReader replays already-consumed constructor bytes without charging
+// them twice while preserving the parent's aggregate decode budget.
+func PrependReader(prefix []byte, r io.Reader) io.Reader {
+	return &prependedBudgetReader{
+		prefix: bytes.NewReader(append([]byte(nil), prefix...)),
+		reader: r,
+		budget: budgetFromReader(r),
+	}
+}
 
 // ReadInt32 reads an int32 in little-endian.
 func ReadInt32(r io.Reader) (int32, error) {
@@ -197,6 +478,9 @@ func ReadVectorBounded(r io.Reader, maxElements int, fn func() error) error {
 	if int64(count) > int64(maxElements) {
 		return fmt.Errorf("%w: got %d, limit %d", ErrVectorTooLong, count, maxElements)
 	}
+	if err := consumeVectorElements(r, count); err != nil {
+		return err
+	}
 	for i := int32(0); i < count; i++ {
 		if err := fn(); err != nil {
 			return err
@@ -221,6 +505,9 @@ func ReadBareVectorBounded(r io.Reader, maxElements int, fn func() error) error 
 	}
 	if int64(count) > int64(maxElements) {
 		return fmt.Errorf("%w: got %d, limit %d", ErrVectorTooLong, count, maxElements)
+	}
+	if err := consumeVectorElements(r, count); err != nil {
+		return err
 	}
 	for i := int32(0); i < count; i++ {
 		if err := fn(); err != nil {

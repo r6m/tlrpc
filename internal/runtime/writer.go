@@ -20,7 +20,10 @@ import (
 var (
 	ErrWriterClosed            = errors.New("runtime: writer closed")
 	ErrRetainedMessageNotFound = errors.New("runtime: retained message not found for resend")
+	ErrEncodedPayloadTooLarge  = errors.New("runtime: encoded payload exceeds limit")
 )
+
+const DefaultMaxEncodedPayloadBytes = 16 << 20
 
 type FrameSink interface {
 	WriteFrame(ctx context.Context, frame []byte) error
@@ -32,28 +35,30 @@ type MessageIDSource interface {
 }
 
 type WriterConfig struct {
-	Lease       *SessionLease
-	AuthKey     crypto.AuthKey
-	Sink        FrameSink
-	MessageIDs  MessageIDSource
-	Reliability *reliability.Store
-	Now         func() time.Time
+	Lease           *SessionLease
+	AuthKey         crypto.AuthKey
+	Sink            FrameSink
+	MessageIDs      MessageIDSource
+	Reliability     *reliability.Store
+	Now             func() time.Time
+	MaxEncodedBytes int
 }
 
 // Writer is the only Runtime v2 component allowed to allocate outbound wire
 // state or write encrypted frames for a connection.
 type Writer struct {
-	lease       *SessionLease
-	authKey     crypto.AuthKey
-	sink        FrameSink
-	messageIDs  MessageIDSource
-	reliability *reliability.Store
-	now         func() time.Time
-	ctx         context.Context
-	cancel      context.CancelCauseFunc
-	requests    chan writerRequest
-	done        chan struct{}
-	closeOnce   sync.Once
+	lease           *SessionLease
+	authKey         crypto.AuthKey
+	sink            FrameSink
+	messageIDs      MessageIDSource
+	reliability     *reliability.Store
+	now             func() time.Time
+	maxEncodedBytes int
+	ctx             context.Context
+	cancel          context.CancelCauseFunc
+	requests        chan writerRequest
+	done            chan struct{}
+	closeOnce       sync.Once
 }
 
 // OutboundReliabilityState is a point-in-time view of one retained outbound
@@ -90,6 +95,9 @@ func NewWriter(parent context.Context, config WriterConfig) (*Writer, error) {
 	if config.Lease == nil || config.Sink == nil || config.Reliability == nil {
 		return nil, errors.New("runtime: incomplete writer configuration")
 	}
+	if config.MaxEncodedBytes < 0 {
+		return nil, errors.New("runtime: encoded payload limit must not be negative")
+	}
 	if parent == nil {
 		parent = context.Background()
 	}
@@ -103,16 +111,17 @@ func NewWriter(parent context.Context, config WriterConfig) (*Writer, error) {
 	}
 	ctx, cancel := context.WithCancelCause(parent)
 	w := &Writer{
-		lease:       config.Lease,
-		authKey:     config.AuthKey,
-		sink:        config.Sink,
-		messageIDs:  messageIDs,
-		reliability: config.Reliability,
-		now:         now,
-		ctx:         ctx,
-		cancel:      cancel,
-		requests:    make(chan writerRequest),
-		done:        make(chan struct{}),
+		lease:           config.Lease,
+		authKey:         config.AuthKey,
+		sink:            config.Sink,
+		messageIDs:      messageIDs,
+		reliability:     config.Reliability,
+		now:             now,
+		maxEncodedBytes: normalizeMaxEncodedBytes(config.MaxEncodedBytes),
+		ctx:             ctx,
+		cancel:          cancel,
+		requests:        make(chan writerRequest),
+		done:            make(chan struct{}),
 	}
 	go w.run()
 	return w, nil
@@ -264,13 +273,19 @@ func (w *Writer) process(ctx context.Context, intent Intent) (bool, error) {
 		if err := w.lease.Commit(ctx, next); err != nil {
 			return false, err
 		}
-		if _, err := w.reliability.Put(reliability.SentMessage{
-			MessageID:      prepared.messageID,
-			SequenceNumber: prepared.sequenceNo,
-			Payload:        prepared.frame,
-			SentAt:         w.now(),
-		}); err != nil {
-			return false, err
+		sentAt := w.now()
+		retained := append(prepared.retained, retainedFrameMessage{
+			messageID: prepared.messageID, sequenceNo: prepared.sequenceNo,
+		})
+		for _, message := range retained {
+			if _, err := w.reliability.Put(reliability.SentMessage{
+				MessageID:      message.messageID,
+				SequenceNumber: message.sequenceNo,
+				Payload:        prepared.frame,
+				SentAt:         sentAt,
+			}); err != nil {
+				return false, err
+			}
 		}
 		if err := w.sink.WriteFrame(ctx, prepared.frame); err != nil {
 			return false, err
@@ -283,6 +298,12 @@ type preparedFrame struct {
 	messageID  int64
 	sequenceNo int32
 	frame      []byte
+	retained   []retainedFrameMessage
+}
+
+type retainedFrameMessage struct {
+	messageID  int64
+	sequenceNo int32
 }
 
 func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error) {
@@ -294,10 +315,15 @@ func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error)
 	var body []byte
 	var messageID int64
 	var sequenceNo int32
+	var retained []retainedFrameMessage
 	if batch, ok := intent.(Batch); ok {
+		if len(batch.Items) > mtproto.DefaultMaxVectorElements {
+			return preparedFrame{}, session.Snapshot{}, ErrEncodedPayloadTooLarge
+		}
 		container := &mtprototl.MsgContainer{Messages: make([]mtprototl.Message, 0, len(batch.Items))}
+		retained = make([]retainedFrameMessage, 0, len(batch.Items))
 		for _, child := range batch.Items {
-			childBody, contentRelated, push, err := encodeIntentBody(child)
+			childBody, contentRelated, push, err := encodeIntentBodyBounded(child, w.maxEncodedBytes)
 			if err != nil {
 				return preparedFrame{}, session.Snapshot{}, err
 			}
@@ -309,8 +335,11 @@ func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error)
 				Bytes:   int32(len(childBody)),
 				BodyRaw: childBody,
 			})
+			retained = append(retained, retainedFrameMessage{
+				messageID: childMessageID, sequenceNo: childSequenceNo,
+			})
 		}
-		body, err = serializeRuntimeTL(container)
+		body, err = serializeRuntimeTLBounded(container, w.maxEncodedBytes)
 		if err != nil {
 			return preparedFrame{}, session.Snapshot{}, err
 		}
@@ -318,7 +347,7 @@ func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error)
 		sequenceNo = nextSequenceNo(&snapshot, false)
 	} else {
 		var contentRelated, push bool
-		body, contentRelated, push, err = encodeIntentBody(intent)
+		body, contentRelated, push, err = encodeIntentBodyBounded(intent, w.maxEncodedBytes)
 		if err != nil {
 			return preparedFrame{}, session.Snapshot{}, err
 		}
@@ -342,27 +371,37 @@ func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error)
 		messageID:  messageID,
 		sequenceNo: sequenceNo,
 		frame:      serializeEncryptedFrame(encrypted),
+		retained:   retained,
 	}, snapshot, nil
 }
 
-func encodeIntentBody(intent Intent) (body []byte, contentRelated, push bool, err error) {
+func encodeIntentBodyBounded(intent Intent, maxBytes int) (body []byte, contentRelated, push bool, err error) {
 	switch value := intent.(type) {
 	case RPCResult:
-		body, err = serializeRuntimeTL(&mtprototl.RPCResult{ReqMsgID: value.RequestMessageID, ResultRaw: value.Body})
+		if len(value.Body) > maxBytes {
+			return nil, false, false, ErrEncodedPayloadTooLarge
+		}
+		body, err = serializeRuntimeTLBounded(&mtprototl.RPCResult{ReqMsgID: value.RequestMessageID, ResultRaw: value.Body}, maxBytes)
 		return body, true, false, err
 	case RPCError:
-		errorBody, encodeErr := serializeRuntimeTL(&mtprototl.RPCError{ErrorCode: value.Code, ErrorMessage: value.Message})
+		errorBody, encodeErr := serializeRuntimeTLBounded(&mtprototl.RPCError{ErrorCode: value.Code, ErrorMessage: value.Message}, maxBytes)
 		if encodeErr != nil {
 			return nil, false, false, encodeErr
 		}
-		body, err = serializeRuntimeTL(&mtprototl.RPCResult{ReqMsgID: value.RequestMessageID, ResultRaw: errorBody})
+		body, err = serializeRuntimeTLBounded(&mtprototl.RPCResult{ReqMsgID: value.RequestMessageID, ResultRaw: errorBody}, maxBytes)
 		return body, true, false, err
 	case ProtocolReply:
+		if len(value.Body) > maxBytes {
+			return nil, false, false, ErrEncodedPayloadTooLarge
+		}
 		return append([]byte(nil), value.Body...), value.ContentRelated, value.Unsolicited, nil
 	case Acknowledge:
-		body, err = serializeRuntimeTL(&mtprototl.MsgsAck{MsgIDs: append([]int64(nil), value.MessageIDs...)})
+		body, err = serializeRuntimeTLBounded(&mtprototl.MsgsAck{MsgIDs: value.MessageIDs}, maxBytes)
 		return body, false, false, err
 	case Push:
+		if len(value.Body) > maxBytes {
+			return nil, false, false, ErrEncodedPayloadTooLarge
+		}
 		return append([]byte(nil), value.Body...), true, true, nil
 	default:
 		return nil, false, false, fmt.Errorf("%w: writer body %T", ErrInvalidIntent, intent)
@@ -387,11 +426,38 @@ func nextSequenceNo(snapshot *session.Snapshot, contentRelated bool) int32 {
 }
 
 func serializeRuntimeTL(value interface{ SerializeTL(io.Writer) error }) ([]byte, error) {
+	return serializeRuntimeTLBounded(value, DefaultMaxEncodedPayloadBytes)
+}
+
+func serializeRuntimeTLBounded(value interface{ SerializeTL(io.Writer) error }, maxBytes int) ([]byte, error) {
+	maxBytes = normalizeMaxEncodedBytes(maxBytes)
 	var buffer bytes.Buffer
-	if err := value.SerializeTL(&buffer); err != nil {
+	writer := &boundedRuntimeWriter{writer: &buffer, remaining: maxBytes}
+	if err := value.SerializeTL(writer); err != nil {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
+}
+
+func normalizeMaxEncodedBytes(maxBytes int) int {
+	if maxBytes <= 0 {
+		return DefaultMaxEncodedPayloadBytes
+	}
+	return maxBytes
+}
+
+type boundedRuntimeWriter struct {
+	writer    io.Writer
+	remaining int
+}
+
+func (w *boundedRuntimeWriter) Write(p []byte) (int, error) {
+	if len(p) > w.remaining {
+		return 0, ErrEncodedPayloadTooLarge
+	}
+	n, err := w.writer.Write(p)
+	w.remaining -= n
+	return n, err
 }
 
 func serializeEncryptedFrame(message *mtproto.EncryptedMessage) []byte {
