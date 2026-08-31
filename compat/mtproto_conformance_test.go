@@ -73,7 +73,7 @@ func TestEncryptedValidationRejectsReplayWithCode32(t *testing.T) {
 	}
 }
 
-func TestEncryptedValidationRejectsSessionMismatchWithCode64(t *testing.T) {
+func TestEncryptedValidationAcceptsRestoredHighSequenceSession(t *testing.T) {
 	h, cli := dialEncryptedHarness(t)
 	payload := serializeCompatObject(t, &pingReq{Value: 30})
 	msgID := client.NextMsgID()
@@ -84,11 +84,12 @@ func TestEncryptedValidationRejectsSessionMismatchWithCode64(t *testing.T) {
 	if err := cli.Conn().WriteMessage(packet); err != nil {
 		t.Fatalf("write request: %v", err)
 	}
-
-	_, obj := readUntilConstructor(t, cli, mtprototl.BadMsgNotificationID)
-	bad := obj.(*mtprototl.BadMsgNotification)
-	if bad.BadMsgID != msgID || bad.BadMsgSeq != 3 || bad.ErrorCode != 64 {
-		t.Fatalf("session mismatch notification = %+v, want id=%d seq=3 code=64", bad, msgID)
+	cli.SetSession(h.keyID, h.key, h.salt, h.session+1)
+	responses := drainRPCExchange(t, cli, msgID, true)
+	rpcResult := responses[mtprototl.RPCResultID].(*mtprototl.RPCResult)
+	var result pingResp
+	if err := result.DeserializeTL(bytes.NewReader(rpcResult.ResultRaw)); err != nil || result.Value != 31 {
+		t.Fatalf("restored-session result = %+v, %v; want ping result 31", result, err)
 	}
 }
 

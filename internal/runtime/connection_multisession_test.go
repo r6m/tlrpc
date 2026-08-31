@@ -123,6 +123,33 @@ func TestConnectionAdmitsTwoInitialSameAuthSessionsWithoutRetiringEither(t *test
 	}
 }
 
+func TestConnectionAcceptsHighInitialSequenceForClientRestoredSession(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	application := &multisessionApplicationStub{}
+	harness := newConnectionHarness(t, now, application, 100, nil)
+	defer harness.connection.shutdown(io.EOF)
+
+	const restoredSequence = int32(501)
+	if err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: inboundMessageID(4), SeqNo: restoredSequence,
+			Data: constructorBody(0x70707070),
+		},
+		AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+	}); err != nil {
+		t.Fatalf("restored-session request: %v", err)
+	}
+	waitForWrittenFrames(t, harness.transport, 3)
+	if got := application.sessionIDs(); !equalInt64s(got, []int64{inboundSessionID}) {
+		t.Fatalf("application sessions = %v, want restored session", got)
+	}
+	snapshot := loadConnectionSessionSnapshot(t, harness.store, harness.authKey.ID(), inboundSessionID)
+	if snapshot.SeqNo != restoredSequence+1 {
+		t.Fatalf("restored client sequence = %d, want %d", snapshot.SeqNo, restoredSequence+1)
+	}
+}
+
 func TestConnectionPinsPhysicalTransportToOneAuthKey(t *testing.T) {
 	now := time.Unix(inboundNowSeconds, 0).UTC()
 	harness := newConnectionHarness(t, now, &multisessionApplicationStub{}, 100, nil)

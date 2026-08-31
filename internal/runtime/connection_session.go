@@ -27,9 +27,6 @@ type connectionSession struct {
 	active      *ActiveRequestRegistry
 	sender      *requestSender
 
-	stateMu           sync.Mutex
-	receivedEncrypted bool
-
 	outcomeMu   sync.Mutex
 	acceptsPush bool
 
@@ -150,27 +147,6 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 	if inner == nil || inner.SessionID != s.key.SessionID {
 		return ErrConnectionProtocol
 	}
-	s.stateMu.Lock()
-	firstEncrypted := !s.receivedEncrypted
-	s.receivedEncrypted = true
-	s.stateMu.Unlock()
-	if firstEncrypted && s.lease.Created() && inner.SeqNo > 1 {
-		bad := &protocol.BadMessageError{
-			MessageID:  inner.MsgID,
-			SequenceNo: inner.SeqNo,
-			Code:       protocol.CodeSessionIDMismatch,
-			Cause:      protocol.ErrSessionIDMismatch,
-		}
-		intent, err := badMessageIntent(bad)
-		if err != nil {
-			return err
-		}
-		if err := s.writer.Submit(ctx, intent); err != nil {
-			return err
-		}
-		return s.lease.Delete(ctx)
-	}
-
 	snapshot, err := s.lease.Snapshot()
 	if err != nil {
 		return err

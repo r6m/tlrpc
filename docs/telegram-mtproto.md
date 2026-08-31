@@ -115,6 +115,12 @@ acquires the session identified by `(AuthKeyID, SessionID)`. Message IDs are
 directional and time-related. Sequence numbers distinguish content-related
 messages; client and server sequence progress are independent.
 
+When a client restores a session whose durable server snapshot is absent, its
+first content-related message may legitimately carry an already-advanced odd
+sequence number. Runtime v2 adopts that high-water mark and keeps normal replay,
+parity, message-ID, salt, and subsequent sequence validation; it does not treat
+the restored progress as a session-ID mismatch.
+
 The first encrypted auth key pins the physical connection. That connection may
 host a bounded map of composite sessions for the same auth key—16 by default—
 but encrypted traffic for another auth key is rejected.
