@@ -119,7 +119,6 @@ func classifyMessageKind(constructorID uint32) protocol.MessageKind {
 	}
 	switch constructorID {
 	case mtprototl.MsgsAckID,
-		mtprototl.GzipPackedID,
 		mtprototl.NewSessionCreatedID,
 		mtprototl.GetFutureSaltsID,
 		mtprototl.MsgsStateReqID,

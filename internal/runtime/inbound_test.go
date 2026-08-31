@@ -47,6 +47,27 @@ func TestSessionValidatorAdvancesDetachedSnapshot(t *testing.T) {
 	validated.Messages[0].Body[0] = 0
 }
 
+func TestSessionValidatorTreatsGzipPackedRequestAsContentRelated(t *testing.T) {
+	original := inboundSnapshot()
+	original.SeqNo = 2
+	validator := newInboundValidator(t, original)
+	messageID := inboundMessageID(4)
+
+	validated, err := validator.Validate(original, &mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: messageID, SeqNo: 3, Data: constructorBody(mtprototl.GzipPackedID),
+	})
+	if err != nil {
+		t.Fatalf("validate gzip_packed request: %v", err)
+	}
+	if len(validated.Messages) != 1 || !validated.Messages[0].ContentRelated {
+		t.Fatalf("decoded gzip_packed message = %+v", validated.Messages)
+	}
+	if validated.Snapshot.SeqNo != 4 {
+		t.Fatalf("advanced snapshot sequence = %d, want 4", validated.Snapshot.SeqNo)
+	}
+}
+
 func TestSessionValidatorValidatesContainerAtomically(t *testing.T) {
 	original := inboundSnapshot()
 	validator := newInboundValidator(t, original)
