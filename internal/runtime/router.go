@@ -164,6 +164,8 @@ func ApplySessionMutations(current session.Snapshot, mutations []SessionMutation
 			next.UserID = value.UserID
 		case UnbindUser:
 			next.UserID = 0
+		case SetPushSubscription:
+			next.PushSubscription = value.Enabled
 		case MarkNewSessionCreated:
 			next.NewSessionCreated = true
 			next.FirstClientMsgID = value.FirstMessageID
@@ -192,6 +194,7 @@ func validateSessionMutation(mutation SessionMutation) error {
 			return ErrInvalidSessionMutation
 		}
 	case UnbindUser:
+	case SetPushSubscription:
 	case MarkNewSessionCreated:
 		if value.FirstMessageID == 0 {
 			return ErrInvalidSessionMutation

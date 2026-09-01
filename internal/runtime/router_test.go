@@ -88,12 +88,13 @@ func TestApplySessionMutationsStagesDetachedNamedState(t *testing.T) {
 		SetLayer{Layer: 228},
 		SetClientMetadata{APIID: 10, DeviceModel: "device", SystemVersion: "system", AppVersion: "app", LangCode: "en"},
 		BindUser{UserID: 42},
+		SetPushSubscription{Enabled: true},
 		MarkNewSessionCreated{FirstMessageID: 100},
 	})
 	if err != nil {
 		t.Fatalf("ApplySessionMutations(): %v", err)
 	}
-	if next.Layer != 228 || next.UserID != 42 || next.Client.APIID != 10 || !next.NewSessionCreated || next.FirstClientMsgID != 100 {
+	if next.Layer != 228 || next.UserID != 42 || !next.PushSubscription || next.Client.APIID != 10 || !next.NewSessionCreated || next.FirstClientMsgID != 100 {
 		t.Fatalf("staged snapshot = %+v", next)
 	}
 	next.RecentClientMsgIDs[0] = 99

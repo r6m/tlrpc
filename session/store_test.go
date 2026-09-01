@@ -13,7 +13,7 @@ func TestMemoryStoreUsesDetachedSnapshotsAndAtomicLoadOrCreate(t *testing.T) {
 	store := NewMemoryStore()
 	key := SessionKey{AuthKeyID: crypto.KeyID(7), SessionID: 9}
 	initial := Snapshot{
-		AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSeqNo: 3,
+		AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSeqNo: 3, PushSubscription: true,
 		ClientMsgIDFloor: 1, RecentClientMsgIDs: []int64{5}, RecentClientSeqNos: []int32{1},
 	}
 
@@ -35,7 +35,7 @@ func TestMemoryStoreUsesDetachedSnapshotsAndAtomicLoadOrCreate(t *testing.T) {
 	if wasCreated {
 		t.Fatal("existing LoadOrCreate incorrectly reported creation")
 	}
-	if existing.ServerSeqNo != 3 || existing.ClientMsgIDFloor != 1 || existing.RecentClientMsgIDs[0] != 5 || existing.RecentClientSeqNos[0] != 1 {
+	if existing.ServerSeqNo != 3 || !existing.PushSubscription || existing.ClientMsgIDFloor != 1 || existing.RecentClientMsgIDs[0] != 5 || existing.RecentClientSeqNos[0] != 1 {
 		t.Fatalf("stored snapshot was aliased or reset: %+v", existing)
 	}
 

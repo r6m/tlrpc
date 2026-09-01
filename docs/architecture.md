@@ -82,6 +82,8 @@ contains:
 - a bounded set of recent client message IDs;
 - a monotonic `ClientMsgIDFloor`; and
 - bounded recent content sequence numbers and directional sequence progress.
+- the durable push-subscription opt-in; the active sender is re-bound by the
+  new connection and is never persisted.
 
 When the recent-ID window is full, the smallest retained ID is evicted and the
 floor advances to at least that value. A later message at or below the floor is

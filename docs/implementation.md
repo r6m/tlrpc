@@ -75,7 +75,9 @@ fields, including:
 - independent client/server sequence progress and session notification state;
 - highest/first client message IDs;
 - `ClientMsgIDFloor` and `RecentClientMsgIDs`; and
-- `RecentClientSeqNos`.
+- `RecentClientSeqNos`; and
+- the push-subscription opt-in, which restores sender registration after a
+  reconnect while keeping `invokeWithoutUpdates` request-scoped.
 
 Slices must be copied on store boundaries. The included memory store is useful
 for tests and single-process development; it does not make replay state durable

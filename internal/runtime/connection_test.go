@@ -194,6 +194,125 @@ func TestConnectionInvokeWithoutUpdatesDoesNotSubscribeColdBoundSession(t *testi
 	harness.connection.shutdown(io.EOF)
 }
 
+func TestConnectionRestoresDurablePushSubscriptionAcrossReconnect(t *testing.T) {
+	const (
+		bindConstructor       = uint32(0x71717171)
+		suppressedConstructor = uint32(0x72727272)
+		incidentalSenderPush  = uint32(0x73737373)
+		incidentalOutcomePush = uint32(0x74747474)
+		laterServerPush       = uint32(0x75757575)
+	)
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	application := &subscriptionApplicationStub{
+		bindConstructor:       bindConstructor,
+		suppressedConstructor: suppressedConstructor,
+		incidentalSenderPush:  incidentalSenderPush,
+		incidentalOutcomePush: incidentalOutcomePush,
+	}
+	presence := newSubscriptionPresenceStub()
+	store := session.NewMemoryStore()
+	first := newConnectionHarnessWithStore(t, now, application, 100, nil, store)
+	first.connection.config.Presence = presence
+
+	if err := first.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: inboundMessageID(4), SeqNo: 1, Data: constructorBody(bindConstructor),
+		},
+		AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+	}); err != nil {
+		t.Fatalf("initial subscribed request: %v", err)
+	}
+	presence.waitForUser(t, 42)
+	waitForWrittenFrames(t, first.transport, 3)
+	snapshot := loadConnectionSessionSnapshot(t, store, first.authKey.ID(), inboundSessionID)
+	if !snapshot.PushSubscription {
+		t.Fatalf("initial session did not persist push subscription: %+v", snapshot)
+	}
+	first.connection.shutdown(io.EOF)
+
+	second := newConnectionHarnessWithStore(t, now, application, 100, nil, store)
+	second.connection.config.Presence = presence
+	defer second.connection.shutdown(io.EOF)
+	if _, err := second.connection.sessionFor(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{Salt: inboundSalt, SessionID: inboundSessionID},
+		AuthKeyID: second.authKey.ID(), AuthKey: second.authKey,
+	}); err != nil {
+		t.Fatalf("reconnect session: %v", err)
+	}
+	presence.waitForUser(t, 42)
+
+	if err := second.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: inboundMessageID(8), SeqNo: 3,
+			Data: encodeControlBody(t, &mtprototl.InvokeWithoutUpdates{QueryRaw: constructorBody(suppressedConstructor)}),
+		},
+		AuthKeyID: second.authKey.ID(), AuthKey: second.authKey,
+	}); err != nil {
+		t.Fatalf("suppressed request after reconnect: %v", err)
+	}
+	waitForWrittenFrames(t, second.transport, 2)
+	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
+		t.Fatalf("restored subscription push: %v", err)
+	}
+	waitForWrittenFrames(t, second.transport, 3)
+
+	constructors := make([]uint32, 0, 3)
+	for _, frame := range second.transport.writtenFrames() {
+		constructors = append(constructors, binaryConstructor(decryptWriterFrame(t, second.authKey, frame).Data))
+	}
+	if containsConstructor(constructors, incidentalSenderPush) || containsConstructor(constructors, incidentalOutcomePush) {
+		t.Fatalf("invokeWithoutUpdates leaked suppressed push after reconnect: %08x", constructors)
+	}
+	if !containsConstructor(constructors, laterServerPush) {
+		t.Fatalf("restored subscription did not receive later push: %08x", constructors)
+	}
+}
+
+func TestConnectionDoesNotRestorePushSubscriptionForColdSession(t *testing.T) {
+	const bindConstructor = uint32(0x81818181)
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	application := &subscriptionApplicationStub{bindConstructor: bindConstructor}
+	presence := newSubscriptionPresenceStub()
+	store := session.NewMemoryStore()
+	first := newConnectionHarnessWithStore(t, now, application, 100, nil, store)
+	first.connection.config.Presence = presence
+	if err := first.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: inboundMessageID(4), SeqNo: 1,
+			Data: encodeControlBody(t, &mtprototl.InvokeWithoutUpdates{QueryRaw: constructorBody(bindConstructor)}),
+		},
+		AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+	}); err != nil {
+		t.Fatalf("initial cold request: %v", err)
+	}
+	waitForWrittenFrames(t, first.transport, 3)
+	snapshot := loadConnectionSessionSnapshot(t, store, first.authKey.ID(), inboundSessionID)
+	if snapshot.PushSubscription {
+		t.Fatalf("cold session unexpectedly persisted push subscription: %+v", snapshot)
+	}
+	first.connection.shutdown(io.EOF)
+
+	second := newConnectionHarnessWithStore(t, now, application, 100, nil, store)
+	second.connection.config.Presence = presence
+	defer second.connection.shutdown(io.EOF)
+	actor, err := second.connection.sessionFor(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{Salt: inboundSalt, SessionID: inboundSessionID},
+		AuthKeyID: second.authKey.ID(), AuthKey: second.authKey,
+	})
+	if err != nil {
+		t.Fatalf("cold reconnect session: %v", err)
+	}
+	if actor.acceptsPush {
+		t.Fatal("cold reconnect restored an active push subscription")
+	}
+	if err := presence.publish(context.Background(), 42, constructorBody(0x82828282)); err == nil {
+		t.Fatal("cold reconnect unexpectedly accepted a server push")
+	}
+}
+
 func TestConnectionRPCDropCancelsRunningGeneratedHandler(t *testing.T) {
 	now := time.Unix(inboundNowSeconds, 0).UTC()
 	requestID := inboundMessageID(4)
@@ -238,6 +357,10 @@ type connectionHarness struct {
 }
 
 func newConnectionHarness(t *testing.T, now time.Time, application ApplicationDispatcher, writes int, messages []mtproto.InnerData) connectionHarness {
+	return newConnectionHarnessWithStore(t, now, application, writes, messages, session.NewMemoryStore())
+}
+
+func newConnectionHarnessWithStore(t *testing.T, now time.Time, application ApplicationDispatcher, writes int, messages []mtproto.InnerData, store *session.MemoryStore) connectionHarness {
 	t.Helper()
 	var authKey crypto.AuthKey
 	for index := range authKey {
@@ -256,7 +379,6 @@ func newConnectionHarness(t *testing.T, now time.Time, application ApplicationDi
 		frames = append(frames, serializeEncryptedFrame(encrypted))
 	}
 	transport := newScriptedFrameConnection(frames, writes)
-	store := session.NewMemoryStore()
 	reliabilityRegistry, err := NewReliabilityRegistry(ReliabilityRegistryConfig{
 		MaxSessions: 4, MessageCapacity: 32, TTL: time.Minute,
 		Now: func() time.Time { return now },

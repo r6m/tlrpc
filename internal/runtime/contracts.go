@@ -151,6 +151,13 @@ type UnbindUser struct{}
 
 func (UnbindUser) isSessionMutation() {}
 
+// SetPushSubscription records whether this durable session accepts unsolicited
+// application pushes. The active sender is always process-local; only the
+// opt-in survives a reconnect so a replacement sender can be registered.
+type SetPushSubscription struct{ Enabled bool }
+
+func (SetPushSubscription) isSessionMutation() {}
+
 type MarkNewSessionCreated struct {
 	FirstMessageID int64
 }

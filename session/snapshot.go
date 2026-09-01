@@ -13,6 +13,7 @@ type Snapshot struct {
 	SessionID          int64
 	Layer              int
 	UserID             int64
+	PushSubscription   bool
 	ServerSalt         int64
 	SeqNo              int32
 	ServerSeqNo        int32

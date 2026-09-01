@@ -66,7 +66,10 @@ compatibility consumers, not framework dependencies.
   detached, persisted protocol state.
 - A durable `session.Store` implementation must round-trip every
   `session.Snapshot` field, including `ClientMsgIDFloor`,
-  `RecentClientMsgIDs`, and `RecentClientSeqNos`.
+  `RecentClientMsgIDs`, `RecentClientSeqNos`, and the durable push
+  subscription opt-in. A reconnect must restore that opt-in to the new
+  process-local sender; `invokeWithoutUpdates` remains request-scoped and
+  must not opt a cold session in.
 - `invokeAfterMsg` and `invokeAfterMsgs` must wait for successful completion of
   their referenced earlier requests, fail after a failed dependency, and time
   out rather than wait indefinitely for an unknown dependency.

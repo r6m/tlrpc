@@ -82,6 +82,12 @@ These guarantees survive reconnect/restart only when the application's durable
 has no prior client progress may adopt an already-advanced first odd content
 sequence number, after which normal bounded replay rules apply.
 
+The snapshot also records whether the session has accepted unsolicited
+application pushes. Runtime v2 restores this opt-in and registers the new
+connection sender; the sender itself remains process-local. A request wrapped
+in `invokeWithoutUpdates` can suppress that request's push intents but cannot
+change the durable subscription state.
+
 ## Wrappers
 
 Runtime v2 removes protocol wrappers before generated dispatch:

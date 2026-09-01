@@ -130,10 +130,11 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 		writer:      writer,
 		router:      router,
 		active:      active,
+		acceptsPush: snapshot.PushSubscription,
 	}
 	actor.sender = &requestSender{writer: writer, connectionID: owner.config.ConnectionID}
 	if owner.config.Presence != nil {
-		owner.config.Presence.Update(snapshot, actor.sender, false)
+		owner.config.Presence.Update(snapshot, actor.sender, actor.acceptsPush)
 	}
 	releaseLease = false
 	releaseReliability = false
@@ -261,7 +262,7 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 		return s.applyOutcome(ctx, current, outcome)
 	}
 	if !current.SuppressPush {
-		if err := s.subscribeForPush(); err != nil {
+		if err := s.subscribeForPush(ctx); err != nil {
 			return err
 		}
 	}
@@ -377,7 +378,7 @@ func isRuntimeControlConstructor(constructorID uint32) bool {
 	}
 }
 
-func (s *connectionSession) subscribeForPush() error {
+func (s *connectionSession) subscribeForPush(ctx context.Context) error {
 	s.outcomeMu.Lock()
 	defer s.outcomeMu.Unlock()
 	if s.acceptsPush {
@@ -387,9 +388,16 @@ func (s *connectionSession) subscribeForPush() error {
 	if err != nil {
 		return err
 	}
-	s.acceptsPush = true
+	next, err := ApplySessionMutations(snapshot, []SessionMutation{SetPushSubscription{Enabled: true}})
+	if err != nil {
+		return err
+	}
+	if err := s.lease.Commit(ctx, next); err != nil {
+		return err
+	}
+	s.acceptsPush = next.PushSubscription
 	if s.owner.config.Presence != nil {
-		s.owner.config.Presence.Update(snapshot, s.sender, true)
+		s.owner.config.Presence.Update(next, s.sender, s.acceptsPush)
 	}
 	return nil
 }
@@ -467,6 +475,7 @@ func (s *connectionSession) applyMutationsLocked(ctx context.Context, mutations 
 	if err := s.lease.Commit(ctx, next); err != nil {
 		return err
 	}
+	s.acceptsPush = next.PushSubscription
 	if s.owner.config.Presence != nil {
 		s.owner.config.Presence.Update(next, s.sender, s.acceptsPush)
 	}
