@@ -91,6 +91,24 @@ func TestRuntimePushRegistryPublishExceptSkipsOnlyExactSession(t *testing.T) {
 	}
 }
 
+func TestRuntimePushRegistryPublishExceptAuthKeySkipsEveryAuthorizationSession(t *testing.T) {
+	registry := newRuntimePushRegistry(nil)
+	first := &recordingRuntimeSender{}
+	sameAuthKey := &recordingRuntimeSender{}
+	otherAuthKey := &recordingRuntimeSender{}
+
+	registry.Update(session.Snapshot{AuthKeyID: 11, SessionID: 22, UserID: 33}, first, true)
+	registry.Update(session.Snapshot{AuthKeyID: 11, SessionID: 23, UserID: 33}, sameAuthKey, true)
+	registry.Update(session.Snapshot{AuthKeyID: 12, SessionID: 22, UserID: 33}, otherAuthKey, true)
+
+	if err := registry.PublishExceptAuthKey(context.Background(), 33, 11, []byte{1, 2, 3, 4}); err != nil {
+		t.Fatal(err)
+	}
+	if first.pushes != 0 || sameAuthKey.pushes != 0 || otherAuthKey.pushes != 1 {
+		t.Fatalf("auth-key-excluded publish counts = (%d, %d, %d), want (0, 0, 1)", first.pushes, sameAuthKey.pushes, otherAuthKey.pushes)
+	}
+}
+
 func TestRuntimePushRegistryColdParallelConnectionDoesNotMaskSubscriber(t *testing.T) {
 	registry := newRuntimePushRegistry(nil)
 	subscribed := &recordingRuntimeSender{}
@@ -160,6 +178,24 @@ func TestServerPublishExceptUsesCompositeBindingAndAggregatesIncludedFailures(t 
 	}
 	if excluded.pushes != 0 || included.pushes != 2 {
 		t.Fatalf("non-context publish counts = (%d, %d), want (0, 2)", excluded.pushes, included.pushes)
+	}
+}
+
+func TestServerPublishExceptAuthKeyPreservesOtherAuthorizations(t *testing.T) {
+	server := NewServer()
+	first := &recordingRuntimeSender{}
+	sameAuthKey := &recordingRuntimeSender{}
+	otherAuthKey := &recordingRuntimeSender{}
+
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 41, SessionID: 51, UserID: 61}, first, true)
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 41, SessionID: 52, UserID: 61}, sameAuthKey, true)
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 42, SessionID: 51, UserID: 61}, otherAuthKey, true)
+
+	if err := server.PublishExceptAuthKey(61, 41, &runtimeApplicationTestResponse{Value: "message update"}); err != nil {
+		t.Fatal(err)
+	}
+	if first.pushes != 0 || sameAuthKey.pushes != 0 || otherAuthKey.pushes != 1 {
+		t.Fatalf("auth-key-excluded server publish counts = (%d, %d, %d), want (0, 0, 1)", first.pushes, sameAuthKey.pushes, otherAuthKey.pushes)
 	}
 }
 

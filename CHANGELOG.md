@@ -9,6 +9,13 @@ documentation define future framework behavior.
 
 ## [Unreleased]
 
+### Added
+
+- Add `Server.PublishExceptAuthKey` and its context variant so a framework
+  consumer can suppress a response-derived push across every transport session
+  of the originating authorization while still updating the user's other
+  devices.
+
 ## [0.12.1] - 2026-09-01
 
 ### Fixed

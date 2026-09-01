@@ -139,14 +139,18 @@ func (r *runtimePushRegistry) removeUserLocked(key session.SessionKey, binding r
 }
 
 func (r *runtimePushRegistry) Publish(ctx context.Context, userID int64, body []byte) error {
-	return r.publish(ctx, userID, nil, body)
+	return r.publish(ctx, userID, nil, nil, body)
 }
 
 func (r *runtimePushRegistry) PublishExcept(ctx context.Context, userID int64, excluded session.SessionKey, body []byte) error {
-	return r.publish(ctx, userID, &excluded, body)
+	return r.publish(ctx, userID, &excluded, nil, body)
 }
 
-func (r *runtimePushRegistry) publish(ctx context.Context, userID int64, excluded *session.SessionKey, body []byte) error {
+func (r *runtimePushRegistry) PublishExceptAuthKey(ctx context.Context, userID int64, excluded crypto.KeyID, body []byte) error {
+	return r.publish(ctx, userID, nil, &excluded, body)
+}
+
+func (r *runtimePushRegistry) publish(ctx context.Context, userID int64, excludedSession *session.SessionKey, excludedAuthKey *crypto.KeyID, body []byte) error {
 	if r == nil || userID <= 0 {
 		return nil
 	}
@@ -154,7 +158,7 @@ func (r *runtimePushRegistry) publish(ctx context.Context, userID int64, exclude
 	bindings := r.byUser[userID]
 	senders := make([]runtimev2.Sender, 0, len(bindings))
 	for key, sessionSenders := range bindings {
-		if excluded != nil && key == *excluded {
+		if excludedSession != nil && key == *excludedSession || excludedAuthKey != nil && key.AuthKeyID == *excludedAuthKey {
 			continue
 		}
 		senders = append(senders, sessionSenders...)
@@ -177,7 +181,7 @@ func (s *Server) Publish(userID int64, update TLObject) error {
 
 // PublishContext is Publish with caller-controlled cancellation and deadlines.
 func (s *Server) PublishContext(ctx context.Context, userID int64, update TLObject) error {
-	return s.publishContext(ctx, userID, nil, update)
+	return s.publishContext(ctx, userID, nil, nil, update)
 }
 
 // PublishExcept sends one schema-defined server push to every active session
@@ -195,10 +199,23 @@ func (s *Server) PublishExceptContext(ctx context.Context, userID int64, exclude
 		AuthKeyID: crypto.KeyID(excluded.AuthKeyID),
 		SessionID: excluded.SessionID,
 	}
-	return s.publishContext(ctx, userID, &key, update)
+	return s.publishContext(ctx, userID, &key, nil, update)
 }
 
-func (s *Server) publishContext(ctx context.Context, userID int64, excluded *session.SessionKey, update TLObject) error {
+// PublishExceptAuthKey sends one schema-defined server push to every active
+// authorization bound to userID except every session using excludedAuthKeyID.
+func (s *Server) PublishExceptAuthKey(userID, excludedAuthKeyID int64, update TLObject) error {
+	return s.PublishExceptAuthKeyContext(context.Background(), userID, excludedAuthKeyID, update)
+}
+
+// PublishExceptAuthKeyContext is PublishExceptAuthKey with caller-controlled
+// cancellation and deadlines.
+func (s *Server) PublishExceptAuthKeyContext(ctx context.Context, userID, excludedAuthKeyID int64, update TLObject) error {
+	authKeyID := crypto.KeyID(excludedAuthKeyID)
+	return s.publishContext(ctx, userID, nil, &authKeyID, update)
+}
+
+func (s *Server) publishContext(ctx context.Context, userID int64, excludedSession *session.SessionKey, excludedAuthKey *crypto.KeyID, update TLObject) error {
 	if s == nil || s.runtimePushes == nil {
 		return nil
 	}
@@ -212,8 +229,11 @@ func (s *Server) publishContext(ctx context.Context, userID int64, excluded *ses
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	if excluded != nil {
-		return s.runtimePushes.PublishExcept(ctx, userID, *excluded, body)
+	if excludedSession != nil {
+		return s.runtimePushes.PublishExcept(ctx, userID, *excludedSession, body)
+	}
+	if excludedAuthKey != nil {
+		return s.runtimePushes.PublishExceptAuthKey(ctx, userID, *excludedAuthKey, body)
 	}
 	return s.runtimePushes.Publish(ctx, userID, body)
 }
