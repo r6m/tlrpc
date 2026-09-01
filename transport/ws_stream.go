@@ -1,15 +1,19 @@
 package transport
 
 import (
+	"bytes"
 	"errors"
 	"io"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 type wsStream struct {
-	conn *websocket.Conn
-	r    io.Reader
+	conn    *websocket.Conn
+	r       io.Reader
+	writeMu sync.Mutex
+	write   bytes.Buffer
 }
 
 func newWSStream(conn *websocket.Conn) *wsStream {
@@ -41,14 +45,29 @@ func (s *wsStream) Read(p []byte) (int, error) {
 }
 
 func (s *wsStream) Write(p []byte) (int, error) {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	return s.write.Write(p)
+}
+
+// Flush emits all writes since the previous flush as one WebSocket message.
+// MTProto-over-WebSocket clients use the WebSocket message boundary as the
+// transport-packet boundary, so allowing bufio.Writer to emit partial messages
+// corrupts packets larger than its internal buffer.
+func (s *wsStream) Flush() error {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	if s.write.Len() == 0 {
+		return nil
+	}
 	w, err := s.conn.NextWriter(websocket.BinaryMessage)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	n, err := w.Write(p)
+	_, err = s.write.WriteTo(w)
 	closeErr := w.Close()
 	if err != nil {
-		return n, err
+		return err
 	}
-	return n, closeErr
+	return closeErr
 }

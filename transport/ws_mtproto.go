@@ -14,6 +14,7 @@ import (
 
 type wsMTProtoConn struct {
 	base       *wsConn
+	stream     *wsStream
 	br         *bufio.Reader
 	bw         *bufio.Writer
 	negotiator *Negotiator
@@ -30,6 +31,7 @@ func newWSMTProtoConn(base *wsConn, config NegotiatorConfig, isClient bool) *wsM
 	stream := newWSStream(base.conn)
 	return &wsMTProtoConn{
 		base:       base,
+		stream:     stream,
 		br:         bufio.NewReader(stream),
 		bw:         bufio.NewWriter(stream),
 		negotiator: NewNegotiator(config),
@@ -52,6 +54,9 @@ func (c *wsMTProtoConn) ensureNegotiated() error {
 			return err
 		}
 		if err := c.bw.Flush(); err != nil {
+			return err
+		}
+		if err := c.stream.Flush(); err != nil {
 			return err
 		}
 	} else {
@@ -99,6 +104,9 @@ func (c *wsMTProtoConn) WriteMessage(payload []byte) error {
 		if err := c.bw.Flush(); err != nil {
 			return err
 		}
+	}
+	if err := c.stream.Flush(); err != nil {
+		return err
 	}
 	if flusher, ok := c.w.(interface{ Flush() error }); ok {
 		return flusher.Flush()

@@ -1,10 +1,12 @@
 package compat
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"net"
+	"sync/atomic"
 	"testing"
 
 	"github.com/r6m/tlrpc"
@@ -18,6 +20,9 @@ import (
 const (
 	pingReqID  uint32 = 0x10203040
 	pingRespID uint32 = 0x11223344
+
+	largePayloadReqID  uint32 = 0x10203041
+	largePayloadRespID uint32 = 0x11223345
 )
 
 type pingReq struct {
@@ -88,6 +93,85 @@ func (r *pingResp) SerializeTL(w io.Writer) error {
 		return err
 	}
 	return mtproto.WriteInt32(w, r.Value)
+}
+
+type largePayloadReq struct {
+	Size int32
+}
+
+func (*largePayloadReq) ConstructorID() uint32 { return largePayloadReqID }
+
+func (r *largePayloadReq) SerializeTL(w io.Writer) error {
+	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+		return err
+	}
+	return mtproto.WriteInt32(w, r.Size)
+}
+
+func (r *largePayloadReq) DeserializeTL(rd io.Reader) error {
+	ctor, err := mtproto.ReadUint32(rd)
+	if err != nil {
+		return err
+	}
+	if ctor != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %08x", ctor)
+	}
+	r.Size, err = mtproto.ReadInt32(rd)
+	return err
+}
+
+type largePayloadResp struct {
+	Data []byte
+}
+
+func (*largePayloadResp) ConstructorID() uint32 { return largePayloadRespID }
+
+func (r *largePayloadResp) SerializeTL(w io.Writer) error {
+	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+		return err
+	}
+	return mtproto.WriteBytes(w, r.Data)
+}
+
+func (r *largePayloadResp) DeserializeTL(rd io.Reader) error {
+	ctor, err := mtproto.ReadUint32(rd)
+	if err != nil {
+		return err
+	}
+	if ctor != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %08x", ctor)
+	}
+	r.Data, err = mtproto.ReadBytes(rd)
+	return err
+}
+
+type largePayloadServiceServer interface {
+	LargePayload(context.Context, *largePayloadReq) (*largePayloadResp, error)
+}
+
+type largePayloadService struct {
+	call func(context.Context, *largePayloadReq) (*largePayloadResp, error)
+}
+
+func (s *largePayloadService) LargePayload(ctx context.Context, request *largePayloadReq) (*largePayloadResp, error) {
+	return s.call(ctx, request)
+}
+
+func largePayloadServiceHandler(service interface{}, ctx context.Context, request *largePayloadReq) (*largePayloadResp, error) {
+	return service.(largePayloadServiceServer).LargePayload(ctx, request)
+}
+
+func registerLargePayloadService(server *tlrpc.Server, implementation largePayloadServiceServer) {
+	server.RegisterService(tlrpc.ServiceDesc{
+		ServiceName: "compat.LargePayloadService",
+		SchemaLayer: 170,
+		HandlerType: (*largePayloadServiceServer)(nil),
+		Methods: []tlrpc.MethodDesc{{
+			MethodName: "LargePayload", ConstructorID: largePayloadReqID,
+			NewRequest: func() tlrpc.TLObject { return &largePayloadReq{} },
+			Handler:    largePayloadServiceHandler,
+		}},
+	}, implementation)
 }
 
 func (r *pingResp) DeserializeTL(rd io.Reader) error {
@@ -221,6 +305,70 @@ func TestWebSocketObfuscatedPaddedIntermediate(t *testing.T) {
 	if resp.Value != 23 {
 		t.Fatalf("unexpected response value: %d", resp.Value)
 	}
+}
+
+func TestWebSocketObfuscatedPaddedIntermediateLargeEncryptedResponse(t *testing.T) {
+	const payloadSize = 12 * 1024
+
+	h := newHarness(t)
+	want := makeLargePayload(payloadSize)
+	var handlerCalled atomic.Bool
+	var requestedSize atomic.Int32
+	registerLargePayloadService(h.server, &largePayloadService{
+		call: func(ctx context.Context, request *largePayloadReq) (*largePayloadResp, error) {
+			handlerCalled.Store(true)
+			requestedSize.Store(request.Size)
+			return &largePayloadResp{Data: want}, nil
+		},
+	})
+	ws := &transport.WebSocketTransport{}
+	lis, err := ws.Listen("127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	runServer(t, h.server, lis)
+
+	addr := lis.Addr().(*net.TCPAddr)
+	cli, err := (&transport.WebSocketTransport{Protocol: transport.ProtocolPaddedIntermediate}).Dial(
+		fmt.Sprintf("ws://%s:%d", addr.IP.String(), addr.Port),
+	)
+	if err != nil {
+		t.Fatalf("dial ws: %v", err)
+	}
+	t.Cleanup(func() { _ = cli.Close() })
+
+	c := client.New(cli, client.WithConstructors(map[uint32]func() tlrpc.TLObject{
+		largePayloadRespID: func() tlrpc.TLObject { return &largePayloadResp{} },
+	}))
+	c.SetSession(h.keyID, h.key, h.salt, h.session)
+	respObj, err := c.Invoke(context.Background(), &largePayloadReq{Size: payloadSize})
+	if err != nil {
+		if handlerCalled.Load() {
+			t.Fatalf("handler returned large payload but client failed to validate/decode encrypted response: %v", err)
+		}
+		t.Fatalf("invoke failed before handler completed: %v", err)
+	}
+	if !handlerCalled.Load() {
+		t.Fatalf("handler was not called")
+	}
+	if got := requestedSize.Load(); got != payloadSize {
+		t.Fatalf("unexpected requested size: got %d want %d", got, payloadSize)
+	}
+	resp, ok := respObj.(*largePayloadResp)
+	if !ok {
+		t.Fatalf("unexpected response type %T", respObj)
+	}
+	if !bytes.Equal(resp.Data, want) {
+		t.Fatalf("large payload mismatch: got %d bytes want %d bytes", len(resp.Data), len(want))
+	}
+}
+
+func makeLargePayload(size int) []byte {
+	payload := make([]byte, size)
+	for i := range payload {
+		payload[i] = byte((i*31 + 17) % 251)
+	}
+	return payload
 }
 
 func TestWrappedInvokeWithLayerInitConnection(t *testing.T) {

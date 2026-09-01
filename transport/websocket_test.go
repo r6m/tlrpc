@@ -1,11 +1,62 @@
 package transport
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/tls"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
+
+func TestWebSocketStreamFlushPreservesPacketBoundaryBeyondBufferSize(t *testing.T) {
+	want := bytes.Repeat([]byte{0x5a}, 12*1024)
+	writeResult := make(chan error, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := (&websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}).Upgrade(w, r, nil)
+		if err != nil {
+			writeResult <- err
+			return
+		}
+		defer conn.Close()
+
+		stream := newWSStream(conn)
+		buffered := bufio.NewWriterSize(stream, 4*1024)
+		_, writeErr := buffered.Write(want)
+		if writeErr == nil {
+			writeErr = buffered.Flush()
+		}
+		if writeErr == nil {
+			writeErr = stream.Flush()
+		}
+		writeResult <- writeErr
+	}))
+	t.Cleanup(server.Close)
+
+	conn, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(server.URL, "http"), nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+
+	messageType, got, err := conn.ReadMessage()
+	if err != nil {
+		t.Fatalf("read message: %v", err)
+	}
+	if err := <-writeResult; err != nil {
+		t.Fatalf("write packet: %v", err)
+	}
+	if messageType != websocket.BinaryMessage {
+		t.Fatalf("message type = %d, want binary", messageType)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("WebSocket message = %d bytes, want one %d-byte packet", len(got), len(want))
+	}
+}
 
 func TestWebSocketOriginPolicyDefaultsToSameOriginAndAllowsMissing(t *testing.T) {
 	transport := &WebSocketTransport{}
