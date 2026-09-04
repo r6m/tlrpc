@@ -46,10 +46,13 @@ A composite session, keyed by `(AuthKeyID, SessionID)`, independently owns:
 - process-local push subscription state.
 
 Replacing a lease cancels the old owner, waits for release, and retires only
-that composite session. Snapshot saves and deletes go through the active
-lease's fencing boundary so a stale owner cannot persist protocol state after a
-new generation takes over. A transport or physical write failure retires the
-whole connection because its shared byte stream can no longer be trusted.
+that composite session. The old physical connection permanently rejects that
+session key, so later frames cannot reacquire the replacement's generation;
+unrelated multiplexed sessions remain usable. Snapshot saves and deletes go
+through the active lease's fencing boundary so a stale owner cannot persist
+protocol state after a new generation takes over. A transport or physical write
+failure retires the whole connection because its shared byte stream can no
+longer be trusted.
 
 ## Inbound request flow
 

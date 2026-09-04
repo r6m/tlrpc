@@ -90,6 +90,7 @@ type Connection struct {
 
 	mu            sync.Mutex
 	sessions      map[session.SessionKey]*connectionSession
+	poisoned      map[session.SessionKey]struct{}
 	authKeyID     crypto.KeyID
 	authKeyPinned bool
 	admission     *connectionRequestAdmission
@@ -135,6 +136,7 @@ func NewConnection(config ConnectionConfig) (*Connection, error) {
 		now:        now,
 		frameSink:  newConnectionFrameSink(config.Conn, config.FrameSinkPolicy),
 		sessions:   make(map[session.SessionKey]*connectionSession, config.SessionCapacity),
+		poisoned:   make(map[session.SessionKey]struct{}),
 		admission:  newConnectionRequestAdmission(config.ActiveRequests),
 	}, nil
 }
@@ -245,6 +247,9 @@ func (c *Connection) sessionFor(ctx context.Context, decoded DecodedFrame) (*con
 	if c.authKeyPinned && c.authKeyID != decoded.AuthKeyID {
 		return nil, ErrConnectionProtocol
 	}
+	if _, lost := c.poisoned[key]; lost {
+		return nil, session.ErrLeaseLost
+	}
 	if actor := c.sessions[key]; actor != nil {
 		return actor, nil
 	}
@@ -262,12 +267,26 @@ func (c *Connection) sessionFor(ctx context.Context, decoded DecodedFrame) (*con
 	return actor, nil
 }
 
-func (c *Connection) removeSession(key session.SessionKey, actor *connectionSession) {
+func (c *Connection) removeSession(key session.SessionKey, actor *connectionSession, cause error) {
 	c.mu.Lock()
+	closeConnection := false
 	if c.sessions[key] == actor {
 		delete(c.sessions, key)
+		if errors.Is(cause, session.ErrLeaseLost) {
+			// A physical MTProto transport may multiplex independent sessions. Keep
+			// those sessions alive, but never let this stale transport reclaim a
+			// fenced session generation after another connection took ownership.
+			c.poisoned[key] = struct{}{}
+			// Bound stale-key memory on a hostile, long-lived multiplexed socket.
+			// Reaching the configured active-session capacity is enough evidence to
+			// retire the physical transport instead of retaining more tombstones.
+			closeConnection = len(c.poisoned) >= c.config.SessionCapacity
+		}
 	}
 	c.mu.Unlock()
+	if closeConnection {
+		_ = c.config.Conn.Close()
+	}
 }
 
 func (c *Connection) requestInfo(snapshot session.Snapshot) RequestInfo {

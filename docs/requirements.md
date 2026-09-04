@@ -51,6 +51,9 @@ compatibility consumers, not framework dependencies.
 - Every successful lease acquisition must carry a monotonically increasing
   generation for that session key, cancel the replaced owner, and fence Save and
   Delete so stale generations cannot mutate durable protocol state.
+- After ownership loss, the old physical connection must reject that session
+  key permanently while preserving unrelated multiplexed sessions; it must not
+  reacquire a later generation and ping-pong ownership.
 - Each session owns independent validation, replay state, reliability, routing,
   active requests, writer ordering, and live-push subscription state.
 - One connection-owned sink must serialize complete physical writes across its

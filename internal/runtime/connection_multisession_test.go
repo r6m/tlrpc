@@ -391,6 +391,12 @@ func TestConnectionLeaseReplacementRetiresOnlyMatchingSession(t *testing.T) {
 	if err := first.transport.Context().Err(); err != nil {
 		t.Fatalf("replacing session B closed shared physical transport: %v", err)
 	}
+	if _, err := first.connection.sessionFor(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{Salt: inboundSalt, SessionID: sessionB},
+		AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+	}); !errors.Is(err, session.ErrLeaseLost) {
+		t.Fatalf("stale connection reacquire error = %v, want ErrLeaseLost", err)
+	}
 
 	if err := first.connection.handleEncrypted(context.Background(), DecodedFrame{
 		Encrypted: &mtproto.InnerData{

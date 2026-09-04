@@ -499,7 +499,7 @@ func (s *connectionSession) shutdown(cause error) {
 		<-s.writer.Done()
 		s.lease.Release()
 		s.reliability.Release()
-		s.owner.removeSession(s.key, s)
+		s.owner.removeSession(s.key, s, cause)
 	})
 }
 
