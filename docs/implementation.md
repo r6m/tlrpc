@@ -67,9 +67,44 @@ wrapped values, preserve their intentional code and message.
 
 ## Session storage
 
-`session.Store` loads, creates, saves, and deletes detached snapshots keyed by
-`session.SessionKey{AuthKeyID, SessionID}`. A production store must preserve all
-fields, including:
+`session.Coordinator` is the public Runtime v2 ownership contract. It acquires
+one active `session.Lease` for a `session.SessionKey{AuthKeyID, SessionID}` and
+returns a monotonically increasing generation for every successful takeover.
+The lease context is canceled when ownership is lost, released, or retired by
+Runtime v2 after a fatal session error.
+
+Runtime v2 saves and deletes snapshots only through the active lease:
+
+```go
+type Coordinator interface {
+	Acquire(ctx context.Context, key SessionKey, initial Snapshot) (Lease, error)
+}
+
+type Lease interface {
+	Key() SessionKey
+	Generation() int64
+	Context() context.Context
+	Done() <-chan struct{}
+	Created() bool
+	Snapshot() (Snapshot, error)
+	Save(ctx context.Context, next Snapshot) error
+	Delete(ctx context.Context) error
+	Retire(cause error)
+	Release()
+}
+```
+
+`session.NewLocalCoordinator(store)` is the default in-process implementation.
+It cancels the replaced owner, waits for release before loading replacement
+state, assigns increasing generations, and rejects stale Save/Delete attempts.
+It is suitable for tests and single-process development. Multi-process
+deployments should provide their own Coordinator backed by a durable fencing
+primitive.
+
+`session.Store` remains the detached snapshot storage primitive used by the
+local coordinator. Stores load, create, save, and delete copies keyed by
+`session.SessionKey{AuthKeyID, SessionID}`. Durable implementations must
+preserve all fields, including:
 
 - salt, layer, user binding, client metadata, and timestamps;
 - independent client/server sequence progress and session notification state;
@@ -79,9 +114,11 @@ fields, including:
 - the push-subscription opt-in, which restores sender registration after a
   reconnect while keeping `invokeWithoutUpdates` request-scoped.
 
-Slices must be copied on store boundaries. The included memory store is useful
-for tests and single-process development; it does not make replay state durable
-across process restart.
+Slices must be copied on store boundaries. Configure an external coordinator
+with `tlrpc.WithSessionCoordinator`. Configure only detached local storage with
+`tlrpc.WithSessionStore`, which is wrapped by the default local coordinator.
+The included memory store is useful for tests and single-process development;
+it does not make replay state durable across process restart.
 
 ## Resource limits
 

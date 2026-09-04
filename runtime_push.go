@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/r6m/tlrpc/crypto"
@@ -173,10 +174,37 @@ func (r *runtimePushRegistry) publish(ctx context.Context, userID int64, exclude
 	return errors.Join(failures...)
 }
 
+func (r *runtimePushRegistry) ActiveUserIDs() []int64 {
+	if r == nil {
+		return nil
+	}
+	r.mu.RLock()
+	userIDs := make([]int64, 0, len(r.byUser))
+	for userID := range r.byUser {
+		if userID > 0 {
+			userIDs = append(userIDs, userID)
+		}
+	}
+	r.mu.RUnlock()
+	sort.Slice(userIDs, func(i, j int) bool {
+		return userIDs[i] < userIDs[j]
+	})
+	return userIDs
+}
+
 // Publish sends one schema-defined server push to every active session bound
 // to userID through Runtime v2's per-connection writer.
 func (s *Server) Publish(userID int64, update TLObject) error {
 	return s.PublishContext(context.Background(), userID, update)
+}
+
+// ActiveUserIDs returns a sorted snapshot of positive user IDs that currently
+// have at least one process-local push-reachable session in Runtime v2.
+func (s *Server) ActiveUserIDs() []int64 {
+	if s == nil || s.runtimePushes == nil {
+		return nil
+	}
+	return s.runtimePushes.ActiveUserIDs()
 }
 
 // PublishContext is Publish with caller-controlled cancellation and deadlines.

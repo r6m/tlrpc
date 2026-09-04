@@ -394,7 +394,7 @@ func newConnectionHarnessWithStore(t *testing.T, now time.Time, application Appl
 	}
 	connection, err := NewConnection(ConnectionConfig{
 		Conn: transport, AuthKeys: authKeys, Handshake: handshakeEngine,
-		Leases: NewSessionLeaseRegistry(store), Reliability: reliabilityRegistry,
+		Sessions: session.NewLocalCoordinator(store), Reliability: reliabilityRegistry,
 		Application: application, MessageIDs: &fixedMessageIDs{next: now.Unix()<<32 | 100},
 		Transport: "test", Now: func() time.Time { return now },
 	})

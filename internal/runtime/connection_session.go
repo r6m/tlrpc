@@ -20,7 +20,7 @@ import (
 type connectionSession struct {
 	owner       *Connection
 	key         session.SessionKey
-	lease       *SessionLease
+	lease       session.Lease
 	reliability *ReliabilityHandle
 	validator   *SessionValidator
 	writer      *Writer
@@ -57,7 +57,7 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 		CreatedAt:    now,
 		LastActivity: now,
 	}
-	lease, err := owner.config.Leases.Acquire(ctx, key, initial)
+	lease, err := owner.config.Sessions.Acquire(ctx, key, initial)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 			delete(reservations, messageID)
 		}
 	}
-	if err := s.lease.Commit(ctx, validated.Snapshot); err != nil {
+	if err := s.lease.Save(ctx, validated.Snapshot); err != nil {
 		releaseReservations()
 		return err
 	}
@@ -303,7 +303,7 @@ func (s *connectionSession) beginRequests(ctx context.Context, messageIDs []int6
 	s.lifecycleMu.Lock()
 	defer s.lifecycleMu.Unlock()
 	if s.closing {
-		return nil, ErrSessionLeaseInactive
+		return nil, session.ErrLeaseInactive
 	}
 	if !s.owner.admission.acquire(len(messageIDs)) {
 		return nil, &ActiveRequestCapacityError{Capacity: s.owner.config.ActiveRequests}
@@ -392,7 +392,7 @@ func (s *connectionSession) subscribeForPush(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := s.lease.Commit(ctx, next); err != nil {
+	if err := s.lease.Save(ctx, next); err != nil {
 		return err
 	}
 	s.acceptsPush = next.PushSubscription
@@ -413,7 +413,7 @@ func (s *connectionSession) ensureNewSessionCreated(ctx context.Context, firstMe
 	if err != nil {
 		return err
 	}
-	if err := s.lease.Commit(ctx, next); err != nil {
+	if err := s.lease.Save(ctx, next); err != nil {
 		return err
 	}
 	body, err := serializeRuntimeTL(&mtprototl.NewSessionCreated{
@@ -472,7 +472,7 @@ func (s *connectionSession) applyMutationsLocked(ctx context.Context, mutations 
 	if err != nil {
 		return err
 	}
-	if err := s.lease.Commit(ctx, next); err != nil {
+	if err := s.lease.Save(ctx, next); err != nil {
 		return err
 	}
 	s.acceptsPush = next.PushSubscription

@@ -217,6 +217,16 @@ type observedSessionStore struct {
 	inner  session.Store
 }
 
+type observedSessionCoordinator struct {
+	server *Server
+	inner  session.Coordinator
+}
+
+type observedSessionLease struct {
+	session.Lease
+	server *Server
+}
+
 func (s *observedSessionStore) Load(ctx context.Context, key session.SessionKey) (session.Snapshot, error) {
 	started := time.Now()
 	snapshot, err := s.inner.Load(ctx, key)
@@ -263,6 +273,74 @@ func (s *observedSessionStore) observe(operation string, key session.SessionKey,
 		SessionID:      key.SessionID,
 		Duration:       duration,
 		Outcome:        outcome,
+		Created:        created,
+		Classification: classifyStoreError(err),
+	})
+}
+
+func (c *observedSessionCoordinator) Acquire(ctx context.Context, key session.SessionKey, initial session.Snapshot) (session.Lease, error) {
+	started := time.Now()
+	lease, err := c.inner.Acquire(ctx, key, initial)
+	created := false
+	if err == nil && lease != nil {
+		created = lease.Created()
+		if c.server != nil {
+			c.server.noteSessionAcquire(key, created)
+		}
+	}
+	c.observe("acquire", key, time.Since(started), created, err)
+	if err != nil || lease == nil {
+		return lease, err
+	}
+	return &observedSessionLease{Lease: lease, server: c.server}, nil
+}
+
+func (c *observedSessionCoordinator) observe(operation string, key session.SessionKey, duration time.Duration, created bool, err error) {
+	if c == nil || c.server == nil || c.server.observerSink == nil {
+		return
+	}
+	outcome := "ok"
+	if err != nil {
+		outcome = "failed"
+	}
+	c.server.observerSink.emit(StoreEvent{
+		Time:           time.Now(),
+		Operation:      operation,
+		AuthKeyID:      int64(key.AuthKeyID),
+		SessionID:      key.SessionID,
+		Duration:       duration,
+		Outcome:        outcome,
+		Created:        created,
+		Classification: classifyStoreError(err),
+	})
+}
+
+func (l *observedSessionLease) Save(ctx context.Context, next session.Snapshot) error {
+	started := time.Now()
+	err := l.Lease.Save(ctx, next)
+	l.observe("save", time.Since(started), false, err)
+	return err
+}
+
+func (l *observedSessionLease) Delete(ctx context.Context) error {
+	started := time.Now()
+	err := l.Lease.Delete(ctx)
+	l.observe("delete", time.Since(started), false, err)
+	return err
+}
+
+func (l *observedSessionLease) observe(operation string, duration time.Duration, created bool, err error) {
+	if l == nil || l.server == nil || l.server.observerSink == nil || l.Lease == nil {
+		return
+	}
+	key := l.Key()
+	l.server.observerSink.emit(StoreEvent{
+		Time:           time.Now(),
+		Operation:      operation,
+		AuthKeyID:      int64(key.AuthKeyID),
+		SessionID:      key.SessionID,
+		Duration:       duration,
+		Outcome:        storeOutcome(err),
 		Created:        created,
 		Classification: classifyStoreError(err),
 	})
@@ -457,9 +535,22 @@ func classifyStoreError(err error) string {
 		return "not_found"
 	case errors.Is(err, session.ErrSessionKeyMismatch):
 		return "key_mismatch"
+	case errors.Is(err, session.ErrLeaseLost):
+		return "lease_lost"
+	case errors.Is(err, session.ErrLeaseReleased):
+		return "lease_released"
+	case errors.Is(err, session.ErrLeaseInactive):
+		return "lease_inactive"
 	default:
 		return "failed"
 	}
+}
+
+func storeOutcome(err error) string {
+	if err != nil {
+		return "failed"
+	}
+	return "ok"
 }
 
 func classifyWriterError(err error) string {
@@ -498,3 +589,5 @@ func (s *Server) closeObserver() {
 }
 
 var _ session.Store = (*observedSessionStore)(nil)
+var _ session.Coordinator = (*observedSessionCoordinator)(nil)
+var _ session.Lease = (*observedSessionLease)(nil)

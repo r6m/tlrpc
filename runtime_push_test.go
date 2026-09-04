@@ -3,6 +3,7 @@ package tlrpc
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/r6m/tlrpc/crypto"
@@ -138,6 +139,67 @@ func TestRuntimePushRegistryColdParallelConnectionDoesNotMaskSubscriber(t *testi
 	}
 	if subscribed.pushes != 3 || cold.pushes != 1 {
 		t.Fatalf("two-subscriber publish counts = (%d, %d), want (3, 1)", subscribed.pushes, cold.pushes)
+	}
+}
+
+func TestRuntimePushRegistryActiveUserIDsReturnsSortedDetachedPositiveSnapshot(t *testing.T) {
+	registry := newRuntimePushRegistry(nil)
+	registry.byUser[-4] = map[session.SessionKey][]runtimev2.Sender{}
+	registry.byUser[0] = map[session.SessionKey][]runtimev2.Sender{}
+	registry.byUser[9] = map[session.SessionKey][]runtimev2.Sender{}
+	registry.byUser[3] = map[session.SessionKey][]runtimev2.Sender{}
+	registry.byUser[7] = map[session.SessionKey][]runtimev2.Sender{}
+
+	got := registry.ActiveUserIDs()
+	want := []int64{3, 7, 9}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("ActiveUserIDs() = %v, want %v", got, want)
+	}
+
+	got[0] = 999
+	again := registry.ActiveUserIDs()
+	if !reflect.DeepEqual(again, want) {
+		t.Fatalf("ActiveUserIDs() after caller mutation = %v, want %v", again, want)
+	}
+}
+
+func TestRuntimePushRegistryActiveUserIDsTracksReachableUsersOnly(t *testing.T) {
+	registry := newRuntimePushRegistry(nil)
+	online := &recordingRuntimeSender{}
+	offline := &recordingRuntimeSender{}
+
+	registry.Update(session.Snapshot{AuthKeyID: 11, SessionID: 21, UserID: 31}, online, true)
+	registry.Update(session.Snapshot{AuthKeyID: 12, SessionID: 22, UserID: 0}, offline, true)
+	registry.Update(session.Snapshot{AuthKeyID: 13, SessionID: 23, UserID: 41}, offline, false)
+
+	want := []int64{31}
+	if got := registry.ActiveUserIDs(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("ActiveUserIDs() = %v, want %v", got, want)
+	}
+
+	registry.Remove(session.SessionKey{AuthKeyID: 11, SessionID: 21}, online)
+	if got := registry.ActiveUserIDs(); len(got) != 0 {
+		t.Fatalf("ActiveUserIDs() after removal = %v, want empty", got)
+	}
+}
+
+func TestServerActiveUserIDsIsNilSafe(t *testing.T) {
+	var nilServer *Server
+	if got := nilServer.ActiveUserIDs(); got != nil {
+		t.Fatalf("nil server ActiveUserIDs() = %v, want nil", got)
+	}
+
+	server := &Server{}
+	if got := server.ActiveUserIDs(); got != nil {
+		t.Fatalf("server without runtime pushes ActiveUserIDs() = %v, want nil", got)
+	}
+
+	live := NewServer()
+	live.runtimePushes.Update(session.Snapshot{AuthKeyID: 51, SessionID: 61, UserID: 71}, &recordingRuntimeSender{}, true)
+	got := live.ActiveUserIDs()
+	want := []int64{71}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("server ActiveUserIDs() = %v, want %v", got, want)
 	}
 }
 

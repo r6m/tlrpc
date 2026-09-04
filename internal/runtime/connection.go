@@ -56,7 +56,7 @@ type ConnectionConfig struct {
 	Conn              FrameConnection
 	AuthKeys          AuthKeySource
 	Handshake         *handshake.Engine
-	Leases            *SessionLeaseRegistry
+	Sessions          session.Coordinator
 	Reliability       *ReliabilityRegistry
 	Application       ApplicationDispatcher
 	MessageIDs        MessageIDSource
@@ -100,7 +100,7 @@ type Connection struct {
 
 func NewConnection(config ConnectionConfig) (*Connection, error) {
 	if config.Conn == nil || config.AuthKeys == nil || config.Handshake == nil ||
-		config.Leases == nil || config.Reliability == nil || config.Application == nil {
+		config.Sessions == nil || config.Reliability == nil || config.Application == nil {
 		return nil, ErrConnectionConfig
 	}
 	if config.ActiveRequests == 0 {

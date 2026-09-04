@@ -5,9 +5,13 @@ import (
 	"sync"
 )
 
-// Store is the final Runtime v2 durable protocol-session contract. Values cross
-// the boundary as detached snapshots; stores never retain mutable runtime
-// session pointers.
+// Store persists detached protocol-session snapshots. Values cross the boundary
+// as copies; stores never retain mutable runtime session pointers.
+//
+// Store does not define active ownership. Runtime v2 mutates snapshots through
+// a Coordinator lease, whose Save and Delete methods provide the fencing
+// boundary. Custom multi-process deployments may replace Coordinator entirely
+// instead of exposing this lower-level storage primitive.
 type Store interface {
 	Load(ctx context.Context, key SessionKey) (Snapshot, error)
 	LoadOrCreate(ctx context.Context, key SessionKey, initial Snapshot) (snapshot Snapshot, created bool, err error)

@@ -102,6 +102,9 @@ func TestNewServer(t *testing.T) {
 	if s.store == nil {
 		t.Error("session store not initialized")
 	}
+	if s.sessionCoordinator == nil {
+		t.Error("session coordinator not initialized")
+	}
 	if s.services == nil {
 		t.Error("services map not initialized")
 	}
@@ -137,6 +140,12 @@ func TestServerOptions(t *testing.T) {
 	s = NewServer(WithSessionStore(mockSessions))
 	if s.store != mockSessions {
 		t.Error("WithSessionStore option not applied")
+	}
+
+	mockCoordinator := session.NewLocalCoordinator(session.NewMemoryStore())
+	s = NewServer(WithSessionCoordinator(mockCoordinator))
+	if s.sessionCoordinator != mockCoordinator {
+		t.Error("WithSessionCoordinator option not applied")
 	}
 }
 

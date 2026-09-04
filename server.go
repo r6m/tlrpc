@@ -37,7 +37,7 @@ type Server struct {
 	authKeys                   crypto.AuthKeyManager
 	serverKeys                 crypto.ServerKeyManager
 	store                      session.Store
-	runtimeLeases              *runtimev2.SessionLeaseRegistry
+	sessionCoordinator         session.Coordinator
 	runtimeReliability         *runtimev2.ReliabilityRegistry
 	runtimeHandshake           *handshakev2.Engine
 	runtimePushes              *runtimePushRegistry
@@ -157,7 +157,11 @@ func NewServer(opts ...ServerOption) *Server {
 	if s.maxInFlightRequests > 0 {
 		s.handlerSlots = make(chan struct{}, s.maxInFlightRequests)
 	}
-	s.runtimeLeases = runtimev2.NewSessionLeaseRegistry(s.store)
+	if s.sessionCoordinator == nil {
+		s.sessionCoordinator = session.NewLocalCoordinator(s.store)
+	} else if s.observerSink != nil {
+		s.sessionCoordinator = &observedSessionCoordinator{server: s, inner: s.sessionCoordinator}
+	}
 	var err error
 	s.runtimeReliability, err = runtimev2.NewReliabilityRegistry(runtimev2.ReliabilityRegistryConfig{
 		MaxSessions: s.reliabilitySessions, MessageCapacity: s.reliabilityMessages, TTL: s.reliabilityTTL,
@@ -441,7 +445,7 @@ func (s *Server) serveConn(conn transport.Conn) bool {
 	application := newRuntimeApplicationDispatcher(s)
 	runtimeConn, err := runtimev2.NewConnection(runtimev2.ConnectionConfig{
 		ConnectionID: state.id, Conn: conn, AuthKeys: s.authKeys, Handshake: s.runtimeHandshake,
-		Leases: s.runtimeLeases, Reliability: s.runtimeReliability,
+		Sessions: s.sessionCoordinator, Reliability: s.runtimeReliability,
 		Application: application, MaxPayloadBytes: s.maxPayloadBytes,
 		MaxDecodedPayload: s.maxPayloadBytes, ActiveRequests: s.maxInFlightRequests,
 		DecodeLimits: s.decodeLimits, MaxEncodedBytes: s.maxEncodedResponseBytes,
@@ -527,6 +531,18 @@ func WithSessionStore(store session.Store) ServerOption {
 			panic("tlrpc: session store is required")
 		}
 		s.store = store
+	}
+}
+
+// WithSessionCoordinator replaces the default process-local session
+// coordinator. Use this when a deployment needs distributed lease ownership and
+// fenced snapshot saves/deletes across multiple Runtime v2 processes.
+func WithSessionCoordinator(coordinator session.Coordinator) ServerOption {
+	return func(s *Server) {
+		if coordinator == nil {
+			panic("tlrpc: session coordinator is required")
+		}
+		s.sessionCoordinator = coordinator
 	}
 }
 

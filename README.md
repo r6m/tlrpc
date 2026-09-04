@@ -26,6 +26,10 @@ handshake, encryption, composite sessions, validation, wrappers, containers,
 controls, request correlation, bounded writes, and live process-local push.
 The application owns its API schema, service semantics, authentication policy,
 durable domain data, durable update recovery, and deployment configuration.
+Framework consumers that need a read-only process-local snapshot of live
+push-reachable users can call `Server.ActiveUserIDs()`, which returns a sorted,
+detached slice of positive user IDs currently present in Runtime v2's push
+registry.
 
 ## Generate and serve
 

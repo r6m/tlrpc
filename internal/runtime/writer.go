@@ -35,7 +35,7 @@ type MessageIDSource interface {
 }
 
 type WriterConfig struct {
-	Lease           *SessionLease
+	Lease           session.Lease
 	AuthKey         crypto.AuthKey
 	Sink            FrameSink
 	MessageIDs      MessageIDSource
@@ -47,7 +47,7 @@ type WriterConfig struct {
 // Writer is the only Runtime v2 component allowed to allocate outbound wire
 // state or write encrypted frames for a connection.
 type Writer struct {
-	lease           *SessionLease
+	lease           session.Lease
 	authKey         crypto.AuthKey
 	sink            FrameSink
 	messageIDs      MessageIDSource
@@ -270,7 +270,7 @@ func (w *Writer) process(ctx context.Context, intent Intent) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		if err := w.lease.Commit(ctx, next); err != nil {
+		if err := w.lease.Save(ctx, next); err != nil {
 			return false, err
 		}
 		sentAt := w.now()

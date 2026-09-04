@@ -197,8 +197,8 @@ func newFrameSinkTestWriter(t *testing.T, sink FrameSink, sessionID int64) frame
 		authKey[index] = byte(index + 1)
 	}
 	key := session.SessionKey{AuthKeyID: authKey.ID(), SessionID: sessionID}
-	registry := NewSessionLeaseRegistry(session.NewMemoryStore())
-	lease, err := registry.Acquire(context.Background(), key, session.Snapshot{
+	coordinator := session.NewLocalCoordinator(session.NewMemoryStore())
+	lease, err := coordinator.Acquire(context.Background(), key, session.Snapshot{
 		AuthKeyID:  key.AuthKeyID,
 		SessionID:  key.SessionID,
 		ServerSalt: 303,

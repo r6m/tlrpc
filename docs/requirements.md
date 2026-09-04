@@ -46,7 +46,11 @@ compatibility consumers, not framework dependencies.
 - Each physical connection must pin to one auth key and may host only a bounded
   number of sessions for that same key.
 - A protocol session is identified by `(AuthKeyID, SessionID)` and must have one
-  active lease so reconnect cannot create concurrent outbound sequence owners.
+  active `session.Lease` from a `session.Coordinator` so reconnect cannot create
+  concurrent outbound sequence owners.
+- Every successful lease acquisition must carry a monotonically increasing
+  generation for that session key, cancel the replaced owner, and fence Save and
+  Delete so stale generations cannot mutate durable protocol state.
 - Each session owns independent validation, replay state, reliability, routing,
   active requests, writer ordering, and live-push subscription state.
 - One connection-owned sink must serialize complete physical writes across its
@@ -64,11 +68,11 @@ compatibility consumers, not framework dependencies.
   required durable snapshot field.
 - Recent client message IDs and recent content sequence numbers must also be
   detached, persisted protocol state.
-- A durable `session.Store` implementation must round-trip every
-  `session.Snapshot` field, including `ClientMsgIDFloor`,
-  `RecentClientMsgIDs`, `RecentClientSeqNos`, and the durable push
-  subscription opt-in. A reconnect must restore that opt-in to the new
-  process-local sender; `invokeWithoutUpdates` remains request-scoped and
+- A durable `session.Coordinator` implementation must round-trip every
+  `session.Snapshot` field through its Save/Delete fencing path, including
+  `ClientMsgIDFloor`, `RecentClientMsgIDs`, `RecentClientSeqNos`, and the
+  durable push subscription opt-in. A reconnect must restore that opt-in to the
+  new process-local sender; `invokeWithoutUpdates` remains request-scoped and
   must not opt a cold session in.
 - `invokeAfterMsg` and `invokeAfterMsgs` must wait for successful completion of
   their referenced earlier requests, fail after a failed dependency, and time

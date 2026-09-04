@@ -259,7 +259,7 @@ func TestWriterReliabilityCommandsReturnShutdownCause(t *testing.T) {
 
 type writerHarness struct {
 	writer      *Writer
-	lease       *SessionLease
+	lease       session.Lease
 	store       session.Store
 	key         session.SessionKey
 	authKey     crypto.AuthKey
@@ -279,8 +279,8 @@ func newWriterHarnessWithMaxEncodedBytes(t *testing.T, store session.Store, sink
 	}
 	key := session.SessionKey{AuthKeyID: authKey.ID(), SessionID: 99}
 	initial := session.Snapshot{AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSalt: 101}
-	registry := NewSessionLeaseRegistry(store)
-	lease, err := registry.Acquire(context.Background(), key, initial)
+	coordinator := session.NewLocalCoordinator(store)
+	lease, err := coordinator.Acquire(context.Background(), key, initial)
 	if err != nil {
 		t.Fatalf("acquire lease: %v", err)
 	}

@@ -37,6 +37,7 @@ A physical TCP or WebSocket connection owns:
 A composite session, keyed by `(AuthKeyID, SessionID)`, independently owns:
 
 - an exclusive active lease;
+- a monotonically increasing ownership generation;
 - inbound validation and replay state;
 - reliability records and protocol controls;
 - active request and `invokeAfter` completion tracking;
@@ -44,9 +45,11 @@ A composite session, keyed by `(AuthKeyID, SessionID)`, independently owns:
 - outbound message IDs, sequence numbers, correlation, and encryption; and
 - process-local push subscription state.
 
-Replacing a lease retires only that composite session. A transport or physical
-write failure retires the whole connection because its shared byte stream can
-no longer be trusted.
+Replacing a lease cancels the old owner, waits for release, and retires only
+that composite session. Snapshot saves and deletes go through the active
+lease's fencing boundary so a stale owner cannot persist protocol state after a
+new generation takes over. A transport or physical write failure retires the
+whole connection because its shared byte stream can no longer be trusted.
 
 ## Inbound request flow
 

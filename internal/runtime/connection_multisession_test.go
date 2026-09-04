@@ -360,7 +360,7 @@ func TestConnectionLeaseReplacementRetiresOnlyMatchingSession(t *testing.T) {
 		Conn:              secondTransport,
 		AuthKeys:          first.connection.config.AuthKeys,
 		Handshake:         first.connection.config.Handshake,
-		Leases:            first.connection.config.Leases,
+		Sessions:          first.connection.config.Sessions,
 		Reliability:       first.connection.config.Reliability,
 		Application:       application,
 		MessageIDs:        &fixedMessageIDs{next: now.Unix()<<32 | 1000},
