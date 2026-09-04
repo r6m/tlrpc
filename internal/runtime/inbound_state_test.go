@@ -54,6 +54,24 @@ func TestInboundStateLedgerRecordsAndCompletesCanonicalStates(t *testing.T) {
 	}
 }
 
+func TestInboundStateLedgerReportsGeneratedResponse(t *testing.T) {
+	ledger, err := NewInboundStateLedger(InboundStateConfig{Capacity: 2, TTL: time.Minute})
+	if err != nil {
+		t.Fatal(err)
+	}
+	message := InboundMessage{MessageID: 100, ConstructorID: 0x01020304, Body: constructorBody(0x01020304), ContentRelated: true}
+	if err := ledger.Record(message); err != nil {
+		t.Fatal(err)
+	}
+	if ledger.HasResponse(message.MessageID) {
+		t.Fatal("received request was reported as responded")
+	}
+	ledger.Complete([]int64{message.MessageID}, true, true)
+	if !ledger.HasResponse(message.MessageID) {
+		t.Fatal("generated response was not retained")
+	}
+}
+
 func TestInboundStateLedgerPreservesRequestedOrderingAndDetachedOutput(t *testing.T) {
 	t.Parallel()
 

@@ -270,6 +270,139 @@ func TestConnectionRestoresDurablePushSubscriptionAcrossReconnect(t *testing.T) 
 	}
 }
 
+func TestConnectionReturnsRetryableErrorForReplayInterruptedByRestart(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	requestID := inboundMessageID(4)
+	request := mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: requestID, SeqNo: 1, Data: constructorBody(0x61616161),
+	}
+	firstApplication := &connectionApplicationStub{block: true, started: make(chan struct{})}
+	store := session.NewMemoryStore()
+	first := newConnectionHarnessWithStore(t, now, firstApplication, 100, nil, store)
+
+	if err := first.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &request, AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+	}); err != nil {
+		t.Fatalf("start request: %v", err)
+	}
+	select {
+	case <-firstApplication.started:
+	case <-time.After(time.Second):
+		t.Fatal("initial request did not start")
+	}
+	first.connection.shutdown(io.EOF)
+
+	secondApplication := &connectionApplicationStub{outcome: Outcome{Intents: []Intent{
+		RPCResult{RequestMessageID: requestID, Body: constructorBody(0x62626262)},
+	}}}
+	second := newConnectionHarnessWithStore(t, now, secondApplication, 100, nil, store)
+	defer second.connection.shutdown(io.EOF)
+	if err := second.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &request, AuthKeyID: second.authKey.ID(), AuthKey: second.authKey,
+	}); err != nil {
+		t.Fatalf("replay after restart: %v", err)
+	}
+	waitForWrittenFrames(t, second.transport, 1)
+	if secondApplication.request.Message.MessageID != 0 {
+		t.Fatal("interrupted replay dispatched the application handler twice")
+	}
+
+	outer := decryptWriterFrame(t, second.authKey, second.transport.writtenFrames()[0])
+	container := &mtprototl.MsgContainer{}
+	if err := decodeControl(outer.Data, container); err != nil {
+		t.Fatalf("retry response container: %v", err)
+	}
+	if len(container.Messages) != 2 {
+		t.Fatalf("retry response messages = %d, want rpc_error + acknowledgement", len(container.Messages))
+	}
+	result := &mtprototl.RPCResult{}
+	if err := decodeControl(container.Messages[0].BodyRaw, result); err != nil {
+		t.Fatalf("retry rpc_result: %v", err)
+	}
+	rpcErr := &mtprototl.RPCError{}
+	if err := decodeControl(result.ResultRaw, rpcErr); err != nil {
+		t.Fatalf("retry rpc_error: %v", err)
+	}
+	if result.ReqMsgID != requestID || rpcErr.ErrorCode != 500 || rpcErr.ErrorMessage != interruptedRequestRetryMessage {
+		t.Fatalf("retry error = result:%+v rpc:%+v", result, rpcErr)
+	}
+	ack := &mtprototl.MsgsAck{}
+	if err := decodeControl(container.Messages[1].BodyRaw, ack); err != nil {
+		t.Fatalf("retry acknowledgement: %v", err)
+	}
+	if !reflect.DeepEqual(ack.MsgIDs, []int64{requestID}) {
+		t.Fatalf("retry acknowledgement IDs = %v, want %d", ack.MsgIDs, requestID)
+	}
+}
+
+func TestConnectionReturnsRetryableErrorForContainerReplayInterruptedByRestart(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	requestID := inboundMessageID(4)
+	outerID := inboundMessageID(8)
+	request := mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: outerID, SeqNo: 2,
+		Data: serializeInboundContainer(t, []mtprototl.Message{{
+			MsgID: requestID, SeqNo: 1, BodyRaw: constructorBody(0x63636363),
+		}}),
+	}
+	firstApplication := &connectionApplicationStub{block: true, started: make(chan struct{})}
+	store := session.NewMemoryStore()
+	first := newConnectionHarnessWithStore(t, now, firstApplication, 100, nil, store)
+	if err := first.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &request, AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+	}); err != nil {
+		t.Fatalf("start container request: %v", err)
+	}
+	select {
+	case <-firstApplication.started:
+	case <-time.After(time.Second):
+		t.Fatal("initial container request did not start")
+	}
+	first.connection.shutdown(io.EOF)
+
+	secondApplication := &connectionApplicationStub{}
+	second := newConnectionHarnessWithStore(t, now, secondApplication, 100, nil, store)
+	defer second.connection.shutdown(io.EOF)
+	if err := second.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &request, AuthKeyID: second.authKey.ID(), AuthKey: second.authKey,
+	}); err != nil {
+		t.Fatalf("container replay after restart: %v", err)
+	}
+	waitForWrittenFrames(t, second.transport, 1)
+	if secondApplication.request.Message.MessageID != 0 {
+		t.Fatal("interrupted container replay dispatched the application handler twice")
+	}
+
+	outer := decryptWriterFrame(t, second.authKey, second.transport.writtenFrames()[0])
+	container := &mtprototl.MsgContainer{}
+	if err := decodeControl(outer.Data, container); err != nil {
+		t.Fatalf("container retry response: %v", err)
+	}
+	if len(container.Messages) != 2 {
+		t.Fatalf("container retry messages = %d, want rpc_error + acknowledgement", len(container.Messages))
+	}
+	result := &mtprototl.RPCResult{}
+	if err := decodeControl(container.Messages[0].BodyRaw, result); err != nil {
+		t.Fatalf("container retry rpc_result: %v", err)
+	}
+	rpcErr := &mtprototl.RPCError{}
+	if err := decodeControl(result.ResultRaw, rpcErr); err != nil {
+		t.Fatalf("container retry rpc_error: %v", err)
+	}
+	if result.ReqMsgID != requestID || rpcErr.ErrorCode != 500 || rpcErr.ErrorMessage != interruptedRequestRetryMessage {
+		t.Fatalf("container retry error = result:%+v rpc:%+v", result, rpcErr)
+	}
+	ack := &mtprototl.MsgsAck{}
+	if err := decodeControl(container.Messages[1].BodyRaw, ack); err != nil {
+		t.Fatalf("container retry acknowledgement: %v", err)
+	}
+	if !reflect.DeepEqual(ack.MsgIDs, []int64{requestID}) {
+		t.Fatalf("container retry acknowledgement IDs = %v, want %d", ack.MsgIDs, requestID)
+	}
+}
+
 func TestConnectionDoesNotRestorePushSubscriptionForColdSession(t *testing.T) {
 	const bindConstructor = uint32(0x81818181)
 	now := time.Unix(inboundNowSeconds, 0).UTC()

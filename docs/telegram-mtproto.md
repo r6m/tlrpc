@@ -82,6 +82,15 @@ These guarantees survive reconnect/restart only when the application's durable
 has no prior client progress may adopt an already-advanced first odd content
 sequence number, after which normal bounded replay rules apply.
 
+Because application handlers and encrypted response retention are process
+local, a process can stop after accepting a client RPC but before it produces a
+response. On a resend of that exact application message after restart, Runtime
+v2 does not invoke the handler twice. It returns a correlated `500
+REQUEST_RETRY` and acknowledgement, allowing the client to retry using a new
+message ID. This recovery applies only when there is no active handler and no
+locally retained response; active and locally completed replays still receive
+the canonical bad-message response.
+
 The snapshot also records whether the session has accepted unsolicited
 application pushes. Runtime v2 restores this opt-in and registers the new
 connection sender; the sender itself remains process-local. A request wrapped

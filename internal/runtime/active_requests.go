@@ -216,6 +216,19 @@ func (r *ActiveRequestRegistry) Drop(id int64) DropStatus {
 	return DropStatusDroppedRunning
 }
 
+// IsActive reports whether id currently owns a handler lifetime. It is used by
+// replay recovery to leave a live request alone so its original rpc_result can
+// settle the client request.
+func (r *ActiveRequestRegistry) IsActive(id int64) bool {
+	if r == nil || id == 0 {
+		return false
+	}
+	r.mu.Lock()
+	_, active := r.active[id]
+	r.mu.Unlock()
+	return active
+}
+
 // CancelAll cancels every active handler with cause and drains the registry.
 func (r *ActiveRequestRegistry) CancelAll(cause error) {
 	if cause == nil {

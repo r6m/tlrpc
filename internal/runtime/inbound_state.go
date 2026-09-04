@@ -148,6 +148,21 @@ func (l *InboundStateLedger) StateInfo(messageIDs []int64) []byte {
 	return info
 }
 
+// HasResponse reports whether this process still retains a generated response
+// for an inbound message. It is deliberately process-local: retained outbound
+// frames are not part of a durable session snapshot.
+func (l *InboundStateLedger) HasResponse(messageID int64) bool {
+	if l == nil || messageID == 0 {
+		return false
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.expireLocked(l.now())
+	entry, ok := l.entries[messageID]
+	return ok && entry.status&mtprototl.MessageStateResponseGenerated != 0
+}
+
 // Expire removes entries whose TTL has elapsed and returns the number removed.
 func (l *InboundStateLedger) Expire() int {
 	l.mu.Lock()

@@ -39,6 +39,8 @@ type connectionSession struct {
 
 const invokeAfterWaitTimeout = 500 * time.Millisecond
 
+const interruptedRequestRetryMessage = "REQUEST_RETRY"
+
 func newConnectionSession(ctx context.Context, owner *Connection, decoded DecodedFrame) (*connectionSession, error) {
 	inner := decoded.Encrypted
 	if owner == nil || inner == nil {
@@ -160,6 +162,9 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 	if err != nil {
 		var bad *protocol.BadMessageError
 		if errors.As(err, &bad) {
+			if handled, recoveryErr := s.recoverInterruptedApplicationReplay(ctx, inner, bad); handled {
+				return recoveryErr
+			}
 			intent, encodeErr := badMessageIntent(bad)
 			if encodeErr != nil {
 				return encodeErr
@@ -220,6 +225,55 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 		}
 	}
 	return nil
+}
+
+// recoverInterruptedApplicationReplay turns a restart-lost application RPC
+// into a correlated retryable failure. Validation is intentionally committed
+// before dispatch, so a new process correctly rejects the same client message
+// ID as a replay while it has neither the old handler nor its process-local
+// writer/reliability record. Re-dispatching would violate at-most-once handler
+// execution because the application might already have committed side effects.
+//
+// A duplicate with an active handler or a locally retained response remains on
+// the canonical bad_msg_notification path; the original handler remains the
+// sole owner of its correlation.
+func (s *connectionSession) recoverInterruptedApplicationReplay(ctx context.Context, inner *mtproto.InnerData, bad *protocol.BadMessageError) (bool, error) {
+	if s == nil || inner == nil || bad == nil || !errors.Is(bad.Cause, protocol.ErrReplayMessageID) {
+		return false, nil
+	}
+	if s.active.IsActive(bad.MessageID) || s.reliability.inboundLedger().HasResponse(bad.MessageID) {
+		return false, nil
+	}
+
+	budget, err := mtproto.NewDecodeBudget(s.owner.config.DecodeLimits)
+	if err != nil {
+		return false, err
+	}
+	envelope, messages, err := classifyProtocolMessage(inner, budget)
+	if err != nil {
+		return false, nil
+	}
+	replayedContainer := envelope.Kind == protocol.Container && bad.MessageID == inner.MsgID
+	intents := make([]Intent, 0, len(messages)+1)
+	acknowledged := make([]int64, 0, len(messages))
+	for _, message := range messages {
+		if !replayedContainer && message.MessageID != bad.MessageID {
+			continue
+		}
+		if !message.ContentRelated || isRuntimeControlConstructor(message.ConstructorID) {
+			continue
+		}
+		if s.active.IsActive(message.MessageID) || s.reliability.inboundLedger().HasResponse(message.MessageID) {
+			continue
+		}
+		intents = append(intents, RPCError{RequestMessageID: message.MessageID, Code: 500, Message: interruptedRequestRetryMessage})
+		acknowledged = append(acknowledged, message.MessageID)
+	}
+	if len(acknowledged) == 0 {
+		return false, nil
+	}
+	intents = append(intents, Acknowledge{MessageIDs: acknowledged})
+	return true, s.writer.Submit(ctx, Batch{Items: intents})
 }
 
 func (s *connectionSession) routeMessage(ctx context.Context, message InboundMessage, reservation *activeRequestRegistration) error {

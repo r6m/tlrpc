@@ -97,6 +97,18 @@ still a replay even though its exact ID is no longer retained. Persistence is
 only durable when the configured `session.Store` durably round-trips all these
 fields; the default in-memory store is intended for local use.
 
+Inbound acceptance is durable before generated dispatch, whereas handlers and
+encrypted outbound reliability records are process-local. If a process stops
+after acceptance but before a handler settles an application RPC, a replacement
+process must not dispatch the same client message ID again: the application may
+already have committed its own side effects. Instead, when the client resends
+that application message and no live handler or retained response exists, the
+runtime returns a correlated `500 REQUEST_RETRY` plus `msgs_ack`. The client can
+settle the stranded call and issue a new request ID. Live duplicates and
+duplicates with a locally retained response remain canonical
+`bad_msg_notification` replays; the original live handler remains the sole
+owner of its correlation.
+
 ## `invokeAfter` ordering
 
 `invokeAfterMsg` and `invokeAfterMsgs` are accepted only as the outermost

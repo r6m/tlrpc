@@ -147,6 +147,24 @@ func TestActiveRequestRegistryCompletionIsIdempotentAndReleasesID(t *testing.T) 
 	replacementComplete()
 }
 
+func TestActiveRequestRegistryReportsOnlyLiveRequests(t *testing.T) {
+	registry, err := NewActiveRequestRegistry(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, complete, err := registry.Begin(context.Background(), 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !registry.IsActive(4) {
+		t.Fatal("running request was not reported active")
+	}
+	complete()
+	if registry.IsActive(4) {
+		t.Fatal("completed request remained active")
+	}
+}
+
 func TestActiveRequestRegistryRepeatedDropIsUnknown(t *testing.T) {
 	registry := newActiveRequestRegistryForTest(t, 1)
 	_, complete, err := registry.Begin(context.Background(), 4)
