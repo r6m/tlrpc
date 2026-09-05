@@ -277,10 +277,13 @@ func (c *Connection) removeSession(key session.SessionKey, actor *connectionSess
 			// those sessions alive, but never let this stale transport reclaim a
 			// fenced session generation after another connection took ownership.
 			c.poisoned[key] = struct{}{}
+			// If this was the transport's last session, there is nothing left that
+			// can make progress on the stale socket. Close it so the displaced client
+			// observes EOF and reconnects instead of waiting forever for canceled RPCs.
 			// Bound stale-key memory on a hostile, long-lived multiplexed socket.
 			// Reaching the configured active-session capacity is enough evidence to
 			// retire the physical transport instead of retaining more tombstones.
-			closeConnection = len(c.poisoned) >= c.config.SessionCapacity
+			closeConnection = len(c.sessions) == 0 || len(c.poisoned) >= c.config.SessionCapacity
 		}
 	}
 	c.mu.Unlock()

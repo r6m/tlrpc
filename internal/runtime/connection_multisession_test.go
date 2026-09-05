@@ -410,6 +410,219 @@ func TestConnectionLeaseReplacementRetiresOnlyMatchingSession(t *testing.T) {
 	waitForWrittenFrames(t, first.transport, 3)
 }
 
+func TestConnectionReloadHandoverCompletesOrClosesConcurrentStartupRPCs(t *testing.T) {
+	const startupRequests = 5
+	for _, tc := range []struct {
+		name         string
+		reuseSession bool
+	}{
+		{name: "new session overlaps old connection", reuseSession: false},
+		{name: "same session lease moves to replacement connection", reuseSession: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			now := time.Unix(inboundNowSeconds, 0).UTC()
+			application := newReloadHandoverApplicationStub(startupRequests)
+			first := newConnectionHarness(t, now, application, 100, nil)
+			first.connection.config.ConnectionID = 101
+			defer first.connection.shutdown(io.EOF)
+
+			for index := 0; index < startupRequests; index++ {
+				requestID := inboundMessageID(uint32(4 + index*4))
+				if err := first.connection.handleEncrypted(context.Background(), DecodedFrame{
+					Encrypted: &mtproto.InnerData{
+						Salt: inboundSalt, SessionID: inboundSessionID,
+						MsgID: requestID, SeqNo: int32(index*2 + 1), Data: constructorBody(0x78787878),
+					},
+					AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+				}); err != nil {
+					t.Fatalf("admit old request %d: %v", requestID, err)
+				}
+				application.waitStarted(t, 101, requestID)
+			}
+
+			secondTransport := newScriptedFrameConnection(nil, 100)
+			second, err := NewConnection(ConnectionConfig{
+				ConnectionID:      202,
+				Conn:              secondTransport,
+				AuthKeys:          first.connection.config.AuthKeys,
+				Handshake:         first.connection.config.Handshake,
+				Sessions:          first.connection.config.Sessions,
+				Reliability:       first.connection.config.Reliability,
+				Application:       application,
+				MessageIDs:        &fixedMessageIDs{next: now.Unix()<<32 | 1000},
+				MaxDecodedPayload: first.connection.config.MaxDecodedPayload,
+				Transport:         "test",
+				Now:               func() time.Time { return now },
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer second.shutdown(io.EOF)
+
+			secondSessionID := inboundSessionID + 1
+			firstSequence := int32(1)
+			requestLow := uint32(100)
+			if tc.reuseSession {
+				secondSessionID = inboundSessionID
+				firstSequence = startupRequests*2 + 1
+			}
+			requestIDs := make([]int64, startupRequests)
+			firstResult := make(chan error, 1)
+			requestIDs[0] = inboundMessageID(requestLow)
+			go func() {
+				firstResult <- second.handleEncrypted(context.Background(), DecodedFrame{
+					Encrypted: &mtproto.InnerData{
+						Salt: inboundSalt, SessionID: secondSessionID,
+						MsgID: requestIDs[0], SeqNo: firstSequence, Data: constructorBody(0x79797979),
+					},
+					AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+				})
+			}()
+			application.waitStarted(t, 202, requestIDs[0])
+			if err := <-firstResult; err != nil {
+				t.Fatalf("admit first replacement request: %v", err)
+			}
+
+			for index := 1; index < startupRequests; index++ {
+				requestIDs[index] = inboundMessageID(requestLow + uint32(index*4))
+				if err := second.handleEncrypted(context.Background(), DecodedFrame{
+					Encrypted: &mtproto.InnerData{
+						Salt: inboundSalt, SessionID: secondSessionID,
+						MsgID: requestIDs[index], SeqNo: firstSequence + int32(index*2), Data: constructorBody(0x79797979),
+					},
+					AuthKeyID: first.authKey.ID(), AuthKey: first.authKey,
+				}); err != nil {
+					t.Fatalf("admit replacement request %d: %v", requestIDs[index], err)
+				}
+				application.waitStarted(t, 202, requestIDs[index])
+			}
+
+			if !tc.reuseSession {
+				first.connection.shutdown(io.EOF)
+			}
+			application.waitCanceled(t, startupRequests)
+			close(application.releaseReplacement)
+
+			wantFrames := startupRequests * 2
+			if !tc.reuseSession {
+				wantFrames++ // new_session_created for the fresh session
+			}
+			waitForWrittenFrames(t, secondTransport, wantFrames)
+			assertCorrelatedStartupResponses(t, secondTransport.writtenFrames(), first.authKey, secondSessionID, requestIDs)
+			if tc.reuseSession && first.transport.Context().Err() == nil {
+				t.Fatal("displaced transport stayed open after its last session lease was lost")
+			}
+		})
+	}
+}
+
+type reloadHandoverApplicationStub struct {
+	started            chan reloadHandoverRequest
+	canceled           chan struct{}
+	releaseReplacement chan struct{}
+}
+
+type reloadHandoverRequest struct {
+	connectionID uint64
+	messageID    int64
+}
+
+func newReloadHandoverApplicationStub(capacity int) *reloadHandoverApplicationStub {
+	return &reloadHandoverApplicationStub{
+		started:            make(chan reloadHandoverRequest, capacity*2),
+		canceled:           make(chan struct{}, capacity),
+		releaseReplacement: make(chan struct{}),
+	}
+}
+
+func (s *reloadHandoverApplicationStub) DispatchApplication(ctx context.Context, request Request) (Outcome, error) {
+	started := reloadHandoverRequest{connectionID: request.Info.ConnectionID, messageID: request.Message.MessageID}
+	select {
+	case s.started <- started:
+	case <-ctx.Done():
+		return Outcome{}, ctx.Err()
+	}
+	if request.Info.ConnectionID == 101 {
+		<-ctx.Done()
+		s.canceled <- struct{}{}
+		return Outcome{}, ctx.Err()
+	}
+	select {
+	case <-s.releaseReplacement:
+		return Outcome{Intents: []Intent{RPCResult{
+			RequestMessageID: request.Message.MessageID,
+			Body:             constructorBody(0x7a7a7a7a),
+		}}}, nil
+	case <-ctx.Done():
+		return Outcome{}, ctx.Err()
+	}
+}
+
+func (s *reloadHandoverApplicationStub) waitStarted(t *testing.T, connectionID uint64, messageID int64) {
+	t.Helper()
+	select {
+	case got := <-s.started:
+		if got.connectionID != connectionID || got.messageID != messageID {
+			t.Fatalf("started request = %+v, want connection=%d message=%d", got, connectionID, messageID)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("connection %d request %d did not start", connectionID, messageID)
+	}
+}
+
+func (s *reloadHandoverApplicationStub) waitCanceled(t *testing.T, count int) {
+	t.Helper()
+	for index := 0; index < count; index++ {
+		select {
+		case <-s.canceled:
+		case <-time.After(time.Second):
+			t.Fatalf("old request cancellations = %d, want %d", index, count)
+		}
+	}
+}
+
+func assertCorrelatedStartupResponses(t *testing.T, frames [][]byte, authKey crypto.AuthKey, sessionID int64, requestIDs []int64) {
+	t.Helper()
+	results := make(map[int64]int, len(requestIDs))
+	acknowledged := make(map[int64]int, len(requestIDs))
+	for _, frame := range frames {
+		inner := decryptWriterFrame(t, authKey, frame)
+		if inner.SessionID != sessionID {
+			t.Fatalf("response session = %d, want %d", inner.SessionID, sessionID)
+		}
+		switch binaryConstructor(inner.Data) {
+		case mtprototl.RPCResultID:
+			result := &mtprototl.RPCResult{}
+			if err := decodeControl(inner.Data, result); err != nil {
+				t.Fatalf("decode rpc_result: %v", err)
+			}
+			if binaryConstructor(result.ResultRaw) != 0x7a7a7a7a {
+				t.Fatalf("request %d result constructor = %08x", result.ReqMsgID, binaryConstructor(result.ResultRaw))
+			}
+			results[result.ReqMsgID]++
+		case mtprototl.MsgsAckID:
+			ack := &mtprototl.MsgsAck{}
+			if err := decodeControl(inner.Data, ack); err != nil {
+				t.Fatalf("decode msgs_ack: %v", err)
+			}
+			for _, messageID := range ack.MsgIDs {
+				acknowledged[messageID]++
+			}
+		case mtprototl.NewSessionCreatedID:
+		default:
+			t.Fatalf("unexpected response constructor %08x", binaryConstructor(inner.Data))
+		}
+	}
+	for _, requestID := range requestIDs {
+		if results[requestID] != 1 || acknowledged[requestID] != 1 {
+			t.Fatalf("request %d correlation counts = result:%d ack:%d", requestID, results[requestID], acknowledged[requestID])
+		}
+	}
+	if len(results) != len(requestIDs) || len(acknowledged) != len(requestIDs) {
+		t.Fatalf("unexpected correlated IDs: results=%v acknowledgements=%v", results, acknowledged)
+	}
+}
+
 type multisessionApplicationStub struct {
 	mu       sync.Mutex
 	sessions []int64

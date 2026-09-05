@@ -104,8 +104,10 @@ primitive.
 When a lease ends with `session.ErrLeaseLost`, Runtime v2 poisons that composite
 session key on the old physical connection. The connection may continue serving
 other sessions for the pinned auth key, but it cannot acquire a newer lease for
-the replaced key. Poisoned keys are bounded by the configured connection-session
-capacity; reaching that bound retires the physical connection.
+the replaced key. When the replaced key was its final live session, Runtime v2
+closes the displaced physical connection so the client observes ownership loss.
+Poisoned keys are bounded by the configured connection-session capacity;
+reaching that bound also retires the physical connection.
 
 `session.Store` remains the detached snapshot storage primitive used by the
 local coordinator. Stores load, create, save, and delete copies keyed by

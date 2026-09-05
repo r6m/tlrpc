@@ -48,9 +48,11 @@ A composite session, keyed by `(AuthKeyID, SessionID)`, independently owns:
 Replacing a lease cancels the old owner, waits for release, and retires only
 that composite session. The old physical connection permanently rejects that
 session key, so later frames cannot reacquire the replacement's generation;
-unrelated multiplexed sessions remain usable. Snapshot saves and deletes go
-through the active lease's fencing boundary so a stale owner cannot persist
-protocol state after a new generation takes over. A transport or physical write
+unrelated multiplexed sessions remain usable. If no unrelated session remains,
+Runtime v2 closes the displaced transport so canceled requests observe a
+disconnect and can reconnect instead of remaining pending. Snapshot saves and
+deletes go through the active lease's fencing boundary so a stale owner cannot
+persist protocol state after a new generation takes over. A transport or physical write
 failure retires the whole connection because its shared byte stream can no
 longer be trusted.
 

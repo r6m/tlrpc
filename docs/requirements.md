@@ -53,7 +53,9 @@ compatibility consumers, not framework dependencies.
   Delete so stale generations cannot mutate durable protocol state.
 - After ownership loss, the old physical connection must reject that session
   key permanently while preserving unrelated multiplexed sessions; it must not
-  reacquire a later generation and ping-pong ownership.
+  reacquire a later generation and ping-pong ownership. If ownership loss
+  removes its final live session, it must close so canceled client requests do
+  not remain pending on a transport that can no longer serve them.
 - Each session owns independent validation, replay state, reliability, routing,
   active requests, writer ordering, and live-push subscription state.
 - One connection-owned sink must serialize complete physical writes across its
