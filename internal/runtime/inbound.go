@@ -66,8 +66,42 @@ func (v *SessionValidator) Validate(snapshot session.Snapshot, inner *mtproto.In
 		return ValidatedInbound{}, err
 	}
 	v.validator = validator
-	if err := validator.Validate(message); err != nil {
-		return ValidatedInbound{}, err
+	// A remembered child can be a legitimate retransmission alongside fresh
+	// requests. Validate the entire remaining envelope before exposing either
+	// list; a malformed sibling must not partially commit or dispatch.
+	recent := make(map[int64]bool, len(snapshot.RecentClientMsgIDs))
+	for _, id := range snapshot.RecentClientMsgIDs {
+		recent[id] = true
+	}
+	original := append([]InboundMessage(nil), decoded...)
+	replayed := make(map[int64]bool)
+	for {
+		err := validator.Validate(message)
+		if err == nil {
+			break
+		}
+		var bad *protocol.BadMessageError
+		if message.Kind != protocol.Container || !errors.As(err, &bad) ||
+			!errors.Is(bad.Cause, protocol.ErrReplayMessageID) ||
+			bad.MessageID == message.MessageID || !recent[bad.MessageID] {
+			return ValidatedInbound{}, err
+		}
+		index := -1
+		for i, child := range message.Children {
+			if child.MessageID == bad.MessageID {
+				index = i
+				break
+			}
+		}
+		if index < 0 {
+			return ValidatedInbound{}, err
+		}
+		replayed[bad.MessageID] = true
+		message.Children = append(message.Children[:index], message.Children[index+1:]...)
+		decoded = append(decoded[:index], decoded[index+1:]...)
+	}
+	for i := range original {
+		original[i].Retransmission = replayed[original[i].MessageID]
 	}
 	state := validator.Snapshot()
 	next := snapshot.Clone()
@@ -87,7 +121,7 @@ func (v *SessionValidator) Validate(snapshot session.Snapshot, inner *mtproto.In
 			DecodeBudget:   budget,
 			ContentRelated: message.Kind == protocol.ContentRelated,
 		},
-		Messages: decoded, Snapshot: next,
+		Messages: original, Snapshot: next,
 	}, nil
 }
 

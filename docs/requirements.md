@@ -68,7 +68,10 @@ compatibility consumers, not framework dependencies.
 
 - Validation must atomically accept an outer envelope and all container
   children or reject the whole input without committing a partial snapshot.
-- Duplicate client message IDs must remain rejected after the bounded recent-ID
+- Known recent child IDs retransmitted inside a fresh container must not execute
+  twice or cause fresh siblings to disappear. Their retained replies are resent
+  when unacknowledged; active requests retain their original execution owner.
+- Unknown duplicate client message IDs must remain rejected after the bounded recent-ID
   window evicts entries. The monotonic client message-ID floor is therefore a
   required durable snapshot field.
 - Recent client message IDs and recent content sequence numbers must also be

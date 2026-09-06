@@ -88,8 +88,14 @@ response. On a resend of that exact application message after restart, Runtime
 v2 does not invoke the handler twice. It returns a correlated `500
 REQUEST_RETRY` and acknowledgement, allowing the client to retry using a new
 message ID. This recovery applies only when there is no active handler and no
-locally retained response; active and locally completed replays still receive
-the canonical bad-message response.
+locally retained response; standalone active and locally completed replays still receive
+the canonical bad-message response. A fresh container may include known recent
+child retransmissions alongside new requests: those children are separated from
+dispatch only after the whole remaining envelope validates. The writer resends
+a retained unacknowledged reply, acknowledges an already acknowledged reply or
+active request, or returns `REQUEST_RETRY` when process-local reply retention is
+missing. No retransmitted child is re-executed. Unknown IDs below the durable
+floor, replayed outer containers, and malformed siblings remain rejected.
 
 The snapshot also records whether the session has accepted unsolicited
 application pushes. Runtime v2 restores this opt-in and registers the new

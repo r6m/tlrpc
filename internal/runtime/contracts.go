@@ -28,6 +28,8 @@ type InboundMessage struct {
 	DecodeBudget   *mtproto.DecodeBudget
 	ContentRelated bool
 	SuppressPush   bool
+	// Retransmission marks a known container child that must never be dispatched again.
+	Retransmission bool
 }
 
 func (m InboundMessage) Validate() error {

@@ -175,7 +175,7 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 	}
 	contentMessageIDs := make([]int64, 0, len(validated.Messages))
 	for _, message := range validated.Messages {
-		if message.ContentRelated && !isRuntimeControlConstructor(message.ConstructorID) {
+		if !message.Retransmission && message.ContentRelated && !isRuntimeControlConstructor(message.ConstructorID) {
 			contentMessageIDs = append(contentMessageIDs, message.MessageID)
 		}
 	}
@@ -202,7 +202,7 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 		return err
 	}
 	for _, message := range validated.Messages {
-		if message.ContentRelated {
+		if !message.Retransmission && message.ContentRelated {
 			if err := s.ensureNewSessionCreated(ctx, message.MessageID); err != nil {
 				releaseReservations()
 				return err
@@ -211,7 +211,19 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 		}
 	}
 
+	handledReplays := make(map[int64]struct{})
 	for _, message := range validated.Messages {
+		if message.Retransmission {
+			if _, handled := handledReplays[message.MessageID]; handled {
+				continue
+			}
+			handledReplays[message.MessageID] = struct{}{}
+			if err := s.recoverContainerReplay(ctx, message); err != nil {
+				releaseReservations()
+				return err
+			}
+			continue
+		}
 		reservation := reservations[message.MessageID]
 		if reservation != nil {
 			delete(reservations, message.MessageID)
@@ -225,6 +237,28 @@ func (s *connectionSession) handleEncrypted(ctx context.Context, inner *mtproto.
 		}
 	}
 	return nil
+}
+
+// recoverContainerReplay never routes a retransmitted body. Replay effects
+// follow container wire order so preceding acknowledgements are applied first.
+// Active requests keep their owner; missing replies produce a correlated retry.
+func (s *connectionSession) recoverContainerReplay(ctx context.Context, message InboundMessage) error {
+	if !message.ContentRelated {
+		return nil
+	}
+	id := message.MessageID
+	if !s.active.IsActive(id) {
+		found, err := s.writer.ReplayResponse(ctx, id)
+		if err != nil {
+			return err
+		}
+		if !found && !isRuntimeControlConstructor(message.ConstructorID) {
+			if err := s.writer.Submit(ctx, RPCError{RequestMessageID: id, Code: 500, Message: interruptedRequestRetryMessage}); err != nil {
+				return err
+			}
+		}
+	}
+	return s.writer.Submit(ctx, Acknowledge{MessageIDs: []int64{id}})
 }
 
 // recoverInterruptedApplicationReplay turns a restart-lost application RPC
@@ -564,6 +598,9 @@ func recordValidated(ledger *InboundStateLedger, validated ValidatedInbound) err
 		}
 	}
 	for _, message := range validated.Messages {
+		if message.Retransmission {
+			continue
+		}
 		if err := ledger.Record(message); err != nil {
 			return err
 		}

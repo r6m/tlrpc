@@ -75,6 +75,7 @@ const (
 	writerOperationSubmit writerOperation = iota
 	writerOperationAcknowledge
 	writerOperationInspect
+	writerOperationReplayResponse
 )
 
 type writerRequest struct {
@@ -151,6 +152,14 @@ func (w *Writer) AcknowledgeOutbound(ctx context.Context, messageIDs []int64) er
 func (w *Writer) InspectOutbound(ctx context.Context, messageID int64) (OutboundReliabilityState, error) {
 	response := w.request(ctx, writerRequest{operation: writerOperationInspect, messageID: messageID})
 	return response.state, response.err
+}
+
+// ReplayResponse acknowledges a retained response by presence, resending its
+// exact packet only when unacknowledged. Lookup and resend share writer ordering
+// with peer acknowledgements and never race a second reliability lookup.
+func (w *Writer) ReplayResponse(ctx context.Context, requestID int64) (bool, error) {
+	response := w.request(ctx, writerRequest{operation: writerOperationReplayResponse, messageID: requestID})
+	return response.state.Known, response.err
 }
 
 func (w *Writer) request(ctx context.Context, request writerRequest) writerResponse {
@@ -241,6 +250,17 @@ func (w *Writer) processRequest(request writerRequest) (writerResponse, bool, er
 			Acknowledged:   known && message.Acknowledged,
 			ResendEligible: known && !message.Acknowledged,
 		}}, false, nil
+	case writerOperationReplayResponse:
+		if err := request.ctx.Err(); err != nil {
+			return writerResponse{err: err}, false, nil
+		}
+		message, known := w.reliability.LookupResponse(request.messageID)
+		if known && !message.Acknowledged {
+			if err := w.sink.WriteFrame(request.ctx, message.Payload); err != nil {
+				return writerResponse{err: err}, false, err
+			}
+		}
+		return writerResponse{state: OutboundReliabilityState{Known: known}}, false, nil
 	case writerOperationSubmit:
 		stop, err := w.process(request.ctx, request.intent)
 		return writerResponse{err: err}, stop, err
@@ -275,14 +295,15 @@ func (w *Writer) process(ctx context.Context, intent Intent) (bool, error) {
 		}
 		sentAt := w.now()
 		retained := append(prepared.retained, retainedFrameMessage{
-			messageID: prepared.messageID, sequenceNo: prepared.sequenceNo,
+			messageID: prepared.messageID, requestMessageID: prepared.requestMessageID, sequenceNo: prepared.sequenceNo,
 		})
 		for _, message := range retained {
 			if _, err := w.reliability.Put(reliability.SentMessage{
-				MessageID:      message.messageID,
-				SequenceNumber: message.sequenceNo,
-				Payload:        prepared.frame,
-				SentAt:         sentAt,
+				MessageID:        message.messageID,
+				RequestMessageID: message.requestMessageID,
+				SequenceNumber:   message.sequenceNo,
+				Payload:          prepared.frame,
+				SentAt:           sentAt,
 			}); err != nil {
 				return false, err
 			}
@@ -295,15 +316,17 @@ func (w *Writer) process(ctx context.Context, intent Intent) (bool, error) {
 }
 
 type preparedFrame struct {
-	messageID  int64
-	sequenceNo int32
-	frame      []byte
-	retained   []retainedFrameMessage
+	messageID        int64
+	requestMessageID int64
+	sequenceNo       int32
+	frame            []byte
+	retained         []retainedFrameMessage
 }
 
 type retainedFrameMessage struct {
-	messageID  int64
-	sequenceNo int32
+	messageID        int64
+	requestMessageID int64
+	sequenceNo       int32
 }
 
 func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error) {
@@ -336,7 +359,7 @@ func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error)
 				BodyRaw: childBody,
 			})
 			retained = append(retained, retainedFrameMessage{
-				messageID: childMessageID, sequenceNo: childSequenceNo,
+				messageID: childMessageID, requestMessageID: responseRequestID(child), sequenceNo: childSequenceNo,
 			})
 		}
 		body, err = serializeRuntimeTLBounded(container, w.maxEncodedBytes)
@@ -368,10 +391,11 @@ func (w *Writer) prepare(intent Intent) (preparedFrame, session.Snapshot, error)
 	}
 	snapshot.LastActivity = w.now().UTC()
 	return preparedFrame{
-		messageID:  messageID,
-		sequenceNo: sequenceNo,
-		frame:      serializeEncryptedFrame(encrypted),
-		retained:   retained,
+		messageID:        messageID,
+		requestMessageID: responseRequestID(intent),
+		sequenceNo:       sequenceNo,
+		frame:            serializeEncryptedFrame(encrypted),
+		retained:         retained,
 	}, snapshot, nil
 }
 
@@ -466,4 +490,15 @@ func serializeEncryptedFrame(message *mtproto.EncryptedMessage) []byte {
 	copy(frame[8:24], message.MsgKey[:])
 	copy(frame[24:], message.EncryptedData)
 	return frame
+}
+
+func responseRequestID(intent Intent) int64 {
+	switch value := intent.(type) {
+	case RPCResult:
+		return value.RequestMessageID
+	case RPCError:
+		return value.RequestMessageID
+	default:
+		return 0
+	}
 }

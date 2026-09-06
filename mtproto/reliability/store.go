@@ -29,11 +29,12 @@ type Config struct {
 // SentMessage is an immutable snapshot of one outbound MTProto message.
 // Store copies Payload when a message enters or leaves the store.
 type SentMessage struct {
-	MessageID      int64
-	SequenceNumber int32
-	Payload        []byte
-	SentAt         time.Time
-	Acknowledged   bool
+	MessageID        int64
+	RequestMessageID int64
+	SequenceNumber   int32
+	Payload          []byte
+	SentAt           time.Time
+	Acknowledged     bool
 }
 
 // Store tracks outbound messages with strict capacity and TTL bounds.
@@ -245,4 +246,22 @@ func cloneBytes(value []byte) []byte {
 		return nil
 	}
 	return append([]byte(nil), value...)
+}
+
+// LookupResponse finds the newest retained response correlated to a request.
+// This uses the same capacity and TTL as outbound packet retention.
+func (s *Store) LookupResponse(requestID int64) (SentMessage, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.expireLocked(s.now())
+	var found *entry
+	for _, item := range s.entries {
+		if item.message.RequestMessageID == requestID && requestID != 0 && (found == nil || item.message.MessageID > found.message.MessageID) {
+			found = item
+		}
+	}
+	if found == nil {
+		return SentMessage{}, false
+	}
+	return cloneMessage(found.message), true
 }

@@ -159,3 +159,14 @@ Runtime events enter a bounded internal channel and are delivered by a separate
 goroutine. A full channel drops new events; callback panics are recovered.
 Observation is diagnostic telemetry, never a synchronization or correctness
 boundary.
+
+## Container retransmissions
+
+The session validator recognizes exact recent child IDs retransmitted inside a
+new container, validates the whole remaining envelope, and marks retransmitted children while preserving
+the original wire order. No replay effect or fresh handler runs until
+validation and admission succeed. Unknown old IDs and malformed siblings still
+reject the container atomically. An earlier acknowledgement is applied before replaying a later child.
+The session writer owns correlated response
+lookup and replay alongside peer acknowledgements; response correlation shares
+the existing bounded packet store, with no second unbounded payload cache.
