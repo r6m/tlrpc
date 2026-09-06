@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 const (
 	DefaultActiveRequestCapacity     = 1024
 	DefaultConnectionSessionCapacity = 16
+	transportErrorAuthKeyNotFound    = int32(-404)
 )
 
 var (
@@ -170,6 +172,11 @@ func (c *Connection) Run(ctx context.Context) (runErr error) {
 		}
 		decoded, err := DecodeFrame(frame, c.config.AuthKeys)
 		if err != nil {
+			if errors.Is(err, crypto.ErrAuthKeyNotFound) {
+				if writeErr := c.writeTransportError(ctx, transportErrorAuthKeyNotFound); writeErr != nil {
+					return errors.Join(err, fmt.Errorf("runtime: write transport error %d: %w", transportErrorAuthKeyNotFound, writeErr))
+				}
+			}
 			return err
 		}
 		if decoded.Unencrypted != nil {
@@ -182,6 +189,12 @@ func (c *Connection) Run(ctx context.Context) (runErr error) {
 			return err
 		}
 	}
+}
+
+func (c *Connection) writeTransportError(ctx context.Context, code int32) error {
+	var payload [4]byte
+	binary.LittleEndian.PutUint32(payload[:], uint32(code))
+	return c.frameSink.WriteFrame(ctx, payload[:])
 }
 
 func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.UnencryptedMessage) error {

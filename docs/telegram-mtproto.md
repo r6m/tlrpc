@@ -59,6 +59,21 @@ permission protections documented in
 
 An auth key is cryptographic identity; it is not an application user login.
 
+### Unknown authorization keys
+
+When an encrypted frame names an authorization key that
+`crypto.AuthKeyManager.Get` reports as `crypto.ErrAuthKeyNotFound`, Runtime v2
+writes the signed little-endian transport error `-404` as a four-byte payload
+through the connection's negotiated MTProto framing and obfuscation, then
+closes the connection. This boundary runs before encrypted-envelope decoding,
+session acquisition, or application dispatch and is identical for TCP and
+WebSocket carriers.
+
+Only the explicit not-found sentinel maps to `-404`. Other auth-key source
+failures, including transient storage errors, remain internal connection
+failures and close without a transport error so the client is not told that a
+key is absent when its status is unknown.
+
 ## Composite sessions and replay
 
 An encrypted message carries auth-key identity plus inner salt, session ID,

@@ -696,6 +696,7 @@ type scriptedFrameConnection struct {
 	mu          sync.Mutex
 	frames      [][]byte
 	writes      [][]byte
+	events      []string
 	wantWrites  int
 	release     chan struct{}
 	releaseOnce sync.Once
@@ -727,6 +728,7 @@ func (c *scriptedFrameConnection) ReadMessage(int) ([]byte, error) {
 func (c *scriptedFrameConnection) WriteMessage(frame []byte) error {
 	c.mu.Lock()
 	c.writes = append(c.writes, append([]byte(nil), frame...))
+	c.events = append(c.events, "write")
 	reached := len(c.writes) >= c.wantWrites
 	c.mu.Unlock()
 	if reached {
@@ -738,9 +740,18 @@ func (c *scriptedFrameConnection) WriteMessage(frame []byte) error {
 func (*scriptedFrameConnection) SetWriteDeadline(time.Time) error { return nil }
 
 func (c *scriptedFrameConnection) Close() error {
+	c.mu.Lock()
+	c.events = append(c.events, "close")
+	c.mu.Unlock()
 	c.cancel()
 	c.releaseOnce.Do(func() { close(c.release) })
 	return nil
+}
+
+func (c *scriptedFrameConnection) recordedEvents() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]string(nil), c.events...)
 }
 
 func (c *scriptedFrameConnection) Context() context.Context { return c.ctx }
