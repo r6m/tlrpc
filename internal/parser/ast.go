@@ -11,6 +11,8 @@ type Position struct {
 // Schema is the root node of a TL schema AST.
 type Schema struct {
 	Layer        int             // Detected or provided layer version
+	BaseLayer    int             // oldest layer represented by a layered schema
+	IsLayered    bool            // true when one package contains multiple layers
 	Types        []TypeDecl      // From ---types--- section
 	Functions    []FuncDecl      // From ---functions--- section
 	Constructors []Constructor   // All constructors from types
@@ -29,6 +31,9 @@ type TypeDecl struct {
 	Name         string        // e.g., "User", "Message"
 	Constructors []Constructor // All constructors for this type
 	IsUnion      bool          // true if multiple constructors
+	// VariantLayer is zero for the stable, unsuffixed Go definition and is the
+	// layer suffix for a changed historical wire shape in a layered schema.
+	VariantLayer int
 }
 
 // Constructor represents a single constructor in TL.
@@ -41,6 +46,14 @@ type Constructor struct {
 	IsBare        bool    // % prefix
 	VectorCount   *string // NEW: element variable for vectors, e.g., "t" in "# [ t ]"
 	IsBuiltin     bool    // pseudo-declaration for a primitive built-in type
+	VariantLayer  int     // zero for the stable Go name, otherwise Layer<N>
+	MinLayer      int     // inclusive; zero with MaxLayer zero means any layer
+	MaxLayer      int     // inclusive; zero means no upper bound
+	// OutputMinLayer and OutputMaxLayer retain declaration availability for
+	// projection. Incoming MinLayer/MaxLayer may be widened to 0/0 for unique
+	// historical IDs that remain accepted by newer clients.
+	OutputMinLayer int
+	OutputMaxLayer int
 }
 
 // FuncDecl represents a function declaration.
@@ -52,13 +65,18 @@ type FuncDecl struct {
 	ResultType    TypeRef
 	IsTemplate    bool // NEW: true if return type is generic param (e.g., = X)
 	IsHelper      bool // schema-only serializer prefix paired with a generic function
+	VariantLayer  int  // zero for the stable Go name, otherwise Layer<N>
+	MinLayer      int  // inclusive; zero with MaxLayer zero means any layer
+	MaxLayer      int  // inclusive; zero means no upper bound
 }
 
 // Parameter represents a parameter in a constructor or function.
 type Parameter struct {
-	Name    string
-	Type    TypeRef
-	FlagBit *int // nil if not conditional
+	Name     string
+	Type     TypeRef
+	FlagBit  *int // nil if not conditional
+	MinLayer int  // inclusive; zero means unbounded
+	MaxLayer int  // inclusive; zero means unbounded
 }
 
 // TypeRef represents a type reference, possibly generic or conditional.
@@ -73,6 +91,9 @@ type TypeRef struct {
 	FlagName   string   // Conditional flag source, e.g. "flags", "flags2"
 	FlagBit    *int     // Conditional on this flag bit
 	IsTypeVar  bool     // NEW: true if this is a type variable like "t" or "X"
+	// VariantLayer selects a generated Layer<N> type when the referenced wire
+	// shape changed in a multi-layer package.
+	VariantLayer int
 }
 
 // NewTypeRef creates a simple type reference.

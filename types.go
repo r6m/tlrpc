@@ -39,6 +39,10 @@ type ServiceDesc struct {
 
 // MethodDesc describes a method within a service.
 type MethodDesc struct {
+	// MinLayer and MaxLayer bound this wire variant inclusively. Zero leaves
+	// that side unbounded. Historical constructors may remain unbounded.
+	MinLayer      int
+	MaxLayer      int
 	MethodName    string
 	ConstructorID uint32          // TL constructor ID for the request method.
 	NewRequest    func() TLObject // Constructs an empty request object for decoding.

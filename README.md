@@ -52,9 +52,43 @@ tlrpc-gen \
   --package=gen
 ```
 
-Layer awareness ends at generation. Runtime v2 records the client's declared
-layer but never selects another generated package or translates constructors,
-fields, or method semantics between layers.
+To generate one package that serves every selected layer, opt in with
+`--layers`. The list must contain the base and every supplied difference in
+strictly increasing order. The base is the complete accepted baseline. It may
+include older forms of a method by placing `// @tlrpc variant-layer <N>`
+immediately before each historical declaration; the canonical declaration is
+left unannotated. The annotation must be positive and no greater than the base
+layer. It controls generated name provenance only; accepted baseline forms are
+available from the generated package's base layer upward. This is the package's
+supported floor, not a universal TL protocol minimum.
+
+```bash
+tlrpc-gen \
+  --schema=./schema/base.tl \
+  --base-layer=228 \
+  --layers=228,229 \
+  --layer-diff=229:./schema/layers/229.tl \
+  --out=./gen \
+  --package=gen
+```
+
+Multi-layer output keeps unchanged definitions and base-layer Go names once.
+Changed request contracts get typed `Layer<N>` methods and disjoint descriptor
+layer ranges. Additive object fields share one generated superset and are
+encoded and decoded only in their declared layers. Other incompatible shapes
+receive `Layer<N>` types. A type that is a union in any selected snapshot stays
+one unsuffixed union containing its historical and current constructor
+variants. Static shape propagation stops at that union boundary. The generated
+constructor and method factories select same-ID wire variants by layer, and
+`ProjectTLObject` recursively clones output objects for a target layer.
+Hook-handled replacements re-enter automatic projection with the replacement
+root hook skipped; nested hooks still run, so nested layer constraints remain
+validated. A zero layer selects the base layer.
+
+Single-layer generation remains unchanged. Runtime v2 records the client's
+effective layer and uses generated descriptor and codec metadata when a
+multi-layer package is registered; application semantics remain in typed
+handlers and explicit projection hooks.
 
 ```go
 type EchoService struct {

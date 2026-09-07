@@ -83,8 +83,8 @@ func (g *ServiceGenerator) GenerateService(funcs []parser.FuncDecl) error {
 			if fn.IsTemplate || fn.IsHelper {
 				continue
 			}
-			method := g.namer.MethodName(fn.Name)
-			reqType := g.namer.RequestName(fn.Name)
+			method := methodName(g.namer, fn)
+			reqType := requestName(g.namer, fn)
 			respType := g.responseType(fn.ResultType)
 
 			methods = append(methods, MethodTemplateData{
@@ -145,8 +145,8 @@ func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []
 	}
 
 	for _, fn := range methods {
-		method := g.namer.MethodName(fn.Name)
-		reqType := g.namer.RequestName(fn.Name)
+		method := methodName(g.namer, fn)
+		reqType := requestName(g.namer, fn)
 		respType := g.responseType(fn.ResultType)
 		handlerName := "_" + strings.TrimSuffix(name, "Server") + "_" + method + "_Handler"
 
@@ -159,10 +159,10 @@ func (g *ServiceGenerator) generateRegistrationFunction(service string, funcs []
 		return err
 	}
 	for _, fn := range methods {
-		method := g.namer.MethodName(fn.Name)
-		reqType := g.namer.RequestName(fn.Name)
+		method := methodName(g.namer, fn)
+		reqType := requestName(g.namer, fn)
 		handlerName := "_" + strings.TrimSuffix(name, "Server") + "_" + method + "_Handler"
-		if _, err := fmt.Fprintf(g.out, "\t\t{\n\t\t\tMethodName: %q,\n\t\t\tConstructorID: 0x%08x,\n\t\t\tNewRequest: func() tlrpc.TLObject { return &%s{} },\n\t\t\tHandler: %s,\n\t\t},\n", method, fn.ID, reqType, handlerName); err != nil {
+		if _, err := fmt.Fprintf(g.out, "\t\t{\n\t\t\tMinLayer: %d,\n\t\t\tMaxLayer: %d,\n\t\t\tMethodName: %q,\n\t\t\tConstructorID: 0x%08x,\n\t\t\tNewRequest: func() tlrpc.TLObject { return &%s{} },\n\t\t\tHandler: %s,\n\t\t},\n", fn.MinLayer, fn.MaxLayer, method, fn.ID, reqType, handlerName); err != nil {
 			return err
 		}
 	}
@@ -195,7 +195,7 @@ func (g *ServiceGenerator) GenerateRequests(funcs []parser.FuncDecl) error {
 			if fn.IsTemplate || fn.IsHelper {
 				continue
 			}
-			reqName := g.namer.RequestName(fn.Name)
+			reqName := requestName(g.namer, fn)
 			if _, err := fmt.Fprintf(g.out, "type %s struct {\n", reqName); err != nil {
 				return err
 			}
@@ -213,7 +213,7 @@ func (g *ServiceGenerator) GenerateRequests(funcs []parser.FuncDecl) error {
 				return err
 			}
 
-			if err := g.generateRequestMethods(fn, strings.TrimSuffix(reqName, "Request")); err != nil {
+			if err := g.generateRequestMethods(fn, reqName); err != nil {
 				return err
 			}
 		}
@@ -221,33 +221,33 @@ func (g *ServiceGenerator) GenerateRequests(funcs []parser.FuncDecl) error {
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestMethods(fn parser.FuncDecl, reqBaseName string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) ConstructorID() uint32 { return 0x%08x }\n", reqBaseName, fn.ID); err != nil {
+func (g *ServiceGenerator) generateRequestMethods(fn parser.FuncDecl, reqName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%s) ConstructorID() uint32 { return 0x%08x }\n", reqName, fn.ID); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) Method() string { return %q }\n\n", reqBaseName, fn.Name); err != nil {
+	if _, err := fmt.Fprintf(g.out, "func (r *%s) Method() string { return %q }\n\n", reqName, fn.Name); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) TLName() string { return %q }\n\n", reqBaseName, fn.Name); err != nil {
+	if _, err := fmt.Fprintf(g.out, "func (r *%s) TLName() string { return %q }\n\n", reqName, fn.Name); err != nil {
 		return err
 	}
 	if hasFlagsParam(fn.Params) {
-		if err := g.generateRequestComputeFlags(fn, reqBaseName); err != nil {
+		if err := g.generateRequestComputeFlags(fn, reqName); err != nil {
 			return err
 		}
 	}
 
-	if err := g.generateRequestSerialize(fn, reqBaseName); err != nil {
+	if err := g.generateRequestSerialize(fn, reqName); err != nil {
 		return err
 	}
-	if err := g.generateRequestDeserialize(fn, reqBaseName); err != nil {
+	if err := g.generateRequestDeserialize(fn, reqName); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestComputeFlags(fn parser.FuncDecl, reqBaseName string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) computeFlags() uint32 {\n\tvar flags uint32\n", reqBaseName); err != nil {
+func (g *ServiceGenerator) generateRequestComputeFlags(fn parser.FuncDecl, reqName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%s) computeFlags() uint32 {\n\tvar flags uint32\n", reqName); err != nil {
 		return err
 	}
 	for _, param := range fn.Params {
@@ -271,8 +271,8 @@ func (g *ServiceGenerator) generateRequestComputeFlags(fn parser.FuncDecl, reqBa
 	return nil
 }
 
-func (g *ServiceGenerator) generateRequestSerialize(fn parser.FuncDecl, reqBaseName string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) SerializeTL(w io.Writer) error {\n", reqBaseName); err != nil {
+func (g *ServiceGenerator) generateRequestSerialize(fn parser.FuncDecl, reqName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%s) SerializeTL(w io.Writer) error {\n", reqName); err != nil {
 		return err
 	}
 	if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
@@ -374,8 +374,8 @@ func (g *ServiceGenerator) writeRequestSerializeValue(t parser.TypeRef, value, i
 	return err
 }
 
-func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBaseName string) error {
-	if _, err := fmt.Fprintf(g.out, "func (r *%sRequest) DeserializeTL(rd io.Reader) error {\n", reqBaseName); err != nil {
+func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqName string) error {
+	if _, err := fmt.Fprintf(g.out, "func (r *%s) DeserializeTL(rd io.Reader) error {\n", reqName); err != nil {
 		return err
 	}
 	if _, err := io.WriteString(g.out, "\tleaveDecode, err := mtproto.EnterObject(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer leaveDecode()\n"); err != nil {
@@ -386,6 +386,11 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 	}
 	if _, err := fmt.Fprintf(g.out, "\tif ctorID != r.ConstructorID() {\n\t\treturn fmt.Errorf(\"wrong constructor: got %%x, want %%x\", ctorID, r.ConstructorID())\n\t}\n"); err != nil {
 		return err
+	}
+	if g.schema.IsLayered && (hasFlagsParam(fn.Params) || hasLayerRanges(fn.Params)) {
+		if _, err := io.WriteString(g.out, "\tlayer := mtproto.TLLayer(rd)\n"); err != nil {
+			return err
+		}
 	}
 	if hasFlagsParam(fn.Params) {
 		for _, setName := range listFlagSets(fn.Params) {
@@ -399,13 +404,28 @@ func (g *ServiceGenerator) generateRequestDeserialize(fn parser.FuncDecl, reqBas
 		if isFlagsParam(param) {
 			setName := param.Name
 			if !flagUsage[setName] {
-				if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
+				if g.schema.IsLayered {
+					if _, err := io.WriteString(g.out, "\t{\n\t\tvalue, err := mtproto.ReadUint32(rd)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n"); err != nil {
+						return err
+					}
+					if err := writeKnownFlagValidation(g.out, fn.Params, setName, "value", "layer", "\t\t"); err != nil {
+						return err
+					}
+					if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
+						return err
+					}
+				} else if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(rd)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
 					return err
 				}
 				continue
 			}
 			if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := mtproto.ReadUint32(rd)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t%s = value\n", setName); err != nil {
 				return err
+			}
+			if g.schema.IsLayered {
+				if err := writeKnownFlagValidation(g.out, fn.Params, setName, "value", "layer", "\t\t"); err != nil {
+					return err
+				}
 			}
 			if !shouldSkipParam(param) {
 				fieldName := g.namer.FieldName(param.Name)
@@ -507,14 +527,23 @@ func (g *ServiceGenerator) writeRequestDeserializeValue(t parser.TypeRef, target
 		if _, err := fmt.Fprintf(g.out, "%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
-			return err
+		if g.schema.IsLayered {
+			if _, err := fmt.Fprintf(g.out, "%s\tobj, ok := NewConstructorForLayer(ctorID, mtproto.TLLayer(rd))\n", indent); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
+				return err
+			}
+		} else {
+			if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
+				return err
+			}
 		}
 		if _, err := fmt.Fprintf(g.out, "%s\tvalue, ok := obj.(%s)\n", indent, iface); err != nil {
 			return err
@@ -640,7 +669,7 @@ func (g *ServiceGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 	}
 
 	if t.Namespace != "" {
-		return g.namer.TypeName(t.Namespace + "." + t.Name)
+		return typeName(g.namer, t.Namespace+"."+t.Name, t.VariantLayer)
 	}
 
 	switch t.Name {
@@ -674,7 +703,7 @@ func (g *ServiceGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 	case "#":
 		return "uint32"
 	default:
-		return g.namer.TypeName(t.Name)
+		return typeName(g.namer, t.Name, t.VariantLayer)
 	}
 }
 
@@ -714,6 +743,9 @@ func groupByService(funcs []parser.FuncDecl) map[string][]parser.FuncDecl {
 	}
 	for name := range services {
 		sort.Slice(services[name], func(i, j int) bool {
+			if services[name][i].Name == services[name][j].Name {
+				return services[name][i].VariantLayer < services[name][j].VariantLayer
+			}
 			return services[name][i].Name < services[name][j].Name
 		})
 	}

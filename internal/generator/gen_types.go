@@ -17,11 +17,12 @@ type TypeGenerator struct {
 	out           io.Writer
 	schema        *parser.Schema
 	usesBaseTypes bool
+	emittedTypes  map[string]struct{}
 }
 
 // NewTypeGenerator creates a new type generator.
 func NewTypeGenerator(namer *naming.Namer, out io.Writer, schema *parser.Schema) *TypeGenerator {
-	return &TypeGenerator{namer: namer, out: out, schema: schema}
+	return &TypeGenerator{namer: namer, out: out, schema: schema, emittedTypes: make(map[string]struct{})}
 }
 
 // UsesBaseTypes returns true if this generator references base MTProto types
@@ -53,6 +54,7 @@ type ConstructorTemplateData struct {
 	FlagFields    []FlagFieldTemplateData
 	SerializeTL   string
 	DeserializeTL string
+	IsLayered     bool
 }
 
 // FieldTemplateData holds data for struct fields
@@ -65,6 +67,8 @@ type FieldTemplateData struct {
 type FlagFieldTemplateData struct {
 	Condition string
 	Bit       int
+	MinLayer  int
+	MaxLayer  int
 }
 
 // InterfaceTemplateData holds data for interface template
@@ -99,10 +103,10 @@ func (v *{{.Name}}) Method() string { return "" }
 func (v *{{.Name}}) TLName() string { return {{quote .TLName}} }
 
 {{if .HasFlags}}
-func (v *{{.Name}}) computeFlags() uint32 {
+func (v *{{.Name}}) computeFlags({{if .IsLayered}}layer int{{end}}) uint32 {
 	var flags uint32
 {{- range .FlagFields}}
-	if {{.Condition}} {
+	if {{if $.IsLayered}}tlLayerSupports(layer, {{.MinLayer}}, {{.MaxLayer}}) && {{end}}{{.Condition}} {
 		flags |= 1 << {{.Bit}}
 	}
 {{- end}}
@@ -145,7 +149,11 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 		return nil // Skip base types
 	}
 
-	name := g.namer.TypeName(decl.Name)
+	name := typeName(g.namer, decl.Name, decl.VariantLayer)
+	if _, exists := g.emittedTypes[name]; exists {
+		return nil
+	}
+	g.emittedTypes[name] = struct{}{}
 
 	// Build field data
 	var fields []FieldTemplateData
@@ -177,6 +185,8 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 			flagFields = append(flagFields, FlagFieldTemplateData{
 				Condition: flagCondition(param, fieldName),
 				Bit:       *bit,
+				MinLayer:  param.MinLayer,
+				MaxLayer:  param.MaxLayer,
 			})
 		}
 	}
@@ -199,6 +209,7 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 		FlagFields:    flagFields,
 		SerializeTL:   serializeTL,
 		DeserializeTL: deserializeTL,
+		IsLayered:     g.schema.IsLayered,
 	}
 
 	tmpl, err := template.New("single_constructor").Funcs(templateFuncMap()).Parse(constructorTemplate)
@@ -214,15 +225,19 @@ func (g *TypeGenerator) GenerateInterface(decl *parser.TypeDecl) error {
 	if !decl.IsUnion || len(decl.Constructors) == 1 {
 		return nil
 	}
-	baseName := g.namer.TypeName(decl.Name)
+	baseName := typeName(g.namer, decl.Name, decl.VariantLayer)
 	name := baseName + "Type"
+	if _, exists := g.emittedTypes[name]; exists {
+		return nil
+	}
+	g.emittedTypes[name] = struct{}{}
 
 	var constructors []string
 	for i := range decl.Constructors {
 		if g.isBaseType(&decl.Constructors[i]) {
 			continue
 		}
-		ctorName := g.namer.ConstructorName(decl.Constructors[i].Name)
+		ctorName := constructorName(g.namer, decl.Constructors[i])
 		constructors = append(constructors, ctorName)
 	}
 	if len(constructors) == 0 {
@@ -270,7 +285,11 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 		return nil
 	}
 
-	name := g.namer.ConstructorName(ctor.Name)
+	name := constructorName(g.namer, *ctor)
+	if _, exists := g.emittedTypes[name]; exists {
+		return nil
+	}
+	g.emittedTypes[name] = struct{}{}
 
 	// Build field data
 	var fields []FieldTemplateData
@@ -302,6 +321,8 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 			flagFields = append(flagFields, FlagFieldTemplateData{
 				Condition: flagCondition(param, fieldName),
 				Bit:       *bit,
+				MinLayer:  param.MinLayer,
+				MaxLayer:  param.MaxLayer,
 			})
 		}
 	}
@@ -324,6 +345,7 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 		FlagFields:    flagFields,
 		SerializeTL:   serializeTL,
 		DeserializeTL: deserializeTL,
+		IsLayered:     g.schema.IsLayered,
 	}
 
 	tmpl, err := template.New("constructor").Funcs(templateFuncMap()).Parse(constructorTemplate)
@@ -373,9 +395,18 @@ func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name strin
 			return err
 		}
 	}
+	if g.schema.IsLayered && (hasFlagsParam(ctor.Params) || hasLayerRanges(ctor.Params)) {
+		if _, err := io.WriteString(g.out, "\tlayer := mtproto.TLLayer(w)\n"); err != nil {
+			return err
+		}
+	}
 	for _, setName := range listFlagSets(ctor.Params) {
 		if setName == "flags" {
-			if _, err := io.WriteString(g.out, "\tflags := v.computeFlags()\n"); err != nil {
+			call := "v.computeFlags()"
+			if g.schema.IsLayered {
+				call = "v.computeFlags(layer)"
+			}
+			if _, err := fmt.Fprintf(g.out, "\tflags := %s\n", call); err != nil {
 				return err
 			}
 			continue
@@ -395,26 +426,11 @@ func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name strin
 		}
 	}
 	for _, param := range ctor.Params {
-		bit := flagBit(param)
-		if isFlagParam(param) {
-			setName := flagParamName(param)
-			if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, %s); err != nil {\n\t\treturn err\n\t}\n", setName); err != nil {
+		if g.schema.IsLayered && (param.MinLayer != 0 || param.MaxLayer != 0) {
+			if _, err := fmt.Fprintf(g.out, "\tif tlLayerSupports(layer, %d, %d) {\n", param.MinLayer, param.MaxLayer); err != nil {
 				return err
 			}
-			continue
-		}
-		if shouldSkipParam(param) {
-			continue
-		}
-		fieldName := g.namer.FieldName(param.Name)
-		if isTrueType(param.Type) {
-			continue
-		}
-		if bit != nil {
-			if _, err := fmt.Fprintf(g.out, "\tif %s&(1<<%d) != 0 {\n", flagSetName(param), *bit); err != nil {
-				return err
-			}
-			if err := g.writeSerializeField(param, fieldName, "\t\t"); err != nil {
+			if err := g.writeSerializeParam(param, "\t\t"); err != nil {
 				return err
 			}
 			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
@@ -422,11 +438,45 @@ func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name strin
 			}
 			continue
 		}
-		if err := g.writeSerializeField(param, fieldName, "\t"); err != nil {
+		if err := g.writeSerializeParam(param, "\t"); err != nil {
 			return err
 		}
 	}
 	if _, err := io.WriteString(g.out, "\treturn nil\n}\n\n"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *TypeGenerator) writeSerializeParam(param parser.Parameter, indent string) error {
+	bit := flagBit(param)
+	if isFlagParam(param) {
+		setName := flagParamName(param)
+		if _, err := fmt.Fprintf(g.out, "%sif err := mtproto.WriteUint32(w, %s); err != nil {\n%s\treturn err\n%s}\n", indent, setName, indent, indent); err != nil {
+			return err
+		}
+		return nil
+	}
+	if shouldSkipParam(param) {
+		return nil
+	}
+	fieldName := g.namer.FieldName(param.Name)
+	if isTrueType(param.Type) {
+		return nil
+	}
+	if bit != nil {
+		if _, err := fmt.Fprintf(g.out, "%sif %s&(1<<%d) != 0 {\n", indent, flagSetName(param), *bit); err != nil {
+			return err
+		}
+		if err := g.writeSerializeField(param, fieldName, indent+"\t"); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := g.writeSerializeField(param, fieldName, indent); err != nil {
 		return err
 	}
 	return nil
@@ -454,7 +504,7 @@ func (g *TypeGenerator) writeSerializeField(param parser.Parameter, fieldName, i
 
 func (g *TypeGenerator) writeSerializeValue(t parser.TypeRef, value, indent string) error {
 	if t.Optional && !isTrueType(t) {
-		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic}
+		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic, VariantLayer: t.VariantLayer}
 		if needsOptionalPointer(t, g.goBaseType(base), g.schema) {
 			if _, ok := serializeBuiltinCall(base, value); ok {
 				return g.writeSerializeValue(base, "*"+value, indent)
@@ -478,6 +528,11 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 	if _, err := io.WriteString(g.out, "\tleaveDecode, err := mtproto.EnterObject(r)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer leaveDecode()\n"); err != nil {
 		return err
 	}
+	if g.schema.IsLayered && (hasFlagsParam(ctor.Params) || hasLayerRanges(ctor.Params)) {
+		if _, err := io.WriteString(g.out, "\tlayer := mtproto.TLLayer(r)\n"); err != nil {
+			return err
+		}
+	}
 	if !ctor.IsBare {
 		if _, err := io.WriteString(g.out, "\tctorID, err := mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
 			return err
@@ -496,46 +551,11 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 		}
 	}
 	for _, param := range ctor.Params {
-		bit := flagBit(param)
-		if isFlagParam(param) {
-			setName := flagParamName(param)
-			if !flagUsage[setName] {
-				if _, err := io.WriteString(g.out, "\t_, err = mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
-					return err
-				}
-				continue
-			}
-			if _, err := fmt.Fprintf(g.out, "\t{\n\t\tvalue, err := mtproto.ReadUint32(r)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\t%s = value\n", setName); err != nil {
+		if g.schema.IsLayered && (param.MinLayer != 0 || param.MaxLayer != 0) {
+			if _, err := fmt.Fprintf(g.out, "\tif tlLayerSupports(layer, %d, %d) {\n", param.MinLayer, param.MaxLayer); err != nil {
 				return err
 			}
-			if !shouldSkipParam(param) {
-				fieldName := g.namer.FieldName(param.Name)
-				if _, err := fmt.Fprintf(g.out, "\t\tv.%s = value\n", fieldName); err != nil {
-					return err
-				}
-			}
-			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
-				return err
-			}
-			continue
-		}
-		if shouldSkipParam(param) {
-			continue
-		}
-		fieldName := g.namer.FieldName(param.Name)
-		if isTrueType(param.Type) {
-			if bit != nil {
-				if _, err := fmt.Fprintf(g.out, "\tv.%s = %s&(1<<%d) != 0\n", fieldName, flagSetName(param), *bit); err != nil {
-					return err
-				}
-			}
-			continue
-		}
-		if bit != nil {
-			if _, err := fmt.Fprintf(g.out, "\tif %s&(1<<%d) != 0 {\n", flagSetName(param), *bit); err != nil {
-				return err
-			}
-			if err := g.writeDeserializeField(param, fieldName, "\t\t"); err != nil {
+			if err := g.writeDeserializeParam(ctor, param, flagUsage, "\t\t"); err != nil {
 				return err
 			}
 			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
@@ -543,11 +563,89 @@ func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name str
 			}
 			continue
 		}
-		if err := g.writeDeserializeField(param, fieldName, "\t"); err != nil {
+		if err := g.writeDeserializeParam(ctor, param, flagUsage, "\t"); err != nil {
 			return err
 		}
 	}
 	if _, err := io.WriteString(g.out, "\treturn nil\n}\n\n"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func hasLayerRanges(parameters []parser.Parameter) bool {
+	for _, parameter := range parameters {
+		if parameter.MinLayer != 0 || parameter.MaxLayer != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *TypeGenerator) writeDeserializeParam(ctor *parser.Constructor, param parser.Parameter, flagUsage map[string]bool, indent string) error {
+	bit := flagBit(param)
+	if isFlagParam(param) {
+		setName := flagParamName(param)
+		if !flagUsage[setName] {
+			if g.schema.IsLayered {
+				if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := mtproto.ReadUint32(r)\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent, indent, indent); err != nil {
+					return err
+				}
+				if err := writeKnownFlagValidation(g.out, ctor.Params, setName, "value", "layer", indent+"\t"); err != nil {
+					return err
+				}
+				if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
+					return err
+				}
+			} else if _, err := fmt.Fprintf(g.out, "%s_, err = mtproto.ReadUint32(r)\n%sif err != nil {\n%s\treturn err\n%s}\n", indent, indent, indent, indent); err != nil {
+				return err
+			}
+			return nil
+		}
+		if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := mtproto.ReadUint32(r)\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n%s\t%s = value\n", indent, indent, indent, indent, indent, indent, setName); err != nil {
+			return err
+		}
+		if g.schema.IsLayered {
+			if err := writeKnownFlagValidation(g.out, ctor.Params, setName, "value", "layer", indent+"\t"); err != nil {
+				return err
+			}
+		}
+		if !shouldSkipParam(param) {
+			fieldName := g.namer.FieldName(param.Name)
+			if _, err := fmt.Fprintf(g.out, "%s\tv.%s = value\n", indent, fieldName); err != nil {
+				return err
+			}
+		}
+		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
+			return err
+		}
+		return nil
+	}
+	if shouldSkipParam(param) {
+		return nil
+	}
+	fieldName := g.namer.FieldName(param.Name)
+	if isTrueType(param.Type) {
+		if bit != nil {
+			if _, err := fmt.Fprintf(g.out, "%sv.%s = %s&(1<<%d) != 0\n", indent, fieldName, flagSetName(param), *bit); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if bit != nil {
+		if _, err := fmt.Fprintf(g.out, "%sif %s&(1<<%d) != 0 {\n", indent, flagSetName(param), *bit); err != nil {
+			return err
+		}
+		if err := g.writeDeserializeField(param, fieldName, indent+"\t"); err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := g.writeDeserializeField(param, fieldName, indent); err != nil {
 		return err
 	}
 	return nil
@@ -609,14 +707,23 @@ func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent s
 		if _, err := fmt.Fprintf(g.out, "%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
-			return err
+		if g.schema.IsLayered {
+			if _, err := fmt.Fprintf(g.out, "%s\tobj, ok := NewConstructorForLayer(ctorID, mtproto.TLLayer(r))\n", indent); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
+				return err
+			}
+		} else {
+			if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
+				return err
+			}
 		}
 		if _, err := fmt.Fprintf(g.out, "%s\tvalue, ok := obj.(%s)\n", indent, iface); err != nil {
 			return err
@@ -643,7 +750,7 @@ func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent s
 	}
 
 	if t.Optional && !isTrueType(t) && needsOptionalPointer(t, g.goBaseType(t), g.schema) {
-		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic}
+		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic, VariantLayer: t.VariantLayer}
 		if readCall, ok := deserializeBuiltinCall(base); ok {
 			if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := %s\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, readCall, indent, indent, indent); err != nil {
 				return err
@@ -856,7 +963,7 @@ func (g *TypeGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 	}
 
 	if t.Namespace != "" {
-		return g.namer.TypeName(t.Namespace + "." + t.Name)
+		return typeName(g.namer, t.Namespace+"."+t.Name, t.VariantLayer)
 	}
 
 	// Check for base MTProto types that are in the types package
@@ -902,7 +1009,7 @@ func (g *TypeGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 	case "#":
 		return "uint32"
 	default:
-		return g.namer.TypeName(t.Name)
+		return typeName(g.namer, t.Name, t.VariantLayer)
 	}
 }
 
@@ -917,11 +1024,29 @@ func GenerateSchemaMetadata(out io.Writer, layer int) error {
 	return err
 }
 
+// GenerateLayeredSchemaMetadata exposes the supported layer set while keeping
+// SchemaLayer as the maximum layer for Runtime v2 wrapper clamping.
+func GenerateLayeredSchemaMetadata(out io.Writer, baseLayer int, layers []int) error {
+	if _, err := fmt.Fprintf(out, "// SchemaBaseLayer is the zero-layer compatibility default.\nconst SchemaBaseLayer = %d\n\n", baseLayer); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintf(out, "// SchemaLayers lists every generated layer in ascending order.\nvar SchemaLayers = []int{%s}\n\n", joinInts(layers))
+	return err
+}
+
+func joinInts(values []int) string {
+	parts := make([]string, len(values))
+	for i, value := range values {
+		parts[i] = fmt.Sprintf("%d", value)
+	}
+	return strings.Join(parts, ", ")
+}
+
 // GenerateConstructorConstants writes constructor IDs as constants.
 func GenerateConstructorConstants(namer *naming.Namer, out io.Writer, ctors []parser.Constructor) error {
 	buf := &bytes.Buffer{}
 	for i := range ctors {
-		name := namer.ConstructorName(ctors[i].Name)
+		name := constructorName(namer, ctors[i])
 		if _, err := fmt.Fprintf(buf, "const %sConstructorID uint32 = 0x%08x\n", name, ctors[i].ID); err != nil {
 			return err
 		}

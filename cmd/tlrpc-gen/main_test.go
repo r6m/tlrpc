@@ -127,6 +127,17 @@ func TestRun_LayerDiffRequiresBaseAndTargetLayers(t *testing.T) {
 	}
 }
 
+func TestRunRejectsRemovedCompatibilitySchemaFlag(t *testing.T) {
+	var stderr strings.Builder
+	code := run([]string{"--compat-schema=historical.tl"}, io.Discard, &stderr)
+	if code != 3 {
+		t.Fatalf("run returned %d, want 3; stderr: %s", code, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "flag provided but not defined: -compat-schema") {
+		t.Fatalf("stderr %q does not reject removed --compat-schema", stderr.String())
+	}
+}
+
 func TestRun_ResolvesOrderedLayerDifferencesAndRecordsSelectedProvenance(t *testing.T) {
 	baseData := []byte(testBaseSchema)
 	basePath := writeTestFile(t, "base.tl", string(baseData))
@@ -345,4 +356,190 @@ func TestRun_GeneratedHeadersContainExactSchemaProvenance(t *testing.T) {
 	if generated == 0 {
 		t.Fatal("expected generated Go files")
 	}
+	if _, err := os.Stat(filepath.Join(outDir, "projection.go")); !os.IsNotExist(err) {
+		t.Fatalf("single-layer generation wrote projection.go: %v", err)
+	}
 }
+
+func TestRun_GeneratesMultiLayerPackageRoundTrip(t *testing.T) {
+	basePath := writeTestFile(t, "base-228.tl", `---types---
+child#00000001 flags:# active:flags.0?true = Child;
+legacyNested#00000002 value:int = Nested;
+container#00000003 child:Child nested:Nested = Container;
+result#00000004 = Result;
+---functions---
+messages.forward#00000020 flags:# silent:flags.0?true container:Container = Result;
+// @tlrpc variant-layer 172
+messages.forward#00000021 container:Container = Result;
+auth.check#00000030 value:int = Result;
+`)
+	deltaPath := writeTestFile(t, "delta-229.tl", `
+// @tlrpc remove constructor legacyNested
+---types---
+child#00000001 flags:# active:flags.0?true label:flags.1?string = Child;
+currentNested#00000005 text:string = Nested;
+---functions---
+messages.forward#00000020 flags:# silent:flags.0?true from_ephemeral:flags.1?true container:Container = Result;
+auth.check#00000031 value:string = Result;
+messages.newMethod#00000022 = Result;
+`)
+	moduleDir := t.TempDir()
+	outDir := filepath.Join(moduleDir, "gen")
+	var stderr strings.Builder
+	if code := run([]string{
+		"--schema=" + basePath,
+		"--base-layer=228",
+		"--layers=228,229",
+		"--layer-diff=229:" + deltaPath,
+		"--out=" + outDir,
+		"--package=gen",
+	}, io.Discard, &stderr); code != 0 {
+		t.Fatalf("run returned %d: %s", code, stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(outDir, "projection.go")); err != nil {
+		t.Fatalf("layered generation did not write projection.go: %v", err)
+	}
+
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	goMod := fmt.Sprintf("module example.com/multilayer-generation\n\ngo 1.25\n\nrequire github.com/r6m/tlrpc v0.0.0\n\nreplace github.com/r6m/tlrpc => %s\n", root)
+	if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(goMod), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "roundtrip_test.go"), []byte(multiLayerRoundTripTest), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command("go", "test", "-mod=mod", "-p=1", "./...")
+	command.Dir = moduleDir
+	command.Env = append(os.Environ(), "GOWORK=off", "GOCACHE=/tmp/tlrpc-generated-go-cache")
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("compile and test generated multi-layer package: %v\n%s", err, output)
+	}
+}
+
+const multiLayerRoundTripTest = `package multilayer_test
+
+import (
+	"bytes"
+	"testing"
+
+	"example.com/multilayer-generation/gen"
+	"github.com/r6m/tlrpc/mtproto"
+)
+
+func TestGeneratedLayerSelectionAndNestedRoundTrip(t *testing.T) {
+	oldRequest, ok := gen.NewMethodRequestForLayer(0x20, 228)
+	if !ok {
+		t.Fatal("missing layer 228 request")
+	}
+	if _, ok := oldRequest.(*gen.MessagesForwardRequest); !ok {
+		t.Fatalf("layer 228 request type = %T", oldRequest)
+	}
+	newRequest, ok := gen.NewMethodRequestForLayer(0x20, 229)
+	if !ok {
+		t.Fatal("missing layer 229 request")
+	}
+	if _, ok := newRequest.(*gen.MessagesForwardRequestLayer229); !ok {
+		t.Fatalf("layer 229 request type = %T", newRequest)
+	}
+	historicalRequest, ok := gen.NewMethodRequestForLayer(0x21, 229)
+	if !ok {
+		t.Fatal("missing historical request on a newer session")
+	}
+	if _, ok := historicalRequest.(*gen.MessagesForwardRequestLayer172); !ok {
+		t.Fatalf("historical request type = %T", historicalRequest)
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x21, 227); ok {
+		t.Fatal("generated package accepted a baseline method below its supported floor")
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x21, 228); !ok {
+		t.Fatal("generated package rejected a historical wire form at its base layer")
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x22, 228); ok {
+		t.Fatal("layer 228 accepted a method introduced at layer 229")
+	}
+	newUniqueRequest, ok := gen.NewMethodRequestForLayer(0x22, 229)
+	if !ok {
+		t.Fatal("layer 229 rejected its newly introduced method")
+	}
+	if _, ok := newUniqueRequest.(*gen.MessagesNewMethodRequest); !ok {
+		t.Fatalf("new layer 229 request type = %T", newUniqueRequest)
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x31, 228); ok {
+		t.Fatal("layer 228 accepted a changed method's layer-229 ID")
+	}
+	changedUniqueRequest, ok := gen.NewMethodRequestForLayer(0x31, 229)
+	if !ok {
+		t.Fatal("layer 229 rejected a changed method's new ID")
+	}
+	if _, ok := changedUniqueRequest.(*gen.AuthCheckRequestLayer229); !ok {
+		t.Fatalf("changed layer 229 request type = %T", changedUniqueRequest)
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x30, 229); !ok {
+		t.Fatal("newer session rejected a unique baseline method ID")
+	}
+	if _, ok := gen.NewConstructorForLayer(0x05, 228); ok {
+		t.Fatal("layer 228 accepted a nested constructor introduced at layer 229")
+	}
+	if _, ok := gen.NewConstructorForLayer(0x05, 229); !ok {
+		t.Fatal("layer 229 rejected its newly introduced nested constructor")
+	}
+
+	label := "new"
+	source := &gen.Container{Child: gen.Child{Active: true, Label: &label}, Nested: &gen.LegacyNested{Value: 7}}
+	var oldWire bytes.Buffer
+	if err := source.SerializeTL(mtproto.WithLayerWriter(&oldWire, 228)); err != nil {
+		t.Fatal(err)
+	}
+	var oldDecoded gen.Container
+	if err := oldDecoded.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(oldWire.Bytes()), 228)); err != nil {
+		t.Fatal(err)
+	}
+	if oldDecoded.Child.Label != nil {
+		t.Fatalf("layer 228 retained layer 229 field: %#v", oldDecoded.Child)
+	}
+	var defaultWire bytes.Buffer
+	if err := source.SerializeTL(&defaultWire); err != nil {
+		t.Fatal(err)
+	}
+	var defaultDecoded gen.Container
+	if err := defaultDecoded.DeserializeTL(bytes.NewReader(defaultWire.Bytes())); err != nil {
+		t.Fatal(err)
+	}
+	if defaultDecoded.Child.Label != nil {
+		t.Fatal("zero layer did not use base compatibility output")
+	}
+	if _, ok := oldDecoded.Nested.(*gen.LegacyNested); !ok {
+		t.Fatalf("historical nested type = %T", oldDecoded.Nested)
+	}
+
+	var newWire bytes.Buffer
+	if err := source.SerializeTL(mtproto.WithLayerWriter(&newWire, 229)); err != nil {
+		t.Fatal(err)
+	}
+	var newDecoded gen.Container
+	if err := newDecoded.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(newWire.Bytes()), 229)); err != nil {
+		t.Fatal(err)
+	}
+	if newDecoded.Child.Label == nil || *newDecoded.Child.Label != "new" {
+		t.Fatalf("layer 229 label = %#v", newDecoded.Child.Label)
+	}
+
+	var malformed bytes.Buffer
+	_ = mtproto.WriteUint32(&malformed, 0x00000001)
+	_ = mtproto.WriteUint32(&malformed, 1<<1)
+	var child gen.Child
+	if err := child.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(malformed.Bytes()), 228)); err == nil {
+		t.Fatal("layer 228 accepted a layer 229-only flag")
+	}
+	var malformedRequest bytes.Buffer
+	_ = mtproto.WriteUint32(&malformedRequest, 0x00000020)
+	_ = mtproto.WriteUint32(&malformedRequest, 1<<1)
+	var request gen.MessagesForwardRequest
+	if err := request.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(malformedRequest.Bytes()), 228)); err == nil {
+		t.Fatal("layer 228 request accepted a layer 229-only flag")
+	}
+}
+`

@@ -16,12 +16,23 @@ keeps three constructor domains separate:
 
 Only application functions become generated service methods.
 
-Telegram introduces API changes as layers. TLRPC's layer support is strictly a
-generation feature: a project may resolve an ordered base/difference history to
-one generated schema package. `invokeWithLayer` records and validates the
-client's declared layer (capping it at the generated schema layer when known),
-but it does not switch generated packages or translate old constructors,
-fields, or semantics.
+Telegram introduces API changes as layers. A project may resolve an ordered
+base/difference history to one selected schema or opt in to one generated
+package covering an exact layer set. `invokeWithLayer` records and validates
+the client's declared layer, caps it at the generated maximum, and runtime
+dispatch uses that effective layer to select generated same-ID request and
+nested-constructor layouts.
+
+The multi-layer generator keeps unchanged definitions once, retains base-layer
+Go names, and versions changed incoming requests. Same-ID additive objects use
+layer-gated superset fields, so shared parents do not need variants solely for
+an added flag. A type that is a union in any selected Telegram layer remains
+one union containing all historical and current constructor variants; nested
+shape propagation stops there. Unknown flag bits are rejected against the
+selected known layer. Historical compatibility methods and removed union
+constructors remain available when supplied by the generated schema history.
+Output objects are recursively cloned by generated projection code; semantic
+conversions require an application hook.
 
 The repository's exact Telegram layer-228 schema is a compatibility fixture for
 parser/generator determinism and Runtime v2 tests. Custom projects neither
@@ -164,9 +175,13 @@ frames from all of that connection's sessions.
 ## Telegram application boundary
 
 TLRPC can deliver a generated update object to an active local session with
-`Sender` or `Server.Publish`. A Telegram server must still own recipients,
-users, authorization policy, dialogs, messages, media, bots, durable update
-state (`pts`, `qts`, `seq`), outbox/fanout, and difference APIs.
+`Sender` or `Server.Publish`. `Server.PublishProjected` exposes each eligible
+session's effective layer and lease generation so the Telegram application can
+choose that recipient's representation. TLRPC does not convert Telegram
+objects or reuse one layer's bytes for another session. A Telegram server must
+still own recipients, users, authorization policy, dialogs, messages, media,
+bots, durable update state (`pts`, `qts`, `seq`), outbox/fanout, difference
+APIs, and any same-layer projection cache.
 
 `tgserver` demonstrates that boundary: it generates its selected Telegram
 schema, implements those services, and supplies durable protocol/product

@@ -70,6 +70,9 @@ func (v *Validator) validateUniqueConstructorIDs() {
 	// Check for duplicates
 	for id, ctors := range idMap {
 		if len(ctors) > 1 {
+			if v.schema.IsLayered && disjointConstructorVariants(ctors) {
+				continue
+			}
 			for _, ctor := range ctors {
 				v.addError(0, 0,
 					fmt.Sprintf("duplicate constructor ID 0x%08x used by %s", id, ctor.Name),
@@ -92,6 +95,9 @@ func (v *Validator) validateUniqueFunctionIDs() {
 	// Check for duplicates
 	for id, fns := range idMap {
 		if len(fns) > 1 {
+			if v.schema.IsLayered && disjointFunctionVariants(fns) {
+				continue
+			}
 			if len(fns) == 2 && ((fns[0].IsHelper && !fns[1].IsHelper) || (!fns[0].IsHelper && fns[1].IsHelper)) {
 				continue
 			}
@@ -102,6 +108,35 @@ func (v *Validator) validateUniqueFunctionIDs() {
 			}
 		}
 	}
+}
+
+func disjointConstructorVariants(constructors []*Constructor) bool {
+	for i := range constructors {
+		for j := i + 1; j < len(constructors); j++ {
+			if layerRangesOverlap(constructors[i].MinLayer, constructors[i].MaxLayer, constructors[j].MinLayer, constructors[j].MaxLayer) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func disjointFunctionVariants(functions []*FuncDecl) bool {
+	for i := range functions {
+		for j := i + 1; j < len(functions); j++ {
+			if serializerPrefixPair(*functions[i], *functions[j]) {
+				continue
+			}
+			if layerRangesOverlap(functions[i].MinLayer, functions[i].MaxLayer, functions[j].MinLayer, functions[j].MaxLayer) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func layerRangesOverlap(firstMin, firstMax, secondMin, secondMax int) bool {
+	return !(firstMax != 0 && secondMin > firstMax || secondMax != 0 && firstMin > secondMax)
 }
 
 // validateTypeResolution checks that all referenced types are defined

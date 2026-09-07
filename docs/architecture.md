@@ -143,13 +143,25 @@ writes from all sessions without merging their protocol ordering state.
 
 Successful handlers may request explicit user bind/unbind mutations. Named
 protocol mutations are persisted before the changed binding is exposed.
-Immutable context values provide layer, auth-key ID, client metadata, binding,
-and a semantic `Sender`.
+Immutable context values provide effective layer, auth-key ID, client metadata,
+binding, and a semantic `Sender`. The binding includes the active session lease
+generation.
 
-`Sender.Send`, `Server.Publish`, and `Server.PublishExceptContext` route
+`Sender.Push`, `Server.Publish`, and `Server.PublishExceptContext` route
 schema-defined objects to target sessions. Delivery is process-local and
 best-effort. Durable product updates, recipient policy, and missed-update
 recovery remain application responsibilities.
+
+`Server.PublishProjected` and its exact-session/auth-key exclusion variants
+snapshot every eligible session binding and ask the application to build the
+object for that binding. The callback receives the effective layer after
+runtime validation and schema-layer capping, not the raw client declaration.
+Runtime v2 encodes and submits each result only if the same registration is
+still reachable with the same layer and lease generation. Projection and
+encoding failures are returned and deliver no bytes to that target. A binding
+change between projection and submission returns `ErrPushBindingChanged`.
+Applications may cache or reuse payload decisions for equal layers, but the
+runtime does not infer that two sessions share an application representation.
 
 An application can opt selected method constructor IDs into a recovery push
 barrier with `WithRecoveryPushBarrier`. The barrier belongs to one active

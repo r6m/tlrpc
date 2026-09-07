@@ -146,7 +146,7 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 	}
 	actor.sender = &requestSender{writer: writer, barrier: actor.pushBarrier, connectionID: owner.config.ConnectionID}
 	if owner.config.Presence != nil {
-		owner.config.Presence.Update(snapshot, actor.sender, actor.acceptsPush)
+		owner.config.Presence.Update(snapshot, lease.Generation(), actor.sender, actor.acceptsPush)
 	}
 	releaseLease = false
 	releaseReliability = false
@@ -332,7 +332,7 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 	if err != nil {
 		return err
 	}
-	request := Request{Message: message, Info: s.owner.requestInfo(snapshot)}
+	request := Request{Message: message, Info: s.owner.requestInfo(snapshot, s.lease.Generation())}
 	request, wrapperMutations, err := NormalizeRequest(request, WrapperConfig{
 		SchemaLayer:       s.owner.config.SchemaLayer,
 		MaxDecodedPayload: s.owner.config.MaxDecodedPayload,
@@ -351,7 +351,7 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 		if err != nil {
 			return err
 		}
-		request.Info = s.owner.requestInfo(snapshot)
+		request.Info = s.owner.requestInfo(snapshot, s.lease.Generation())
 	}
 	current := request.Message
 	request.Info.Sender = &requestSender{writer: s.writer, barrier: s.pushBarrier, suppress: current.SuppressPush, connectionID: s.owner.config.ConnectionID}
@@ -514,7 +514,7 @@ func (s *connectionSession) subscribeForPush(ctx context.Context) error {
 	}
 	s.acceptsPush = next.PushSubscription
 	if s.owner.config.Presence != nil {
-		s.owner.config.Presence.Update(next, s.sender, s.acceptsPush)
+		s.owner.config.Presence.Update(next, s.lease.Generation(), s.sender, s.acceptsPush)
 	}
 	return nil
 }
@@ -594,7 +594,7 @@ func (s *connectionSession) applyMutationsLocked(ctx context.Context, mutations 
 	}
 	s.acceptsPush = next.PushSubscription
 	if s.owner.config.Presence != nil {
-		s.owner.config.Presence.Update(next, s.sender, s.acceptsPush)
+		s.owner.config.Presence.Update(next, s.lease.Generation(), s.sender, s.acceptsPush)
 	}
 	return nil
 }

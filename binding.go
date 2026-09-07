@@ -7,9 +7,12 @@ type Binding struct {
 	ConnectionID uint64
 	AuthKeyID    int64
 	SessionID    int64
-	ServerSalt   int64
-	UserID       int64
-	Layer        int
+	// LeaseGeneration identifies the exact active owner of the composite
+	// session. It changes whenever that session is acquired again.
+	LeaseGeneration int64
+	ServerSalt      int64
+	UserID          int64
+	Layer           int
 }
 
 // BindingFromContext derives a binding from known context values.

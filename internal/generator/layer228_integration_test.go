@@ -24,9 +24,9 @@ const (
 	// These counts are independently derived below from the exact TL declarations
 	// in the resolved fixture, rather than inferred from generated Go output.
 	telegramLayer228Constructors = 1655
-	telegramLayer228Functions    = 813
+	telegramLayer228Functions    = 815
 
-	telegramLayer228FixtureSHA256 = "921a58e71f2baebb840609366c506fb92ffac8db3c5bb832423aacd7cd6817cf"
+	telegramLayer228FixtureSHA256 = "dbfc5cdae0e931c8e35bff269b93447bc16d6712dd6b1eba556789e21f051e9b"
 )
 
 func TestIntegration_TelegramLayer228(t *testing.T) {
@@ -34,19 +34,17 @@ func TestIntegration_TelegramLayer228(t *testing.T) {
 	fixture, err := os.ReadFile(fixturePath)
 	require.NoError(t, err)
 
-	// The fixture is a byte-for-byte copy of tgserver/schema/tl/telegram_api.tl.
-	// It is intentionally not composed with mtproto.tl: TLRPC owns MTProto wire
-	// constructors internally, while generated service packages represent the
-	// user-supplied API schema. Including the companion would duplicate framework
-	// mechanics in the generated service contract and is not required by this
-	// generator. This digest pins the exact API source content and order.
+	// The fixture is the flattened accepted layer-228 baseline: the official 228
+	// API plus explicitly annotated historical request IDs. It is intentionally
+	// not composed with mtproto.tl because TLRPC owns those wire constructors.
+	// This digest pins the exact accepted API source content and order.
 	require.Equal(t, telegramLayer228FixtureSHA256, sha256Hex(fixture))
 
 	sourceConstructors, sourceFunctions := countTLDeclarations(t, fixture)
 	require.Equal(t, telegramLayer228Constructors, sourceConstructors)
 	require.Equal(t, telegramLayer228Functions, sourceFunctions)
 
-	schema, err := parser.NewParser(string(fixture)).ParseWithLayer(telegramLayer228)
+	schema, err := parser.ParseBaselineSchema(string(fixture), telegramLayer228, telegramLayer228Fixture)
 	require.NoError(t, err)
 	require.NoError(t, parser.NewValidator(schema).Validate())
 	require.Equal(t, telegramLayer228, schema.Layer)

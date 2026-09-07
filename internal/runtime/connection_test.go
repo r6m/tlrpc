@@ -582,7 +582,7 @@ func newSubscriptionPresenceStub() *subscriptionPresenceStub {
 	return &subscriptionPresenceStub{byUser: make(map[int64]Sender), updated: make(chan struct{}, 8)}
 }
 
-func (s *subscriptionPresenceStub) Update(snapshot session.Snapshot, sender Sender, acceptsPush bool) {
+func (s *subscriptionPresenceStub) Update(snapshot session.Snapshot, _ int64, sender Sender, acceptsPush bool) {
 	s.mu.Lock()
 	if snapshot.UserID != 0 {
 		if acceptsPush {

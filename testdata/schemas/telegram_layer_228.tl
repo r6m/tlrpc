@@ -3111,3 +3111,10 @@ ephemeral.deleteMessage#a3c0d511 peer:InputPeer receiver_id:InputUser id:int = B
 ephemeral.reportMessage#8704f2bf peer:InputPeer id:int option:bytes message:string = ReportResult;
 ephemeral.getCallbackAnswer#3fa464c8 flags:# peer:InputPeer id:int data:flags.1?bytes = messages.BotCallbackAnswer;
 ephemeral.editMessage#13f250ee flags:# peer:InputPeer receiver_id:InputUser id:int message:flags.0?string media:flags.3?InputMedia entities:flags.1?Vector<MessageEntity> reply_markup:flags.2?ReplyMarkup = Updates;
+
+// Provenance: official Telegram Android tlscheme/172.json.
+// @tlrpc variant-layer 172
+auth.signUp#80eee427 phone_number:string phone_code_hash:string first_name:string last_name:string = auth.Authorization;
+// Provenance: official Telegram Android tlscheme/158.json.
+// @tlrpc variant-layer 158
+updates.getDifference#25939651 flags:# pts:int pts_total_limit:flags.0?int date:int qts:int = updates.Difference;

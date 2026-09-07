@@ -22,11 +22,22 @@ compatibility consumers, not framework dependencies.
   unimplemented stubs, static descriptors, and `Register*Server` helpers.
 - Output and provenance must be deterministic for the same selected schema.
 - Optional layer differences must resolve only during generation from one
-  labeled base, ordered differences, and one selected target.
+  labeled base and ordered differences. Generation may select one target or,
+  when explicitly requested, emit one package for an exact ordered layer set.
 - A same-name declaration replaces the earlier declaration, a new name adds
   one, and exact `@tlrpc remove` directives remove declarations.
-- Runtime v2 must not translate API layers, constructor IDs, object shapes, or
-  method semantics. One generated package represents one resolved layer.
+- Multi-layer output must preserve unchanged definitions and unsuffixed base
+  names, distinguish same-ID wire layouts by disjoint layer ranges, reject
+  flags unknown to a known layer, and keep historical union members decodable.
+- A type that is a union in any supported snapshot must remain one unsuffixed
+  union across the generated history. Concrete shape propagation must stop at
+  that union boundary.
+- Changed incoming request contracts must remain typed service methods.
+  Response-only changes must not duplicate service methods.
+- Runtime v2 must select generated request and constructor variants using the
+  effective session layer. Semantic output changes require explicit
+  application projection; no canonical business request or response model is
+  part of the framework.
 
 ## Service model
 
@@ -136,9 +147,12 @@ TLRPC intentionally does not provide:
 - an HTTP/JSON Bot API or arbitrary HTTP RPC gateway; or
 - deployment topology and tenant-specific limits.
 
-`Sender` and `Server.Publish` are process-local live-delivery tools. An
-application must commit durable product state before treating live delivery as
-an optimization.
+`Sender`, `Server.Publish`, and `Server.PublishProjected` are process-local
+live-delivery tools. Projected publishing supplies the exact active session
+binding, including its effective layer and lease generation, to an
+application callback. Runtime v2 does not convert application objects between
+schema layers. An application must commit durable product state before
+treating live delivery as an optimization.
 
 ## v0.12.0 acceptance
 

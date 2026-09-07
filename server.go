@@ -217,7 +217,7 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 		invoker func(context.Context, TLObject) (interface{}, error)
 	}
 	registrations := make([]registration, 0, len(desc.Methods))
-	methodIDs := make(map[uint32]string, len(desc.Methods))
+	methodIDs := make(map[uint32][]MethodDesc, len(desc.Methods))
 	methodNames := make(map[string]struct{}, len(desc.Methods))
 	for _, method := range desc.Methods {
 		if method.MethodName == "" {
@@ -236,10 +236,15 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 		if method.Handler == nil {
 			panic(fmt.Sprintf("method %q is missing handler", method.MethodName))
 		}
-		if previous, exists := methodIDs[method.ConstructorID]; exists {
-			panic(fmt.Sprintf("duplicate method constructor ID 0x%08x for %q and %q", method.ConstructorID, previous, method.MethodName))
+		if method.MinLayer < 0 || method.MaxLayer < 0 || (method.MaxLayer != 0 && method.MinLayer > method.MaxLayer) {
+			panic(fmt.Sprintf("method %q has invalid layer range", method.MethodName))
 		}
-		methodIDs[method.ConstructorID] = method.MethodName
+		for _, previous := range methodIDs[method.ConstructorID] {
+			if methodLayersOverlap(previous, method) {
+				panic(fmt.Sprintf("duplicate method constructor ID 0x%08x for %q and %q", method.ConstructorID, previous.MethodName, method.MethodName))
+			}
+		}
+		methodIDs[method.ConstructorID] = append(methodIDs[method.ConstructorID], method)
 
 		invoker, err := bindServiceMethodHandler(impl, method.Handler)
 		if err != nil {

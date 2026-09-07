@@ -82,7 +82,7 @@ type ConnectionConfig struct {
 // SessionPresence receives semantic sender availability for active composite
 // sessions. Implementations must use sender identity when removing a binding.
 type SessionPresence interface {
-	Update(snapshot session.Snapshot, sender Sender, acceptsPush bool)
+	Update(snapshot session.Snapshot, leaseGeneration int64, sender Sender, acceptsPush bool)
 	Remove(key session.SessionKey, sender Sender)
 }
 
@@ -314,7 +314,7 @@ func (c *Connection) removeSession(key session.SessionKey, actor *connectionSess
 	}
 }
 
-func (c *Connection) requestInfo(snapshot session.Snapshot) RequestInfo {
+func (c *Connection) requestInfo(snapshot session.Snapshot, leaseGeneration int64) RequestInfo {
 	transportMode := c.config.Transport
 	if provider, ok := c.config.Conn.(interface{ TransportMode() string }); ok {
 		if negotiated := provider.TransportMode(); negotiated != "" {
@@ -324,7 +324,8 @@ func (c *Connection) requestInfo(snapshot session.Snapshot) RequestInfo {
 	info := RequestInfo{
 		ConnectionID: c.config.ConnectionID,
 		AuthKeyID:    snapshot.AuthKeyID, SessionID: snapshot.SessionID,
-		ServerSalt: snapshot.ServerSalt, UserID: snapshot.UserID, Layer: snapshot.Layer,
+		LeaseGeneration: leaseGeneration,
+		ServerSalt:      snapshot.ServerSalt, UserID: snapshot.UserID, Layer: snapshot.Layer,
 		Client: snapshot.Client,
 		Peer:   PeerInfo{Transport: transportMode},
 	}

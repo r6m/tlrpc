@@ -43,6 +43,56 @@ Differences after the selected target are not applied. Generation validates
 duplicate domains and removal targets. Runtime dispatch remains constructor
 driven and does not select layers.
 
+Multi-layer mode emits one package for an exact base/difference history:
+
+```bash
+tlrpc-gen \
+  --schema=./schema/base.tl \
+  --base-layer=228 \
+  --layers=228,229 \
+  --layer-diff=229:./schema/layers/229.tl \
+  --out=./gen \
+  --package=gen
+```
+
+The generated package preserves unsuffixed base names and emits suffixes only
+for changed requests or incompatible concrete shapes. Response-only changes do
+not create service methods. Same-ID request variants receive inclusive
+`MinLayer`/`MaxLayer` descriptor ranges; zero means unbounded. A sole historical
+form may remain unbounded, while same-ID forms must have disjoint ranges.
+
+A type that is a union in any selected snapshot remains one unsuffixed union
+for the complete history. Changed same-name constructors receive their own
+`Layer<N>` concrete variants inside that union, and removed constructors remain
+available for historical decoding. References to the union stay unsuffixed.
+Incompatible single-constructor types may propagate a required static parent
+shape, but propagation stops when it reaches a stable union owner.
+
+Additive flagged objects use one superset struct. Their codecs obtain the wire
+layer from `mtproto.TLLayer`; layer zero means the base layer. Decoding rejects
+flag bits unknown to the selected layer, and encoding omits fields unavailable
+at that layer. Layered nested decoding uses `NewConstructorForLayer`, and
+same-ID request decoding uses `NewMethodRequestForLayer`.
+
+The base schema may contain multiple accepted constructor IDs for one method.
+It must contain exactly one unannotated canonical declaration and place
+`// @tlrpc variant-layer <N>` immediately before each historical declaration.
+IDs and positive variant layers must be unique, and a variant layer cannot
+exceed the declared base layer. The annotation controls generated name
+provenance, not session acceptance: every form included in the baseline remains
+available from the generated package's base layer upward. The base is the
+package's supported floor, not a universal TL protocol minimum. Generated names
+retain provenance, for example `AuthSignUpRequestLayer172` and
+`UpdatesGetDifferenceRequestLayer158`.
+
+Layered output also provides `ProjectTLObject(source, targetLayer, hook)`. It
+recursively clones response objects, vectors, and unions into the target wire
+shape without reflection. Automatic projection rejects semantic or lossy
+changes unless the application hook supplies an explicit replacement. A hook
+replacement marked handled re-enters automatic projection with the replacement
+root hook skipped. Nested children still invoke hooks and undergo normal layer
+validation and cloning. Request objects are rejected by this output-only API.
+
 ## Registration and handlers
 
 ```go
@@ -52,9 +102,12 @@ err := server.Serve(listener)
 ```
 
 Generated registration installs complete `ServiceDesc`/`MethodDesc` metadata.
-Runtime v2 looks up the request constructor, decodes the generated request,
-runs unary interceptors, invokes the typed method, and encodes its declared TL
-result. Generated unimplemented stubs return structured unimplemented errors.
+For layered packages, `ServiceDesc.SchemaLayer` is the highest supported layer
+and each changed request variant carries its accepted range. Runtime v2 selects
+among same-ID request descriptors using the effective request layer, decodes
+the generated typed request, runs unary interceptors, invokes the typed method,
+and encodes its declared TL result. Generated unimplemented stubs return
+structured unimplemented errors.
 
 Request context exposes immutable values such as layer, auth-key ID, client
 metadata, user binding, and semantic sender. `BindSessionUser` and
@@ -317,7 +370,18 @@ parent directory, backups, process memory, and key rotation procedure.
 cancels connection/session work, waits for the configured grace period, and
 then closes remaining transports. Read and write deadlines bound stalled I/O.
 
-`Sender.Send`, `Server.Publish`, and exclusion variants perform semantic,
+`Sender.Push`, `Server.Publish`, and exclusion variants perform semantic,
 process-local live delivery through session writers or an enabled
 exact-session recovery FIFO. Acceptance into that FIFO is distinct from
 physical delivery. These APIs are not a durable or distributed update system.
+
+For session-layer-aware delivery, use `Server.PublishProjected` or its
+`Context`, exact-session exclusion, and auth-key exclusion variants. A
+`PushProjector` receives the exact eligible `Binding`, including effective
+`Layer` and `LeaseGeneration`, and returns the schema object for that session.
+Runtime v2 performs no Telegram or application conversion. It encodes each
+result under the normal response-size limit and revalidates the registration
+before submission. A projector or encoding error fails closed for that target
+and is included in the returned joined error; a changed layer, generation,
+subscription, or registration returns `ErrPushBindingChanged`. Successful
+submission retains the existing copied, bounded recovery FIFO behavior.

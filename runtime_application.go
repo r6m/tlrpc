@@ -9,6 +9,8 @@ import (
 )
 
 type runtimeApplicationMethod struct {
+	descriptor MethodDesc
+	decoder    *dispatcher
 	handler    func(context.Context, TLObject) (interface{}, error)
 	fullMethod string
 }
@@ -18,16 +20,14 @@ type runtimeApplicationMethod struct {
 // snapshot containing only methods declared by per-server ServiceDesc values.
 type runtimeApplicationDispatcher struct {
 	server   *Server
-	methods  map[uint32]runtimeApplicationMethod
-	decoder  *dispatcher
+	methods  map[uint32][]runtimeApplicationMethod
 	setupErr error
 }
 
 func newRuntimeApplicationDispatcher(server *Server) *runtimeApplicationDispatcher {
 	adapter := &runtimeApplicationDispatcher{
 		server:  server,
-		methods: make(map[uint32]runtimeApplicationMethod),
-		decoder: newDispatcher(),
+		methods: make(map[uint32][]runtimeApplicationMethod),
 	}
 	if server == nil {
 		adapter.setupErr = fmt.Errorf("tlrpc: Runtime v2 application dispatcher requires a server")
@@ -40,21 +40,29 @@ func newRuntimeApplicationDispatcher(server *Server) *runtimeApplicationDispatch
 			return adapter
 		}
 		for _, method := range service.desc.Methods {
-			constructor, constructorOK := server.dispatcher.LookupConstructor(method.ConstructorID)
-			handler, handlerOK := server.dispatcher.LookupMethod(method.ConstructorID)
+			_, constructorOK := server.dispatcher.LookupConstructor(method.ConstructorID)
+			_, handlerOK := server.dispatcher.LookupMethod(method.ConstructorID)
 			if !constructorOK || !handlerOK {
 				adapter.setupErr = fmt.Errorf("tlrpc: generated method %q is not fully registered", method.MethodName)
 				return adapter
 			}
-			if _, duplicate := adapter.methods[method.ConstructorID]; duplicate {
-				adapter.setupErr = fmt.Errorf("tlrpc: duplicate generated method constructor 0x%08x", method.ConstructorID)
+			handler, err := bindServiceMethodHandler(service.impl, method.Handler)
+			if err != nil {
+				adapter.setupErr = err
 				return adapter
 			}
-			adapter.methods[method.ConstructorID] = runtimeApplicationMethod{
-				handler:    handler,
-				fullMethod: "/" + service.desc.ServiceName + "/" + method.MethodName,
+			for _, previous := range adapter.methods[method.ConstructorID] {
+				if methodLayersOverlap(previous.descriptor, method) {
+					adapter.setupErr = fmt.Errorf("tlrpc: overlapping generated method constructor 0x%08x", method.ConstructorID)
+					return adapter
+				}
 			}
-			adapter.decoder.RegisterConstructor(method.ConstructorID, constructor)
+			decoder := newDispatcher()
+			decoder.RegisterConstructor(method.ConstructorID, method.NewRequest)
+			adapter.methods[method.ConstructorID] = append(adapter.methods[method.ConstructorID], runtimeApplicationMethod{
+				descriptor: method, decoder: decoder, handler: handler,
+				fullMethod: "/" + service.desc.ServiceName + "/" + method.MethodName,
+			})
 		}
 	}
 	return adapter
@@ -75,12 +83,25 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 	if a.setupErr != nil {
 		return runtimev2.Outcome{}, a.setupErr
 	}
-	method, ok := a.methods[request.Message.ConstructorID]
-	if !ok {
+	variants := a.methods[request.Message.ConstructorID]
+	layer := request.Info.Layer
+	if layer == 0 {
+		layer = a.server.schemaLayer
+	}
+	var method runtimeApplicationMethod
+	found := false
+	for _, variant := range variants {
+		if methodSupportsLayer(variant.descriptor, layer) {
+			method = variant
+			found = true
+			break
+		}
+	}
+	if !found {
 		return runtimeApplicationFailure(requestMessageID, NewNotFoundError("METHOD_NOT_FOUND")), nil
 	}
 
-	decoded, remaining, err := decodeTLObjectWithBudget(a.decoder, request.Message.Body, request.Message.DecodeBudget)
+	decoded, remaining, err := decodeTLObjectWithBudgetForLayer(method.decoder, request.Message.Body, request.Message.DecodeBudget, layer)
 	if err != nil {
 		return runtimeApplicationFailure(requestMessageID, NewBadRequestError("REQUEST_DECODE_FAILED")), nil
 	}
@@ -91,6 +112,9 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 		return runtimeApplicationFailure(requestMessageID, NewBadRequestError("REQUEST_TRAILING_BYTES")), nil
 	}
 
+	// Keep handler projection and final encoding on the same effective layer,
+	// including the pre-negotiation default.
+	request.Info.Layer = layer
 	collector := &runtimeMutationCollector{}
 	ctx = runtimeApplicationHandlerContext(ctx, request, collector)
 	if err := a.server.acquireHandler(ctx); err != nil {
@@ -140,7 +164,7 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 	if object == nil {
 		return runtimeApplicationFailure(requestMessageID, NewInternalError("NIL_RESPONSE")), nil
 	}
-	body, err := encodeTLObjectWithLimits(object, EncodeLimits{MaxEncodedBytes: a.server.maxEncodedResponseBytes})
+	body, err := encodeTLObjectWithLimitsForLayer(object, EncodeLimits{MaxEncodedBytes: a.server.maxEncodedResponseBytes}, layer)
 	if err != nil {
 		return runtimeApplicationFailure(requestMessageID, NewInternalError("RESPONSE_ENCODE_FAILED")), nil
 	}
@@ -193,6 +217,7 @@ func runtimeApplicationHandlerContext(ctx context.Context, request runtimev2.Req
 		ConnectionID: request.Info.ConnectionID,
 		AuthKeyID:    int64(request.Info.AuthKeyID), SessionID: request.Info.SessionID,
 		ServerSalt: request.Info.ServerSalt, UserID: request.Info.UserID, Layer: request.Info.Layer,
+		LeaseGeneration: request.Info.LeaseGeneration,
 	})
 	ctx = withClientMetadata(ctx, request.Info.Client)
 	if request.Info.Sender != nil {

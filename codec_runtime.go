@@ -22,6 +22,10 @@ func encodeTLObject(obj TLObject) ([]byte, error) {
 }
 
 func encodeTLObjectWithLimits(obj TLObject, limits EncodeLimits) ([]byte, error) {
+	return encodeTLObjectWithLimitsForLayer(obj, limits, 0)
+}
+
+func encodeTLObjectWithLimitsForLayer(obj TLObject, limits EncodeLimits, layer int) ([]byte, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("tlrpc: cannot encode nil TL object")
 	}
@@ -38,7 +42,7 @@ func encodeTLObjectWithLimits(obj TLObject, limits EncodeLimits) ([]byte, error)
 	}
 	var buffer bytes.Buffer
 	writer := &boundedEncodeWriter{writer: &buffer, remaining: maxBytes}
-	if err := serializer.SerializeTL(writer); err != nil {
+	if err := serializer.SerializeTL(mtproto.WithLayerWriter(writer, layer)); err != nil {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
@@ -63,6 +67,10 @@ func decodeTLObjectWithLimits(d *dispatcher, data []byte, limits mtproto.DecodeL
 }
 
 func decodeTLObjectWithBudget(d *dispatcher, data []byte, budget *mtproto.DecodeBudget) (TLObject, *bytes.Reader, error) {
+	return decodeTLObjectWithBudgetForLayer(d, data, budget, 0)
+}
+
+func decodeTLObjectWithBudgetForLayer(d *dispatcher, data []byte, budget *mtproto.DecodeBudget, layer int) (TLObject, *bytes.Reader, error) {
 	if len(data) < 4 {
 		return nil, nil, io.ErrUnexpectedEOF
 	}
@@ -87,7 +95,7 @@ func decodeTLObjectWithBudget(d *dispatcher, data []byte, budget *mtproto.Decode
 	if !ok {
 		return nil, nil, fmt.Errorf("constructor %08x does not implement DeserializeTL", constructorID)
 	}
-	if err := deser.DeserializeTL(reader); err != nil {
+	if err := deser.DeserializeTL(mtproto.WithLayerReader(reader, layer)); err != nil {
 		return nil, nil, err
 	}
 	return obj, r, nil

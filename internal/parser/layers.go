@@ -199,20 +199,47 @@ func validateDeclarationSet(label string, constructors []Constructor, functions 
 		constructorIDs[constructor.ID] = constructor.Name
 	}
 
-	functionNames := make(map[string]struct{}, len(functions))
-	functionIDs := make(map[uint32]string, len(functions))
+	functionNames := make(map[string][]FuncDecl, len(functions))
+	functionIDs := make(map[uint32]FuncDecl, len(functions))
 	for _, function := range functions {
-		if _, exists := functionNames[function.Name]; exists {
-			return fmt.Errorf("%s: duplicate function name %q", label, function.Name)
+		functionNames[function.Name] = append(functionNames[function.Name], function)
+		if existing, exists := functionIDs[function.ID]; exists {
+			if existing.Name == function.Name {
+				return fmt.Errorf("%s: duplicate function name %q uses ID 0x%08x more than once", label, function.Name, function.ID)
+			}
+			if !serializerPrefixPair(existing, function) {
+				return fmt.Errorf("%s: function ID 0x%08x collides between %q and %q", label, function.ID, existing.Name, function.Name)
+			}
 		}
-		functionNames[function.Name] = struct{}{}
-		if existing, exists := functionIDs[function.ID]; exists && existing != function.Name {
-			return fmt.Errorf("%s: function ID 0x%08x collides between %q and %q", label, function.ID, existing, function.Name)
+		functionIDs[function.ID] = function
+	}
+	for name, variants := range functionNames {
+		if len(variants) == 1 {
+			continue
 		}
-		functionIDs[function.ID] = function.Name
+		canonical := 0
+		variantLayers := make(map[int]struct{}, len(variants))
+		for _, variant := range variants {
+			if variant.VariantLayer == 0 {
+				canonical++
+				continue
+			}
+			if _, duplicate := variantLayers[variant.VariantLayer]; duplicate {
+				return fmt.Errorf("%s: duplicate function name %q has repeated variant layer %d", label, name, variant.VariantLayer)
+			}
+			variantLayers[variant.VariantLayer] = struct{}{}
+		}
+		if canonical != 1 {
+			return fmt.Errorf("%s: duplicate function name %q requires exactly one canonical declaration and annotated variants", label, name)
+		}
 	}
 
 	return nil
+}
+
+func serializerPrefixPair(first, second FuncDecl) bool {
+	return (first.IsHelper && second.IsTemplate && strings.TrimSuffix(first.Name, "Prefix") == second.Name) ||
+		(second.IsHelper && first.IsTemplate && strings.TrimSuffix(second.Name, "Prefix") == first.Name)
 }
 
 func removeConstructors(current []Constructor, removals []string, difference LayerDifference) ([]Constructor, error) {
@@ -272,7 +299,7 @@ func constructorIndex(constructors []Constructor, name string) int {
 
 func functionIndex(functions []FuncDecl, name string) int {
 	for i := range functions {
-		if functions[i].Name == name {
+		if functions[i].Name == name && functions[i].VariantLayer == 0 {
 			return i
 		}
 	}
@@ -319,7 +346,10 @@ func cloneSchema(schema *Schema) *Schema {
 	if schema == nil {
 		return nil
 	}
-	return rebuildSchema(schema.Layer, schema.Constructors, schema.Functions)
+	cloned := rebuildSchema(schema.Layer, schema.Constructors, schema.Functions)
+	cloned.BaseLayer = schema.BaseLayer
+	cloned.IsLayered = schema.IsLayered
+	return cloned
 }
 
 func cloneConstructors(constructors []Constructor) []Constructor {

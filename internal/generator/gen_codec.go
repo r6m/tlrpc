@@ -22,9 +22,23 @@ func NewCodecGenerator(namer *naming.Namer, out io.Writer) *CodecGenerator {
 
 // CodecTemplateData holds data for codec template
 type CodecTemplateData struct {
-	BaseConstructors      []BaseConstructorTemplateData
-	GeneratedConstructors []GeneratedConstructorTemplateData
-	MethodConstructors    []MethodConstructorTemplateData
+	IsLayered              bool
+	BaseLayer              int
+	BaseConstructors       []BaseConstructorTemplateData
+	StaticConstructors     []GeneratedConstructorTemplateData
+	ConstructorLayerGroups []ConstructorLayerGroupTemplateData
+	StaticMethods          []MethodConstructorTemplateData
+	MethodLayerGroups      []MethodLayerGroupTemplateData
+}
+
+type ConstructorLayerGroupTemplateData struct {
+	ID       uint32
+	Variants []GeneratedConstructorTemplateData
+}
+
+type MethodLayerGroupTemplateData struct {
+	ID       uint32
+	Variants []MethodConstructorTemplateData
 }
 
 // BaseConstructorTemplateData holds data for base constructor entries
@@ -35,27 +49,41 @@ type BaseConstructorTemplateData struct {
 
 // GeneratedConstructorTemplateData holds data for generated constructor entries
 type GeneratedConstructorTemplateData struct {
-	ID   uint32
-	Name string
+	ID       uint32
+	Name     string
+	MinLayer int
+	MaxLayer int
 }
 
 // MethodConstructorTemplateData holds data for method constructor entries
 type MethodConstructorTemplateData struct {
-	Name string
-	Type string
+	ID       uint32
+	Name     string
+	Type     string
+	MinLayer int
+	MaxLayer int
 }
 
 // codecTemplate generates static constructor and method maps
 const codecTemplate = `// Static constructor map for efficient decoding
+{{if .IsLayered}}
+func tlLayerSupports(layer, minLayer, maxLayer int) bool {
+	if layer == 0 {
+		layer = {{.BaseLayer}}
+	}
+	return (minLayer == 0 || layer >= minLayer) && (maxLayer == 0 || layer <= maxLayer)
+}
+{{end}}
+
 var staticConstructors = map[uint32]func() tlrpc.TLObject{
 	// Base MTProto types
 {{- range .BaseConstructors}}
 	{{hex .ID}}: {{.Code}},
 {{- end}}
 
-{{- if .GeneratedConstructors}}
+{{- if .StaticConstructors}}
 	// Generated types
-{{- range .GeneratedConstructors}}
+{{- range .StaticConstructors}}
 	{{hex .ID}}: func() tlrpc.TLObject { return &{{.Name}}{} },
 {{- end}}
 {{- end}}
@@ -66,9 +94,44 @@ func GetStaticConstructors() map[uint32]func() tlrpc.TLObject {
 	return staticConstructors
 }
 
+type tlConstructorLayerVariant struct {
+	minLayer int
+	maxLayer int
+	newObject func() tlrpc.TLObject
+}
+
+var constructorLayerVariants = map[uint32][]tlConstructorLayerVariant{
+{{- range .ConstructorLayerGroups}}
+	{{hex .ID}}: {
+	{{- range .Variants}}
+		{minLayer: {{.MinLayer}}, maxLayer: {{.MaxLayer}}, newObject: func() tlrpc.TLObject { return &{{.Name}}{} }},
+	{{- end}}
+	},
+{{- end}}
+}
+
+// NewConstructorForLayer constructs the wire shape selected by an incoming
+// constructor ID and the negotiated session layer.
+func NewConstructorForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	variants, hasLayerVariants := constructorLayerVariants[id]
+	for _, variant := range variants {
+		if layer == 0 || ((variant.minLayer == 0 || layer >= variant.minLayer) && (variant.maxLayer == 0 || layer <= variant.maxLayer)) {
+			return variant.newObject(), true
+		}
+	}
+	if hasLayerVariants {
+		return nil, false
+	}
+	constructor, ok := staticConstructors[id]
+	if !ok {
+		return nil, false
+	}
+	return constructor(), true
+}
+
 // Static method constructor map for RPC request deserialization
 var staticMethods = map[string]func() tlrpc.TLObject{
-{{- range .MethodConstructors}}
+{{- range .StaticMethods}}
 	{{quote .Name}}: func() tlrpc.TLObject { return &{{.Type}}{} },
 {{- end}}
 }
@@ -76,6 +139,26 @@ var staticMethods = map[string]func() tlrpc.TLObject{
 // GetStaticMethods returns the static method constructor map
 func GetStaticMethods() map[string]func() tlrpc.TLObject {
 	return staticMethods
+}
+
+var methodLayerVariants = map[uint32][]tlConstructorLayerVariant{
+{{- range .MethodLayerGroups}}
+	{{hex .ID}}: {
+	{{- range .Variants}}
+		{minLayer: {{.MinLayer}}, maxLayer: {{.MaxLayer}}, newObject: func() tlrpc.TLObject { return &{{.Type}}{} }},
+	{{- end}}
+	},
+{{- end}}
+}
+
+// NewMethodRequestForLayer constructs a typed request wire variant.
+func NewMethodRequestForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	for _, variant := range methodLayerVariants[id] {
+		if layer == 0 || ((variant.minLayer == 0 || layer >= variant.minLayer) && (variant.maxLayer == 0 || layer <= variant.maxLayer)) {
+			return variant.newObject(), true
+		}
+	}
+	return nil, false
 }
 `
 
@@ -127,14 +210,14 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 			if g.isBaseConstructor(only.Name) {
 				continue
 			}
-			emittedTypeByCtor[only.Name] = g.namer.TypeName(decl.Name)
+			emittedTypeByCtor[variantKey(only.Name, only.VariantLayer)] = typeName(g.namer, decl.Name, decl.VariantLayer)
 			continue
 		}
 		for _, ctor := range decl.Constructors {
 			if g.isBaseConstructor(ctor.Name) {
 				continue
 			}
-			emittedTypeByCtor[ctor.Name] = g.namer.ConstructorName(ctor.Name)
+			emittedTypeByCtor[variantKey(ctor.Name, ctor.VariantLayer)] = constructorName(g.namer, ctor)
 		}
 	}
 	constructors := make([]parser.Constructor, 0, len(schema.Constructors))
@@ -149,17 +232,19 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 		constructors = append(constructors, ctor)
 	}
 	sort.Slice(constructors, func(i, j int) bool {
+		if constructors[i].ID == constructors[j].ID {
+			return constructors[i].MinLayer < constructors[j].MinLayer
+		}
 		return constructors[i].ID < constructors[j].ID
 	})
 
 	for _, ctor := range constructors {
-		name, ok := emittedTypeByCtor[ctor.Name]
+		name, ok := emittedTypeByCtor[variantKey(ctor.Name, ctor.VariantLayer)]
 		if !ok {
 			continue
 		}
 		generatedConstructors = append(generatedConstructors, GeneratedConstructorTemplateData{
-			ID:   ctor.ID,
-			Name: name,
+			ID: ctor.ID, Name: name, MinLayer: ctor.MinLayer, MaxLayer: ctor.MaxLayer,
 		})
 	}
 
@@ -173,18 +258,23 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 				continue
 			}
 			methodName := fn.Name // Use full method name with service prefix
-			requestName := g.namer.RequestName(fn.Name)
+			requestType := requestName(g.namer, fn)
 			methodConstructors = append(methodConstructors, MethodConstructorTemplateData{
-				Name: methodName,
-				Type: requestName,
+				ID: fn.ID, Name: methodName, Type: requestType, MinLayer: fn.MinLayer, MaxLayer: fn.MaxLayer,
 			})
 		}
 	}
 
+	constructorGroups := groupConstructorVariants(generatedConstructors)
+	methodGroups := groupMethodVariants(methodConstructors)
 	data := CodecTemplateData{
-		BaseConstructors:      baseConstructors,
-		GeneratedConstructors: generatedConstructors,
-		MethodConstructors:    methodConstructors,
+		IsLayered:              schema.IsLayered,
+		BaseLayer:              schema.BaseLayer,
+		BaseConstructors:       baseConstructors,
+		StaticConstructors:     firstConstructors(constructorGroups),
+		ConstructorLayerGroups: constructorGroups,
+		StaticMethods:          firstMethodsByName(methodConstructors),
+		MethodLayerGroups:      methodGroups,
 	}
 
 	tmpl, err := template.New("codec").Funcs(templateFuncMap()).Parse(codecTemplate)
@@ -197,4 +287,55 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 	}
 
 	return nil
+}
+
+func groupConstructorVariants(variants []GeneratedConstructorTemplateData) []ConstructorLayerGroupTemplateData {
+	var groups []ConstructorLayerGroupTemplateData
+	for _, variant := range variants {
+		if len(groups) == 0 || groups[len(groups)-1].ID != variant.ID {
+			groups = append(groups, ConstructorLayerGroupTemplateData{ID: variant.ID})
+		}
+		groups[len(groups)-1].Variants = append(groups[len(groups)-1].Variants, variant)
+	}
+	return groups
+}
+
+func firstConstructors(groups []ConstructorLayerGroupTemplateData) []GeneratedConstructorTemplateData {
+	out := make([]GeneratedConstructorTemplateData, 0, len(groups))
+	for _, group := range groups {
+		if len(group.Variants) > 0 {
+			out = append(out, group.Variants[0])
+		}
+	}
+	return out
+}
+
+func groupMethodVariants(variants []MethodConstructorTemplateData) []MethodLayerGroupTemplateData {
+	sort.SliceStable(variants, func(i, j int) bool {
+		if variants[i].ID == variants[j].ID {
+			return variants[i].MinLayer < variants[j].MinLayer
+		}
+		return variants[i].ID < variants[j].ID
+	})
+	var groups []MethodLayerGroupTemplateData
+	for _, variant := range variants {
+		if len(groups) == 0 || groups[len(groups)-1].ID != variant.ID {
+			groups = append(groups, MethodLayerGroupTemplateData{ID: variant.ID})
+		}
+		groups[len(groups)-1].Variants = append(groups[len(groups)-1].Variants, variant)
+	}
+	return groups
+}
+
+func firstMethodsByName(variants []MethodConstructorTemplateData) []MethodConstructorTemplateData {
+	seen := make(map[string]struct{}, len(variants))
+	var out []MethodConstructorTemplateData
+	for _, variant := range variants {
+		if _, exists := seen[variant.Name]; exists {
+			continue
+		}
+		seen[variant.Name] = struct{}{}
+		out = append(out, variant)
+	}
+	return out
 }
