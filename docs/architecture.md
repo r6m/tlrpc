@@ -146,10 +146,35 @@ protocol mutations are persisted before the changed binding is exposed.
 Immutable context values provide layer, auth-key ID, client metadata, binding,
 and a semantic `Sender`.
 
-`Sender.Send`, `Server.Publish`, and `Server.PublishExceptContext` enqueue
-schema-defined objects into target session writers. Delivery is process-local
-and best-effort. Durable product updates, recipient policy, and missed-update
+`Sender.Send`, `Server.Publish`, and `Server.PublishExceptContext` route
+schema-defined objects to target sessions. Delivery is process-local and
+best-effort. Durable product updates, recipient policy, and missed-update
 recovery remain application responsibilities.
+
+An application can opt selected method constructor IDs into a recovery push
+barrier with `WithRecoveryPushBarrier`. The barrier belongs to one active
+`(AuthKeyID, SessionID)` lease generation. Runtime v2 activates it immediately
+before application dispatch and keeps it active until the protected request's
+correlated reply has been written. Same-session pushes accepted during that
+interval are copied into a bounded FIFO and drained after the reply. The gate
+remains active while draining, so newly accepted pushes cannot overtake older
+ones. Queue overflow retires the affected session, and lease replacement
+discards the retired generation's queue.
+
+If the protected request is canceled, application dispatch ends without an
+outcome, or its reply cannot be written, Runtime v2 discards that generation's
+queued pushes and retires the session. It never opens a healthy-looking gate
+behind an undelivered recovery reply.
+
+The barrier does not join sessions that share an authorization key or user.
+Those sessions remain independent delivery targets.
+
+`WithNonSubscribingMethods` supplies a separate static constructor policy for
+application methods that must not make a cold session push-reachable. Runtime
+v2 checks the normalized inner constructor after removing wrappers, then uses
+the existing `SuppressPush` request path before sender creation and subscription.
+This suppresses request-scoped sender and outcome pushes and skips subscription
+creation. It leaves an existing durable subscription unchanged.
 
 ## Observation path
 

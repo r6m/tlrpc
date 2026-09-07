@@ -27,6 +27,7 @@ type connectionSession struct {
 	router      *Router
 	active      *ActiveRequestRegistry
 	sender      *requestSender
+	pushBarrier *recoveryPushBarrier
 
 	outcomeMu   sync.Mutex
 	acceptsPush bool
@@ -134,7 +135,16 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 		active:      active,
 		acceptsPush: snapshot.PushSubscription,
 	}
-	actor.sender = &requestSender{writer: writer, connectionID: owner.config.ConnectionID}
+	if len(owner.config.RecoveryPushBarrierMethods) != 0 {
+		actor.pushBarrier = newRecoveryPushBarrier(
+			lease.Context(),
+			owner.config.RecoveryPushBarrierCount,
+			owner.config.RecoveryPushBarrierBytes,
+			writer.Submit,
+			lease.Retire,
+		)
+	}
+	actor.sender = &requestSender{writer: writer, barrier: actor.pushBarrier, connectionID: owner.config.ConnectionID}
 	if owner.config.Presence != nil {
 		owner.config.Presence.Update(snapshot, actor.sender, actor.acceptsPush)
 	}
@@ -330,6 +340,9 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 	if err != nil {
 		return err
 	}
+	if _, nonSubscribing := s.owner.config.NonSubscribingMethods[request.Message.ConstructorID]; nonSubscribing {
+		request.Message.SuppressPush = true
+	}
 	if len(wrapperMutations) != 0 {
 		if err := s.applyMutations(ctx, wrapperMutations); err != nil {
 			return err
@@ -341,7 +354,7 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 		request.Info = s.owner.requestInfo(snapshot)
 	}
 	current := request.Message
-	request.Info.Sender = &requestSender{writer: s.writer, suppress: current.SuppressPush, connectionID: s.owner.config.ConnectionID}
+	request.Info.Sender = &requestSender{writer: s.writer, barrier: s.pushBarrier, suppress: current.SuppressPush, connectionID: s.owner.config.ConnectionID}
 	outcome, handled, err := s.router.RouteControl(ctx, request)
 	if err != nil {
 		return err
@@ -375,10 +388,26 @@ func (s *connectionSession) routeMessage(ctx context.Context, message InboundMes
 			}
 			return
 		}
+		var barrierToken *recoveryPushBarrierToken
+		if s.pushBarrier != nil {
+			if _, enabled := s.owner.config.RecoveryPushBarrierMethods[current.ConstructorID]; enabled {
+				barrierToken = s.pushBarrier.begin()
+			}
+		}
 		outcome, dispatchErr := s.router.DispatchApplication(handlerCtx, request)
 		if dispatchErr == nil {
-			dispatchErr = s.applyOutcome(handlerCtx, current, outcome)
+			if barrierToken != nil {
+				dispatchErr = barrierToken.finish(func() error {
+					return s.applyOutcome(handlerCtx, current, outcome)
+				})
+				barrierToken = nil
+			} else {
+				dispatchErr = s.applyOutcome(handlerCtx, current, outcome)
+			}
 			succeeded = dispatchErr == nil && requestOutcomeSucceeded(outcome, current.MessageID)
+		}
+		if barrierToken != nil {
+			barrierToken.cancel()
 		}
 		if dispatchErr != nil && !errors.Is(dispatchErr, context.Canceled) {
 			s.lease.Retire(dispatchErr)
@@ -583,6 +612,9 @@ func (s *connectionSession) shutdown(cause error) {
 		}
 		s.active.CancelAll(cause)
 		s.lease.Retire(cause)
+		if s.pushBarrier != nil {
+			s.pushBarrier.close(cause)
+		}
 		s.requestWG.Wait()
 		<-s.writer.Done()
 		s.lease.Release()

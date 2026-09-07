@@ -149,6 +149,7 @@ it does not make replay state durable across process restart.
 | gzip expansion ratio | 128x |
 | gzip work | 32 MiB |
 | encoded TL response | 16 MiB |
+| recovery push barrier queue | 64 objects / 16 MiB |
 | read timeout | 2 minutes |
 | write timeout | 30 seconds |
 
@@ -182,6 +183,53 @@ decode. Generated `DeserializeTL` methods charge object nodes/depth, vector
 readers charge aggregate elements, wrapper/container parsers charge their
 counts, and `gzip_packed` charges decoded bytes, expansion ratio, and work.
 Response serialization writes through a bounded writer before encryption.
+
+When `WithRecoveryPushBarrier` is enabled, its per-session FIFO reuses
+`PhysicalWriteQueueCapacity` as its object-count limit and
+`MaxEncodedResponseBytes` as its aggregate byte limit. Exceeding either limit
+returns `ErrRecoveryPushBarrierFull` to the publisher and retires that exact
+session so its client must recover from durable application state.
+
+Configure the opt-in with application method constructor IDs:
+
+```go
+server := tlrpc.NewServer(
+	tlrpc.WithRecoveryPushBarrier(getDifferenceID, getChannelDifferenceID),
+)
+```
+
+The gate starts immediately before generated application dispatch and ends
+only after the correlated `rpc_result` or `rpc_error` is written. A push to
+that exact session returns successfully once Runtime v2 copies it into the
+bounded FIFO; success does not mean physical delivery. The FIFO drains in
+order after the reply. Other target sessions in the same publish fanout
+continue independently.
+
+If cancellation or a write failure prevents the protected reply from reaching
+the wire, Runtime v2 discards the queued FIFO and retires that session. The
+replacement session must recover from durable application state; queued bodies
+from the retired lease generation are never replayed.
+
+The barrier is scoped to one `(AuthKeyID, SessionID)` generation. Other
+sessions under the same authorization key, and other authorizations bound to
+the same user, are outside that request's barrier.
+
+Applications can prevent selected methods from making cold sessions eligible
+for live push:
+
+```go
+server := tlrpc.NewServer(
+	tlrpc.WithNonSubscribingMethods(uploadGetFileID, uploadSaveFilePartID),
+)
+```
+
+Runtime v2 matches the normalized inner application constructor, including a
+method nested in `invokeWithLayer` or `initConnection`. A matching request uses
+the same request-scoped suppression as `invokeWithoutUpdates`: it does not add
+a push subscription, its `Sender` drops request-scoped sends, and push intents
+in its outcome are removed. The option is empty by default and does not clear
+an existing durable subscription. Applications must provide explicit schema
+constructor IDs; Runtime v2 does not infer connection or method roles.
 
 `WithReliabilityLimits` separately controls the bounded session/message
 retention and TTL used by MTProto ACK/state/resend behavior.
@@ -270,5 +318,6 @@ cancels connection/session work, waits for the configured grace period, and
 then closes remaining transports. Read and write deadlines bound stalled I/O.
 
 `Sender.Send`, `Server.Publish`, and exclusion variants perform semantic,
-process-local live delivery through session writers. They are not a durable or
-distributed update system.
+process-local live delivery through session writers or an enabled
+exact-session recovery FIFO. Acceptance into that FIFO is distinct from
+physical delivery. These APIs are not a durable or distributed update system.

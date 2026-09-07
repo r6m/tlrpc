@@ -54,25 +54,29 @@ type FrameConnection interface {
 }
 
 type ConnectionConfig struct {
-	ConnectionID      uint64
-	Conn              FrameConnection
-	AuthKeys          AuthKeySource
-	Handshake         *handshake.Engine
-	Sessions          session.Coordinator
-	Reliability       *ReliabilityRegistry
-	Application       ApplicationDispatcher
-	MessageIDs        MessageIDSource
-	MaxPayloadBytes   int
-	MaxDecodedPayload int
-	DecodeLimits      mtproto.DecodeLimits
-	MaxEncodedBytes   int
-	FrameSinkPolicy   FrameSinkPolicy
-	ActiveRequests    int
-	SessionCapacity   int
-	Transport         string
-	SchemaLayer       int
-	Now               func() time.Time
-	Presence          SessionPresence
+	ConnectionID               uint64
+	Conn                       FrameConnection
+	AuthKeys                   AuthKeySource
+	Handshake                  *handshake.Engine
+	Sessions                   session.Coordinator
+	Reliability                *ReliabilityRegistry
+	Application                ApplicationDispatcher
+	MessageIDs                 MessageIDSource
+	MaxPayloadBytes            int
+	MaxDecodedPayload          int
+	DecodeLimits               mtproto.DecodeLimits
+	MaxEncodedBytes            int
+	FrameSinkPolicy            FrameSinkPolicy
+	ActiveRequests             int
+	SessionCapacity            int
+	Transport                  string
+	SchemaLayer                int
+	Now                        func() time.Time
+	Presence                   SessionPresence
+	RecoveryPushBarrierMethods map[uint32]struct{}
+	RecoveryPushBarrierCount   int
+	RecoveryPushBarrierBytes   int
+	NonSubscribingMethods      map[uint32]struct{}
 }
 
 // SessionPresence receives semantic sender availability for active composite
@@ -121,7 +125,12 @@ func NewConnection(config ConnectionConfig) (*Connection, error) {
 	if _, err := mtproto.NewDecodeBudget(config.DecodeLimits); err != nil {
 		return nil, ErrConnectionConfig
 	}
-	if config.MaxEncodedBytes < 0 || config.FrameSinkPolicy.QueueCapacity < 0 || config.FrameSinkPolicy.WriteTimeout < 0 {
+	if config.MaxEncodedBytes < 0 || config.FrameSinkPolicy.QueueCapacity < 0 || config.FrameSinkPolicy.WriteTimeout < 0 ||
+		config.RecoveryPushBarrierCount < 0 || config.RecoveryPushBarrierBytes < 0 {
+		return nil, ErrConnectionConfig
+	}
+	if len(config.RecoveryPushBarrierMethods) != 0 &&
+		(config.RecoveryPushBarrierCount == 0 || config.RecoveryPushBarrierBytes == 0) {
 		return nil, ErrConnectionConfig
 	}
 	messageIDs := config.MessageIDs
@@ -367,6 +376,7 @@ func badMessageIntent(bad *protocol.BadMessageError) (ProtocolReply, error) {
 
 type requestSender struct {
 	writer       *Writer
+	barrier      *recoveryPushBarrier
 	suppress     bool
 	connectionID uint64
 }
@@ -384,6 +394,9 @@ func (s *requestSender) Push(ctx context.Context, body []byte) error {
 	}
 	if s.suppress {
 		return nil
+	}
+	if s.barrier != nil {
+		return s.barrier.push(ctx, body)
 	}
 	return s.writer.Submit(ctx, Push{Body: append([]byte(nil), body...)})
 }

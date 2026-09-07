@@ -21,6 +21,10 @@ var (
 	// ErrServerStopped is returned when shutdown cancels a handler waiting for a
 	// server-wide application execution slot.
 	ErrServerStopped = errors.New("tlrpc: server stopped")
+	// ErrRecoveryPushBarrierFull reports that a protected session exceeded its
+	// bounded queued-push count or byte budget. Runtime v2 retires that session
+	// so the client must recover from durable application state.
+	ErrRecoveryPushBarrierFull = runtimev2.ErrRecoveryPushBarrierFull
 )
 
 type messageSizeError struct {

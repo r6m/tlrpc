@@ -137,6 +137,13 @@ current request, are deduplicated, and are capped at 64. The wait is bounded to
 Wrappers count toward one shared logical-request budget; nesting cannot reset
 byte, wrapper, object, or gzip limits.
 
+An application may apply the same request-scoped behavior without requiring a
+client wrapper by passing explicit normalized method constructor IDs to
+`WithNonSubscribingMethods`. This server policy prevents those methods from
+creating a cold session push subscription. It does not clear a subscription
+already established by another request, and Runtime v2 does not infer file or
+transport roles.
+
 ## Containers, controls, and writes
 
 Every callable `msg_container` child has its own request ID and receives an

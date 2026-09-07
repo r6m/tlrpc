@@ -58,6 +58,8 @@ type Server struct {
 	decodeLimits               mtproto.DecodeLimits
 	maxEncodedResponseBytes    int
 	physicalWriteQueueCapacity int
+	recoveryPushBarrierMethods map[uint32]struct{}
+	nonSubscribingMethods      map[uint32]struct{}
 	maxConnections             int
 	maxConnectionsPerIP        int
 	maxConnectionsPerAuthKey   int
@@ -457,7 +459,11 @@ func (s *Server) serveConn(conn transport.Conn) bool {
 		},
 		SessionCapacity: s.maxSessionsPerConnection,
 		SchemaLayer:     s.schemaLayer, Transport: runtimeTransportMode(conn),
-		Presence: s.runtimePushes,
+		Presence:                   s.runtimePushes,
+		RecoveryPushBarrierMethods: cloneConstructorSet(s.recoveryPushBarrierMethods),
+		RecoveryPushBarrierCount:   s.physicalWriteQueueCapacity,
+		RecoveryPushBarrierBytes:   s.maxEncodedResponseBytes,
+		NonSubscribingMethods:      cloneConstructorSet(s.nonSubscribingMethods),
 	})
 	if err != nil || application.setupErr != nil {
 		reason := "setup_failed"
@@ -516,6 +522,67 @@ func (s *Server) stoppedLocked() bool {
 
 // ServerOption represents server configuration options
 type ServerOption func(*Server)
+
+// WithRecoveryPushBarrier prevents same-session live pushes from overtaking
+// replies for the selected application methods. A queued push is accepted
+// once copied into the bounded session FIFO; acceptance does not mean that it
+// has reached the wire. Other sessions retain ordinary push behavior.
+func WithRecoveryPushBarrier(methodConstructorIDs ...uint32) ServerOption {
+	if len(methodConstructorIDs) == 0 {
+		panic("tlrpc: recovery push barrier requires at least one method constructor ID")
+	}
+	methods := make(map[uint32]struct{}, len(methodConstructorIDs))
+	for _, constructorID := range methodConstructorIDs {
+		if constructorID == 0 {
+			panic("tlrpc: recovery push barrier method constructor ID cannot be zero")
+		}
+		methods[constructorID] = struct{}{}
+	}
+	return func(s *Server) {
+		if s.recoveryPushBarrierMethods == nil {
+			s.recoveryPushBarrierMethods = make(map[uint32]struct{}, len(methods))
+		}
+		for constructorID := range methods {
+			s.recoveryPushBarrierMethods[constructorID] = struct{}{}
+		}
+	}
+}
+
+// WithNonSubscribingMethods gives selected normalized application methods the
+// same request-scoped push suppression as invokeWithoutUpdates. A cold session
+// does not become push-reachable because it called one of these methods. An
+// existing durable push subscription is left intact.
+func WithNonSubscribingMethods(constructorIDs ...uint32) ServerOption {
+	if len(constructorIDs) == 0 {
+		panic("tlrpc: non-subscribing methods require at least one constructor ID")
+	}
+	methods := make(map[uint32]struct{}, len(constructorIDs))
+	for _, constructorID := range constructorIDs {
+		if constructorID == 0 {
+			panic("tlrpc: non-subscribing method constructor ID cannot be zero")
+		}
+		methods[constructorID] = struct{}{}
+	}
+	return func(s *Server) {
+		if s.nonSubscribingMethods == nil {
+			s.nonSubscribingMethods = make(map[uint32]struct{}, len(methods))
+		}
+		for constructorID := range methods {
+			s.nonSubscribingMethods[constructorID] = struct{}{}
+		}
+	}
+}
+
+func cloneConstructorSet(source map[uint32]struct{}) map[uint32]struct{} {
+	if len(source) == 0 {
+		return nil
+	}
+	clone := make(map[uint32]struct{}, len(source))
+	for constructorID := range source {
+		clone[constructorID] = struct{}{}
+	}
+	return clone
+}
 
 // WithUnaryInterceptor adds a unary interceptor to the server (gRPC-like).
 func WithUnaryInterceptor(i UnaryInterceptor) ServerOption {

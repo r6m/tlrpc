@@ -85,6 +85,18 @@ compatibility consumers, not framework dependencies.
 - `invokeAfterMsg` and `invokeAfterMsgs` must wait for successful completion of
   their referenced earlier requests, fail after a failed dependency, and time
   out rather than wait indefinitely for an unknown dependency.
+- Applications may opt selected method constructor IDs into an exact-session
+  recovery push barrier. For those requests, Runtime v2 must hold same-session
+  pushes from immediately before application dispatch until the correlated RPC
+  reply has been written, then drain accepted pushes in order. The queue must
+  be bounded by count and bytes; overflow retires that session instead of
+  silently losing an update. Other methods and sessions retain ordinary push
+  behavior.
+- Applications may configure selected normalized application method
+  constructor IDs as non-subscribing. Those requests must receive the same
+  request-scoped push suppression as `invokeWithoutUpdates` and must not turn a
+  cold session into a live-push subscriber. The policy must not revoke a push
+  subscription that the session already holds.
 
 ## Resource and security boundaries
 
