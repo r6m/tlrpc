@@ -151,6 +151,12 @@ For a content-related RPC, Runtime v2 places a final `rpc_result` or
 one session-snapshot persistence boundary and one physical write while keeping
 their own child message IDs and sequence numbers. Pushes, protocol replies,
 resends, and close intents retain their existing ordering boundaries.
+When multiple application pushes for one session are already waiting at the
+writer, it may also place up to 64 consecutive pushes with the same context in
+one container. The writer never waits to form a batch, never crosses another
+intent or context, and respects the configured encoded-payload bound. Every
+submission keeps its own completion while the container shares one snapshot
+save and physical write.
 
 ## Application state and live delivery
 
@@ -185,6 +191,11 @@ interval are copied into a bounded FIFO and drained after the reply. The gate
 remains active while draining, so newly accepted pushes cannot overtake older
 ones. Queue overflow retires the affected session, and lease replacement
 discards the retired generation's queue.
+
+While no protected request or drain is active, concurrent pushes may enter the
+session writer together for opportunistic batching. A waiting protected begin
+has exclusive priority: it starts only after every earlier direct push settles,
+and newer pushes queue behind it.
 
 If the protected request is canceled, application dispatch ends without an
 outcome, or its reply cannot be written, Runtime v2 discards that generation's

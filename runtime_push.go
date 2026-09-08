@@ -338,6 +338,16 @@ func (r *runtimePushRegistry) ActiveUserIDs() []int64 {
 	return userIDs
 }
 
+func (r *runtimePushRegistry) HasActiveUser(userID int64) bool {
+	if r == nil || userID <= 0 {
+		return false
+	}
+	r.mu.RLock()
+	active := len(r.byUser[userID]) != 0
+	r.mu.RUnlock()
+	return active
+}
+
 // Publish sends one schema-defined server push to every active session bound
 // to userID through Runtime v2's per-connection writer.
 func (s *Server) Publish(userID int64, update TLObject) error {
@@ -351,6 +361,12 @@ func (s *Server) ActiveUserIDs() []int64 {
 		return nil
 	}
 	return s.runtimePushes.ActiveUserIDs()
+}
+
+// HasActiveUser reports whether userID currently has at least one process-local
+// push-reachable session in Runtime v2 without allocating a full user snapshot.
+func (s *Server) HasActiveUser(userID int64) bool {
+	return s != nil && s.runtimePushes != nil && s.runtimePushes.HasActiveUser(userID)
 }
 
 // PublishContext is Publish with caller-controlled cancellation and deadlines.

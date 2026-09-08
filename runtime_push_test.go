@@ -3,15 +3,20 @@ package tlrpc
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/r6m/tlrpc/crypto"
 	runtimev2 "github.com/r6m/tlrpc/internal/runtime"
 	"github.com/r6m/tlrpc/mtproto"
+	"github.com/r6m/tlrpc/mtproto/reliability"
+	mtprototl "github.com/r6m/tlrpc/mtproto/tl"
 	"github.com/r6m/tlrpc/session"
 )
 
@@ -26,6 +31,96 @@ type recordingRuntimeSender struct {
 type blockingRuntimeSender struct {
 	started chan struct{}
 	release chan struct{}
+}
+
+type publishWriterSender struct {
+	writer  *runtimev2.Writer
+	entered chan<- struct{}
+}
+
+func (s *publishWriterSender) Push(ctx context.Context, body []byte) error {
+	s.entered <- struct{}{}
+	return s.writer.Submit(ctx, runtimev2.Push{Body: append([]byte(nil), body...)})
+}
+
+type publishSaveCountingStore struct {
+	session.Store
+	mu    sync.Mutex
+	saves int
+}
+
+func (s *publishSaveCountingStore) Save(ctx context.Context, key session.SessionKey, snapshot session.Snapshot) error {
+	s.mu.Lock()
+	s.saves++
+	s.mu.Unlock()
+	return s.Store.Save(ctx, key, snapshot)
+}
+
+func (s *publishSaveCountingStore) saveCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.saves
+}
+
+type blockingPublishFrameSink struct {
+	mu      sync.Mutex
+	once    sync.Once
+	started chan struct{}
+	release chan struct{}
+	frames  [][]byte
+}
+
+func (s *blockingPublishFrameSink) WriteFrame(ctx context.Context, frame []byte) error {
+	blocked := false
+	s.once.Do(func() {
+		blocked = true
+		close(s.started)
+	})
+	if blocked {
+		select {
+		case <-s.release:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	s.mu.Lock()
+	s.frames = append(s.frames, append([]byte(nil), frame...))
+	s.mu.Unlock()
+	return nil
+}
+
+func (s *blockingPublishFrameSink) Close() error { return nil }
+
+func (s *blockingPublishFrameSink) snapshot() [][]byte {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	frames := make([][]byte, len(s.frames))
+	for index := range s.frames {
+		frames[index] = append([]byte(nil), s.frames[index]...)
+	}
+	return frames
+}
+
+func countPublishedPushes(t *testing.T, authKey crypto.AuthKey, frame []byte) int {
+	t.Helper()
+	if len(frame) < 24 {
+		t.Fatalf("encrypted frame is truncated: %d", len(frame))
+	}
+	message := &mtproto.EncryptedMessage{AuthKeyID: crypto.KeyID(binary.LittleEndian.Uint64(frame[:8]))}
+	copy(message.MsgKey[:], frame[8:24])
+	message.EncryptedData = append([]byte(nil), frame[24:]...)
+	inner, err := message.Decrypt(authKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if binary.LittleEndian.Uint32(inner.Data[:4]) != mtprototl.MsgContainerID {
+		return 1
+	}
+	container := &mtprototl.MsgContainer{}
+	if err := container.DeserializeTL(bytes.NewReader(inner.Data)); err != nil {
+		t.Fatal(err)
+	}
+	return len(container.Messages)
 }
 
 type layerRecordingPushObject struct {
@@ -215,6 +310,28 @@ func TestRuntimePushRegistryActiveUserIDsTracksReachableUsersOnly(t *testing.T) 
 	}
 }
 
+func TestRuntimePushRegistryHasActiveUserTracksReachableUsersOnly(t *testing.T) {
+	registry := newRuntimePushRegistry(nil)
+	sender := &recordingRuntimeSender{}
+	snapshot := session.Snapshot{AuthKeyID: 11, SessionID: 21, UserID: 31}
+
+	if registry.HasActiveUser(31) || registry.HasActiveUser(0) || (*runtimePushRegistry)(nil).HasActiveUser(31) {
+		t.Fatal("empty registry reported an active user")
+	}
+	registry.Update(snapshot, 1, sender, false)
+	if registry.HasActiveUser(31) {
+		t.Fatal("non-push-reachable binding reported active")
+	}
+	registry.Update(snapshot, 1, sender, true)
+	if !registry.HasActiveUser(31) {
+		t.Fatal("push-reachable binding did not report active")
+	}
+	registry.Remove(snapshot.Key(), sender)
+	if registry.HasActiveUser(31) {
+		t.Fatal("removed binding remained active")
+	}
+}
+
 func TestServerActiveUserIDsIsNilSafe(t *testing.T) {
 	var nilServer *Server
 	if got := nilServer.ActiveUserIDs(); got != nil {
@@ -232,6 +349,109 @@ func TestServerActiveUserIDsIsNilSafe(t *testing.T) {
 	want := []int64{71}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("server ActiveUserIDs() = %v, want %v", got, want)
+	}
+}
+
+func TestServerHasActiveUserIsNilSafe(t *testing.T) {
+	var nilServer *Server
+	if nilServer.HasActiveUser(71) {
+		t.Fatal("nil server reported an active user")
+	}
+	server := &Server{}
+	if server.HasActiveUser(71) {
+		t.Fatal("server without runtime pushes reported an active user")
+	}
+	live := NewServer()
+	live.runtimePushes.Update(session.Snapshot{AuthKeyID: 51, SessionID: 61, UserID: 71}, 1, &recordingRuntimeSender{}, true)
+	if !live.HasActiveUser(71) || live.HasActiveUser(-1) {
+		t.Fatal("server point lookup did not match reachable positive user")
+	}
+}
+
+func TestServerPublishBurstUsesWriterPushBatching(t *testing.T) {
+	const pushes = 32
+	store := &publishSaveCountingStore{Store: session.NewMemoryStore()}
+	var authKey crypto.AuthKey
+	for index := range authKey {
+		authKey[index] = byte(index + 1)
+	}
+	key := session.SessionKey{AuthKeyID: authKey.ID(), SessionID: 61}
+	lease, err := session.NewLocalCoordinator(store).Acquire(context.Background(), key, session.Snapshot{
+		AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, ServerSalt: 71,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sink := &blockingPublishFrameSink{started: make(chan struct{}), release: make(chan struct{})}
+	retained, err := reliability.New(reliability.Config{Capacity: 128, TTL: time.Minute})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writer, err := runtimev2.NewWriter(context.Background(), runtimev2.WriterConfig{
+		Lease: lease, AuthKey: authKey, Sink: sink, Reliability: retained,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = writer.Submit(context.Background(), runtimev2.Close{Cause: runtimev2.ErrWriterClosed})
+		lease.Release()
+	})
+	entered := make(chan struct{}, pushes)
+	sender := &publishWriterSender{writer: writer, entered: entered}
+	server := NewServer()
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: key.AuthKeyID, SessionID: key.SessionID, UserID: 81}, lease.Generation(), sender, true)
+
+	errorsByPublish := make(chan error, pushes)
+	go func() { errorsByPublish <- server.Publish(81, &runtimeApplicationTestResponse{Value: "first"}) }()
+	select {
+	case <-sink.started:
+	case <-time.After(time.Second):
+		t.Fatal("first push did not reach physical writer")
+	}
+	for index := 1; index < pushes; index++ {
+		index := index
+		go func() {
+			errorsByPublish <- server.Publish(81, &runtimeApplicationTestResponse{Value: fmt.Sprintf("push-%d", index)})
+		}()
+	}
+	for index := 0; index < pushes; index++ {
+		select {
+		case <-entered:
+		case <-time.After(time.Second):
+			t.Fatalf("publish %d did not enter the session sender", index)
+		}
+	}
+	// The first physical write remains blocked, so every later publisher has a
+	// chance to wait at the writer before it performs its immediate drain.
+	time.Sleep(20 * time.Millisecond)
+	close(sink.release)
+	for index := 0; index < pushes; index++ {
+		if err := <-errorsByPublish; err != nil {
+			t.Fatalf("publish %d: %v", index, err)
+		}
+	}
+
+	frames := sink.snapshot()
+	if len(frames) != 2 {
+		t.Fatalf("physical frames = %d, want first in-flight push plus one queued container", len(frames))
+	}
+	if got := store.saveCount(); got != len(frames) {
+		t.Fatalf("session saves = %d, want one per physical frame (%d)", got, len(frames))
+	}
+	decodedPushes := 0
+	for _, frame := range frames {
+		decodedPushes += countPublishedPushes(t, authKey, frame)
+	}
+	if decodedPushes != pushes {
+		t.Fatalf("decoded pushes = %d, want %d", decodedPushes, pushes)
+	}
+	snapshot, err := lease.Snapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.ServerSeqNo != pushes {
+		t.Fatalf("server sequence = %d, want %d content pushes", snapshot.ServerSeqNo, pushes)
 	}
 }
 

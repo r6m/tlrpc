@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"sync"
 	"time"
 
@@ -23,7 +24,12 @@ var (
 	ErrEncodedPayloadTooLarge  = errors.New("runtime: encoded payload exceeds limit")
 )
 
-const DefaultMaxEncodedPayloadBytes = 16 << 20
+const (
+	DefaultMaxEncodedPayloadBytes = 16 << 20
+	maxOpportunisticPushBatch     = 64
+	messageContainerHeaderBytes   = 8
+	messageContainerChildBytes    = 16
+)
 
 type FrameSink interface {
 	WriteFrame(ctx context.Context, frame []byte) error
@@ -205,29 +211,112 @@ func (w *Writer) run() {
 		_ = w.sink.Close()
 		w.closeOnce.Do(func() { close(w.done) })
 	}()
+	var pending *writerRequest
 	for {
-		select {
-		case <-w.ctx.Done():
-			return
-		case <-w.lease.Context().Done():
-			w.cancel(context.Cause(w.lease.Context()))
-			return
-		case request := <-w.requests:
-			response, stop, fatal := w.processRequest(request)
-			request.reply <- response
-			if fatal != nil {
-				w.lease.Retire(fatal)
-				w.cancel(fatal)
+		var request writerRequest
+		if pending != nil {
+			select {
+			case <-w.ctx.Done():
 				return
+			case <-w.lease.Context().Done():
+				w.cancel(context.Cause(w.lease.Context()))
+				return
+			default:
 			}
-			if stop {
-				cause := request.intent.(Close).Cause
-				w.lease.Retire(cause)
-				w.cancel(cause)
+			request = *pending
+			pending = nil
+		} else {
+			select {
+			case <-w.ctx.Done():
 				return
+			case <-w.lease.Context().Done():
+				w.cancel(context.Cause(w.lease.Context()))
+				return
+			case request = <-w.requests:
 			}
 		}
+
+		requests, next := w.collectPushRequests(request)
+		pending = next
+		response, stop, fatal := w.processRequests(requests)
+		for _, current := range requests {
+			current.reply <- response
+		}
+		if fatal != nil {
+			w.lease.Retire(fatal)
+			w.cancel(fatal)
+			return
+		}
+		if stop {
+			cause := request.intent.(Close).Cause
+			w.lease.Retire(cause)
+			w.cancel(cause)
+			return
+		}
 	}
+}
+
+func (w *Writer) collectPushRequests(first writerRequest) ([]writerRequest, *writerRequest) {
+	requests := []writerRequest{first}
+	firstPush, ok := pushRequest(first)
+	if !ok || !writerContextComparable(first.ctx) {
+		return requests, nil
+	}
+	firstOverhead := messageContainerHeaderBytes + messageContainerChildBytes
+	if w.maxEncodedBytes < firstOverhead || len(firstPush.Body) > w.maxEncodedBytes-firstOverhead {
+		return requests, nil
+	}
+	encodedBytes := firstOverhead + len(firstPush.Body)
+	for len(requests) < maxOpportunisticPushBatch {
+		select {
+		case next := <-w.requests:
+			nextPush, compatible := pushRequest(next)
+			remaining := w.maxEncodedBytes - encodedBytes
+			if !compatible || !sameWriterContext(first.ctx, next.ctx) || remaining < messageContainerChildBytes || len(nextPush.Body) > remaining-messageContainerChildBytes {
+				return requests, &next
+			}
+			encodedBytes += messageContainerChildBytes + len(nextPush.Body)
+			requests = append(requests, next)
+		default:
+			return requests, nil
+		}
+	}
+	return requests, nil
+}
+
+func (w *Writer) processRequests(requests []writerRequest) (writerResponse, bool, error) {
+	if len(requests) == 1 {
+		return w.processRequest(requests[0])
+	}
+	items := make([]Intent, len(requests))
+	for index, request := range requests {
+		items[index] = request.intent
+	}
+	stop, err := w.process(requests[0].ctx, Batch{Items: items})
+	return writerResponse{err: err}, stop, err
+}
+
+func pushRequest(request writerRequest) (Push, bool) {
+	if request.operation != writerOperationSubmit {
+		return Push{}, false
+	}
+	push, ok := request.intent.(Push)
+	return push, ok
+}
+
+func writerContextComparable(ctx context.Context) bool {
+	if ctx == nil {
+		return false
+	}
+	typeOf := reflect.TypeOf(ctx)
+	return typeOf != nil && typeOf.Comparable()
+}
+
+func sameWriterContext(first, second context.Context) bool {
+	if !writerContextComparable(first) || reflect.TypeOf(first) != reflect.TypeOf(second) || !writerContextComparable(second) {
+		return false
+	}
+	return first == second
 }
 
 func (w *Writer) processRequest(request writerRequest) (writerResponse, bool, error) {

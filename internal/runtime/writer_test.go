@@ -138,6 +138,112 @@ func TestWriterPersistsResponseAndAcknowledgementBatchOnceAndRetainsReplay(t *te
 	}
 }
 
+func TestWriterCollectsOnlyCompatibleAlreadyQueuedPushes(t *testing.T) {
+	ctx := context.Background()
+	w := &Writer{requests: make(chan writerRequest, 3), maxEncodedBytes: 48}
+	w.requests <- writerRequest{ctx: ctx, operation: writerOperationSubmit, intent: Push{Body: constructorBody(2)}}
+	w.requests <- writerRequest{ctx: ctx, operation: writerOperationSubmit, intent: Push{Body: constructorBody(3)}}
+	w.requests <- writerRequest{ctx: ctx, operation: writerOperationAcknowledge}
+
+	requests, pending := w.collectPushRequests(writerRequest{ctx: ctx, operation: writerOperationSubmit, intent: Push{Body: constructorBody(1)}})
+	if len(requests) != 2 {
+		t.Fatalf("collected pushes = %d, want exact-size pair", len(requests))
+	}
+	if pending == nil || pending.operation != writerOperationSubmit || binaryConstructor(pending.intent.(Push).Body) != 3 {
+		t.Fatalf("size-bound pending request = %#v, want third push", pending)
+	}
+
+	w.requests = make(chan writerRequest, 1)
+	w.requests <- writerRequest{ctx: ctx, operation: writerOperationAcknowledge}
+	requests, pending = w.collectPushRequests(writerRequest{ctx: ctx, operation: writerOperationSubmit, intent: Push{Body: constructorBody(1)}})
+	if len(requests) != 1 || pending == nil || pending.operation != writerOperationAcknowledge {
+		t.Fatalf("incompatible boundary = requests:%d pending:%#v", len(requests), pending)
+	}
+}
+
+func TestWriterPushBatchContextComparisonIsSafeAndExact(t *testing.T) {
+	first := context.WithValue(context.Background(), struct{ name string }{"key"}, "first")
+	second := context.WithValue(context.Background(), struct{ name string }{"key"}, "second")
+	if sameWriterContext(first, second) {
+		t.Fatal("different context identities were considered compatible")
+	}
+	if !sameWriterContext(first, first) {
+		t.Fatal("same context identity was not considered compatible")
+	}
+	uncomparable := nonComparableWriterContext{Context: context.Background(), values: []int{1}}
+	if sameWriterContext(uncomparable, uncomparable) {
+		t.Fatal("non-comparable context was considered compatible")
+	}
+}
+
+func TestWriterPushBatchIsBounded(t *testing.T) {
+	ctx := context.Background()
+	w := &Writer{requests: make(chan writerRequest, maxOpportunisticPushBatch), maxEncodedBytes: DefaultMaxEncodedPayloadBytes}
+	for index := 0; index < maxOpportunisticPushBatch; index++ {
+		w.requests <- writerRequest{ctx: ctx, operation: writerOperationSubmit, intent: Push{Body: constructorBody(uint32(index + 2))}}
+	}
+	requests, pending := w.collectPushRequests(writerRequest{ctx: ctx, operation: writerOperationSubmit, intent: Push{Body: constructorBody(1)}})
+	if len(requests) != maxOpportunisticPushBatch || pending != nil {
+		t.Fatalf("collected batch = %d pending:%#v, want bounded %d", len(requests), pending, maxOpportunisticPushBatch)
+	}
+	if len(w.requests) != 1 {
+		t.Fatalf("queued requests after bounded collect = %d, want 1", len(w.requests))
+	}
+}
+
+func TestWriterPushBatchFailureCompletesMembersAndPendingRequest(t *testing.T) {
+	wantErr := errors.New("batched save failed")
+	store := &failingSaveStore{Store: session.NewMemoryStore(), err: wantErr}
+	var authKey crypto.AuthKey
+	for index := range authKey {
+		authKey[index] = byte(index + 1)
+	}
+	key := session.SessionKey{AuthKeyID: authKey.ID(), SessionID: 99}
+	lease, err := session.NewLocalCoordinator(store).Acquire(context.Background(), key, session.Snapshot{AuthKeyID: key.AuthKeyID, SessionID: key.SessionID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lease.Release()
+	retained, err := reliability.New(reliability.Config{Capacity: 16, TTL: time.Minute})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writerCtx, cancel := context.WithCancelCause(context.Background())
+	w := &Writer{
+		lease: lease, authKey: authKey, sink: &recordingFrameSink{},
+		messageIDs: &fixedMessageIDs{next: 100}, reliability: retained, now: time.Now,
+		maxEncodedBytes: DefaultMaxEncodedPayloadBytes, ctx: writerCtx, cancel: cancel,
+		requests: make(chan writerRequest, 3), done: make(chan struct{}),
+	}
+
+	results := make([]chan writerResponse, 3)
+	requests := []writerRequest{
+		{operation: writerOperationSubmit, intent: Push{Body: constructorBody(1)}},
+		{operation: writerOperationSubmit, intent: Push{Body: constructorBody(2)}},
+		{operation: writerOperationInspect, messageID: 1},
+	}
+	for index := range requests {
+		results[index] = make(chan writerResponse, 1)
+		request := requests[index]
+		go func() { results[index] <- w.request(context.Background(), request) }()
+		waitWriterQueueLength(t, w.requests, index+1)
+	}
+	go w.run()
+	for index, result := range results {
+		select {
+		case response := <-result:
+			if !errors.Is(response.err, wantErr) {
+				t.Fatalf("request %d error = %v, want batched failure", index, response.err)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("request %d remained stranded after batch failure", index)
+		}
+	}
+	if !errors.Is(context.Cause(lease.Context()), wantErr) {
+		t.Fatalf("lease cause = %v, want batched failure", context.Cause(lease.Context()))
+	}
+}
+
 func TestWriterPersistenceFailureWritesNothingAndRetiresLease(t *testing.T) {
 	wantErr := errors.New("save failed")
 	store := &failingSaveStore{Store: session.NewMemoryStore(), err: wantErr}
@@ -350,6 +456,31 @@ func newWriterHarnessWithMaxEncodedBytes(t *testing.T, store session.Store, sink
 
 type fixedMessageIDs struct {
 	next int64
+}
+
+type nonComparableWriterContext struct {
+	context.Context
+	values []int
+}
+
+func (c nonComparableWriterContext) Value(key any) any {
+	if key == "values" {
+		return c.values
+	}
+	return c.Context.Value(key)
+}
+
+var _ context.Context = nonComparableWriterContext{}
+
+func waitWriterQueueLength(t *testing.T, requests chan writerRequest, want int) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for len(requests) != want {
+		if time.Now().After(deadline) {
+			t.Fatalf("writer queue length = %d, want %d", len(requests), want)
+		}
+		time.Sleep(time.Millisecond)
+	}
 }
 
 func (s *fixedMessageIDs) Next() int64 {

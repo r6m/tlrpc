@@ -17,7 +17,7 @@ type recoveryPushSubmit func(context.Context, Intent) error
 // It gates only Push intents; protected replies use the normal outcome path.
 type recoveryPushBarrier struct {
 	mu      sync.Mutex
-	orderMu sync.Mutex
+	orderMu sync.RWMutex
 
 	ctx      context.Context
 	maxCount int
@@ -78,25 +78,25 @@ func (b *recoveryPushBarrier) push(ctx context.Context, body []byte) error {
 	}
 	b.mu.Unlock()
 
-	b.orderMu.Lock()
+	b.orderMu.RLock()
 	b.mu.Lock()
 	if b.closed {
 		err := b.closeCauseLocked()
 		b.mu.Unlock()
-		b.orderMu.Unlock()
+		b.orderMu.RUnlock()
 		return err
 	}
 	if b.active != 0 || b.draining {
 		err := b.enqueueLocked(body)
 		b.mu.Unlock()
-		b.orderMu.Unlock()
+		b.orderMu.RUnlock()
 		b.retireOverflow(err)
 		return err
 	}
 	b.mu.Unlock()
 	copyBody := append([]byte(nil), body...)
 	err := b.submit(ctx, Push{Body: copyBody})
-	b.orderMu.Unlock()
+	b.orderMu.RUnlock()
 	return err
 }
 

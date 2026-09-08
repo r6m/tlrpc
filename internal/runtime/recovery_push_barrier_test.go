@@ -51,6 +51,75 @@ func TestRecoveryPushBarrierAcceptsAndDrainsAfterReply(t *testing.T) {
 	}
 }
 
+func TestRecoveryPushBarrierAllowsConcurrentInactivePushesBeforeProtectedBegin(t *testing.T) {
+	started := make(chan string, 3)
+	release := make(chan struct{})
+	barrier := newRecoveryPushBarrier(context.Background(), 4, 64, func(_ context.Context, intent Intent) error {
+		value := string(intent.(Push).Body)
+		started <- value
+		if value != "third" {
+			<-release
+		}
+		return nil
+	}, nil)
+
+	pushes := make(chan error, 3)
+	go func() { pushes <- barrier.push(context.Background(), []byte("first")) }()
+	go func() { pushes <- barrier.push(context.Background(), []byte("second")) }()
+	seen := map[string]bool{}
+	for len(seen) != 2 {
+		select {
+		case value := <-started:
+			seen[value] = true
+		case <-time.After(time.Second):
+			t.Fatal("inactive pushes did not submit concurrently")
+		}
+	}
+
+	tokenReady := make(chan *recoveryPushBarrierToken, 1)
+	go func() { tokenReady <- barrier.begin() }()
+	// Give the exclusive begin call a chance to wait behind both in-flight
+	// readers. sync.RWMutex then prevents a newer direct push from passing it.
+	time.Sleep(20 * time.Millisecond)
+	go func() { pushes <- barrier.push(context.Background(), []byte("third")) }()
+	select {
+	case <-pushes:
+		t.Fatal("newer push passed a waiting protected begin")
+	case <-time.After(20 * time.Millisecond):
+	}
+	close(release)
+	for index := 0; index < 2; index++ {
+		if err := <-pushes; err != nil {
+			t.Fatal(err)
+		}
+	}
+	var token *recoveryPushBarrierToken
+	select {
+	case token = <-tokenReady:
+	case <-time.After(time.Second):
+		t.Fatal("protected begin did not resume after direct pushes")
+	}
+	if err := <-pushes; err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case value := <-started:
+		t.Fatalf("queued push submitted before protected reply: %q", value)
+	default:
+	}
+	if err := token.finish(func() error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case value := <-started:
+		if value != "third" {
+			t.Fatalf("drained push = %q, want third", value)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("queued push did not drain after protected reply")
+	}
+}
+
 func TestRecoveryPushBarrierSerializesNewProtectedRequestBehindDrain(t *testing.T) {
 	firstStarted := make(chan struct{})
 	releaseFirst := make(chan struct{})
