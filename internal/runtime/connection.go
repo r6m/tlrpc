@@ -219,7 +219,18 @@ func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.Une
 		return err
 	}
 	if c.authorization != nil {
-		return ErrConnectionProtocol
+		// PFS clients may generate the permanent and temporary keys serially
+		// on one plaintext connection before sending their first encrypted RPC.
+		if len(message.Data) != 20 {
+			return ErrConnectionProtocol
+		}
+		constructor := binary.LittleEndian.Uint32(message.Data)
+		if constructor != 0xbe7e8ef1 && constructor != 0x60469778 {
+			return ErrConnectionProtocol
+		}
+		c.handshakeSession.Close()
+		c.handshakeSession = nil
+		c.authorization = nil
 	}
 	if c.handshakeSession == nil {
 		session, err := c.config.Handshake.NewSession()
@@ -293,8 +304,14 @@ func (c *Connection) sessionFor(ctx context.Context, decoded DecodedFrame) (*con
 	c.authKeyID = decoded.AuthKeyID
 	c.authKeyPinned = true
 	if policy, ok := c.config.AuthKeys.(connectionAuthKeyCachePolicy); ok && policy.CacheAuthKeyForConnection() {
-		c.authKey = decoded.AuthKey
-		c.authKeyCached = true
+		cache := true
+		if policy, ok := c.config.AuthKeys.(interface{ CacheAuthKeyIDForConnection(crypto.KeyID) bool }); ok {
+			cache = policy.CacheAuthKeyIDForConnection(decoded.AuthKeyID)
+		}
+		if cache {
+			c.authKey = decoded.AuthKey
+			c.authKeyCached = true
+		}
 	}
 	c.sessions[key] = actor
 	actor.start()

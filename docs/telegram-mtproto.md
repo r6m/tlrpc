@@ -55,7 +55,7 @@ obfuscated2, and applies the origin policy documented in
 
 ## Authorization-key handshake
 
-Runtime v2 owns the permanent authorization-key exchange:
+Runtime v2 owns permanent and temporary authorization-key exchanges:
 
 ```text
 req_pq_multi -> resPQ -> req_DH_params -> server_DH_params_ok
@@ -69,6 +69,29 @@ permission protections documented in
 [implementation.md](./implementation.md#rsa-server-keys).
 
 An auth key is cryptographic identity; it is not an application user login.
+
+Temporary `p_q_inner_data_temp_dc` exchanges require a
+`crypto.TemporaryAuthKeyManager`. Temporary secrets remain in volatile memory;
+their TTL must be positive and at most 24 hours. A generated application's
+`auth.bindTempAuthKey` service can call `tlrpc.BindTemporaryAuthKey` to verify
+the special MTProto 1.0 binding envelope, including both key IDs, session ID,
+message ID, nonce, and expiry. Ordinary traffic remains MTProto 2.0. Binding
+cannot extend the generated key lifetime or switch an existing binding to a
+different permanent key. The application still owns login identity resolution
+and must reject unbound temporary keys on protected RPCs.
+
+A plaintext connection may perform successive permanent and temporary
+exchanges before its first encrypted frame. An unfinished exchange may restart
+with fresh `req_pq` nonces. Each completed exchange remains single-use, and
+the first encrypted frame still pins the connection's key. Temporary-key
+connections close at expiry and check metadata before outbound frames, so
+shortened lifetimes and revocations also apply to server pushes.
+
+`initConnection` accepts optional `inputClientProxy` and TL `JSONValue` params.
+These fields are decoded before forwarding the wrapped query; they are
+client-supplied metadata, not trusted routing or authorization instructions.
+JSON decoding is bounded to 16 levels and 1024 values in addition to the
+normal decode budgets.
 
 During key exchange, Runtime v2 validates and consumes plaintext `msgs_ack`
 controls without replying or advancing the handshake. This includes Android's

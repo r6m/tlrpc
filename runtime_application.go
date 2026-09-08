@@ -117,6 +117,7 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 	request.Info.Layer = layer
 	collector := &runtimeMutationCollector{}
 	ctx = runtimeApplicationHandlerContext(ctx, request, collector)
+	ctx = context.WithValue(ctx, temporaryKeyContextKey{}, temporaryKeyRequest{keys: a.server.authKeys, messageID: requestMessageID})
 	if err := a.server.acquireHandler(ctx); err != nil {
 		return runtimeApplicationFailure(requestMessageID, err), nil
 	}

@@ -11,6 +11,7 @@ import (
 	"io"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/r6m/tlrpc/crypto"
 	"github.com/r6m/tlrpc/mtproto"
@@ -72,11 +73,12 @@ type dhState struct {
 type Session struct {
 	engine *Engine
 
-	mu          sync.Mutex
-	stage       stage
-	nonce       [16]byte
-	serverNonce [16]byte
-	dh          *dhState
+	mu                 sync.Mutex
+	stage              stage
+	nonce              [16]byte
+	serverNonce        [16]byte
+	dh                 *dhState
+	temporaryExpiresAt time.Time
 }
 
 // Close releases the engine capacity held by the session. It is idempotent.
@@ -118,10 +120,10 @@ func (s *Session) Handle(ctx context.Context, messageID int64, data []byte) (Out
 	var err error
 	switch constructorID {
 	case reqPQID, reqPQMultiID:
-		if s.stage != stageFresh {
-			err = ErrInvalidHandshake
-			break
-		}
+		// A client may restart key exchange on an existing plaintext connection.
+		// Discard the old DH attempt before issuing fresh server randomness.
+		s.dh = nil
+		s.temporaryExpiresAt = time.Time{}
 		output.Response, err = s.handleReqPQ(data)
 	case reqDHParamsID:
 		if s.stage != stagePQIssued {
@@ -269,6 +271,12 @@ func (s *Session) handleReqDHParams(data []byte) ([]byte, error) {
 	if err := validatePQFactors(inner.p, inner.q, inner.pq); err != nil {
 		return nil, err
 	}
+	if inner.expiresIn != 0 {
+		if _, ok := s.engine.authKeys.(crypto.TemporaryAuthKeyManager); !ok {
+			return nil, crypto.ErrTemporaryKeyUnsupported
+		}
+		s.temporaryExpiresAt = s.engine.now().Add(time.Duration(inner.expiresIn) * time.Second)
+	}
 
 	privateA, err := s.generatePrivateExponent()
 	if err != nil {
@@ -386,8 +394,17 @@ func (s *Session) handleSetClientDHParams(data []byte, dh *dhState) (Output, err
 	var authKey crypto.AuthKey
 	copy(authKey[:], authKeyBytes)
 	authKeyID := authKey.ID()
-	if err := s.engine.authKeys.Put(authKeyID, authKey); err != nil {
-		return Output{}, err
+	var storeErr error
+	if !s.temporaryExpiresAt.IsZero() {
+		if !s.engine.now().Before(s.temporaryExpiresAt) {
+			return Output{}, crypto.ErrTemporaryKeyExpiry
+		}
+		storeErr = s.engine.authKeys.(crypto.TemporaryAuthKeyManager).PutTemporary(authKeyID, authKey, s.temporaryExpiresAt)
+	} else {
+		storeErr = s.engine.authKeys.Put(authKeyID, authKey)
+	}
+	if storeErr != nil {
+		return Output{}, storeErr
 	}
 	serverSalt := computeServerSalt(dh.newNonce, serverNonce)
 
@@ -456,6 +473,7 @@ func (s *Session) encryptServerDH(newNonce [32]byte, serverNonce [16]byte, plain
 }
 
 type pqInnerData struct {
+	expiresIn   int32
 	pq          []byte
 	p           []byte
 	q           []byte
@@ -502,7 +520,7 @@ func parsePQInnerData(data []byte) (pqInnerData, error) {
 			if _, err = mtproto.ReadInt32(r); err != nil {
 				continue
 			}
-			if _, err = mtproto.ReadInt32(r); err != nil {
+			if inner.expiresIn, err = mtproto.ReadInt32(r); err != nil || inner.expiresIn <= 0 || time.Duration(inner.expiresIn)*time.Second > crypto.MaxTemporaryAuthKeyLifetime {
 				continue
 			}
 		}

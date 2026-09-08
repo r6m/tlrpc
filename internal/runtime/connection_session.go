@@ -94,10 +94,14 @@ func newConnectionSession(ctx context.Context, owner *Connection, decoded Decode
 	if err != nil {
 		return nil, err
 	}
+	sink, err := temporaryKeySink(lease.Context(), owner, decoded.AuthKeyID)
+	if err != nil {
+		return nil, err
+	}
 	writer, err := NewWriter(lease.Context(), WriterConfig{
 		Lease:           lease,
 		AuthKey:         decoded.AuthKey,
-		Sink:            owner.frameSink,
+		Sink:            sink,
 		MessageIDs:      owner.messageIDs,
 		Reliability:     reliability.outboundStore(),
 		Now:             owner.now,

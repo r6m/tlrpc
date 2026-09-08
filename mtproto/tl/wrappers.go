@@ -51,6 +51,8 @@ type InitConnection struct {
 	SystemLangCode string
 	LangPack       string
 	LangCode       string
+	Proxy          *InputClientProxy
+	Params         *JSONValue
 	QueryRaw       []byte
 }
 
@@ -84,9 +86,8 @@ func (m *InitConnection) SerializeTL(w io.Writer) error {
 	if err := mtproto.WriteString(w, m.LangCode); err != nil {
 		return err
 	}
-	// Optional proxy/params are intentionally unsupported in this minimal wrapper implementation.
-	if m.Flags&(1<<0) != 0 || m.Flags&(1<<1) != 0 {
-		return fmt.Errorf("initConnection optional proxy/params are not supported")
+	if err := m.writeOptions(w); err != nil {
+		return err
 	}
 	_, err := w.Write(m.QueryRaw)
 	return err
@@ -124,8 +125,8 @@ func (m *InitConnection) DeserializeTL(r io.Reader) error {
 	if m.LangCode, err = mtproto.ReadString(r); err != nil {
 		return err
 	}
-	if m.Flags&(1<<0) != 0 || m.Flags&(1<<1) != 0 {
-		return fmt.Errorf("initConnection optional proxy/params are not supported")
+	if err := m.readOptions(r); err != nil {
+		return err
 	}
 	m.QueryRaw, err = io.ReadAll(r)
 	return err
