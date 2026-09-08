@@ -70,6 +70,12 @@ permission protections documented in
 
 An auth key is cryptographic identity; it is not an application user login.
 
+During key exchange, Runtime v2 validates and consumes plaintext `msgs_ack`
+controls without replying or advancing the handshake. This includes Android's
+acknowledgements before the DH requests and its final `dh_gen_ok`
+acknowledgement. These controls do not alter encrypted-session reliability;
+once the connection binds an encrypted session, plaintext input is rejected.
+
 ### Unknown authorization keys
 
 When an encrypted frame names an authorization key that

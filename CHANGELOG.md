@@ -16,6 +16,16 @@ documentation define future framework behavior.
   of the originating authorization while still updating the user's other
   devices.
 
+## [0.13.1] - 2026-09-08
+
+### Fixed
+
+- Accept validated plaintext `msgs_ack` during authorization-key exchange,
+  including the final `dh_gen_ok` acknowledgement, so Android clients can
+  complete the handshake. Acknowledgements neither advance key exchange nor
+  alter encrypted-session reliability; plaintext remains forbidden after
+  encrypted-session binding.
+
 ## [0.12.1] - 2026-09-01
 
 ### Fixed

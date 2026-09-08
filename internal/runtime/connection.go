@@ -210,7 +210,13 @@ func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.Une
 	c.mu.Lock()
 	bound := len(c.sessions) != 0 || c.authKeyPinned
 	c.mu.Unlock()
-	if bound || c.authorization != nil {
+	if bound {
+		return ErrConnectionProtocol
+	}
+	if handled, err := c.handleHandshakeAcknowledgement(message.Data); handled {
+		return err
+	}
+	if c.authorization != nil {
 		return ErrConnectionProtocol
 	}
 	if c.handshakeSession == nil {
