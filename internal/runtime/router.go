@@ -129,6 +129,9 @@ func (r *Router) DispatchApplication(ctx context.Context, request Request) (Outc
 }
 
 func ValidateOutcome(outcome Outcome) error {
+	if outcome.DisconnectAfter != nil && *outcome.DisconnectAfter < 0 {
+		return ErrInvalidIntent
+	}
 	for _, intent := range outcome.Intents {
 		if err := ValidateIntent(intent); err != nil {
 			return err

@@ -188,6 +188,8 @@ func classifyMessageKind(constructorID uint32) protocol.MessageKind {
 	case mtprototl.MsgsAckID,
 		mtprototl.NewSessionCreatedID,
 		mtprototl.GetFutureSaltsID,
+		mtprototl.PingID,
+		mtprototl.PingDelayDisconnectID,
 		mtprototl.MsgsStateReqID,
 		mtprototl.MsgResendReqID,
 		mtprototl.MsgsStateInfoID:

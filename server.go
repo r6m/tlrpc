@@ -494,7 +494,7 @@ func (s *Server) serveConn(conn transport.Conn) bool {
 		if runErr := runtimeConn.Run(context.Background()); runErr != nil {
 			reason = classifyConnectionClose(runErr, s.stopped())
 			if !s.stopped() && s.logger != nil {
-				s.logger.Error("connection runtime stopped", "error", runErr)
+				s.logger.Error("connection runtime stopped", "connection_id", fmt.Sprintf("%016x", state.id), "transport", runtimeTransportMode(conn), "reason", reason, "error", runErr)
 			}
 		} else if s.stopped() {
 			reason = "shutdown"

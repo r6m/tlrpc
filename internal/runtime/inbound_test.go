@@ -3,6 +3,7 @@ package runtime
 import (
 	"bytes"
 	"errors"
+	"io"
 	"reflect"
 	"testing"
 	"time"
@@ -65,6 +66,34 @@ func TestSessionValidatorTreatsGzipPackedRequestAsContentRelated(t *testing.T) {
 	}
 	if validated.Snapshot.SeqNo != 4 {
 		t.Fatalf("advanced snapshot sequence = %d, want 4", validated.Snapshot.SeqNo)
+	}
+}
+
+func TestSessionValidatorTreatsPingControlsAsNonContentRelated(t *testing.T) {
+	snapshot := inboundSnapshot()
+	validator := newInboundValidator(t, snapshot)
+	controls := []struct {
+		messageID int64
+		body      []byte
+	}{
+		{messageID: inboundMessageID(4), body: serializeInboundControl(t, &mtprototl.Ping{PingID: 1})},
+		{messageID: inboundMessageID(8), body: serializeInboundControl(t, &mtprototl.PingDelayDisconnect{PingID: 2, DisconnectDelay: 75})},
+	}
+	for _, control := range controls {
+		validated, err := validator.Validate(snapshot, &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: control.messageID, SeqNo: 6, Data: control.body,
+		})
+		if err != nil {
+			t.Fatalf("validate %08x: %v", binaryConstructor(control.body), err)
+		}
+		if len(validated.Messages) != 1 || validated.Messages[0].ContentRelated {
+			t.Fatalf("decoded %08x = %+v", binaryConstructor(control.body), validated.Messages)
+		}
+		if validated.Snapshot.SeqNo != snapshot.SeqNo {
+			t.Fatalf("control advanced content sequence from %d to %d", snapshot.SeqNo, validated.Snapshot.SeqNo)
+		}
+		snapshot = validated.Snapshot
 	}
 }
 
@@ -205,4 +234,13 @@ func serializeInboundContainer(t *testing.T, messages []mtprototl.Message) []byt
 		t.Fatalf("serialize container: %v", err)
 	}
 	return buffer.Bytes()
+}
+
+func serializeInboundControl(t *testing.T, value interface{ SerializeTL(io.Writer) error }) []byte {
+	t.Helper()
+	body, err := serializeRuntimeTL(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return body
 }

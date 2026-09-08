@@ -3,6 +3,7 @@ package tl
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"testing"
 
 	"github.com/gotd/td/bin"
@@ -42,6 +43,39 @@ func TestInitConnectionDecodesIndependentClientOptions(t *testing.T) {
 	for i := 4; i < len(b.Buf)-4; i++ {
 		if err := new(InitConnection).DeserializeTL(bytes.NewReader(b.Buf[:i])); err == nil {
 			t.Fatalf("truncated options accepted at %d", i)
+		}
+	}
+}
+
+func TestInitConnectionAndroidEmulatorFlag(t *testing.T) {
+	for _, options := range []bool{false, true} {
+		request := &tg.InitConnectionRequest{APIID: 100001, DeviceModel: "Android", SystemVersion: "16", AppVersion: "1", SystemLangCode: "en", LangPack: "android", LangCode: "en", Query: &tg.HelpGetNearestDCRequest{}}
+		if options {
+			request.SetProxy(tg.InputClientProxy{Address: "localhost", Port: 443})
+			request.SetParams(&tg.JSONObject{Value: []tg.JSONObjectValue{{Key: "tz_offset", Value: &tg.JSONNumber{Value: 12600}}}})
+		}
+		b := &bin.Buffer{}
+		if err := request.Encode(b); err != nil {
+			t.Fatal(err)
+		}
+		// Android's Java getInitFlags adds 1024; its native serializer writes
+		// the flag unchanged without appending an optional field for it.
+		flags := binary.LittleEndian.Uint32(b.Buf[4:]) | 1024
+		binary.LittleEndian.PutUint32(b.Buf[4:], flags)
+		var decoded InitConnection
+		if err := decoded.DeserializeTL(bytes.NewReader(b.Buf)); err != nil {
+			t.Fatalf("Android flags %#x rejected: %v", flags, err)
+		}
+		if decoded.Flags != flags || !bytes.Equal(decoded.QueryRaw, []byte{0x26, 0x30, 0xb3, 0x1f}) {
+			t.Fatalf("flags or query changed: flags=%#x query=%x", decoded.Flags, decoded.QueryRaw)
+		}
+		var encoded bytes.Buffer
+		if err := decoded.SerializeTL(&encoded); err != nil || !bytes.Equal(encoded.Bytes(), b.Buf) {
+			t.Fatalf("Android init round trip failed: %v", err)
+		}
+		binary.LittleEndian.PutUint32(b.Buf[4:], flags|4)
+		if err := decoded.DeserializeTL(bytes.NewReader(b.Buf)); !errors.Is(err, ErrInitConnectionOptions) {
+			t.Fatalf("unknown flag error = %v", err)
 		}
 	}
 }

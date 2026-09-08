@@ -492,7 +492,8 @@ func (s *connectionSession) rejectOverloaded(ctx context.Context, messageIDs []i
 func isRuntimeControlConstructor(constructorID uint32) bool {
 	switch constructorID {
 	case mtprototl.MsgsAckID, mtprototl.MsgsStateReqID, mtprototl.MsgResendReqID,
-		mtprototl.RPCDropAnswerID, mtprototl.GetFutureSaltsID:
+		mtprototl.RPCDropAnswerID, mtprototl.GetFutureSaltsID, mtprototl.PingID,
+		mtprototl.PingDelayDisconnectID:
 		return true
 	default:
 		return false
@@ -567,6 +568,9 @@ func (s *connectionSession) applyOutcome(ctx context.Context, message InboundMes
 		if err := s.writer.Submit(ctx, intent); err != nil {
 			return err
 		}
+	}
+	if outcome.DisconnectAfter != nil {
+		s.owner.resetDisconnectDelay(*outcome.DisconnectAfter)
 	}
 	acknowledged := message.ContentRelated
 	s.reliability.inboundLedger().Complete([]int64{message.MessageID}, acknowledged, len(outcome.Intents) != 0)

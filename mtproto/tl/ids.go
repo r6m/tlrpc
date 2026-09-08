@@ -14,6 +14,9 @@ const (
 	FutureSaltID              uint32 = 0x0949d9dc
 	FutureSaltsID             uint32 = 0xae500895
 	GetFutureSaltsID          uint32 = 0xb921bd04
+	PingID                    uint32 = 0x7abe77ec
+	PingDelayDisconnectID     uint32 = 0xf3427b8c
+	PongID                    uint32 = 0x347773c5
 	BadMsgNotificationID      uint32 = 0xa7eff811
 	BadServerSaltID           uint32 = 0xedab447b
 	MsgResendReqID            uint32 = 0x7d861a08

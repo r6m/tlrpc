@@ -85,6 +85,156 @@ func TestConnectionRoutesGeneratedApplicationThroughSingleWriter(t *testing.T) {
 	}
 }
 
+func TestConnectionPingControlsResetDeferredCloseAndKeepRPCHealthy(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	requestID := inboundMessageID(12)
+	application := &connectionApplicationStub{outcome: Outcome{Intents: []Intent{
+		RPCResult{RequestMessageID: requestID, Body: constructorBody(0x20202020)},
+	}}}
+	harness := newConnectionHarness(t, now, application, 4, nil)
+	defer harness.connection.shutdown(context.Canceled)
+
+	handle := func(messageID int64, sequenceNo int32, body []byte) {
+		t.Helper()
+		if err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+			Encrypted: &mtproto.InnerData{
+				Salt: inboundSalt, SessionID: inboundSessionID,
+				MsgID: messageID, SeqNo: sequenceNo, Data: body,
+			},
+			AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+		}); err != nil {
+			t.Fatalf("handle %08x: %v", binaryConstructor(body), err)
+		}
+	}
+	assertPong := func(frameIndex int, requestMessageID, pingID int64) {
+		t.Helper()
+		frames := harness.transport.writtenFrames()
+		if len(frames) <= frameIndex {
+			t.Fatalf("written frames = %d, want index %d", len(frames), frameIndex)
+		}
+		inner := decryptWriterFrame(t, harness.authKey, frames[frameIndex])
+		pong := &mtprototl.Pong{}
+		if err := decodeControl(inner.Data, pong); err != nil {
+			t.Fatalf("decode pong frame %d: %v", frameIndex, err)
+		}
+		if pong.MsgID != requestMessageID || pong.PingID != pingID || inner.SeqNo&1 != 0 {
+			t.Fatalf("pong frame %d = inner=%+v pong=%+v", frameIndex, inner, pong)
+		}
+	}
+
+	handle(inboundMessageID(4), 6, encodeControlBody(t, &mtprototl.PingDelayDisconnect{PingID: 101, DisconnectDelay: 1}))
+	waitForWrittenFrames(t, harness.transport, 1)
+	assertPong(0, inboundMessageID(4), 101)
+
+	// Reset late enough that the original timer would expire before the RPC.
+	time.Sleep(700 * time.Millisecond)
+	handle(inboundMessageID(8), 6, encodeControlBody(t, &mtprototl.PingDelayDisconnect{PingID: 102, DisconnectDelay: 1}))
+	waitForWrittenFrames(t, harness.transport, 2)
+	assertPong(1, inboundMessageID(8), 102)
+
+	time.Sleep(500 * time.Millisecond)
+	if countConnectionEvents(harness.transport.recordedEvents(), "close") != 0 {
+		t.Fatalf("original deferred-close timer was not reset: events=%v", harness.transport.recordedEvents())
+	}
+	handle(requestID, 1, constructorBody(0x10101010))
+	waitForWrittenFrames(t, harness.transport, 4)
+	application.mu.Lock()
+	gotRequest := application.request
+	application.mu.Unlock()
+	if gotRequest.Message.ConstructorID != 0x10101010 || gotRequest.Message.MessageID != requestID {
+		t.Fatalf("application request = %+v", gotRequest.Message)
+	}
+
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	for countConnectionEvents(harness.transport.recordedEvents(), "close") == 0 {
+		select {
+		case <-time.After(time.Millisecond):
+		case <-deadline.C:
+			t.Fatalf("deferred close did not expire: events=%v", harness.transport.recordedEvents())
+		}
+	}
+}
+
+func TestConnectionDeferredCloseWritesPongBeforeZeroDelay(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	harness := newConnectionHarness(t, now, &connectionApplicationStub{}, 1, nil)
+	defer harness.connection.shutdown(context.Canceled)
+	messageID := inboundMessageID(4)
+	if err := harness.connection.handleEncrypted(context.Background(), DecodedFrame{
+		Encrypted: &mtproto.InnerData{
+			Salt: inboundSalt, SessionID: inboundSessionID,
+			MsgID: messageID, SeqNo: 6,
+			Data: encodeControlBody(t, &mtprototl.PingDelayDisconnect{PingID: 101, DisconnectDelay: 0}),
+		},
+		AuthKeyID: harness.authKey.ID(), AuthKey: harness.authKey,
+	}); err != nil {
+		t.Fatalf("handle zero-delay ping: %v", err)
+	}
+	waitForWrittenFrames(t, harness.transport, 1)
+	inner := decryptWriterFrame(t, harness.authKey, harness.transport.writtenFrames()[0])
+	pong := &mtprototl.Pong{}
+	if err := decodeControl(inner.Data, pong); err != nil {
+		t.Fatalf("decode pong: %v", err)
+	}
+	if pong.MsgID != messageID || pong.PingID != 101 {
+		t.Fatalf("pong = %+v", pong)
+	}
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	for countConnectionEvents(harness.transport.recordedEvents(), "close") == 0 {
+		select {
+		case <-time.After(time.Millisecond):
+		case <-deadline.C:
+			t.Fatalf("zero-delay close did not fire: events=%v", harness.transport.recordedEvents())
+		}
+	}
+}
+
+func TestConnectionShutdownStopsDeferredCloseTimer(t *testing.T) {
+	harness := newConnectionHarness(t, time.Unix(inboundNowSeconds, 0).UTC(), &connectionApplicationStub{}, 1, nil)
+	harness.connection.resetDisconnectDelay(50 * time.Millisecond)
+	harness.connection.shutdown(context.Canceled)
+	time.Sleep(100 * time.Millisecond)
+	if got := countConnectionEvents(harness.transport.recordedEvents(), "close"); got != 1 {
+		t.Fatalf("close calls after shutdown = %d, want one", got)
+	}
+}
+
+func TestConnectionDeferredCloseExpiryPreventsRacingReset(t *testing.T) {
+	harness := newConnectionHarness(t, time.Unix(inboundNowSeconds, 0).UTC(), &connectionApplicationStub{}, 1, nil)
+	defer harness.connection.shutdown(context.Canceled)
+	harness.connection.resetDisconnectDelay(time.Hour)
+	harness.connection.disconnectMu.Lock()
+	generation := harness.connection.disconnectGeneration
+	harness.connection.disconnectMu.Unlock()
+
+	// Expiry wins the timer generation before a concurrent reset can acquire it.
+	harness.connection.expireDisconnectDelay(generation)
+	harness.connection.resetDisconnectDelay(time.Hour)
+	harness.connection.disconnectMu.Lock()
+	closed := harness.connection.disconnectClosed
+	currentGeneration := harness.connection.disconnectGeneration
+	timer := harness.connection.disconnectTimer
+	harness.connection.disconnectMu.Unlock()
+	if !closed || currentGeneration != generation || timer != nil {
+		t.Fatalf("expiry allowed a reset: closed=%t generation=%d want=%d timer=%v", closed, currentGeneration, generation, timer)
+	}
+	if got := countConnectionEvents(harness.transport.recordedEvents(), "close"); got != 1 {
+		t.Fatalf("close calls after expiry = %d, want one", got)
+	}
+}
+
+func countConnectionEvents(events []string, want string) int {
+	count := 0
+	for _, event := range events {
+		if event == want {
+			count++
+		}
+	}
+	return count
+}
+
 func TestOutcomeWriteIntentsBatchesOnlyTrailingResponseAndAcknowledgement(t *testing.T) {
 	requestID := int64(41)
 	response := RPCResult{RequestMessageID: requestID, Body: constructorBody(0x11111111)}

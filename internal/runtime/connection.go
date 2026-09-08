@@ -103,6 +103,11 @@ type Connection struct {
 	authKeyCached bool
 	admission     *connectionRequestAdmission
 
+	disconnectMu         sync.Mutex
+	disconnectTimer      *time.Timer
+	disconnectGeneration uint64
+	disconnectClosed     bool
+
 	handshakeSession *handshake.Session
 	authorization    *handshake.Result
 }
@@ -213,7 +218,7 @@ func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.Une
 	bound := len(c.sessions) != 0 || c.authKeyPinned
 	c.mu.Unlock()
 	if bound {
-		return ErrConnectionProtocol
+		return fmt.Errorf("%w: plaintext_after_encrypted", ErrConnectionProtocol)
 	}
 	if handled, err := c.handleHandshakeAcknowledgement(message.Data); handled {
 		return err
@@ -222,11 +227,11 @@ func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.Une
 		// PFS clients may generate the permanent and temporary keys serially
 		// on one plaintext connection before sending their first encrypted RPC.
 		if len(message.Data) != 20 {
-			return ErrConnectionProtocol
+			return fmt.Errorf("%w: unexpected_plaintext_after_handshake", ErrConnectionProtocol)
 		}
 		constructor := binary.LittleEndian.Uint32(message.Data)
 		if constructor != 0xbe7e8ef1 && constructor != 0x60469778 {
-			return ErrConnectionProtocol
+			return fmt.Errorf("%w: unexpected_plaintext_after_handshake", ErrConnectionProtocol)
 		}
 		c.handshakeSession.Close()
 		c.handshakeSession = nil
@@ -264,7 +269,7 @@ func (c *Connection) handleUnencrypted(ctx context.Context, message *mtproto.Une
 func (c *Connection) handleEncrypted(ctx context.Context, decoded DecodedFrame) error {
 	inner := decoded.Encrypted
 	if inner == nil {
-		return ErrConnectionProtocol
+		return fmt.Errorf("%w: missing_encrypted_inner_data", ErrConnectionProtocol)
 	}
 	if c.authorization != nil && c.authorization.AuthKeyID != decoded.AuthKeyID {
 		return ErrHandshakeAuthKeyMismatch
@@ -279,14 +284,14 @@ func (c *Connection) handleEncrypted(ctx context.Context, decoded DecodedFrame) 
 func (c *Connection) sessionFor(ctx context.Context, decoded DecodedFrame) (*connectionSession, error) {
 	inner := decoded.Encrypted
 	if inner == nil {
-		return nil, ErrConnectionProtocol
+		return nil, fmt.Errorf("%w: missing_encrypted_inner_data", ErrConnectionProtocol)
 	}
 	key := session.SessionKey{AuthKeyID: decoded.AuthKeyID, SessionID: inner.SessionID}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.authKeyPinned && c.authKeyID != decoded.AuthKeyID {
-		return nil, ErrConnectionProtocol
+		return nil, fmt.Errorf("%w: different_auth_key", ErrConnectionProtocol)
 	}
 	if _, lost := c.poisoned[key]; lost {
 		return nil, session.ErrLeaseLost
@@ -347,7 +352,7 @@ func (s connectionAuthKeySource) Get(keyID crypto.KeyID) (crypto.AuthKey, error)
 		return source.Get(keyID)
 	}
 	if pinnedID != keyID {
-		return crypto.AuthKey{}, ErrConnectionProtocol
+		return crypto.AuthKey{}, fmt.Errorf("%w: different_auth_key", ErrConnectionProtocol)
 	}
 	if cached {
 		return pinnedKey, nil
@@ -404,11 +409,65 @@ func (c *Connection) requestInfo(snapshot session.Snapshot, leaseGeneration int6
 	return info
 }
 
+// resetDisconnectDelay schedules the physical transport to close after a
+// ping_delay_disconnect interval. Reset and expiry are linearized under
+// disconnectMu: whichever wins first prevents the other from changing the
+// connection's terminal state.
+func (c *Connection) resetDisconnectDelay(delay time.Duration) {
+	if c == nil || c.config.Conn == nil {
+		return
+	}
+	c.disconnectMu.Lock()
+	if c.disconnectClosed {
+		c.disconnectMu.Unlock()
+		return
+	}
+	c.disconnectGeneration++
+	generation := c.disconnectGeneration
+	if c.disconnectTimer != nil {
+		c.disconnectTimer.Stop()
+	}
+	c.disconnectTimer = time.AfterFunc(delay, func() { c.expireDisconnectDelay(generation) })
+	c.disconnectMu.Unlock()
+}
+
+func (c *Connection) expireDisconnectDelay(generation uint64) {
+	if c == nil || c.config.Conn == nil {
+		return
+	}
+	c.disconnectMu.Lock()
+	if c.disconnectClosed || c.disconnectGeneration != generation {
+		c.disconnectMu.Unlock()
+		return
+	}
+	// Mark the terminal state before releasing the lock. A racing reset must
+	// observe it and cannot refresh a connection whose close is already due.
+	c.disconnectClosed = true
+	c.disconnectTimer = nil
+	c.disconnectMu.Unlock()
+	_ = c.config.Conn.Close()
+}
+
+func (c *Connection) stopDisconnectDelay() {
+	if c == nil {
+		return
+	}
+	c.disconnectMu.Lock()
+	c.disconnectClosed = true
+	c.disconnectGeneration++
+	if c.disconnectTimer != nil {
+		c.disconnectTimer.Stop()
+		c.disconnectTimer = nil
+	}
+	c.disconnectMu.Unlock()
+}
+
 func (c *Connection) nextResponseMessageID() int64 {
 	return c.messageIDs.Next()&^int64(3) | 1
 }
 
 func (c *Connection) shutdown(cause error) {
+	c.stopDisconnectDelay()
 	c.mu.Lock()
 	actors := make([]*connectionSession, 0, len(c.sessions))
 	for _, actor := range c.sessions {

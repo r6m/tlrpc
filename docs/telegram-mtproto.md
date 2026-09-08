@@ -77,8 +77,11 @@ their TTL must be positive and at most 24 hours. A generated application's
 the special MTProto 1.0 binding envelope, including both key IDs, session ID,
 message ID, nonce, and expiry. Ordinary traffic remains MTProto 2.0. Binding
 cannot extend the generated key lifetime or switch an existing binding to a
-different permanent key. The application still owns login identity resolution
-and must reject unbound temporary keys on protected RPCs.
+different permanent key. An authenticated client expiry beyond the server's
+local 24-hour horizon is clamped to the generated key's stored expiry, allowing
+for client/server clock skew without extending the key. The application still
+owns login identity resolution and must reject unbound temporary keys on
+protected RPCs.
 
 A plaintext connection may perform successive permanent and temporary
 exchanges before its first encrypted frame. An unfinished exchange may restart
@@ -92,6 +95,11 @@ These fields are decoded before forwarding the wrapped query; they are
 client-supplied metadata, not trusted routing or authorization instructions.
 JSON decoding is bounded to 16 levels and 1024 values in addition to the
 normal decode budgets.
+
+The runtime also accepts Android's payloadless emulator flag (bit 10) in
+`initConnection`, alongside the proxy and params presence bits. It preserves
+the flag on a wire round trip without consuming bytes from the wrapped query.
+Other unknown flags remain rejected.
 
 During key exchange, Runtime v2 validates and consumes plaintext `msgs_ack`
 controls without replying or advancing the handshake. This includes Android's
@@ -195,6 +203,14 @@ Protocol controls remain independent of application services, including
 `get_future_salts`, bad-message/bad-salt responses, and new-session
 notification. Reliability records are bounded and expiring and retain exact
 encrypted packets where resend requires them.
+
+`ping` and `ping_delay_disconnect` are non-content controls. Runtime v2 emits
+one bare non-content `pong` with the inbound MTProto message ID and supplied
+ping ID; it does not wrap the response in `rpc_result` or acknowledge the
+ping. A valid non-negative `ping_delay_disconnect` starts (or replaces) one
+physical-connection close timer after its pong is accepted by the writer.
+Only a later `ping_delay_disconnect` resets that timer. A zero delay closes
+immediately after the pong; a negative delay is rejected.
 
 The per-session writer allocates outbound message IDs/sequence numbers,
 correlates results, bounds serialization, encrypts, records reliability state,

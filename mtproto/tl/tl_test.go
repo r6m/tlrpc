@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"reflect"
 	"testing"
 
 	"github.com/r6m/tlrpc/mtproto"
@@ -119,6 +120,38 @@ func TestGetFutureSaltsRoundTrip(t *testing.T) {
 	}
 	if out.Num != 32 {
 		t.Fatalf("num: got %d want %d", out.Num, 32)
+	}
+}
+
+func TestPingControlsRoundTrip(t *testing.T) {
+	tests := []Object{
+		&Ping{PingID: 123},
+		&PingDelayDisconnect{PingID: 456, DisconnectDelay: 75},
+		&Pong{MsgID: 789, PingID: 456},
+	}
+	for _, input := range tests {
+		buffer := &bytes.Buffer{}
+		if err := input.SerializeTL(buffer); err != nil {
+			t.Fatalf("serialize %T: %v", input, err)
+		}
+		if got := bytesToUint32(buffer.Bytes()[:4]); got != input.ConstructorID() {
+			t.Fatalf("constructor %T = %08x, want %08x", input, got, input.ConstructorID())
+		}
+		var output Object
+		switch input.(type) {
+		case *Ping:
+			output = &Ping{}
+		case *PingDelayDisconnect:
+			output = &PingDelayDisconnect{}
+		case *Pong:
+			output = &Pong{}
+		}
+		if err := output.DeserializeTL(bytes.NewReader(buffer.Bytes())); err != nil {
+			t.Fatalf("deserialize %T: %v", input, err)
+		}
+		if !reflect.DeepEqual(output, input) {
+			t.Fatalf("round trip %T = %#v, want %#v", input, output, input)
+		}
 	}
 }
 

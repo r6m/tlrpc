@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	ErrControlDependencies = errors.New("runtime: incomplete control router dependencies")
-	ErrTrailingControlData = errors.New("runtime: trailing data after MTProto control object")
+	ErrControlDependencies    = errors.New("runtime: incomplete control router dependencies")
+	ErrTrailingControlData    = errors.New("runtime: trailing data after MTProto control object")
+	ErrInvalidDisconnectDelay = errors.New("runtime: invalid ping_delay_disconnect delay")
 )
 
 type OutboundReliability interface {
@@ -52,6 +53,32 @@ func NewMTProtoControlRouter(config MTProtoControlConfig) (*MTProtoControlRouter
 
 func (r *MTProtoControlRouter) RouteControl(ctx context.Context, request Request) (Outcome, bool, error) {
 	switch request.Message.ConstructorID {
+	case mtprototl.PingID:
+		message := &mtprototl.Ping{}
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
+			return Outcome{}, true, err
+		}
+		body, err := serializeRuntimeTL(&mtprototl.Pong{MsgID: request.Message.MessageID, PingID: message.PingID})
+		if err != nil {
+			return Outcome{}, true, err
+		}
+		return Outcome{Intents: []Intent{ProtocolReply{Body: body}}}, true, nil
+
+	case mtprototl.PingDelayDisconnectID:
+		message := &mtprototl.PingDelayDisconnect{}
+		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {
+			return Outcome{}, true, err
+		}
+		if message.DisconnectDelay < 0 {
+			return Outcome{}, true, ErrInvalidDisconnectDelay
+		}
+		body, err := serializeRuntimeTL(&mtprototl.Pong{MsgID: request.Message.MessageID, PingID: message.PingID})
+		if err != nil {
+			return Outcome{}, true, err
+		}
+		delay := time.Duration(message.DisconnectDelay) * time.Second
+		return Outcome{Intents: []Intent{ProtocolReply{Body: body}}, DisconnectAfter: &delay}, true, nil
+
 	case mtprototl.MsgsAckID:
 		message := &mtprototl.MsgsAck{}
 		if err := decodeControlBudget(request.Message.Body, message, request.Message.DecodeBudget); err != nil {

@@ -27,10 +27,6 @@ func BindTemporaryAuthKey(ctx context.Context, permanentID, nonce int64, expires
 	if err != nil || !temporary {
 		return NewBadRequestError("TEMP_AUTH_KEY_EMPTY")
 	}
-	expires := time.Unix(int64(expiresAt), 0)
-	if !expires.After(time.Now()) || expires.After(time.Now().Add(crypto.MaxTemporaryAuthKeyLifetime)) {
-		return NewBadRequestError("EXPIRES_AT_INVALID")
-	}
 	if _, temporary, err := manager.TemporaryInfo(crypto.KeyID(permanentID)); err != nil || temporary {
 		return NewBadRequestError("ENCRYPTED_MESSAGE_INVALID")
 	}
@@ -43,8 +39,13 @@ func BindTemporaryAuthKey(ctx context.Context, permanentID, nonce int64, expires
 	}
 	// Client/server clocks and second rounding may differ. A requested expiry
 	// can shorten, but can never extend, the lifetime fixed at key generation.
+	expires := time.Unix(int64(expiresAt), 0)
 	if expires.After(info.ExpiresAt) {
 		expires = info.ExpiresAt
+	}
+	now := time.Now()
+	if !expires.After(now) || expires.After(now.Add(crypto.MaxTemporaryAuthKeyLifetime)) {
+		return NewBadRequestError("EXPIRES_AT_INVALID")
 	}
 	if err := manager.BindTemporary(crypto.KeyID(binding.AuthKeyID), crypto.KeyID(permanentID), expires); err != nil {
 		switch {

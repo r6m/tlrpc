@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/r6m/tlrpc/mtproto"
 )
@@ -48,8 +49,9 @@ func (m InboundMessage) Validate() error {
 // state changes are explicit and are committed by the session owner; wire
 // effects are submitted to the single writer as intents.
 type Outcome struct {
-	Intents   []Intent
-	Mutations []SessionMutation
+	Intents         []Intent
+	Mutations       []SessionMutation
+	DisconnectAfter *time.Duration
 }
 
 // Intent is a closed set of semantic outbound operations. Intents never carry

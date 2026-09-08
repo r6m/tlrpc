@@ -9,6 +9,19 @@ documentation define future framework behavior.
 
 ## [Unreleased]
 
+### Fixed
+
+- Handle `ping` and `ping_delay_disconnect` as non-content runtime controls,
+  returning correlated bare pongs and applying the requested connection close
+  delay only after the pong is written.
+- Accept Android's payloadless emulator flag in `initConnection` without
+  rejecting the wrapped initialization RPC or shifting its optional fields.
+- Validate temporary-key binding expiry after cryptographic verification and
+  capping it at the stored key's expiry, avoiding false clock-skew rejections
+  without extending temporary-key lifetimes.
+- Include connection identity and transport in runtime stop logs, and identify
+  rejected protocol transitions without exposing packet contents.
+
 ### Added
 
 - Add `Server.PublishExceptAuthKey` and its context variant so a framework

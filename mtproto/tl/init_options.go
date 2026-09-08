@@ -17,6 +17,9 @@ const (
 	JSONObjectID       uint32 = 0x99c1d49d
 	jsonObjectValueID  uint32 = 0xc0de1bd9
 	inputClientProxyID uint32 = 0x75588b3f
+	// Telegram Android's getInitFlags sets bit 10 for an emulator. It is
+	// metadata only: unlike proxy and params, it adds no bytes to the body.
+	initConnectionKnownFlags uint32 = 3 | 1<<10
 )
 
 var ErrInitConnectionOptions = errors.New("invalid initConnection options")
@@ -42,7 +45,7 @@ type JSONValue struct {
 
 func (m *InitConnection) readOptions(r io.Reader) error {
 	m.Proxy, m.Params = nil, nil
-	if m.Flags & ^uint32(3) != 0 {
+	if m.Flags & ^initConnectionKnownFlags != 0 {
 		return ErrInitConnectionOptions
 	}
 	if m.Flags&1 != 0 {
@@ -77,7 +80,7 @@ func (m *InitConnection) readOptions(r io.Reader) error {
 }
 
 func (m *InitConnection) writeOptions(w io.Writer) error {
-	if m.Flags & ^uint32(3) != 0 || (m.Flags&1 != 0) != (m.Proxy != nil) || (m.Flags&2 != 0) != (m.Params != nil) {
+	if m.Flags & ^initConnectionKnownFlags != 0 || (m.Flags&1 != 0) != (m.Proxy != nil) || (m.Flags&2 != 0) != (m.Params != nil) {
 		return ErrInitConnectionOptions
 	}
 	if m.Proxy != nil {

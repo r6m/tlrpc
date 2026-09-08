@@ -25,6 +25,62 @@ func TestMTProtoControlRouterConsumesAcknowledgements(t *testing.T) {
 	}
 }
 
+func TestMTProtoControlRouterPongsWithoutAcknowledgement(t *testing.T) {
+	router := newControlRouter(t, &controlOutboundStub{}, &controlInboundStub{})
+	const (
+		messageID = int64(101)
+		pingID    = int64(202)
+	)
+	body := encodeControlBody(t, &mtprototl.Ping{PingID: pingID})
+	outcome, handled, err := router.RouteControl(context.Background(), controlRequest(messageID, body))
+	if err != nil || !handled || len(outcome.Intents) != 1 {
+		t.Fatalf("route ping = %+v, %t, %v", outcome, handled, err)
+	}
+	reply, ok := outcome.Intents[0].(ProtocolReply)
+	if !ok || reply.ContentRelated || reply.Unsolicited {
+		t.Fatalf("ping reply = %#v", outcome.Intents[0])
+	}
+	pong := &mtprototl.Pong{}
+	if err := decodeControl(reply.Body, pong); err != nil {
+		t.Fatalf("decode pong: %v", err)
+	}
+	if pong.MsgID != messageID || pong.PingID != pingID {
+		t.Fatalf("pong = %+v", pong)
+	}
+}
+
+func TestMTProtoControlRouterResetsDeferredDisconnectAndPongs(t *testing.T) {
+	router := newControlRouter(t, &controlOutboundStub{}, &controlInboundStub{})
+	body := encodeControlBody(t, &mtprototl.PingDelayDisconnect{PingID: 303, DisconnectDelay: 75})
+	outcome, handled, err := router.RouteControl(context.Background(), controlRequest(107, body))
+	if err != nil || !handled || len(outcome.Intents) != 1 {
+		t.Fatalf("route ping_delay_disconnect = %+v, %t, %v", outcome, handled, err)
+	}
+	if outcome.DisconnectAfter == nil || *outcome.DisconnectAfter != 75*time.Second {
+		t.Fatalf("disconnect delay = %v", outcome.DisconnectAfter)
+	}
+	reply, ok := outcome.Intents[0].(ProtocolReply)
+	if !ok || reply.ContentRelated || reply.Unsolicited {
+		t.Fatalf("ping_delay_disconnect reply = %#v", outcome.Intents[0])
+	}
+	pong := &mtprototl.Pong{}
+	if err := decodeControl(reply.Body, pong); err != nil {
+		t.Fatalf("decode pong: %v", err)
+	}
+	if pong.MsgID != 107 || pong.PingID != 303 {
+		t.Fatalf("pong = %+v", pong)
+	}
+}
+
+func TestMTProtoControlRouterRejectsNegativeDisconnectDelay(t *testing.T) {
+	router := newControlRouter(t, &controlOutboundStub{}, &controlInboundStub{})
+	body := encodeControlBody(t, &mtprototl.PingDelayDisconnect{PingID: 303, DisconnectDelay: -1})
+	_, handled, err := router.RouteControl(context.Background(), controlRequest(109, body))
+	if !handled || !errors.Is(err, ErrInvalidDisconnectDelay) {
+		t.Fatalf("negative delay = handled %t error %v", handled, err)
+	}
+}
+
 func TestMTProtoControlRouterReportsInboundState(t *testing.T) {
 	inbound := &controlInboundStub{info: []byte{132, 1}}
 	router := newControlRouter(t, &controlOutboundStub{}, inbound)
