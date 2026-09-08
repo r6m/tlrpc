@@ -70,30 +70,127 @@ func TestSessionValidatorTreatsGzipPackedRequestAsContentRelated(t *testing.T) {
 }
 
 func TestSessionValidatorTreatsPingControlsAsNonContentRelated(t *testing.T) {
-	snapshot := inboundSnapshot()
-	validator := newInboundValidator(t, snapshot)
 	controls := []struct {
+		name      string
 		messageID int64
+		sequence  int32
+		wantSeqNo int32
 		body      []byte
 	}{
-		{messageID: inboundMessageID(4), body: serializeInboundControl(t, &mtprototl.Ping{PingID: 1})},
-		{messageID: inboundMessageID(8), body: serializeInboundControl(t, &mtprototl.PingDelayDisconnect{PingID: 2, DisconnectDelay: 75})},
+		{name: "Android even ping", messageID: inboundMessageID(4), sequence: 6, wantSeqNo: 6, body: serializeInboundControl(t, &mtprototl.Ping{PingID: 1})},
+		{name: "Web K odd ping", messageID: inboundMessageID(8), sequence: 7, wantSeqNo: 8, body: serializeInboundControl(t, &mtprototl.Ping{PingID: 2})},
+		{name: "Android even ping delay", messageID: inboundMessageID(12), sequence: 6, wantSeqNo: 6, body: serializeInboundControl(t, &mtprototl.PingDelayDisconnect{PingID: 3, DisconnectDelay: 75})},
+		{name: "Web K odd ping delay", messageID: inboundMessageID(16), sequence: 9, wantSeqNo: 10, body: serializeInboundControl(t, &mtprototl.PingDelayDisconnect{PingID: 4, DisconnectDelay: 75})},
 	}
 	for _, control := range controls {
-		validated, err := validator.Validate(snapshot, &mtproto.InnerData{
-			Salt: inboundSalt, SessionID: inboundSessionID,
-			MsgID: control.messageID, SeqNo: 6, Data: control.body,
+		t.Run(control.name, func(t *testing.T) {
+			snapshot := inboundSnapshot()
+			snapshot.SeqNo = 6
+			validator := newInboundValidator(t, snapshot)
+			validated, err := validator.Validate(snapshot, &mtproto.InnerData{
+				Salt: inboundSalt, SessionID: inboundSessionID,
+				MsgID: control.messageID, SeqNo: control.sequence, Data: control.body,
+			})
+			if err != nil {
+				t.Fatalf("validate %08x: %v", binaryConstructor(control.body), err)
+			}
+			if len(validated.Messages) != 1 || validated.Messages[0].ContentRelated {
+				t.Fatalf("decoded %08x = %+v", binaryConstructor(control.body), validated.Messages)
+			}
+			if validated.Snapshot.SeqNo != control.wantSeqNo {
+				t.Fatalf("sequence state = %d, want %d", validated.Snapshot.SeqNo, control.wantSeqNo)
+			}
 		})
-		if err != nil {
-			t.Fatalf("validate %08x: %v", binaryConstructor(control.body), err)
-		}
-		if len(validated.Messages) != 1 || validated.Messages[0].ContentRelated {
-			t.Fatalf("decoded %08x = %+v", binaryConstructor(control.body), validated.Messages)
-		}
-		if validated.Snapshot.SeqNo != snapshot.SeqNo {
-			t.Fatalf("control advanced content sequence from %d to %d", snapshot.SeqNo, validated.Snapshot.SeqNo)
-		}
-		snapshot = validated.Snapshot
+	}
+}
+
+func TestSessionValidatorAcceptsWebKOddPingBesideInitializationRPC(t *testing.T) {
+	original := inboundSnapshot()
+	validator := newInboundValidator(t, original)
+	pingID := inboundMessageID(4)
+	configID := inboundMessageID(8)
+	outerID := inboundMessageID(12)
+	body := serializeInboundContainer(t, []mtprototl.Message{
+		{MsgID: pingID, SeqNo: 1, BodyRaw: serializeInboundControl(t, &mtprototl.PingDelayDisconnect{PingID: 9, DisconnectDelay: 75})},
+		{MsgID: configID, SeqNo: 3, BodyRaw: constructorBody(mtprototl.InvokeWithLayerID)},
+	})
+
+	validated, err := validator.Validate(original, &mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: outerID, SeqNo: 4, Data: body,
+	})
+	if err != nil {
+		t.Fatalf("validate Web K initialization container: %v", err)
+	}
+	if len(validated.Messages) != 2 || validated.Messages[0].ContentRelated || !validated.Messages[1].ContentRelated {
+		t.Fatalf("classified children = %+v", validated.Messages)
+	}
+	if validated.Snapshot.SeqNo != 4 {
+		t.Fatalf("content sequence = %d, want 4 after odd ping and initialization RPC", validated.Snapshot.SeqNo)
+	}
+	wantIDs := []int64{outerID, pingID, configID}
+	if !reflect.DeepEqual(validated.Snapshot.RecentClientMsgIDs, wantIDs) {
+		t.Fatalf("recent IDs = %v, want %v", validated.Snapshot.RecentClientMsgIDs, wantIDs)
+	}
+}
+
+func TestSessionValidatorRejectsReplayedWebKOddPing(t *testing.T) {
+	snapshot := inboundSnapshot()
+	validator := newInboundValidator(t, snapshot)
+	messageID := inboundMessageID(4)
+	inner := &mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: messageID, SeqNo: 1,
+		Data: serializeInboundControl(t, &mtprototl.PingDelayDisconnect{PingID: 9, DisconnectDelay: 75}),
+	}
+	validated, err := validator.Validate(snapshot, inner)
+	if err != nil {
+		t.Fatalf("validate first odd ping: %v", err)
+	}
+	if validated.Messages[0].ContentRelated || validated.Snapshot.SeqNo != 2 {
+		t.Fatalf("first odd ping = messages %+v snapshot %+v", validated.Messages, validated.Snapshot)
+	}
+	_, err = validator.Validate(validated.Snapshot, inner)
+	var bad *protocol.BadMessageError
+	if !errors.As(err, &bad) || bad.Code != protocol.CodeReplayMessageID || bad.MessageID != messageID || bad.SequenceNo != 1 {
+		t.Fatalf("replayed odd ping error = %v", err)
+	}
+}
+
+func TestSessionValidatorStillRejectsEvenApplicationRPC(t *testing.T) {
+	snapshot := inboundSnapshot()
+	validator := newInboundValidator(t, snapshot)
+	messageID := inboundMessageID(4)
+	_, err := validator.Validate(snapshot, &mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: messageID, SeqNo: 2, Data: constructorBody(0x01020304),
+	})
+	var bad *protocol.BadMessageError
+	if !errors.As(err, &bad) || bad.Code != protocol.CodeExpectedOddSequenceNo || bad.MessageID != messageID || bad.SequenceNo != 2 {
+		t.Fatalf("even application RPC error = %v", err)
+	}
+}
+
+func TestSessionValidatorStillRejectsOddAcknowledgementAtomically(t *testing.T) {
+	original := inboundSnapshot()
+	validator := newInboundValidator(t, original)
+	ackID := inboundMessageID(4)
+	body := serializeInboundContainer(t, []mtprototl.Message{
+		{MsgID: ackID, SeqNo: 1, BodyRaw: constructorBody(mtprototl.MsgsAckID)},
+		{MsgID: inboundMessageID(8), SeqNo: 3, BodyRaw: constructorBody(mtprototl.InvokeWithLayerID)},
+	})
+
+	_, err := validator.Validate(original, &mtproto.InnerData{
+		Salt: inboundSalt, SessionID: inboundSessionID,
+		MsgID: inboundMessageID(12), SeqNo: 4, Data: body,
+	})
+	var bad *protocol.BadMessageError
+	if !errors.As(err, &bad) || bad.Code != protocol.CodeExpectedEvenSequenceNo || bad.MessageID != ackID {
+		t.Fatalf("odd acknowledgement error = %v", err)
+	}
+	state := validator.validator.Snapshot()
+	if state.SequenceNo != 0 || state.HighestMessageID != 0 || len(state.RecentMessageIDs) != 0 {
+		t.Fatalf("rejected container advanced state: %+v", state)
 	}
 }
 

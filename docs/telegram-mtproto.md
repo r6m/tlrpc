@@ -204,7 +204,12 @@ Protocol controls remain independent of application services, including
 notification. Reliability records are bounded and expiring and retain exact
 encrypted packets where resend requires them.
 
-`ping` and `ping_delay_disconnect` are non-content controls. Runtime v2 emits
+`ping` and `ping_delay_disconnect` are runtime controls that do not require
+acknowledgement. Android uses even sequence numbers; Web K currently allocates
+odd sequence numbers for these calls. Only these two constructors accept both
+forms: odd pings advance the validated sequence counter, while even pings do
+not. Message-ID, replay, container, and all other constructor parity checks
+remain enforced. Runtime v2 emits
 one bare non-content `pong` with the inbound MTProto message ID and supplied
 ping ID; it does not wrap the response in `rpc_result` or acknowledge the
 ping. A valid non-negative `ping_delay_disconnect` starts (or replaces) one

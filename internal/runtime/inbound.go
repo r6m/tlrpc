@@ -119,7 +119,7 @@ func (v *SessionValidator) Validate(snapshot session.Snapshot, inner *mtproto.In
 			ConstructorID:  binary.LittleEndian.Uint32(inner.Data[:4]),
 			Body:           append([]byte(nil), inner.Data...),
 			DecodeBudget:   budget,
-			ContentRelated: message.Kind == protocol.ContentRelated,
+			ContentRelated: requiresAcknowledgement(binary.LittleEndian.Uint32(inner.Data[:4]), message.Kind),
 		},
 		Messages: original, Snapshot: next,
 	}, nil
@@ -139,13 +139,13 @@ func classifyProtocolMessage(inner *mtproto.InnerData, budget *mtproto.DecodeBud
 	message := protocol.Message{
 		ServerSalt: inner.Salt, SessionID: inner.SessionID,
 		MessageID: inner.MsgID, SequenceNo: inner.SeqNo,
-		Kind: classifyMessageKind(constructorID),
+		Kind: classifyMessageKind(constructorID, inner.SeqNo),
 	}
 	if constructorID != mtprototl.MsgContainerID {
 		return message, []InboundMessage{{
 			MessageID: inner.MsgID, SequenceNo: inner.SeqNo,
 			ConstructorID: constructorID, Body: append([]byte(nil), inner.Data...),
-			ContentRelated: message.Kind == protocol.ContentRelated, DecodeBudget: budget,
+			ContentRelated: requiresAcknowledgement(constructorID, message.Kind), DecodeBudget: budget,
 		}}, nil
 	}
 
@@ -167,34 +167,50 @@ func classifyProtocolMessage(inner *mtproto.InnerData, budget *mtproto.DecodeBud
 			return protocol.Message{}, nil, ErrInboundBodyTooShort
 		}
 		childConstructor := binary.LittleEndian.Uint32(child.BodyRaw[:4])
-		kind := classifyMessageKind(childConstructor)
+		kind := classifyMessageKind(childConstructor, child.SeqNo)
 		message.Children = append(message.Children, protocol.ContainerMessage{
 			MessageID: child.MsgID, SequenceNo: child.SeqNo, Kind: kind,
 		})
 		decoded = append(decoded, InboundMessage{
 			MessageID: child.MsgID, SequenceNo: child.SeqNo,
 			ConstructorID: childConstructor, Body: append([]byte(nil), child.BodyRaw...),
-			ContentRelated: kind == protocol.ContentRelated, DecodeBudget: budget,
+			ContentRelated: requiresAcknowledgement(childConstructor, kind), DecodeBudget: budget,
 		})
 	}
 	return message, decoded, nil
 }
 
-func classifyMessageKind(constructorID uint32) protocol.MessageKind {
+func classifyMessageKind(constructorID uint32, sequenceNo int32) protocol.MessageKind {
 	if constructorID == mtprototl.MsgContainerID {
 		return protocol.Container
 	}
 	switch constructorID {
+	case mtprototl.PingID, mtprototl.PingDelayDisconnectID:
+		// Web K currently allocates these controls through its content-related
+		// call path and advances its sequence counter, while Android sends the
+		// canonical even form. Match only these constructors to their wire
+		// parity so both clients retain coherent sequence progress.
+		if sequenceNo&1 != 0 {
+			return protocol.ContentRelated
+		}
+		return protocol.NonContentRelated
 	case mtprototl.MsgsAckID,
 		mtprototl.NewSessionCreatedID,
 		mtprototl.GetFutureSaltsID,
-		mtprototl.PingID,
-		mtprototl.PingDelayDisconnectID,
 		mtprototl.MsgsStateReqID,
 		mtprototl.MsgResendReqID,
 		mtprototl.MsgsStateInfoID:
 		return protocol.NonContentRelated
 	default:
 		return protocol.ContentRelated
+	}
+}
+
+func requiresAcknowledgement(constructorID uint32, kind protocol.MessageKind) bool {
+	switch constructorID {
+	case mtprototl.PingID, mtprototl.PingDelayDisconnectID:
+		return false
+	default:
+		return kind == protocol.ContentRelated
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"time"
@@ -395,6 +396,8 @@ func classifyConnectionClose(err error, stopping bool) string {
 	case stopping:
 		return "shutdown"
 	case err == nil:
+		return "closed"
+	case errors.Is(err, io.EOF):
 		return "closed"
 	case errors.Is(err, runtimev2.ErrHandshakeAuthKeyMismatch):
 		return "handshake_auth_key_mismatch"

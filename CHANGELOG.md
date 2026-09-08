@@ -11,6 +11,12 @@ documentation define future framework behavior.
 
 ### Fixed
 
+- Accept Web K's odd-sequence pings alongside Android's even-sequence pings,
+  preserving sequence and replay validation without discarding neighboring
+  configuration or update RPCs in a mixed container.
+- Classify a normal TCP EOF as a closed connection rather than an error, so
+  Kubernetes TCP probes do not generate failure logs.
+
 - Handle `ping` and `ping_delay_disconnect` as non-content runtime controls,
   returning correlated bare pongs and applying the requested connection close
   delay only after the pong is written.
