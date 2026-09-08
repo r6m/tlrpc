@@ -359,13 +359,15 @@ func drainRPCExchange(t *testing.T, cli *client.Client, reqMsgID int64, wantNewS
 	}
 	seen := make(map[uint32]tlrpc.TLObject, len(want))
 	for len(seen) < len(want) {
-		_, obj := readKnownObject(t, cli)
-		id := obj.ConstructorID()
-		if id == mtprototl.RPCResultID && obj.(*mtprototl.RPCResult).ReqMsgID != reqMsgID {
-			continue
-		}
-		if want[id] {
-			seen[id] = obj
+		_, objects := readKnownObjects(t, cli)
+		for _, obj := range objects {
+			id := obj.ConstructorID()
+			if id == mtprototl.RPCResultID && obj.(*mtprototl.RPCResult).ReqMsgID != reqMsgID {
+				continue
+			}
+			if want[id] {
+				seen[id] = obj
+			}
 		}
 	}
 	return seen
@@ -374,16 +376,18 @@ func drainRPCExchange(t *testing.T, cli *client.Client, reqMsgID int64, wantNewS
 func readUntilConstructor(t *testing.T, cli *client.Client, constructorID uint32) (*mtproto.InnerData, tlrpc.TLObject) {
 	t.Helper()
 	for i := 0; i < 8; i++ {
-		inner, obj := readKnownObject(t, cli)
-		if obj.ConstructorID() == constructorID {
-			return inner, obj
+		inner, objects := readKnownObjects(t, cli)
+		for _, obj := range objects {
+			if obj.ConstructorID() == constructorID {
+				return inner, obj
+			}
 		}
 	}
 	t.Fatalf("constructor 0x%08x not received", constructorID)
 	return nil, nil
 }
 
-func readKnownObject(t *testing.T, cli *client.Client) (*mtproto.InnerData, tlrpc.TLObject) {
+func readKnownObjects(t *testing.T, cli *client.Client) (*mtproto.InnerData, []tlrpc.TLObject) {
 	t.Helper()
 	if err := cli.Conn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
 		t.Fatalf("set deadline: %v", err)
@@ -396,16 +400,31 @@ func readKnownObject(t *testing.T, cli *client.Client) (*mtproto.InnerData, tlrp
 	if err != nil {
 		t.Fatalf("decrypt response: %v", err)
 	}
-	obj, err := decodeConformanceObject(inner.Data)
+	objects, err := decodeConformanceObjects(inner.Data)
 	if err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	return inner, obj
+	return inner, objects
 }
 
-func decodeConformanceObject(data []byte) (tlrpc.TLObject, error) {
+func decodeConformanceObjects(data []byte) ([]tlrpc.TLObject, error) {
 	if len(data) < 4 {
 		return nil, io.ErrUnexpectedEOF
+	}
+	if mtprotoReadConstructor(data) == mtprototl.MsgContainerID {
+		container := &mtprototl.MsgContainer{}
+		if err := container.DeserializeTL(bytes.NewReader(data)); err != nil {
+			return nil, err
+		}
+		result := make([]tlrpc.TLObject, 0, len(container.Messages))
+		for _, message := range container.Messages {
+			children, err := decodeConformanceObjects(message.BodyRaw)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, children...)
+		}
+		return result, nil
 	}
 	var obj tlrpc.TLObject
 	switch mtprotoReadConstructor(data) {
@@ -425,7 +444,7 @@ func decodeConformanceObject(data []byte) (tlrpc.TLObject, error) {
 	if err := obj.(interface{ DeserializeTL(io.Reader) error }).DeserializeTL(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
-	return obj, nil
+	return []tlrpc.TLObject{obj}, nil
 }
 
 func mtprotoReadConstructor(data []byte) uint32 {

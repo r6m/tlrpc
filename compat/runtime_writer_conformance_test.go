@@ -110,8 +110,15 @@ func TestRuntimeWriterMixedOutboundEncryptedWireConformance(t *testing.T) {
 		pushCount       int
 		acknowledged    bool
 	)
+	objects := make([]runtimeWriterWireObject, 0, len(wantConstructors))
+	for len(objects) < len(wantConstructors) {
+		objects = append(objects, readRuntimeWriterWireObjects(t, cli)...)
+	}
+	if len(objects) != len(wantConstructors) {
+		t.Fatalf("logical wire messages = %d, want %d", len(objects), len(wantConstructors))
+	}
 	for wireIndex, wantConstructor := range wantConstructors {
-		inner, obj := readRuntimeWriterWireObject(t, cli)
+		inner, obj := objects[wireIndex].inner, objects[wireIndex].object
 		if got := obj.ConstructorID(); got != wantConstructor {
 			t.Fatalf("wire message %d constructor = 0x%08x, want 0x%08x", wireIndex, got, wantConstructor)
 		}
@@ -201,7 +208,12 @@ func dialEncryptedHarnessFromHarness(t *testing.T, h *testHarness) (*encryptedHa
 	return &encryptedHarness{testHarness: h, listenerAddress: lis.Addr().String()}, cli
 }
 
-func readRuntimeWriterWireObject(t *testing.T, cli *client.Client) (*mtproto.InnerData, tlrpc.TLObject) {
+type runtimeWriterWireObject struct {
+	inner  *mtproto.InnerData
+	object tlrpc.TLObject
+}
+
+func readRuntimeWriterWireObjects(t *testing.T, cli *client.Client) []runtimeWriterWireObject {
 	t.Helper()
 	if err := cli.Conn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
 		t.Fatalf("set deadline: %v", err)
@@ -215,8 +227,39 @@ func readRuntimeWriterWireObject(t *testing.T, cli *client.Client) (*mtproto.Inn
 		t.Fatalf("decrypt wire message: %v", err)
 	}
 
+	objects, err := decodeRuntimeWriterWireObjects(inner, inner.Data)
+	if err != nil {
+		t.Fatalf("decode wire object: %v", err)
+	}
+	return objects
+}
+
+func decodeRuntimeWriterWireObjects(outer *mtproto.InnerData, data []byte) ([]runtimeWriterWireObject, error) {
+	if mtprotoReadConstructor(data) == mtprototl.MsgContainerID {
+		container := &mtprototl.MsgContainer{}
+		if err := container.DeserializeTL(bytes.NewReader(data)); err != nil {
+			return nil, err
+		}
+		objects := make([]runtimeWriterWireObject, 0, len(container.Messages))
+		for _, message := range container.Messages {
+			child := &mtproto.InnerData{
+				Salt:      outer.Salt,
+				SessionID: outer.SessionID,
+				MsgID:     message.MsgID,
+				SeqNo:     message.SeqNo,
+				Data:      message.BodyRaw,
+			}
+			decoded, err := decodeRuntimeWriterWireObjects(child, message.BodyRaw)
+			if err != nil {
+				return nil, err
+			}
+			objects = append(objects, decoded...)
+		}
+		return objects, nil
+	}
+
 	var obj tlrpc.TLObject
-	switch constructorID := mtprotoReadConstructor(inner.Data); constructorID {
+	switch constructorID := mtprotoReadConstructor(data); constructorID {
 	case runtimeWriterPushID:
 		obj = &runtimeWriterPush{}
 	case mtprototl.RPCResultID:
@@ -224,10 +267,10 @@ func readRuntimeWriterWireObject(t *testing.T, cli *client.Client) (*mtproto.Inn
 	case mtprototl.MsgsAckID:
 		obj = &mtprototl.MsgsAck{}
 	default:
-		t.Fatalf("unexpected wire constructor 0x%08x", constructorID)
+		return nil, fmt.Errorf("unexpected wire constructor 0x%08x", constructorID)
 	}
-	if err := obj.(interface{ DeserializeTL(io.Reader) error }).DeserializeTL(bytes.NewReader(inner.Data)); err != nil {
-		t.Fatalf("decode wire object: %v", err)
+	if err := obj.(interface{ DeserializeTL(io.Reader) error }).DeserializeTL(bytes.NewReader(data)); err != nil {
+		return nil, err
 	}
-	return inner, obj
+	return []runtimeWriterWireObject{{inner: outer, object: obj}}, nil
 }

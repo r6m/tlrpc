@@ -98,7 +98,9 @@ type Connection struct {
 	sessions      map[session.SessionKey]*connectionSession
 	poisoned      map[session.SessionKey]struct{}
 	authKeyID     crypto.KeyID
+	authKey       crypto.AuthKey
 	authKeyPinned bool
+	authKeyCached bool
 	admission     *connectionRequestAdmission
 
 	handshakeSession *handshake.Session
@@ -179,7 +181,7 @@ func (c *Connection) Run(ctx context.Context) (runErr error) {
 		if err != nil {
 			return err
 		}
-		decoded, err := DecodeFrame(frame, c.config.AuthKeys)
+		decoded, err := DecodeFrame(frame, connectionAuthKeySource{connection: c})
 		if err != nil {
 			if errors.Is(err, crypto.ErrAuthKeyNotFound) {
 				if writeErr := c.writeTransportError(ctx, transportErrorAuthKeyNotFound); writeErr != nil {
@@ -290,9 +292,50 @@ func (c *Connection) sessionFor(ctx context.Context, decoded DecodedFrame) (*con
 	}
 	c.authKeyID = decoded.AuthKeyID
 	c.authKeyPinned = true
+	if policy, ok := c.config.AuthKeys.(connectionAuthKeyCachePolicy); ok && policy.CacheAuthKeyForConnection() {
+		c.authKey = decoded.AuthKey
+		c.authKeyCached = true
+	}
 	c.sessions[key] = actor
 	actor.start()
 	return actor, nil
+}
+
+// connectionAuthKeySource resolves the first encrypted frame from the
+// configured source. Once a session lease has been acquired successfully, the
+// physical connection serves that validated key locally and rejects key
+// switches without another store lookup.
+type connectionAuthKeySource struct{ connection *Connection }
+
+// connectionAuthKeyCachePolicy is an explicit manager capability. Opting in
+// asserts that authorization-key revocation also retires or rejects the
+// associated active session lease; Runtime v2 cannot otherwise observe Delete
+// while serving a connection-cached key.
+type connectionAuthKeyCachePolicy interface {
+	CacheAuthKeyForConnection() bool
+}
+
+func (s connectionAuthKeySource) Get(keyID crypto.KeyID) (crypto.AuthKey, error) {
+	if s.connection == nil {
+		return crypto.AuthKey{}, ErrConnectionConfig
+	}
+	s.connection.mu.Lock()
+	pinned := s.connection.authKeyPinned
+	pinnedID := s.connection.authKeyID
+	pinnedKey := s.connection.authKey
+	cached := s.connection.authKeyCached
+	source := s.connection.config.AuthKeys
+	s.connection.mu.Unlock()
+	if !pinned {
+		return source.Get(keyID)
+	}
+	if pinnedID != keyID {
+		return crypto.AuthKey{}, ErrConnectionProtocol
+	}
+	if cached {
+		return pinnedKey, nil
+	}
+	return source.Get(keyID)
 }
 
 func (c *Connection) removeSession(key session.SessionKey, actor *connectionSession, cause error) {

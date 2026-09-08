@@ -30,7 +30,8 @@ func TestRuntimeReliabilityConformance(t *testing.T) {
 			MsgIDs: []int64{requestID, requestID - 4},
 		}))
 
-		_, _, object := readReliabilityPacket(t, cli)
+		_, _, objects := readReliabilityPacket(t, cli)
+		object := requireSingleReliabilityObject(t, objects)
 		info, ok := object.(*mtprototl.MsgsStateInfo)
 		if !ok {
 			t.Fatalf("response constructor = 0x%08x, want msgs_state_info", object.ConstructorID())
@@ -58,16 +59,17 @@ func TestRuntimeReliabilityConformance(t *testing.T) {
 		writeEncryptedRequest(t, cli, resendRequestID, 2, serializeCompatObject(t, &mtprototl.MsgResendReq{
 			MsgIDs: []int64{response.inner.MsgID},
 		}))
-		resentPacket, resentInner, object := readReliabilityPacket(t, cli)
+		resentPacket, resentPhysical, objects := readReliabilityPacket(t, cli)
+		object := requireReliabilityObject(t, objects, mtprototl.RPCResultID)
 		if !bytes.Equal(resentPacket, response.packet) {
 			t.Fatal("msg_resend_req did not reproduce the exact retained encrypted packet")
 		}
-		if resentInner.MsgID != response.inner.MsgID ||
-			resentInner.SeqNo != response.inner.SeqNo ||
-			!bytes.Equal(resentInner.Data, response.inner.Data) {
+		if resentPhysical.MsgID != response.physical.MsgID ||
+			resentPhysical.SeqNo != response.physical.SeqNo ||
+			!bytes.Equal(resentPhysical.Data, response.physical.Data) {
 			t.Fatalf("resent inner message = id:%d seq:%d data:%x, want id:%d seq:%d data:%x",
-				resentInner.MsgID, resentInner.SeqNo, resentInner.Data,
-				response.inner.MsgID, response.inner.SeqNo, response.inner.Data)
+				resentPhysical.MsgID, resentPhysical.SeqNo, resentPhysical.Data,
+				response.physical.MsgID, response.physical.SeqNo, response.physical.Data)
 		}
 		if result, ok := object.(*mtprototl.RPCResult); !ok || result.ReqMsgID != response.result.ReqMsgID {
 			t.Fatalf("resent object = %#v, want rpc_result correlated to %d", object, response.result.ReqMsgID)
@@ -87,7 +89,8 @@ func TestRuntimeReliabilityConformance(t *testing.T) {
 			MsgIDs: []int64{response.inner.MsgID},
 		}))
 
-		packet, _, object := readReliabilityPacket(t, cli)
+		packet, _, objects := readReliabilityPacket(t, cli)
+		object := requireSingleReliabilityObject(t, objects)
 		if bytes.Equal(packet, response.packet) {
 			t.Fatal("acknowledged response was retransmitted")
 		}
@@ -122,13 +125,14 @@ func TestRuntimeReliabilityConformance(t *testing.T) {
 		writeEncryptedRequest(t, reconnected, ids.next(), 2, serializeCompatObject(t, &mtprototl.MsgResendReq{
 			MsgIDs: []int64{response.inner.MsgID},
 		}))
-		resentPacket, resentInner, object := readReliabilityPacket(t, reconnected)
+		resentPacket, resentPhysical, objects := readReliabilityPacket(t, reconnected)
+		object := requireReliabilityObject(t, objects, mtprototl.RPCResultID)
 		if !bytes.Equal(resentPacket, response.packet) {
 			t.Fatal("reconnect did not retain the exact unacknowledged encrypted packet")
 		}
-		if resentInner.MsgID != response.inner.MsgID || !bytes.Equal(resentInner.Data, response.inner.Data) {
+		if resentPhysical.MsgID != response.physical.MsgID || !bytes.Equal(resentPhysical.Data, response.physical.Data) {
 			t.Fatalf("reconnected resend inner message differs: got id:%d data:%x, want id:%d data:%x",
-				resentInner.MsgID, resentInner.Data, response.inner.MsgID, response.inner.Data)
+				resentPhysical.MsgID, resentPhysical.Data, response.physical.MsgID, response.physical.Data)
 		}
 		if result, ok := object.(*mtprototl.RPCResult); !ok || result.ReqMsgID != response.result.ReqMsgID {
 			t.Fatalf("reconnected resend object = %#v, want rpc_result correlated to %d", object, response.result.ReqMsgID)
@@ -150,9 +154,10 @@ func (g *reliabilityMessageIDs) next() int64 {
 }
 
 type retainedRPCResponse struct {
-	packet []byte
-	inner  *mtproto.InnerData
-	result *mtprototl.RPCResult
+	packet   []byte
+	physical *mtproto.InnerData
+	inner    *mtproto.InnerData
+	result   *mtprototl.RPCResult
 }
 
 func sendReliabilityRPC(t *testing.T, cli *client.Client, requestID int64, value int32) retainedRPCResponse {
@@ -162,23 +167,26 @@ func sendReliabilityRPC(t *testing.T, cli *client.Client, requestID int64, value
 	var response retainedRPCResponse
 	seen := make(map[uint32]bool, 3)
 	for len(seen) < 3 {
-		packet, inner, object := readReliabilityPacket(t, cli)
-		switch value := object.(type) {
-		case *mtprototl.RPCResult:
-			if value.ReqMsgID != requestID {
-				continue
+		packet, physical, objects := readReliabilityPacket(t, cli)
+		for _, decoded := range objects {
+			switch value := decoded.object.(type) {
+			case *mtprototl.RPCResult:
+				if value.ReqMsgID != requestID {
+					continue
+				}
+				response = retainedRPCResponse{
+					packet:   append([]byte(nil), packet...),
+					physical: cloneReliabilityInner(physical),
+					inner:    cloneReliabilityInner(decoded.inner),
+					result:   value,
+				}
+			case *mtprototl.MsgsAck:
+			case *mtprototl.NewSessionCreated:
+			default:
+				t.Fatalf("unexpected initial exchange object %T", decoded.object)
 			}
-			response = retainedRPCResponse{
-				packet: append([]byte(nil), packet...),
-				inner:  cloneReliabilityInner(inner),
-				result: value,
-			}
-		case *mtprototl.MsgsAck:
-		case *mtprototl.NewSessionCreated:
-		default:
-			t.Fatalf("unexpected initial exchange object %T", object)
+			seen[decoded.object.ConstructorID()] = true
 		}
-		seen[object.ConstructorID()] = true
 	}
 	if response.inner == nil {
 		t.Fatal("initial exchange did not produce a correlated rpc_result")
@@ -186,7 +194,7 @@ func sendReliabilityRPC(t *testing.T, cli *client.Client, requestID int64, value
 	return response
 }
 
-func readReliabilityPacket(t *testing.T, cli *client.Client) ([]byte, *mtproto.InnerData, tlrpc.TLObject) {
+func readReliabilityPacket(t *testing.T, cli *client.Client) ([]byte, *mtproto.InnerData, []runtimeWriterWireObject) {
 	t.Helper()
 	if err := cli.Conn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
 		t.Fatalf("set reliability read deadline: %v", err)
@@ -199,25 +207,69 @@ func readReliabilityPacket(t *testing.T, cli *client.Client) ([]byte, *mtproto.I
 	if err != nil {
 		t.Fatalf("decrypt reliability packet: %v", err)
 	}
-	object, err := decodeReliabilityObject(inner.Data)
+	objects, err := decodeReliabilityObjects(inner, inner.Data)
 	if err != nil {
 		t.Fatalf("decode reliability packet: %v", err)
 	}
-	return packet, inner, object
+	return packet, inner, objects
 }
 
-func decodeReliabilityObject(data []byte) (tlrpc.TLObject, error) {
+func decodeReliabilityObjects(outer *mtproto.InnerData, data []byte) ([]runtimeWriterWireObject, error) {
 	if len(data) < 4 {
 		return nil, io.ErrUnexpectedEOF
 	}
-	if mtprotoReadConstructor(data) != mtprototl.MsgsStateInfoID {
-		return decodeConformanceObject(data)
+	if mtprotoReadConstructor(data) == mtprototl.MsgContainerID {
+		container := &mtprototl.MsgContainer{}
+		if err := container.DeserializeTL(bytes.NewReader(data)); err != nil {
+			return nil, err
+		}
+		objects := make([]runtimeWriterWireObject, 0, len(container.Messages))
+		for _, message := range container.Messages {
+			child := &mtproto.InnerData{Salt: outer.Salt, SessionID: outer.SessionID, MsgID: message.MsgID, SeqNo: message.SeqNo, Data: message.BodyRaw}
+			decoded, err := decodeReliabilityObjects(child, message.BodyRaw)
+			if err != nil {
+				return nil, err
+			}
+			objects = append(objects, decoded...)
+		}
+		return objects, nil
 	}
-	object := &mtprototl.MsgsStateInfo{}
-	if err := object.DeserializeTL(bytes.NewReader(data)); err != nil {
-		return nil, fmt.Errorf("decode msgs_state_info: %w", err)
+	var object tlrpc.TLObject
+	switch mtprotoReadConstructor(data) {
+	case mtprototl.MsgsStateInfoID:
+		object = &mtprototl.MsgsStateInfo{}
+	case mtprototl.RPCResultID:
+		object = &mtprototl.RPCResult{}
+	case mtprototl.MsgsAckID:
+		object = &mtprototl.MsgsAck{}
+	case mtprototl.NewSessionCreatedID:
+		object = &mtprototl.NewSessionCreated{}
+	default:
+		return nil, fmt.Errorf("unknown reliability constructor 0x%08x", mtprotoReadConstructor(data))
 	}
-	return object, nil
+	if err := object.(interface{ DeserializeTL(io.Reader) error }).DeserializeTL(bytes.NewReader(data)); err != nil {
+		return nil, fmt.Errorf("decode reliability object: %w", err)
+	}
+	return []runtimeWriterWireObject{{inner: outer, object: object}}, nil
+}
+
+func requireSingleReliabilityObject(t *testing.T, objects []runtimeWriterWireObject) tlrpc.TLObject {
+	t.Helper()
+	if len(objects) != 1 {
+		t.Fatalf("reliability objects = %d, want 1", len(objects))
+	}
+	return objects[0].object
+}
+
+func requireReliabilityObject(t *testing.T, objects []runtimeWriterWireObject, constructorID uint32) tlrpc.TLObject {
+	t.Helper()
+	for _, object := range objects {
+		if object.object.ConstructorID() == constructorID {
+			return object.object
+		}
+	}
+	t.Fatalf("reliability objects do not contain constructor 0x%08x", constructorID)
+	return nil
 }
 
 func cloneReliabilityInner(inner *mtproto.InnerData) *mtproto.InnerData {

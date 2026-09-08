@@ -132,11 +132,12 @@ func bindRecoveryBarrierSession(t *testing.T, cli *client.Client) {
 func readRecoveryBarrierInteresting(t *testing.T, cli *client.Client) (*mtproto.InnerData, tlrpc.TLObject) {
 	t.Helper()
 	for index := 0; index < 8; index++ {
-		inner, object := readRuntimeWriterWireObject(t, cli)
-		if object.ConstructorID() == mtprototl.MsgsAckID {
-			continue
+		for _, decoded := range readRuntimeWriterWireObjects(t, cli) {
+			if decoded.object.ConstructorID() == mtprototl.MsgsAckID {
+				continue
+			}
+			return decoded.inner, decoded.object
 		}
-		return inner, object
 	}
 	t.Fatal("interesting wire object not received")
 	return nil, nil

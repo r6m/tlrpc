@@ -44,7 +44,7 @@ func TestConnectionRoutesAlternatingSessionsOnOnePhysicalConnection(t *testing.T
 		}); err != nil {
 			t.Fatalf("handle request %d: %v", index, err)
 		}
-		waitForWrittenFrames(t, harness.transport, []int{3, 6, 8}[index])
+		waitForWrittenFrames(t, harness.transport, []int{2, 4, 5}[index])
 	}
 
 	framesBySession := make(map[int64]int)
@@ -52,8 +52,8 @@ func TestConnectionRoutesAlternatingSessionsOnOnePhysicalConnection(t *testing.T
 		inner := decryptWriterFrame(t, harness.authKey, frame)
 		framesBySession[inner.SessionID]++
 	}
-	if framesBySession[inboundSessionID] != 5 || framesBySession[sessionB] != 3 {
-		t.Fatalf("frames by session = %v, want A=5 B=3", framesBySession)
+	if framesBySession[inboundSessionID] != 3 || framesBySession[sessionB] != 2 {
+		t.Fatalf("frames by session = %v, want A=3 B=2", framesBySession)
 	}
 	if got := application.sessionIDs(); !equalInt64s(got, []int64{inboundSessionID, sessionB, inboundSessionID}) {
 		t.Fatalf("application session order = %v", got)
@@ -116,7 +116,7 @@ func TestConnectionAdmitsTwoInitialSameAuthSessionsWithoutRetiringEither(t *test
 	}
 
 	close(application.release)
-	waitForWrittenFrames(t, harness.transport, 6)
+	waitForWrittenFrames(t, harness.transport, 4)
 	for _, actor := range actors {
 		if err := context.Cause(actor.lease.Context()); err != nil {
 			t.Fatalf("session %d retired after its initial request: %v", actor.key.SessionID, err)
@@ -141,7 +141,7 @@ func TestConnectionAcceptsHighInitialSequenceForClientRestoredSession(t *testing
 	}); err != nil {
 		t.Fatalf("restored-session request: %v", err)
 	}
-	waitForWrittenFrames(t, harness.transport, 3)
+	waitForWrittenFrames(t, harness.transport, 2)
 	if got := application.sessionIDs(); !equalInt64s(got, []int64{inboundSessionID}) {
 		t.Fatalf("application sessions = %v, want restored session", got)
 	}
@@ -174,6 +174,93 @@ func TestConnectionPinsPhysicalTransportToOneAuthKey(t *testing.T) {
 	if _, err := harness.connection.sessionFor(context.Background(), second); !errors.Is(err, ErrConnectionProtocol) {
 		t.Fatalf("second auth key error = %v, want ErrConnectionProtocol", err)
 	}
+}
+
+func TestConnectionOptInCachedAuthKeyAvoidsRepeatedSourceReadsAndRejectsSwitchBeforeLookup(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	harness := newConnectionHarness(t, now, &multisessionApplicationStub{}, 100, nil)
+	defer harness.connection.shutdown(io.EOF)
+	source := &countingAuthKeySource{source: harness.connection.config.AuthKeys, cacheForConnection: true}
+	harness.connection.config.AuthKeys = source
+
+	inner := &mtproto.InnerData{Salt: inboundSalt, SessionID: inboundSessionID}
+	frame := encryptedClientFrame(t, harness.authKey, inner)
+	decoded, err := DecodeFrame(frame, connectionAuthKeySource{connection: harness.connection})
+	if err != nil {
+		t.Fatalf("decode initial frame: %v", err)
+	}
+	if _, err := harness.connection.sessionFor(context.Background(), decoded); err != nil {
+		t.Fatalf("acquire initial session: %v", err)
+	}
+	if _, err := DecodeFrame(frame, connectionAuthKeySource{connection: harness.connection}); err != nil {
+		t.Fatalf("decode frame with pinned key: %v", err)
+	}
+	if got := source.count(); got != 1 {
+		t.Fatalf("auth-key source reads = %d, want one", got)
+	}
+
+	other := harness.authKey
+	other[0] ^= 0xff
+	otherFrame := encryptedClientFrame(t, other, &mtproto.InnerData{Salt: inboundSalt, SessionID: inboundSessionID + 1})
+	if _, err := DecodeFrame(otherFrame, connectionAuthKeySource{connection: harness.connection}); !errors.Is(err, ErrConnectionProtocol) {
+		t.Fatalf("switched auth-key decode error = %v, want ErrConnectionProtocol", err)
+	}
+	if got := source.count(); got != 1 {
+		t.Fatalf("auth-key switch reached source: reads=%d", got)
+	}
+}
+
+type countingAuthKeySource struct {
+	mu                 sync.Mutex
+	source             AuthKeySource
+	reads              int
+	cacheForConnection bool
+}
+
+func (s *countingAuthKeySource) Get(keyID crypto.KeyID) (crypto.AuthKey, error) {
+	s.mu.Lock()
+	s.reads++
+	s.mu.Unlock()
+	return s.source.Get(keyID)
+}
+
+func (s *countingAuthKeySource) CacheAuthKeyForConnection() bool { return s.cacheForConnection }
+
+func (s *countingAuthKeySource) count() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.reads
+}
+
+func TestConnectionDefaultAuthKeySourceObservesDeleteAfterSessionAttach(t *testing.T) {
+	now := time.Unix(inboundNowSeconds, 0).UTC()
+	harness := newConnectionHarness(t, now, &multisessionApplicationStub{}, 100, nil)
+	defer harness.connection.shutdown(io.EOF)
+	manager := harness.connection.config.AuthKeys.(*crypto.MemoryAuthKeyManager)
+	inner := &mtproto.InnerData{Salt: inboundSalt, SessionID: inboundSessionID}
+	frame := encryptedClientFrame(t, harness.authKey, inner)
+	decoded, err := DecodeFrame(frame, connectionAuthKeySource{connection: harness.connection})
+	if err != nil {
+		t.Fatalf("decode initial frame: %v", err)
+	}
+	if _, err := harness.connection.sessionFor(context.Background(), decoded); err != nil {
+		t.Fatalf("acquire initial session: %v", err)
+	}
+	if err := manager.Delete(harness.authKey.ID()); err != nil {
+		t.Fatalf("delete auth key: %v", err)
+	}
+	if _, err := DecodeFrame(frame, connectionAuthKeySource{connection: harness.connection}); !errors.Is(err, crypto.ErrAuthKeyNotFound) {
+		t.Fatalf("decode after auth-key deletion = %v, want ErrAuthKeyNotFound", err)
+	}
+}
+
+func encryptedClientFrame(t *testing.T, authKey crypto.AuthKey, inner *mtproto.InnerData) []byte {
+	t.Helper()
+	encrypted, err := inner.EncryptFromClient(authKey, authKey.ID())
+	if err != nil {
+		t.Fatalf("encrypt client frame: %v", err)
+	}
+	return serializeEncryptedFrame(encrypted)
 }
 
 func TestConnectionSessionMapIsBounded(t *testing.T) {
@@ -269,7 +356,7 @@ func TestConnectionAdmissionSaturationReturnsCorrelatedRetryableErrorAcrossSessi
 	}
 
 	close(application.release)
-	waitForWrittenFrames(t, harness.transport, 4)
+	waitForWrittenFrames(t, harness.transport, 3)
 	if err := harness.connection.handleEncrypted(context.Background(), secondFrame); err != nil {
 		t.Fatalf("retry same request: %v", err)
 	}
@@ -407,7 +494,7 @@ func TestConnectionLeaseReplacementRetiresOnlyMatchingSession(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("session A after replacing B: %v", err)
 	}
-	waitForWrittenFrames(t, first.transport, 3)
+	waitForWrittenFrames(t, first.transport, 2)
 }
 
 func TestConnectionReloadHandoverCompletesOrClosesConcurrentStartupRPCs(t *testing.T) {
@@ -503,7 +590,7 @@ func TestConnectionReloadHandoverCompletesOrClosesConcurrentStartupRPCs(t *testi
 			application.waitCanceled(t, startupRequests)
 			close(application.releaseReplacement)
 
-			wantFrames := startupRequests * 2
+			wantFrames := startupRequests
 			if !tc.reuseSession {
 				wantFrames++ // new_session_created for the fresh session
 			}
@@ -590,28 +677,30 @@ func assertCorrelatedStartupResponses(t *testing.T, frames [][]byte, authKey cry
 		if inner.SessionID != sessionID {
 			t.Fatalf("response session = %d, want %d", inner.SessionID, sessionID)
 		}
-		switch binaryConstructor(inner.Data) {
-		case mtprototl.RPCResultID:
-			result := &mtprototl.RPCResult{}
-			if err := decodeControl(inner.Data, result); err != nil {
-				t.Fatalf("decode rpc_result: %v", err)
+		visitWriterMessages(t, inner.MsgID, inner.Data, func(_ int64, body []byte) {
+			switch binaryConstructor(body) {
+			case mtprototl.RPCResultID:
+				result := &mtprototl.RPCResult{}
+				if err := decodeControl(body, result); err != nil {
+					t.Fatalf("decode rpc_result: %v", err)
+				}
+				if binaryConstructor(result.ResultRaw) != 0x7a7a7a7a {
+					t.Fatalf("request %d result constructor = %08x", result.ReqMsgID, binaryConstructor(result.ResultRaw))
+				}
+				results[result.ReqMsgID]++
+			case mtprototl.MsgsAckID:
+				ack := &mtprototl.MsgsAck{}
+				if err := decodeControl(body, ack); err != nil {
+					t.Fatalf("decode msgs_ack: %v", err)
+				}
+				for _, messageID := range ack.MsgIDs {
+					acknowledged[messageID]++
+				}
+			case mtprototl.NewSessionCreatedID:
+			default:
+				t.Fatalf("unexpected response constructor %08x", binaryConstructor(body))
 			}
-			if binaryConstructor(result.ResultRaw) != 0x7a7a7a7a {
-				t.Fatalf("request %d result constructor = %08x", result.ReqMsgID, binaryConstructor(result.ResultRaw))
-			}
-			results[result.ReqMsgID]++
-		case mtprototl.MsgsAckID:
-			ack := &mtprototl.MsgsAck{}
-			if err := decodeControl(inner.Data, ack); err != nil {
-				t.Fatalf("decode msgs_ack: %v", err)
-			}
-			for _, messageID := range ack.MsgIDs {
-				acknowledged[messageID]++
-			}
-		case mtprototl.NewSessionCreatedID:
-		default:
-			t.Fatalf("unexpected response constructor %08x", binaryConstructor(inner.Data))
-		}
+		})
 	}
 	for _, requestID := range requestIDs {
 		if results[requestID] != 1 || acknowledged[requestID] != 1 {

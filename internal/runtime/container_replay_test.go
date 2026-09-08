@@ -62,16 +62,19 @@ func TestConnectionMixedContainerRetransmission(t *testing.T) {
 			var original []byte
 			var responseID int64
 			if mode == "completed" || mode == "repeated" || mode == "acknowledged" || mode == "ack_in_container" {
-				waitForWrittenFrames(t, h.transport, 3)
+				waitForWrittenFrames(t, h.transport, 2)
 				for _, frame := range h.transport.writtenFrames() {
 					inner := decryptWriterFrame(t, h.authKey, frame)
-					if binaryConstructor(inner.Data) == mtprototl.RPCResultID {
-						original = frame
-						responseID = inner.MsgID
-						if mode == "acknowledged" {
-							send(inboundMessageID(6*4), 2, encodeControlBody(t, &mtprototl.MsgsAck{MsgIDs: []int64{inner.MsgID}}))
+					visitWriterMessages(t, inner.MsgID, inner.Data, func(messageID int64, body []byte) {
+						if binaryConstructor(body) != mtprototl.RPCResultID {
+							return
 						}
-					}
+						original = frame
+						responseID = messageID
+						if mode == "acknowledged" {
+							send(inboundMessageID(6*4), 2, encodeControlBody(t, &mtprototl.MsgsAck{MsgIDs: []int64{messageID}}))
+						}
+					})
 				}
 				if original == nil {
 					t.Fatal("missing original response")
@@ -96,9 +99,9 @@ func TestConnectionMixedContainerRetransmission(t *testing.T) {
 			}
 			send(inboundMessageID(40), 4, serializeInboundContainer(t, children))
 			waitCall(freshID)
-			extra := 3
+			extra := 2
 			if mode == "completed" || mode == "repeated" || mode == "restart" {
-				extra = 4
+				extra = 3
 			}
 			waitForWrittenFrames(t, h.transport, prior+extra)
 			frames := h.transport.writtenFrames()[prior:]
@@ -110,12 +113,15 @@ func TestConnectionMixedContainerRetransmission(t *testing.T) {
 					resendCount++
 				}
 				inner := decryptWriterFrame(t, h.authKey, frame)
-				if binaryConstructor(inner.Data) == mtprototl.BadMsgNotificationID {
-					t.Fatal("valid retransmission rejected")
-				}
-				if binaryConstructor(inner.Data) == mtprototl.RPCResultID {
+				visitWriterMessages(t, inner.MsgID, inner.Data, func(_ int64, body []byte) {
+					if binaryConstructor(body) == mtprototl.BadMsgNotificationID {
+						t.Fatal("valid retransmission rejected")
+					}
+					if binaryConstructor(body) != mtprototl.RPCResultID {
+						return
+					}
 					result := &mtprototl.RPCResult{}
-					if err := decodeControl(inner.Data, result); err != nil {
+					if err := decodeControl(body, result); err != nil {
 						t.Fatal(err)
 					}
 					if result.ReqMsgID == oldID && binaryConstructor(result.ResultRaw) == mtprototl.RPCErrorID {
@@ -125,7 +131,7 @@ func TestConnectionMixedContainerRetransmission(t *testing.T) {
 						}
 						retry = failure.ErrorCode == 500 && failure.ErrorMessage == interruptedRequestRetryMessage
 					}
-				}
+				})
 			}
 			if (mode == "completed" || mode == "repeated") != resent {
 				t.Fatalf("response resend=%v mode=%s", resent, mode)
@@ -138,7 +144,7 @@ func TestConnectionMixedContainerRetransmission(t *testing.T) {
 			}
 			if mode == "inflight" {
 				close(app.release)
-				waitForWrittenFrames(t, h.transport, prior+extra+2)
+				waitForWrittenFrames(t, h.transport, prior+extra+1)
 			}
 			select {
 			case id := <-app.calls:

@@ -56,6 +56,14 @@ persist protocol state after a new generation takes over. A transport or physica
 failure retires the whole connection because its shared byte stream can no
 longer be trusted.
 
+Authorization-key sources may explicitly implement
+`CacheAuthKeyForConnection() bool` and return true to let Runtime v2 retain the
+validated key after a session lease is acquired successfully. This removes a
+key-source read from subsequent encrypted frames on that physical connection.
+It is safe only when revoking an authorization key also retires or rejects its
+active session leases. Sources without this capability continue to resolve the
+key for every encrypted frame, so deletion remains immediately observable.
+
 ## Inbound request flow
 
 ```text
@@ -138,6 +146,11 @@ these to semantic intents. The per-session writer:
 
 The sink has a bounded queue and one end-to-end write timeout. It serializes
 writes from all sessions without merging their protocol ordering state.
+For a content-related RPC, Runtime v2 places a final `rpc_result` or
+`rpc_error` and its `msgs_ack` in one intentional MTProto container. They share
+one session-snapshot persistence boundary and one physical write while keeping
+their own child message IDs and sequence numbers. Pushes, protocol replies,
+resends, and close intents retain their existing ordering boundaries.
 
 ## Application state and live delivery
 

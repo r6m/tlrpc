@@ -104,6 +104,40 @@ func TestWriterBuildsContainerChildrenInsideOneSequenceBoundary(t *testing.T) {
 	}
 }
 
+func TestWriterPersistsResponseAndAcknowledgementBatchOnceAndRetainsReplay(t *testing.T) {
+	store := &saveCountingStore{Store: session.NewMemoryStore()}
+	h := newWriterHarness(t, store, &recordingFrameSink{})
+	requestID := int64(88)
+	if err := h.writer.Submit(context.Background(), Batch{Items: []Intent{
+		RPCResult{RequestMessageID: requestID, Body: constructorBody(0x05060708)},
+		Acknowledge{MessageIDs: []int64{requestID}},
+	}}); err != nil {
+		t.Fatalf("submit response/ack batch: %v", err)
+	}
+	if got := store.saveCount(); got != 1 {
+		t.Fatalf("session saves = %d, want one", got)
+	}
+	frames := h.sink.snapshot()
+	if len(frames) != 1 {
+		t.Fatalf("written frames = %d, want one", len(frames))
+	}
+	outer := decryptWriterFrame(t, h.authKey, frames[0])
+	container := &mtprototl.MsgContainer{}
+	if err := container.DeserializeTL(bytes.NewReader(outer.Data)); err != nil {
+		t.Fatalf("decode response/ack container: %v", err)
+	}
+	if len(container.Messages) != 2 || binary.LittleEndian.Uint32(container.Messages[0].BodyRaw[:4]) != mtprototl.RPCResultID || binary.LittleEndian.Uint32(container.Messages[1].BodyRaw[:4]) != mtprototl.MsgsAckID {
+		t.Fatalf("response/ack children = %+v", container.Messages)
+	}
+	if found, err := h.writer.ReplayResponse(context.Background(), requestID); err != nil || !found {
+		t.Fatalf("replay retained response = %t, %v", found, err)
+	}
+	replayed := h.sink.snapshot()
+	if len(replayed) != 2 || !bytes.Equal(replayed[0], replayed[1]) {
+		t.Fatal("retained response did not replay its exact response/ack packet")
+	}
+}
+
 func TestWriterPersistenceFailureWritesNothingAndRetiresLease(t *testing.T) {
 	wantErr := errors.New("save failed")
 	store := &failingSaveStore{Store: session.NewMemoryStore(), err: wantErr}
@@ -363,6 +397,25 @@ type failingSaveStore struct {
 	err error
 }
 
+type saveCountingStore struct {
+	session.Store
+	mu    sync.Mutex
+	saves int
+}
+
+func (s *saveCountingStore) Save(ctx context.Context, key session.SessionKey, snapshot session.Snapshot) error {
+	s.mu.Lock()
+	s.saves++
+	s.mu.Unlock()
+	return s.Store.Save(ctx, key, snapshot)
+}
+
+func (s *saveCountingStore) saveCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.saves
+}
+
 func (s *failingSaveStore) Save(context.Context, session.SessionKey, session.Snapshot) error {
 	return s.err
 }
@@ -386,4 +439,19 @@ func decryptWriterFrame(t *testing.T, authKey crypto.AuthKey, frame []byte) *mtp
 		t.Fatalf("decrypt writer frame: %v", err)
 	}
 	return inner
+}
+
+func visitWriterMessages(t *testing.T, messageID int64, body []byte, visit func(int64, []byte)) {
+	t.Helper()
+	if binaryConstructor(body) != mtprototl.MsgContainerID {
+		visit(messageID, body)
+		return
+	}
+	container := &mtprototl.MsgContainer{}
+	if err := decodeControl(body, container); err != nil {
+		t.Fatalf("decode writer container: %v", err)
+	}
+	for _, child := range container.Messages {
+		visitWriterMessages(t, child.MsgID, child.BodyRaw, visit)
+	}
 }

@@ -558,20 +558,45 @@ func (s *connectionSession) applyOutcome(ctx context.Context, message InboundMes
 			return err
 		}
 	}
-	for _, intent := range outcome.Intents {
+	intents := outcomeWriteIntents(outcome.Intents, message)
+	for _, intent := range intents {
 		if err := s.writer.Submit(ctx, intent); err != nil {
 			return err
 		}
 	}
-	acknowledged := false
-	if message.ContentRelated {
-		if err := s.writer.Submit(ctx, Acknowledge{MessageIDs: []int64{message.MessageID}}); err != nil {
-			return err
-		}
-		acknowledged = true
-	}
+	acknowledged := message.ContentRelated
 	s.reliability.inboundLedger().Complete([]int64{message.MessageID}, acknowledged, len(outcome.Intents) != 0)
 	return nil
+}
+
+// outcomeWriteIntents lets the final application response and its inbound
+// acknowledgement share one writer persistence boundary. Existing Push,
+// ProtocolReply, Resend, and Close packet boundaries and ordering stay intact.
+// An existing batch is copied before the acknowledgement is appended.
+func outcomeWriteIntents(intents []Intent, message InboundMessage) []Intent {
+	result := append([]Intent(nil), intents...)
+	if !message.ContentRelated {
+		return result
+	}
+	ack := Acknowledge{MessageIDs: []int64{message.MessageID}}
+	if len(result) == 0 {
+		return []Intent{ack}
+	}
+	last := len(result) - 1
+	switch value := result[last].(type) {
+	case RPCResult, RPCError:
+		result[last] = Batch{Items: []Intent{value, ack}}
+	case Batch:
+		if len(value.Items) < mtproto.DefaultMaxVectorElements {
+			items := append([]Intent(nil), value.Items...)
+			result[last] = Batch{Items: append(items, ack)}
+		} else {
+			result = append(result, ack)
+		}
+	default:
+		result = append(result, ack)
+	}
+	return result
 }
 
 func (s *connectionSession) applyMutations(ctx context.Context, mutations []SessionMutation) error {

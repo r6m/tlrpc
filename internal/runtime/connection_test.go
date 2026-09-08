@@ -24,7 +24,7 @@ func TestConnectionRoutesGeneratedApplicationThroughSingleWriter(t *testing.T) {
 	application := &connectionApplicationStub{outcome: Outcome{Intents: []Intent{
 		RPCResult{RequestMessageID: requestID, Body: constructorBody(0x20202020)},
 	}}, pushBody: constructorBody(0x21212121)}
-	harness := newConnectionHarness(t, now, application, 4, []mtproto.InnerData{{
+	harness := newConnectionHarness(t, now, application, 3, []mtproto.InnerData{{
 		Salt: inboundSalt, SessionID: inboundSessionID,
 		MsgID: requestID, SeqNo: 1, Data: requestBody,
 	}})
@@ -34,37 +34,40 @@ func TestConnectionRoutesGeneratedApplicationThroughSingleWriter(t *testing.T) {
 		t.Fatalf("Run() error = %v, want EOF", err)
 	}
 	frames := harness.transport.writtenFrames()
-	if len(frames) != 4 {
-		t.Fatalf("written frames = %d, want 4", len(frames))
+	if len(frames) != 3 {
+		t.Fatalf("written frames = %d, want 3", len(frames))
 	}
 	decoded := make([]*mtproto.InnerData, len(frames))
 	for index, frame := range frames {
 		decoded[index] = decryptWriterFrame(t, harness.authKey, frame)
 	}
-	constructors := []uint32{
-		binaryConstructor(decoded[0].Data),
-		binaryConstructor(decoded[1].Data),
-		binaryConstructor(decoded[2].Data), binaryConstructor(decoded[3].Data),
-	}
-	wantConstructors := []uint32{mtprototl.NewSessionCreatedID, 0x21212121, mtprototl.RPCResultID, mtprototl.MsgsAckID}
+	constructors := []uint32{binaryConstructor(decoded[0].Data), binaryConstructor(decoded[1].Data), binaryConstructor(decoded[2].Data)}
+	wantConstructors := []uint32{mtprototl.NewSessionCreatedID, 0x21212121, mtprototl.MsgContainerID}
 	if !reflect.DeepEqual(constructors, wantConstructors) {
 		t.Fatalf("wire constructors = %08x, want %08x", constructors, wantConstructors)
 	}
-	if got := []int32{decoded[0].SeqNo, decoded[1].SeqNo, decoded[2].SeqNo, decoded[3].SeqNo}; !reflect.DeepEqual(got, []int32{0, 1, 3, 4}) {
+	if got := []int32{decoded[0].SeqNo, decoded[1].SeqNo, decoded[2].SeqNo}; !reflect.DeepEqual(got, []int32{0, 1, 4}) {
 		t.Fatalf("wire sequence numbers = %v", got)
 	}
-	if decoded[0].MsgID&3 != 3 || decoded[1].MsgID&3 != 3 || decoded[2].MsgID&3 != 1 || decoded[3].MsgID&3 != 1 {
-		t.Fatalf("wire message ID classes = %d, %d, %d, %d", decoded[0].MsgID&3, decoded[1].MsgID&3, decoded[2].MsgID&3, decoded[3].MsgID&3)
+	if decoded[0].MsgID&3 != 3 || decoded[1].MsgID&3 != 3 || decoded[2].MsgID&3 != 1 {
+		t.Fatalf("wire message ID classes = %d, %d, %d", decoded[0].MsgID&3, decoded[1].MsgID&3, decoded[2].MsgID&3)
+	}
+	container := &mtprototl.MsgContainer{}
+	if err := decodeControl(decoded[2].Data, container); err != nil {
+		t.Fatal(err)
+	}
+	if len(container.Messages) != 2 || container.Messages[0].SeqNo != 3 || container.Messages[1].SeqNo != 4 {
+		t.Fatalf("response container = %+v", container.Messages)
 	}
 	result := &mtprototl.RPCResult{}
-	if err := decodeControl(decoded[2].Data, result); err != nil {
+	if err := decodeControl(container.Messages[0].BodyRaw, result); err != nil {
 		t.Fatal(err)
 	}
 	if result.ReqMsgID != requestID || binaryConstructor(result.ResultRaw) != 0x20202020 {
 		t.Fatalf("rpc result = %+v", result)
 	}
 	ack := &mtprototl.MsgsAck{}
-	if err := decodeControl(decoded[3].Data, ack); err != nil {
+	if err := decodeControl(container.Messages[1].BodyRaw, ack); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(ack.MsgIDs, []int64{requestID}) {
@@ -79,6 +82,64 @@ func TestConnectionRoutesGeneratedApplicationThroughSingleWriter(t *testing.T) {
 	}
 	if !stored.NewSessionCreated || stored.FirstClientMsgID != requestID || stored.SeqNo != 2 || stored.ServerSeqNo != 2 {
 		t.Fatalf("stored session = %+v", stored)
+	}
+}
+
+func TestOutcomeWriteIntentsBatchesOnlyTrailingResponseAndAcknowledgement(t *testing.T) {
+	requestID := int64(41)
+	response := RPCResult{RequestMessageID: requestID, Body: constructorBody(0x11111111)}
+	push := Push{Body: constructorBody(0x22222222)}
+	result := outcomeWriteIntents([]Intent{push, response}, InboundMessage{MessageID: requestID, ContentRelated: true})
+	if len(result) != 2 {
+		t.Fatalf("writer intents = %d, want push plus response/ack batch", len(result))
+	}
+	if _, ok := result[0].(Push); !ok {
+		t.Fatalf("first intent = %T, want Push", result[0])
+	}
+	batch, ok := result[1].(Batch)
+	if !ok || len(batch.Items) != 2 {
+		t.Fatalf("trailing intent = %#v, want two-child Batch", result[1])
+	}
+	if _, ok := batch.Items[0].(RPCResult); !ok {
+		t.Fatalf("batch response = %T", batch.Items[0])
+	}
+	ack, ok := batch.Items[1].(Acknowledge)
+	if !ok || !reflect.DeepEqual(ack.MessageIDs, []int64{requestID}) {
+		t.Fatalf("batch acknowledgement = %#v", batch.Items[1])
+	}
+
+	resend := Resend{MessageIDs: []int64{9}}
+	separated := outcomeWriteIntents([]Intent{response, resend}, InboundMessage{MessageID: requestID, ContentRelated: true})
+	if len(separated) != 3 {
+		t.Fatalf("unsupported boundary intents = %#v", separated)
+	}
+	if _, ok := separated[0].(RPCResult); !ok {
+		t.Fatalf("response crossed resend boundary: %#v", separated)
+	}
+	if _, ok := separated[1].(Resend); !ok {
+		t.Fatalf("resend boundary changed: %#v", separated)
+	}
+	if _, ok := separated[2].(Acknowledge); !ok {
+		t.Fatalf("trailing acknowledgement = %T", separated[2])
+	}
+}
+
+func TestOutcomeWriteIntentsAppendsAckToCopiedExistingBatch(t *testing.T) {
+	requestID := int64(43)
+	original := Batch{Items: []Intent{
+		Push{Body: constructorBody(0x33333333)},
+		RPCError{RequestMessageID: requestID, Code: 500, Message: "FAILED"},
+	}}
+	result := outcomeWriteIntents([]Intent{original}, InboundMessage{MessageID: requestID, ContentRelated: true})
+	if len(result) != 1 {
+		t.Fatalf("writer intents = %d, want one batch", len(result))
+	}
+	batch, ok := result[0].(Batch)
+	if !ok || len(batch.Items) != 3 {
+		t.Fatalf("writer batch = %#v", result[0])
+	}
+	if len(original.Items) != 2 {
+		t.Fatalf("input batch mutated: %#v", original.Items)
 	}
 }
 
@@ -118,21 +179,21 @@ func TestConnectionInvokeWithoutUpdatesKeepsBoundSessionSubscribed(t *testing.T)
 
 	handle(inboundMessageID(4), 1, constructorBody(bindConstructor))
 	presence.waitForUser(t, 42)
-	waitForWrittenFrames(t, harness.transport, 3)
+	waitForWrittenFrames(t, harness.transport, 2)
 
 	handle(inboundMessageID(8), 3, constructorBody(normalConstructor))
-	waitForWrittenFrames(t, harness.transport, 5)
+	waitForWrittenFrames(t, harness.transport, 3)
 
 	withoutUpdates := encodeControlBody(t, &mtprototl.InvokeWithoutUpdates{
 		QueryRaw: constructorBody(suppressedConstructor),
 	})
 	handle(inboundMessageID(12), 5, withoutUpdates)
-	waitForWrittenFrames(t, harness.transport, 7)
+	waitForWrittenFrames(t, harness.transport, 4)
 
 	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
 		t.Fatalf("publish after invokeWithoutUpdates: %v", err)
 	}
-	waitForWrittenFrames(t, harness.transport, 8)
+	waitForWrittenFrames(t, harness.transport, 5)
 
 	constructors := make([]uint32, 0, 8)
 	for _, frame := range harness.transport.writtenFrames() {
@@ -179,17 +240,17 @@ func TestConnectionInvokeWithoutUpdatesDoesNotSubscribeColdBoundSession(t *testi
 	handle(inboundMessageID(4), 1, encodeControlBody(t, &mtprototl.InvokeWithoutUpdates{
 		QueryRaw: constructorBody(bindConstructor),
 	}))
-	waitForWrittenFrames(t, harness.transport, 3)
+	waitForWrittenFrames(t, harness.transport, 2)
 	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err == nil {
 		t.Fatal("cold invokeWithoutUpdates connection unexpectedly subscribed for push")
 	}
 
 	handle(inboundMessageID(8), 3, constructorBody(normalConstructor))
-	waitForWrittenFrames(t, harness.transport, 5)
+	waitForWrittenFrames(t, harness.transport, 3)
 	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
 		t.Fatalf("publish after normal request: %v", err)
 	}
-	waitForWrittenFrames(t, harness.transport, 6)
+	waitForWrittenFrames(t, harness.transport, 4)
 
 	harness.connection.shutdown(io.EOF)
 }
@@ -224,7 +285,7 @@ func TestConnectionRestoresDurablePushSubscriptionAcrossReconnect(t *testing.T) 
 		t.Fatalf("initial subscribed request: %v", err)
 	}
 	presence.waitForUser(t, 42)
-	waitForWrittenFrames(t, first.transport, 3)
+	waitForWrittenFrames(t, first.transport, 2)
 	snapshot := loadConnectionSessionSnapshot(t, store, first.authKey.ID(), inboundSessionID)
 	if !snapshot.PushSubscription {
 		t.Fatalf("initial session did not persist push subscription: %+v", snapshot)
@@ -252,11 +313,11 @@ func TestConnectionRestoresDurablePushSubscriptionAcrossReconnect(t *testing.T) 
 	}); err != nil {
 		t.Fatalf("suppressed request after reconnect: %v", err)
 	}
-	waitForWrittenFrames(t, second.transport, 2)
+	waitForWrittenFrames(t, second.transport, 1)
 	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
 		t.Fatalf("restored subscription push: %v", err)
 	}
-	waitForWrittenFrames(t, second.transport, 3)
+	waitForWrittenFrames(t, second.transport, 2)
 
 	constructors := make([]uint32, 0, 3)
 	for _, frame := range second.transport.writtenFrames() {
@@ -421,7 +482,7 @@ func TestConnectionDoesNotRestorePushSubscriptionForColdSession(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("initial cold request: %v", err)
 	}
-	waitForWrittenFrames(t, first.transport, 3)
+	waitForWrittenFrames(t, first.transport, 2)
 	snapshot := loadConnectionSessionSnapshot(t, store, first.authKey.ID(), inboundSessionID)
 	if snapshot.PushSubscription {
 		t.Fatalf("cold session unexpectedly persisted push subscription: %+v", snapshot)
@@ -452,7 +513,7 @@ func TestConnectionRPCDropCancelsRunningGeneratedHandler(t *testing.T) {
 	dropID := inboundMessageID(8)
 	application := &connectionApplicationStub{block: true, started: make(chan struct{})}
 	dropBody := encodeControlBody(t, &mtprototl.RPCDropAnswer{ReqMsgID: requestID})
-	harness := newConnectionHarness(t, now, application, 3, []mtproto.InnerData{
+	harness := newConnectionHarness(t, now, application, 2, []mtproto.InnerData{
 		{Salt: inboundSalt, SessionID: inboundSessionID, MsgID: requestID, SeqNo: 1, Data: constructorBody(0x30303030)},
 		{Salt: inboundSalt, SessionID: inboundSessionID, MsgID: dropID, SeqNo: 3, Data: dropBody},
 	})
@@ -469,12 +530,19 @@ func TestConnectionRPCDropCancelsRunningGeneratedHandler(t *testing.T) {
 		t.Fatal("rpc_drop_answer did not cancel the running generated handler")
 	}
 	frames := harness.transport.writtenFrames()
-	if len(frames) != 3 {
-		t.Fatalf("written frames = %d, want new_session_created + drop result + ack", len(frames))
+	if len(frames) != 2 {
+		t.Fatalf("written frames = %d, want new_session_created + result/ack container", len(frames))
 	}
 	resultInner := decryptWriterFrame(t, harness.authKey, frames[1])
+	container := &mtprototl.MsgContainer{}
+	if err := decodeControl(resultInner.Data, container); err != nil {
+		t.Fatal(err)
+	}
+	if len(container.Messages) != 2 {
+		t.Fatalf("drop response messages = %d, want result + ack", len(container.Messages))
+	}
 	result := &mtprototl.RPCResult{}
-	if err := decodeControl(resultInner.Data, result); err != nil {
+	if err := decodeControl(container.Messages[0].BodyRaw, result); err != nil {
 		t.Fatal(err)
 	}
 	if result.ReqMsgID != dropID || binaryConstructor(result.ResultRaw) != mtprototl.RPCAnswerDroppedRunningID {

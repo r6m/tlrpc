@@ -48,7 +48,7 @@ func TestConnectionNonSubscribingMethodUsesNormalizedConstructor(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("handle wrapped non-subscribing method: %v", err)
 	}
-	waitForWrittenFrames(t, harness.transport, 3)
+	waitForWrittenFrames(t, harness.transport, 2)
 
 	if application.request.Message.ConstructorID != methodConstructor || !application.request.Message.SuppressPush {
 		t.Fatalf("normalized request = %+v, want constructor 0x%08x with push suppressed", application.request.Message, methodConstructor)
@@ -104,14 +104,14 @@ func TestConnectionNonSubscribingMethodKeepsExistingSubscription(t *testing.T) {
 	}
 	handle(inboundMessageID(4), 1, bindConstructor)
 	presence.waitForUser(t, 42)
-	waitForWrittenFrames(t, harness.transport, 3)
+	waitForWrittenFrames(t, harness.transport, 2)
 	handle(inboundMessageID(8), 3, nonSubscribingMethod)
-	waitForWrittenFrames(t, harness.transport, 5)
+	waitForWrittenFrames(t, harness.transport, 3)
 
 	if err := presence.publish(context.Background(), 42, constructorBody(laterServerPush)); err != nil {
 		t.Fatalf("publish through existing subscription: %v", err)
 	}
-	waitForWrittenFrames(t, harness.transport, 6)
+	waitForWrittenFrames(t, harness.transport, 4)
 	constructors := make([]uint32, 0, 6)
 	for _, frame := range harness.transport.writtenFrames() {
 		constructors = append(constructors, binaryConstructor(decryptWriterFrame(t, harness.authKey, frame).Data))
