@@ -182,6 +182,13 @@ change between projection and submission returns `ErrPushBindingChanged`.
 Applications may cache or reuse payload decisions for equal layers, but the
 runtime does not infer that two sessions share an application representation.
 
+`Server.PublishProjectedByAuthKey` addresses every process-local,
+push-subscribed session using one authorization key, including sessions that
+are not yet bound to a user. It exists for application protocols such as QR
+login whose wake-up target is the key itself. Runtime v2 still applies the
+same layer projection, registration, subscription, and lease-generation
+fences. This API does not provide cross-process delivery.
+
 An application can opt selected method constructor IDs into a recovery push
 barrier with `WithRecoveryPushBarrier`. The barrier belongs to one active
 `(AuthKeyID, SessionID)` lease generation. Runtime v2 activates it immediately

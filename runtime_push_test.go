@@ -583,6 +583,112 @@ func TestServerPublishProjectedUsesSchemaLayerForZeroLayerRegistration(t *testin
 	}
 }
 
+func TestServerPublishProjectedByAuthKeyTargetsSubscribedSessionsIncludingUnauthenticated(t *testing.T) {
+	server := NewServer()
+	unauthenticated := &recordingRuntimeSender{}
+	otherSession := &recordingRuntimeSender{}
+	otherAuthKey := &recordingRuntimeSender{}
+	nonSubscribing := &recordingRuntimeSender{}
+
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 41, SessionID: 51, Layer: 228}, 7, unauthenticated, true)
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 41, SessionID: 52, UserID: 61, Layer: 229}, 9, otherSession, true)
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 42, SessionID: 53, UserID: 61, Layer: 230}, 11, otherAuthKey, true)
+	// A file-like non-subscribing request can register a sender without making
+	// that session eligible for process-local pushes.
+	server.runtimePushes.Update(session.Snapshot{AuthKeyID: 41, SessionID: 54, Layer: 231}, 13, nonSubscribing, false)
+
+	seen := make(map[int64]Binding)
+	err := server.PublishProjectedByAuthKey(41, func(_ context.Context, binding Binding) (TLObject, error) {
+		seen[binding.SessionID] = binding
+		layer := binding.Layer
+		return &layerRecordingPushObject{layer: &layer}, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(seen) != 2 {
+		t.Fatalf("projected bindings = %#v, want two auth-key sessions", seen)
+	}
+	if got := seen[51]; got.UserID != 0 || got.Layer != 228 || got.LeaseGeneration != 7 {
+		t.Fatalf("unauthenticated binding = %#v", got)
+	}
+	if got := seen[52]; got.UserID != 61 || got.Layer != 229 || got.LeaseGeneration != 9 {
+		t.Fatalf("other auth-key session binding = %#v", got)
+	}
+	if unauthenticated.pushes != 1 || otherSession.pushes != 1 || otherAuthKey.pushes != 0 || nonSubscribing.pushes != 0 {
+		t.Fatalf("auth-key projected push counts = (%d, %d, %d, %d), want (1, 1, 0, 0)", unauthenticated.pushes, otherSession.pushes, otherAuthKey.pushes, nonSubscribing.pushes)
+	}
+	for name, test := range map[string]struct {
+		body      []byte
+		wantLayer int
+	}{
+		"unauthenticated": {body: unauthenticated.lastBody, wantLayer: 228},
+		"other session":   {body: otherSession.lastBody, wantLayer: 229},
+	} {
+		if len(test.body) != 4 {
+			t.Fatalf("%s projected body = %x, want layer-recording object", name, test.body)
+		}
+		if got := int(int32(binary.LittleEndian.Uint32(test.body))); got != test.wantLayer {
+			t.Fatalf("%s encoded layer = %d, want %d", name, got, test.wantLayer)
+		}
+	}
+}
+
+func TestServerPublishProjectedByAuthKeyValidatesAuthKeyAndProjector(t *testing.T) {
+	server := NewServer()
+	called := false
+	projector := func(context.Context, Binding) (TLObject, error) {
+		called = true
+		return &runtimeApplicationTestResponse{Value: "unexpected"}, nil
+	}
+	if err := server.PublishProjectedByAuthKey(0, projector); !errors.Is(err, ErrInvalidAuthKeyID) {
+		t.Fatalf("zero auth key error = %v, want ErrInvalidAuthKeyID", err)
+	}
+	if called {
+		t.Fatal("zero auth key invoked projector")
+	}
+	if err := server.PublishProjectedByAuthKey(41, nil); !errors.Is(err, ErrPushProjectorRequired) {
+		t.Fatalf("nil projector error = %v, want ErrPushProjectorRequired", err)
+	}
+
+	var nilServer *Server
+	if err := nilServer.PublishProjectedByAuthKey(0, nil); err != nil {
+		t.Fatalf("nil server publish = %v, want nil", err)
+	}
+}
+
+func TestServerPublishProjectedByAuthKeyFencesRemovedOrUnsubscribedBindings(t *testing.T) {
+	for name, change := range map[string]func(*Server, session.Snapshot, runtimev2.Sender){
+		"removed": func(server *Server, snapshot session.Snapshot, sender runtimev2.Sender) {
+			server.runtimePushes.Remove(snapshot.Key(), sender)
+		},
+		"unsubscribed": func(server *Server, snapshot session.Snapshot, sender runtimev2.Sender) {
+			server.runtimePushes.Update(snapshot, 5, sender, false)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := NewServer()
+			sender := &recordingRuntimeSender{}
+			snapshot := session.Snapshot{AuthKeyID: 41, SessionID: 51, Layer: 228}
+			server.runtimePushes.Update(snapshot, 5, sender, true)
+
+			err := server.PublishProjectedByAuthKey(41, func(_ context.Context, binding Binding) (TLObject, error) {
+				if binding.Layer != 228 || binding.LeaseGeneration != 5 {
+					t.Fatalf("projected binding = %#v", binding)
+				}
+				change(server, snapshot, sender)
+				return &runtimeApplicationTestResponse{Value: "stale bytes"}, nil
+			})
+			if !errors.Is(err, ErrPushBindingChanged) {
+				t.Fatalf("PublishProjectedByAuthKey error = %v, want ErrPushBindingChanged", err)
+			}
+			if sender.pushes != 0 {
+				t.Fatalf("changed binding received %d pushes, want 0", sender.pushes)
+			}
+		})
+	}
+}
+
 func TestRuntimePushRegistryWithoutServerPreservesZeroLayerBinding(t *testing.T) {
 	registry := newRuntimePushRegistry(nil)
 	sender := &recordingRuntimeSender{}

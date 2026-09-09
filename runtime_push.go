@@ -15,6 +15,7 @@ import (
 var (
 	ErrPushProjectorRequired = errors.New("tlrpc: push projector is required")
 	ErrPushBindingChanged    = errors.New("tlrpc: projected push binding changed")
+	ErrInvalidAuthKeyID      = errors.New("tlrpc: auth key ID must be non-zero")
 )
 
 // PushProjector builds one schema-defined push for the exact eligible session
@@ -24,10 +25,11 @@ var (
 type PushProjector func(context.Context, Binding) (TLObject, error)
 
 type runtimePushBinding struct {
-	mu        sync.Mutex
-	binding   Binding
-	sender    runtimev2.Sender
-	reachable bool
+	mu          sync.Mutex
+	binding     Binding
+	sender      runtimev2.Sender
+	reachable   bool
+	acceptsPush bool
 }
 
 // runtimePushRegistry stores semantic senders only. It never receives a raw
@@ -72,7 +74,7 @@ func (r *runtimePushRegistry) Update(snapshot session.Snapshot, leaseGeneration 
 				r.mu.Unlock()
 				continue
 			}
-			target = &runtimePushBinding{binding: binding, sender: sender, reachable: binding.UserID != 0 && acceptsPush}
+			target = &runtimePushBinding{binding: binding, sender: sender, reachable: binding.UserID != 0 && acceptsPush, acceptsPush: acceptsPush}
 			r.byKey[key] = append(r.byKey[key], target)
 			if target.reachable {
 				r.addUserLocked(key, target, binding.UserID)
@@ -95,6 +97,7 @@ func (r *runtimePushRegistry) Update(snapshot session.Snapshot, leaseGeneration 
 		r.removeUserLocked(key, target, previous.UserID)
 		target.binding = binding
 		target.reachable = binding.UserID != 0 && acceptsPush
+		target.acceptsPush = acceptsPush
 		if target.reachable {
 			r.addUserLocked(key, target, binding.UserID)
 		}
@@ -162,6 +165,7 @@ func (r *runtimePushRegistry) Remove(key session.SessionKey, sender runtimev2.Se
 		}
 		r.removeUserLocked(key, target, binding.UserID)
 		target.reachable = false
+		target.acceptsPush = false
 		r.mu.Unlock()
 		target.mu.Unlock()
 		if r.server != nil {
@@ -298,6 +302,58 @@ func (r *runtimePushRegistry) publishProjected(ctx context.Context, userID int64
 	return errors.Join(failures...)
 }
 
+func (r *runtimePushRegistry) publishProjectedByAuthKey(ctx context.Context, authKeyID crypto.KeyID, projector PushProjector, maxEncodedBytes int) error {
+	if r == nil || authKeyID == 0 {
+		return nil
+	}
+	if projector == nil {
+		return ErrPushProjectorRequired
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	r.mu.RLock()
+	registrations := make([]*runtimePushBinding, 0)
+	for key, sessionBindings := range r.byKey {
+		if key.AuthKeyID == authKeyID {
+			registrations = append(registrations, sessionBindings...)
+		}
+	}
+	r.mu.RUnlock()
+	targets := make([]projectedPushTarget, 0, len(registrations))
+	for _, target := range registrations {
+		target.mu.Lock()
+		binding := target.binding
+		eligible := target.acceptsPush && crypto.KeyID(binding.AuthKeyID) == authKeyID
+		target.mu.Unlock()
+		if eligible {
+			targets = append(targets, projectedPushTarget{registration: target, binding: binding})
+		}
+	}
+
+	var failures []error
+	for _, target := range targets {
+		if err := ctx.Err(); err != nil {
+			failures = append(failures, err)
+			break
+		}
+		object, err := projector(ctx, target.binding)
+		if err != nil {
+			failures = append(failures, fmt.Errorf("tlrpc: project auth-key push for auth key %d session %d generation %d layer %d: %w", target.binding.AuthKeyID, target.binding.SessionID, target.binding.LeaseGeneration, target.binding.Layer, err))
+			continue
+		}
+		body, err := encodeTLObjectWithLimitsForLayer(object, EncodeLimits{MaxEncodedBytes: maxEncodedBytes}, target.binding.Layer)
+		if err != nil {
+			failures = append(failures, fmt.Errorf("tlrpc: encode projected auth-key push for auth key %d session %d generation %d layer %d: %w", target.binding.AuthKeyID, target.binding.SessionID, target.binding.LeaseGeneration, target.binding.Layer, err))
+			continue
+		}
+		if err := r.pushProjectedByAuthKeyIfCurrent(ctx, authKeyID, target, body); err != nil {
+			failures = append(failures, err)
+		}
+	}
+	return errors.Join(failures...)
+}
+
 type projectedPushTarget struct {
 	registration *runtimePushBinding
 	binding      Binding
@@ -312,6 +368,19 @@ func (r *runtimePushRegistry) pushProjectedIfCurrent(ctx context.Context, target
 	current.mu.Lock()
 	defer current.mu.Unlock()
 	if current.reachable && current.binding == target.binding {
+		if err := current.sender.Push(ctx, append([]byte(nil), body...)); err != nil {
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("%w: auth key %d session %d generation %d layer %d", ErrPushBindingChanged, target.binding.AuthKeyID, target.binding.SessionID, target.binding.LeaseGeneration, target.binding.Layer)
+}
+
+func (r *runtimePushRegistry) pushProjectedByAuthKeyIfCurrent(ctx context.Context, authKeyID crypto.KeyID, target projectedPushTarget, body []byte) error {
+	current := target.registration
+	current.mu.Lock()
+	defer current.mu.Unlock()
+	if current.acceptsPush && crypto.KeyID(current.binding.AuthKeyID) == authKeyID && current.binding == target.binding {
 		if err := current.sender.Push(ctx, append([]byte(nil), body...)); err != nil {
 			return err
 		}
@@ -415,6 +484,32 @@ func (s *Server) PublishProjected(userID int64, projector PushProjector) error {
 // cancellation and deadlines.
 func (s *Server) PublishProjectedContext(ctx context.Context, userID int64, projector PushProjector) error {
 	return s.publishProjectedContext(ctx, userID, nil, nil, projector)
+}
+
+// PublishProjectedByAuthKey builds and sends one schema-defined push to every
+// process-local push-subscribed session using authKeyID. Unlike user-addressed
+// publishing, this includes unauthenticated sessions and is intended for
+// protocol flows such as updateLoginToken that wake one specific auth key.
+func (s *Server) PublishProjectedByAuthKey(authKeyID uint64, projector PushProjector) error {
+	return s.PublishProjectedByAuthKeyContext(context.Background(), authKeyID, projector)
+}
+
+// PublishProjectedByAuthKeyContext is PublishProjectedByAuthKey with
+// caller-controlled cancellation and deadlines.
+func (s *Server) PublishProjectedByAuthKeyContext(ctx context.Context, authKeyID uint64, projector PushProjector) error {
+	if s == nil || s.runtimePushes == nil {
+		return nil
+	}
+	if authKeyID == 0 {
+		return ErrInvalidAuthKeyID
+	}
+	if projector == nil {
+		return ErrPushProjectorRequired
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return s.runtimePushes.publishProjectedByAuthKey(ctx, crypto.KeyID(authKeyID), projector, s.maxEncodedResponseBytes)
 }
 
 // PublishProjectedExcept projects a push for every active session bound to

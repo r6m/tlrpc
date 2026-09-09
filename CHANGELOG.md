@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Released entries are historical records; the Unreleased section and current
 documentation define future framework behavior.
 
+## [0.14.4] - 2026-09-09
+
+### Added
+
+- Add `Server.PublishProjectedByAuthKey` and its context variant for
+  process-local, layer-aware delivery to every push-subscribed session on a
+  specific authorization key, including an unauthenticated session. This
+  supports protocols such as QR login without retaining a request-scoped
+  sender.
+
 ## [0.14.3] - 2026-09-09
 
 ### Fixed

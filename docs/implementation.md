@@ -385,3 +385,10 @@ before submission. A projector or encoding error fails closed for that target
 and is included in the returned joined error; a changed layer, generation,
 subscription, or registration returns `ErrPushBindingChanged`. Successful
 submission retains the existing copied, bounded recovery FIFO behavior.
+
+`Server.PublishProjectedByAuthKey` uses the same projection and final binding
+check while selecting by authorization-key ID rather than positive user ID.
+It includes an unauthenticated main session that has subscribed through a
+normal request, but excludes non-subscribing file/import sessions. The API is
+process-local; applications must retain polling or another durable recovery
+path when delivery is missed or the target is connected to another process.
