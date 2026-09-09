@@ -68,12 +68,15 @@ func UserIDFromContext(ctx context.Context) int64 {
 }
 
 // ClientMetadataFromContext returns immutable initConnection metadata.
+// A fresh session's zero-value metadata is absent, even though the runtime
+// installs a context value for it. Clients may rotate sessions without repeating
+// initConnection; absence must not be interpreted as a declared API ID of zero.
 func ClientMetadataFromContext(ctx context.Context) (session.ClientMetadata, bool) {
 	if ctx == nil {
 		return session.ClientMetadata{}, false
 	}
 	metadata, ok := ctx.Value(contextKeyClient).(session.ClientMetadata)
-	return metadata, ok
+	return metadata, ok && metadata != (session.ClientMetadata{})
 }
 
 func withLayer(ctx context.Context, layer int) context.Context {

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Released entries are historical records; the Unreleased section and current
 documentation define future framework behavior.
 
+## [0.14.3] - 2026-09-09
+
+### Fixed
+
+- Report zero-value client metadata as absent after protocol-session rotation,
+  so applications do not reject valid login credentials against a fabricated
+  `initConnection` API ID of zero. Preserve all nonempty client metadata.
+
 ## [Unreleased]
 
 ### Fixed
