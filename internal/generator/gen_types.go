@@ -18,11 +18,35 @@ type TypeGenerator struct {
 	schema        *parser.Schema
 	usesBaseTypes bool
 	emittedTypes  map[string]struct{}
+	bareTypes     map[string]struct{}
 }
 
 // NewTypeGenerator creates a new type generator.
 func NewTypeGenerator(namer *naming.Namer, out io.Writer, schema *parser.Schema) *TypeGenerator {
-	return &TypeGenerator{namer: namer, out: out, schema: schema, emittedTypes: make(map[string]struct{})}
+	g := &TypeGenerator{namer: namer, out: out, schema: schema, emittedTypes: make(map[string]struct{}), bareTypes: make(map[string]struct{})}
+	if schema != nil {
+		mark := func(reference parser.TypeRef) {}
+		mark = func(reference parser.TypeRef) {
+			if reference.IsVector && reference.Generic != nil {
+				mark(*reference.Generic)
+				return
+			}
+			if name, ok := bareConcreteTypeName(namer, schema, reference); ok {
+				g.bareTypes[name] = struct{}{}
+			}
+		}
+		for _, constructor := range schema.Constructors {
+			for _, parameter := range constructor.Params {
+				mark(parameter.Type)
+			}
+		}
+		for _, function := range schema.Functions {
+			for _, parameter := range function.Params {
+				mark(parameter.Type)
+			}
+		}
+	}
+	return g
 }
 
 // UsesBaseTypes returns true if this generator references base MTProto types
@@ -67,8 +91,6 @@ type FieldTemplateData struct {
 type FlagFieldTemplateData struct {
 	Condition string
 	Bit       int
-	MinLayer  int
-	MaxLayer  int
 }
 
 // InterfaceTemplateData holds data for interface template
@@ -103,10 +125,10 @@ func (v *{{.Name}}) Method() string { return "" }
 func (v *{{.Name}}) TLName() string { return {{quote .TLName}} }
 
 {{if .HasFlags}}
-func (v *{{.Name}}) computeFlags({{if .IsLayered}}layer int{{end}}) uint32 {
+func (v *{{.Name}}) computeFlags() uint32 {
 	var flags uint32
 {{- range .FlagFields}}
-	if {{if $.IsLayered}}tlLayerSupports(layer, {{.MinLayer}}, {{.MaxLayer}}) && {{end}}{{.Condition}} {
+	if {{.Condition}} {
 		flags |= 1 << {{.Bit}}
 	}
 {{- end}}
@@ -121,7 +143,7 @@ func (v *{{.Name}}) computeFlags({{if .IsLayered}}layer int{{end}}) uint32 {
 
 // GenerateType emits all constructor structs for a type declaration.
 func (g *TypeGenerator) GenerateType(decl *parser.TypeDecl) error {
-	if len(decl.Constructors) == 1 {
+	if len(decl.Constructors) == 1 && !g.schema.IsLayered {
 		// Single constructor type - generate struct with type name
 		return g.GenerateSingleConstructorType(decl)
 	}
@@ -135,7 +157,7 @@ func (g *TypeGenerator) GenerateType(decl *parser.TypeDecl) error {
 			return err
 		}
 	}
-	return nil
+	return g.generateFamilyDecoder(decl)
 }
 
 // GenerateSingleConstructorType generates a struct with the type name for single-constructor types
@@ -185,8 +207,6 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 			flagFields = append(flagFields, FlagFieldTemplateData{
 				Condition: flagCondition(param, fieldName),
 				Bit:       *bit,
-				MinLayer:  param.MinLayer,
-				MaxLayer:  param.MaxLayer,
 			})
 		}
 	}
@@ -222,10 +242,10 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 
 // GenerateInterface emits a polymorphic interface for union types.
 func (g *TypeGenerator) GenerateInterface(decl *parser.TypeDecl) error {
-	if !decl.IsUnion || len(decl.Constructors) == 1 {
+	if (!decl.IsUnion || len(decl.Constructors) == 1) && !g.schema.IsLayered {
 		return nil
 	}
-	baseName := typeName(g.namer, decl.Name, decl.VariantLayer)
+	baseName := typeName(g.namer, decl.Name, 0)
 	name := baseName + "Type"
 	if _, exists := g.emittedTypes[name]; exists {
 		return nil
@@ -233,12 +253,23 @@ func (g *TypeGenerator) GenerateInterface(decl *parser.TypeDecl) error {
 	g.emittedTypes[name] = struct{}{}
 
 	var constructors []string
-	for i := range decl.Constructors {
-		if g.isBaseType(&decl.Constructors[i]) {
+	seenConstructors := make(map[string]struct{})
+	for i := range g.schema.Types {
+		family := &g.schema.Types[i]
+		if family.Name != decl.Name {
 			continue
 		}
-		ctorName := constructorName(g.namer, decl.Constructors[i])
-		constructors = append(constructors, ctorName)
+		for j := range family.Constructors {
+			if g.isBaseType(&family.Constructors[j]) {
+				continue
+			}
+			ctorName := concreteTypeName(g.namer, g.schema, family.Constructors[j])
+			if _, exists := seenConstructors[ctorName]; exists {
+				continue
+			}
+			seenConstructors[ctorName] = struct{}{}
+			constructors = append(constructors, ctorName)
+		}
 	}
 	if len(constructors) == 0 {
 		return nil
@@ -285,7 +316,7 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 		return nil
 	}
 
-	name := constructorName(g.namer, *ctor)
+	name := concreteTypeName(g.namer, g.schema, *ctor)
 	if _, exists := g.emittedTypes[name]; exists {
 		return nil
 	}
@@ -321,8 +352,6 @@ func (g *TypeGenerator) GenerateConstructor(ctor *parser.Constructor) error {
 			flagFields = append(flagFields, FlagFieldTemplateData{
 				Condition: flagCondition(param, fieldName),
 				Bit:       *bit,
-				MinLayer:  param.MinLayer,
-				MaxLayer:  param.MaxLayer,
 			})
 		}
 	}
@@ -383,408 +412,6 @@ func (g *TypeGenerator) generateDeserializeTLString(ctor *parser.Constructor, na
 	}
 
 	*result = buf.String()
-	return nil
-}
-
-func (g *TypeGenerator) generateSerializeTL(ctor *parser.Constructor, name string) error {
-	if _, err := fmt.Fprintf(g.out, "func (v *%s) SerializeTL(w io.Writer) error {\n", name); err != nil {
-		return err
-	}
-	if !ctor.IsBare {
-		if _, err := fmt.Fprintf(g.out, "\tif err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {\n\t\treturn err\n\t}\n"); err != nil {
-			return err
-		}
-	}
-	if g.schema.IsLayered && (hasFlagsParam(ctor.Params) || hasLayerRanges(ctor.Params)) {
-		if _, err := io.WriteString(g.out, "\tlayer := mtproto.TLLayer(w)\n"); err != nil {
-			return err
-		}
-	}
-	for _, setName := range listFlagSets(ctor.Params) {
-		if setName == "flags" {
-			call := "v.computeFlags()"
-			if g.schema.IsLayered {
-				call = "v.computeFlags(layer)"
-			}
-			if _, err := fmt.Fprintf(g.out, "\tflags := %s\n", call); err != nil {
-				return err
-			}
-			continue
-		}
-		if _, err := fmt.Fprintf(g.out, "\t%s := uint32(0)\n", setName); err != nil {
-			return err
-		}
-		for _, param := range ctor.Params {
-			bit := flagBit(param)
-			if bit == nil || flagSetName(param) != setName {
-				continue
-			}
-			fieldName := g.namer.FieldName(param.Name)
-			if _, err := fmt.Fprintf(g.out, "\tif %s {\n\t\t%s |= 1 << %d\n\t}\n", flagCondition(param, fieldName), setName, *bit); err != nil {
-				return err
-			}
-		}
-	}
-	for _, param := range ctor.Params {
-		if g.schema.IsLayered && (param.MinLayer != 0 || param.MaxLayer != 0) {
-			if _, err := fmt.Fprintf(g.out, "\tif tlLayerSupports(layer, %d, %d) {\n", param.MinLayer, param.MaxLayer); err != nil {
-				return err
-			}
-			if err := g.writeSerializeParam(param, "\t\t"); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := g.writeSerializeParam(param, "\t"); err != nil {
-			return err
-		}
-	}
-	if _, err := io.WriteString(g.out, "\treturn nil\n}\n\n"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TypeGenerator) writeSerializeParam(param parser.Parameter, indent string) error {
-	bit := flagBit(param)
-	if isFlagParam(param) {
-		setName := flagParamName(param)
-		if _, err := fmt.Fprintf(g.out, "%sif err := mtproto.WriteUint32(w, %s); err != nil {\n%s\treturn err\n%s}\n", indent, setName, indent, indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	if shouldSkipParam(param) {
-		return nil
-	}
-	fieldName := g.namer.FieldName(param.Name)
-	if isTrueType(param.Type) {
-		return nil
-	}
-	if bit != nil {
-		if _, err := fmt.Fprintf(g.out, "%sif %s&(1<<%d) != 0 {\n", indent, flagSetName(param), *bit); err != nil {
-			return err
-		}
-		if err := g.writeSerializeField(param, fieldName, indent+"\t"); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	if err := g.writeSerializeField(param, fieldName, indent); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TypeGenerator) writeSerializeField(param parser.Parameter, fieldName, indent string) error {
-	typeRef := param.Type
-	if typeRef.IsVector && typeRef.Generic != nil {
-		if _, err := fmt.Fprintf(g.out, "%sif err := mtproto.WriteVectorHeader(w, len(v.%s)); err != nil {\n%s\treturn err\n%s}\n", indent, fieldName, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%sfor i := range v.%s {\n", indent, fieldName); err != nil {
-			return err
-		}
-		if err := g.writeSerializeValue(*typeRef.Generic, fmt.Sprintf("v.%s[i]", fieldName), indent+"\t"); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	return g.writeSerializeValue(typeRef, "v."+fieldName, indent)
-}
-
-func (g *TypeGenerator) writeSerializeValue(t parser.TypeRef, value, indent string) error {
-	if t.Optional && !isTrueType(t) {
-		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic, VariantLayer: t.VariantLayer}
-		if needsOptionalPointer(t, g.goBaseType(base), g.schema) {
-			if _, ok := serializeBuiltinCall(base, value); ok {
-				return g.writeSerializeValue(base, "*"+value, indent)
-			}
-			return g.writeSerializeValue(base, value, indent)
-		}
-	}
-	writeCall, ok := serializeBuiltinCall(t, value)
-	if ok {
-		_, err := fmt.Fprintf(g.out, "%s%s\n", indent, writeCall)
-		return err
-	}
-	_, err := fmt.Fprintf(g.out, "%sif err := %s.SerializeTL(w); err != nil {\n%s\treturn err\n%s}\n", indent, value, indent, indent)
-	return err
-}
-
-func (g *TypeGenerator) generateDeserializeTL(ctor *parser.Constructor, name string) error {
-	if _, err := fmt.Fprintf(g.out, "func (v *%s) DeserializeTL(r io.Reader) error {\n", name); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(g.out, "\tleaveDecode, err := mtproto.EnterObject(r)\n\tif err != nil {\n\t\treturn err\n\t}\n\tdefer leaveDecode()\n"); err != nil {
-		return err
-	}
-	if g.schema.IsLayered && (hasFlagsParam(ctor.Params) || hasLayerRanges(ctor.Params)) {
-		if _, err := io.WriteString(g.out, "\tlayer := mtproto.TLLayer(r)\n"); err != nil {
-			return err
-		}
-	}
-	if !ctor.IsBare {
-		if _, err := io.WriteString(g.out, "\tctorID, err := mtproto.ReadUint32(r)\n\tif err != nil {\n\t\treturn err\n\t}\n"); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "\tif ctorID != v.ConstructorID() {\n\t\treturn fmt.Errorf(\"wrong constructor: got %%x, want %%x\", ctorID, v.ConstructorID())\n\t}\n"); err != nil {
-			return err
-		}
-	}
-	flagUsage := flagSetUsage(ctor.Params)
-	for _, setName := range listFlagSets(ctor.Params) {
-		if !flagUsage[setName] {
-			continue
-		}
-		if _, err := fmt.Fprintf(g.out, "\tvar %s uint32\n", setName); err != nil {
-			return err
-		}
-	}
-	for _, param := range ctor.Params {
-		if g.schema.IsLayered && (param.MinLayer != 0 || param.MaxLayer != 0) {
-			if _, err := fmt.Fprintf(g.out, "\tif tlLayerSupports(layer, %d, %d) {\n", param.MinLayer, param.MaxLayer); err != nil {
-				return err
-			}
-			if err := g.writeDeserializeParam(ctor, param, flagUsage, "\t\t"); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(g.out, "\t}\n"); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := g.writeDeserializeParam(ctor, param, flagUsage, "\t"); err != nil {
-			return err
-		}
-	}
-	if _, err := io.WriteString(g.out, "\treturn nil\n}\n\n"); err != nil {
-		return err
-	}
-	return nil
-}
-
-func hasLayerRanges(parameters []parser.Parameter) bool {
-	for _, parameter := range parameters {
-		if parameter.MinLayer != 0 || parameter.MaxLayer != 0 {
-			return true
-		}
-	}
-	return false
-}
-
-func (g *TypeGenerator) writeDeserializeParam(ctor *parser.Constructor, param parser.Parameter, flagUsage map[string]bool, indent string) error {
-	bit := flagBit(param)
-	if isFlagParam(param) {
-		setName := flagParamName(param)
-		if !flagUsage[setName] {
-			if g.schema.IsLayered {
-				if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := mtproto.ReadUint32(r)\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent, indent, indent); err != nil {
-					return err
-				}
-				if err := writeKnownFlagValidation(g.out, ctor.Params, setName, "value", "layer", indent+"\t"); err != nil {
-					return err
-				}
-				if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-					return err
-				}
-			} else if _, err := fmt.Fprintf(g.out, "%s_, err = mtproto.ReadUint32(r)\n%sif err != nil {\n%s\treturn err\n%s}\n", indent, indent, indent, indent); err != nil {
-				return err
-			}
-			return nil
-		}
-		if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := mtproto.ReadUint32(r)\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n%s\t%s = value\n", indent, indent, indent, indent, indent, indent, setName); err != nil {
-			return err
-		}
-		if g.schema.IsLayered {
-			if err := writeKnownFlagValidation(g.out, ctor.Params, setName, "value", "layer", indent+"\t"); err != nil {
-				return err
-			}
-		}
-		if !shouldSkipParam(param) {
-			fieldName := g.namer.FieldName(param.Name)
-			if _, err := fmt.Fprintf(g.out, "%s\tv.%s = value\n", indent, fieldName); err != nil {
-				return err
-			}
-		}
-		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	if shouldSkipParam(param) {
-		return nil
-	}
-	fieldName := g.namer.FieldName(param.Name)
-	if isTrueType(param.Type) {
-		if bit != nil {
-			if _, err := fmt.Fprintf(g.out, "%sv.%s = %s&(1<<%d) != 0\n", indent, fieldName, flagSetName(param), *bit); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	if bit != nil {
-		if _, err := fmt.Fprintf(g.out, "%sif %s&(1<<%d) != 0 {\n", indent, flagSetName(param), *bit); err != nil {
-			return err
-		}
-		if err := g.writeDeserializeField(param, fieldName, indent+"\t"); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	if err := g.writeDeserializeField(param, fieldName, indent); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *TypeGenerator) writeDeserializeField(param parser.Parameter, fieldName, indent string) error {
-	typeRef := param.Type
-	if typeRef.IsVector && typeRef.Generic != nil {
-		elementBase := g.goBaseTypeNonVector(*typeRef.Generic)
-		elementType := elementBase
-		elementPtr := shouldUsePointerForType(g.schema, *typeRef.Generic)
-		if elementPtr {
-			elementType = "*" + elementBase
-		}
-		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tvar items []%s\n", indent, elementType); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.ReadVector(r, func() error {\n", indent); err != nil {
-			return err
-		}
-		if elementPtr {
-			if _, err := fmt.Fprintf(g.out, "%s\t\titem := &%s{}\n", indent, elementBase); err != nil {
-				return err
-			}
-		} else {
-			if _, err := fmt.Fprintf(g.out, "%s\t\tvar item %s\n", indent, elementType); err != nil {
-				return err
-			}
-		}
-		if err := g.writeDeserializeValue(*typeRef.Generic, "item", indent+"\t\t"); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\t\titems = append(items, item)\n%s\t\treturn nil\n%s\t}); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tv.%s = items\n", indent, fieldName); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	return g.writeDeserializeValue(typeRef, "v."+fieldName, indent)
-}
-
-func (g *TypeGenerator) writeDeserializeValue(t parser.TypeRef, target, indent string) error {
-	if isUnionType(g.schema, t) {
-		iface := unionInterfaceName(g.namer, t)
-		if _, err := fmt.Fprintf(g.out, "%s{\n", indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tctorID, err := mtproto.ReadUint32(r)\n", indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
-			return err
-		}
-		if g.schema.IsLayered {
-			if _, err := fmt.Fprintf(g.out, "%s\tobj, ok := NewConstructorForLayer(ctorID, mtproto.TLLayer(r))\n", indent); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
-				return err
-			}
-		} else {
-			if _, err := fmt.Fprintf(g.out, "%s\tctor, ok := GetStaticConstructors()[ctorID]\n", indent); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"unknown constructor: %%x\", ctorID)\n%s\t}\n", indent, indent, indent); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(g.out, "%s\tobj := ctor()\n", indent); err != nil {
-				return err
-			}
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tvalue, ok := obj.(%s)\n", indent, iface); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif !ok {\n%s\t\treturn fmt.Errorf(\"constructor %%x is not %s\", ctorID)\n%s\t}\n", indent, indent, iface, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tvar boxedCtor bytes.Buffer\n", indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\tif err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), r)); err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\t%s = value\n", indent, target); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	if t.Optional && !isTrueType(t) && needsOptionalPointer(t, g.goBaseType(t), g.schema) {
-		base := parser.TypeRef{Name: t.Name, Namespace: t.Namespace, IsVector: t.IsVector, Generic: t.Generic, VariantLayer: t.VariantLayer}
-		if readCall, ok := deserializeBuiltinCall(base); ok {
-			if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := %s\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, readCall, indent, indent, indent); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(g.out, "%s\tval := value\n%s\t%s = &val\n%s}\n", indent, indent, target, indent); err != nil {
-				return err
-			}
-			return nil
-		}
-		baseName := g.goBaseType(base)
-		if _, err := fmt.Fprintf(g.out, "%svar value %s\n", indent, baseName); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%sif err := value.DeserializeTL(r); err != nil {\n%s\treturn err\n%s}\n", indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s%s = &value\n", indent, target); err != nil {
-			return err
-		}
-		return nil
-	}
-	readCall, ok := deserializeBuiltinCall(t)
-	if ok {
-		if _, err := fmt.Fprintf(g.out, "%s{\n%s\tvalue, err := %s\n%s\tif err != nil {\n%s\t\treturn err\n%s\t}\n", indent, indent, readCall, indent, indent, indent); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(g.out, "%s\t%s = value\n%s}\n", indent, target, indent); err != nil {
-			return err
-		}
-		return nil
-	}
-	if _, err := fmt.Fprintf(g.out, "%sif err := %s.DeserializeTL(r); err != nil {\n%s\treturn err\n%s}\n", indent, target, indent, indent); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -863,63 +490,6 @@ func flagCondition(param parser.Parameter, fieldName string) string {
 	return "v." + fieldName + " != nil"
 }
 
-func serializeBuiltinCall(t parser.TypeRef, value string) (string, bool) {
-	switch t.Name {
-	case "int":
-		return fmt.Sprintf("if err := mtproto.WriteInt32(w, %s); err != nil {\n\treturn err\n}", value), true
-	case "long":
-		return fmt.Sprintf("if err := mtproto.WriteInt64(w, %s); err != nil {\n\treturn err\n}", value), true
-	case "int128":
-		// types.Int128 is [16]byte, so convert it
-		return fmt.Sprintf("if err := mtproto.WriteInt128(w, [16]byte(%s)); err != nil {\n\treturn err\n}", value), true
-	case "int256":
-		// types.Int256 is [32]byte, so convert it
-		return fmt.Sprintf("if err := mtproto.WriteInt256(w, [32]byte(%s)); err != nil {\n\treturn err\n}", value), true
-	case "double":
-		// types.Double is float64, so convert it
-		return fmt.Sprintf("if err := mtproto.WriteDouble(w, float64(%s)); err != nil {\n\treturn err\n}", value), true
-	case "string":
-		return fmt.Sprintf("if err := mtproto.WriteString(w, %s); err != nil {\n\treturn err\n}", value), true
-	case "bytes":
-		return fmt.Sprintf("if err := mtproto.WriteBytes(w, %s); err != nil {\n\treturn err\n}", value), true
-	case "Bool", "bool", "true", "false":
-		return fmt.Sprintf("if err := mtproto.WriteBool(w, %s); err != nil {\n\treturn err\n}", value), true
-	case "#":
-		return fmt.Sprintf("if err := mtproto.WriteUint32(w, %s); err != nil {\n\treturn err\n}", value), true
-	default:
-		return "", false
-	}
-}
-
-func deserializeBuiltinCall(t parser.TypeRef) (string, bool) {
-	return deserializeBuiltinCallWithReader(t, "r")
-}
-
-func deserializeBuiltinCallWithReader(t parser.TypeRef, readerName string) (string, bool) {
-	switch t.Name {
-	case "int":
-		return fmt.Sprintf("mtproto.ReadInt32(%s)", readerName), true
-	case "long":
-		return fmt.Sprintf("mtproto.ReadInt64(%s)", readerName), true
-	case "int128":
-		return fmt.Sprintf("func() (Int128, error) { v, err := mtproto.ReadInt128(%s); return Int128(v), err }()", readerName), true
-	case "int256":
-		return fmt.Sprintf("func() (Int256, error) { v, err := mtproto.ReadInt256(%s); return Int256(v), err }()", readerName), true
-	case "double":
-		return fmt.Sprintf("func() (Double, error) { v, err := mtproto.ReadDouble(%s); return Double(v), err }()", readerName), true
-	case "string":
-		return fmt.Sprintf("mtproto.ReadString(%s)", readerName), true
-	case "bytes":
-		return fmt.Sprintf("mtproto.ReadBytes(%s)", readerName), true
-	case "Bool", "bool", "true", "false":
-		return fmt.Sprintf("mtproto.ReadBool(%s)", readerName), true
-	case "#":
-		return fmt.Sprintf("mtproto.ReadUint32(%s)", readerName), true
-	default:
-		return "", false
-	}
-}
-
 func shouldSkipParam(param parser.Parameter) bool {
 	if isFlagParam(param) && param.Name == "flags" {
 		return true
@@ -960,6 +530,9 @@ func (g *TypeGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 
 	if isUnionType(g.schema, t) {
 		return unionInterfaceName(g.namer, t)
+	}
+	if name, ok := bareConcreteTypeName(g.namer, g.schema, t); ok {
+		return name
 	}
 
 	if t.Namespace != "" {

@@ -28,7 +28,7 @@ func TestRegisterServiceRejectsOverlappingWireVariants(t *testing.T) {
 				}
 			}()
 			server := NewServer()
-			method := MethodDesc{MethodName: "Call", ConstructorID: runtimeApplicationRequestID, MinLayer: ranges[0], MaxLayer: ranges[1], NewRequest: func() TLObject { return &runtimeApplicationTestRequest{} }, Handler: runtimeApplicationTestHandler}
+			method := MethodDesc{MethodName: "Call", ConstructorID: runtimeApplicationRequestID, MinLayer: ranges[0], MaxLayer: ranges[1], NewRequest: func() TLObject { return &runtimeApplicationTestRequest{} }, Handler: runtimeApplicationMethodHandler, EncodeResponse: encodeRuntimeApplicationTestResponse}
 			other := method
 			other.MethodName = "CallOther"
 			other.MinLayer = ranges[2]

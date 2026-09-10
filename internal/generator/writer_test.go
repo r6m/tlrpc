@@ -100,3 +100,25 @@ func TestNewFileWriter_RemainsCompatible(t *testing.T) {
 		t.Fatalf("legacy constructor header missing explicit unavailable provenance: %q", got)
 	}
 }
+
+func TestFileWriterImportsOnlyCodeQualifiers(t *testing.T) {
+	writer := NewFileWriter(t.TempDir(), "gen", "schema.tl", 229)
+	_, err := io.WriteString(writer.NewFile("register.go"), `
+// fmt.Error and types.Long are only comments.
+const schemaMethod = "io.Read types.Int"
+var _ = tltypes.Int(1)
+var _ = mtproto.MaxTLBytesLength
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	header := writer.header("register.go")
+	for _, unused := range []string{`"fmt"`, `"io"`, "\n\t\"github.com/r6m/tlrpc/types\""} {
+		if strings.Contains(header, unused) {
+			t.Fatalf("unused import %s in %s", unused, header)
+		}
+	}
+	if !strings.Contains(header, `tltypes "github.com/r6m/tlrpc/types"`) || !strings.Contains(header, `"github.com/r6m/tlrpc/mtproto"`) {
+		t.Fatalf("missing real qualifier imports: %s", header)
+	}
+}

@@ -42,7 +42,7 @@ func newHandshakeHarness(t *testing.T) (*tlrpc.Server, *crypto.ServerKey) {
 			MethodName:    "GetConfig",
 			ConstructorID: (&gen.HelpGetConfigRequest{}).ConstructorID(),
 			NewRequest:    func() tlrpc.TLObject { return &gen.HelpGetConfigRequest{} },
-			Handler:       handshakeHelpGetConfigHandler,
+			Handler:       tlrpc.BindMethod(handshakeHelpGetConfigHandler), EncodeResponse: encodeCompatResponse[*gen.Config],
 		}},
 	}, handshakeHelpService{})
 	return srv, serverKey

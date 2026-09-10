@@ -46,10 +46,9 @@ func newRuntimeApplicationDispatcher(server *Server) *runtimeApplicationDispatch
 				adapter.setupErr = fmt.Errorf("tlrpc: generated method %q is not fully registered", method.MethodName)
 				return adapter
 			}
-			handler, err := bindServiceMethodHandler(service.impl, method.Handler)
-			if err != nil {
-				adapter.setupErr = err
-				return adapter
+			handler := method.Handler
+			boundHandler := func(ctx context.Context, req TLObject) (interface{}, error) {
+				return handler(service.impl, ctx, req)
 			}
 			for _, previous := range adapter.methods[method.ConstructorID] {
 				if methodLayersOverlap(previous.descriptor, method) {
@@ -60,7 +59,7 @@ func newRuntimeApplicationDispatcher(server *Server) *runtimeApplicationDispatch
 			decoder := newDispatcher()
 			decoder.RegisterConstructor(method.ConstructorID, method.NewRequest)
 			adapter.methods[method.ConstructorID] = append(adapter.methods[method.ConstructorID], runtimeApplicationMethod{
-				descriptor: method, decoder: decoder, handler: handler,
+				descriptor: method, decoder: decoder, handler: boundHandler,
 				fullMethod: "/" + service.desc.ServiceName + "/" + method.MethodName,
 			})
 		}
@@ -116,7 +115,8 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 	// including the pre-negotiation default.
 	request.Info.Layer = layer
 	collector := &runtimeMutationCollector{}
-	ctx = runtimeApplicationHandlerContext(ctx, request, collector)
+	limits := EncodeLimits{MaxEncodedBytes: a.server.maxEncodedResponseBytes}
+	ctx = runtimeApplicationHandlerContext(ctx, request, collector, limits)
 	ctx = context.WithValue(ctx, temporaryKeyContextKey{}, temporaryKeyRequest{keys: a.server.authKeys, messageID: requestMessageID})
 	if err := a.server.acquireHandler(ctx); err != nil {
 		return runtimeApplicationFailure(requestMessageID, err), nil
@@ -158,15 +158,8 @@ func (a *runtimeApplicationDispatcher) DispatchApplication(ctx context.Context, 
 		return runtimeApplicationFailure(requestMessageID, NewInternalError("NIL_RESPONSE")), nil
 	}
 
-	object, err := normalizeResponse(response)
-	if err != nil {
-		return runtimeApplicationFailure(requestMessageID, err), nil
-	}
-	if object == nil {
-		return runtimeApplicationFailure(requestMessageID, NewInternalError("NIL_RESPONSE")), nil
-	}
-	body, err := encodeTLObjectWithLimitsForLayer(object, EncodeLimits{MaxEncodedBytes: a.server.maxEncodedResponseBytes}, layer)
-	if err != nil {
+	body, err := method.descriptor.EncodeResponse(response, layer, limits)
+	if err != nil || len(body) > a.server.maxEncodedResponseBytes {
 		return runtimeApplicationFailure(requestMessageID, NewInternalError("RESPONSE_ENCODE_FAILED")), nil
 	}
 	return runtimev2.Outcome{
@@ -206,7 +199,7 @@ func (c *runtimeMutationCollector) snapshot() []runtimev2.SessionMutation {
 
 type contextKeyRuntimeMutations struct{}
 
-func runtimeApplicationHandlerContext(ctx context.Context, request runtimev2.Request, collector *runtimeMutationCollector) context.Context {
+func runtimeApplicationHandlerContext(ctx context.Context, request runtimev2.Request, collector *runtimeMutationCollector, limits EncodeLimits) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -222,7 +215,7 @@ func runtimeApplicationHandlerContext(ctx context.Context, request runtimev2.Req
 	})
 	ctx = withClientMetadata(ctx, request.Info.Client)
 	if request.Info.Sender != nil {
-		ctx = withRuntimeSender(ctx, request.Info.Sender)
+		ctx = withRuntimeSender(ctx, request.Info.Sender, request.Info.Layer, limits)
 	}
 	return ctx
 }

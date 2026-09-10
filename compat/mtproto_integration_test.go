@@ -81,7 +81,7 @@ func registerPingService(server *tlrpc.Server, implementation pingServiceServer)
 		Methods: []tlrpc.MethodDesc{{
 			MethodName: "Ping", ConstructorID: pingReqID,
 			NewRequest: func() tlrpc.TLObject { return &pingReq{} },
-			Handler:    pingServiceHandler,
+			Handler:    tlrpc.BindMethod(pingServiceHandler), EncodeResponse: encodeCompatResponse[*pingResp],
 		}},
 	}, implementation)
 }
@@ -169,7 +169,7 @@ func registerLargePayloadService(server *tlrpc.Server, implementation largePaylo
 		Methods: []tlrpc.MethodDesc{{
 			MethodName: "LargePayload", ConstructorID: largePayloadReqID,
 			NewRequest: func() tlrpc.TLObject { return &largePayloadReq{} },
-			Handler:    largePayloadServiceHandler,
+			Handler:    tlrpc.BindMethod(largePayloadServiceHandler), EncodeResponse: encodeCompatResponse[*largePayloadResp],
 		}},
 	}, implementation)
 }

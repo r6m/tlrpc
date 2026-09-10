@@ -1,0 +1,24 @@
+Ciphertext borrowing result. Only the synchronous ciphertext copy is removed from this measured path.
+Command: rtk proxy go test -p=1 ./internal/runtime -run '^TestDecodeFrame' -bench '^BenchmarkDecodeEncryptedFrame$' -benchmem -count=5 -benchtime=200ms -cpu=1
+
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc/internal/runtime
+cpu: Apple M4 Pro
+BenchmarkDecodeEncryptedFrame/small         	  305629	       695.9 ns/op	 126.45 MB/s	    1000 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/small         	  364653	       694.1 ns/op	 126.78 MB/s	    1000 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/small         	  357937	       685.4 ns/op	 128.40 MB/s	    1000 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/small         	  329821	       683.7 ns/op	 128.70 MB/s	    1000 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/small         	  320200	       691.5 ns/op	 127.26 MB/s	    1000 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/1KiB          	   96482	      2560 ns/op	 428.10 MB/s	    3096 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/1KiB          	   75506	      2725 ns/op	 402.21 MB/s	    3096 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/1KiB          	   97526	      2498 ns/op	 438.78 MB/s	    3096 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/1KiB          	   96212	      2500 ns/op	 438.35 MB/s	    3096 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/1KiB          	   99526	      2544 ns/op	 430.75 MB/s	    3096 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/64KiB         	    2173	    112949 ns/op	 580.86 MB/s	  140184 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/64KiB         	    2252	    113924 ns/op	 575.89 MB/s	  140184 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/64KiB         	    2258	    111340 ns/op	 589.26 MB/s	  140184 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/64KiB         	    2221	    111338 ns/op	 589.27 MB/s	  140184 B/op	      18 allocs/op
+BenchmarkDecodeEncryptedFrame/64KiB         	    2115	    111350 ns/op	 589.20 MB/s	  140184 B/op	      18 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc/internal/runtime	4.308s

@@ -116,19 +116,54 @@ func TestTypeGenerator_UnionFieldDeserializeUsesConstructorDispatch(t *testing.T
 		}
 	}
 	content := typesBuf.String()
-	if !strings.Contains(content, "GetStaticConstructors()[ctorID]") {
+	if !strings.Contains(content, "decodeUserType(d)") {
 		t.Fatalf("expected union constructor dispatch in DeserializeTL")
 	}
-	if !strings.Contains(content, "mtproto.EnterObject(r)") {
+	if !strings.Contains(content, "d.EnterObject()") {
 		t.Fatalf("expected generated object decode budget entry")
 	}
-	if !strings.Contains(content, "mtproto.PrependReader(boxedCtor.Bytes(), r)") {
-		t.Fatalf("expected union constructor replay to preserve decode budget")
-	}
-	if strings.Contains(content, "io.MultiReader(&boxedCtor, r)") {
-		t.Fatalf("expected union constructor replay not to hide decode budget")
+	if strings.Contains(content, "PrependReader") || strings.Contains(content, "bytes.Buffer") {
+		t.Fatalf("cursor family decode must not replay constructor bytes")
 	}
 	if strings.Contains(content, "if err := v.User.DeserializeTL(r); err != nil {") {
 		t.Fatalf("expected union field to avoid direct interface DeserializeTL call")
+	}
+}
+
+func TestTypeGenerator_LayeredSingletonUsesStableInterfaceAndConditionalBareCodec(t *testing.T) {
+	base, err := parser.NewParser(`---types---
+leaf#1 value:int = Leaf;
+box#2 leaf:!Leaf = Box;`).ParseWithLayer(228)
+	if err != nil {
+		t.Fatal(err)
+	}
+	layered, err := parser.ResolveLayers(base, 228, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var types, interfaces bytes.Buffer
+	typeGen := NewTypeGenerator(naming.NewNamer(), &types, layered.Schema)
+	interfaceGen := NewTypeGenerator(naming.NewNamer(), &interfaces, layered.Schema)
+	for i := range layered.Schema.Types {
+		if err := typeGen.GenerateType(&layered.Schema.Types[i]); err != nil {
+			t.Fatal(err)
+		}
+		if err := interfaceGen.GenerateInterface(&layered.Schema.Types[i]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !strings.Contains(interfaces.String(), "type LeafType interface") || !strings.Contains(interfaces.String(), "func (*Leaf) isLeafType()") {
+		t.Fatalf("missing layered singleton interface:\n%s", interfaces.String())
+	}
+	if strings.Count(types.String(), "func (v *Leaf) serializeTLBare") != 1 || strings.Contains(types.String(), "func (v *Box) serializeTLBare") {
+		t.Fatalf("bare helpers must be emitted only for referenced Leaf codec:\n%s", types.String())
+	}
+	start := strings.Index(types.String(), "func (v *Leaf) serializeTLBare")
+	end := strings.Index(types.String()[start:], "func (v *Leaf) deserializeTLBare")
+	if start < 0 || end < 0 || strings.Contains(types.String()[start:start+end], "WriteUint32(w, v.ConstructorID())") {
+		t.Fatalf("bare serializer emitted a constructor tag")
+	}
+	if !strings.Contains(types.String(), "e.EnterObject()") {
+		t.Fatalf("missing recursive encode guard")
 	}
 }

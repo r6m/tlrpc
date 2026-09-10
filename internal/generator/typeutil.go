@@ -23,12 +23,6 @@ func writeKnownFlagValidation(out io.Writer, parameters []parser.Parameter, setN
 			continue
 		}
 		seenBits[*bit] = struct{}{}
-		if parameter.MinLayer != 0 || parameter.MaxLayer != 0 {
-			if _, err := fmt.Fprintf(out, "%sif tlLayerSupports(%s, %d, %d) {\n%s\tknownFlags |= 1 << %d\n%s}\n", indent, layerName, parameter.MinLayer, parameter.MaxLayer, indent, *bit, indent); err != nil {
-				return err
-			}
-			continue
-		}
 		if _, err := fmt.Fprintf(out, "%sknownFlags |= 1 << %d\n", indent, *bit); err != nil {
 			return err
 		}
@@ -41,12 +35,22 @@ func isUnionType(schema *parser.Schema, t parser.TypeRef) bool {
 	if schema == nil {
 		return false
 	}
+	if t.IsBare {
+		return false
+	}
 	name := t.Name
 	if t.Namespace != "" {
 		name = t.Namespace + "." + t.Name
 	}
 	if naming.IsBuiltinType(name) || naming.IsBuiltinType(t.Name) {
 		return false
+	}
+	if schema.IsLayered {
+		for i := range schema.Types {
+			if schema.Types[i].Name == name {
+				return true
+			}
+		}
 	}
 	if schema.UnionTypes != nil && schema.UnionTypes[name] {
 		return true
@@ -83,8 +87,58 @@ func constructorName(namer *naming.Namer, constructor parser.Constructor) string
 	return namer.ConstructorName(constructor.Name) + variantSuffix(constructor.VariantLayer)
 }
 
+func concreteTypeName(namer *naming.Namer, schema *parser.Schema, constructor parser.Constructor) string {
+	if schema != nil && !schema.IsLayered {
+		for _, declaration := range schema.Types {
+			if declaration.Name == constructor.ResultType.FullName() && len(declaration.Constructors) == 1 {
+				return typeName(namer, declaration.Name, declaration.VariantLayer)
+			}
+		}
+	}
+	return constructorName(namer, constructor)
+}
+
+func bareConcreteTypeName(namer *naming.Namer, schema *parser.Schema, reference parser.TypeRef) (string, bool) {
+	if !reference.IsBare || schema == nil {
+		return "", false
+	}
+	for _, declaration := range schema.Types {
+		if declaration.Name != reference.FullName() {
+			continue
+		}
+		for _, constructor := range declaration.Constructors {
+			if constructor.VariantLayer == reference.VariantLayer {
+				return concreteTypeName(namer, schema, constructor), true
+			}
+		}
+	}
+	return "", false
+}
+
+func declarationIntervals(intervals []parser.LayerInterval) []parser.LayerInterval {
+	if len(intervals) == 0 {
+		return []parser.LayerInterval{{}}
+	}
+	return intervals
+}
+
+func layerSupportExpression(layerName string, intervals []parser.LayerInterval) string {
+	parts := make([]string, 0, len(intervals))
+	for _, interval := range declarationIntervals(intervals) {
+		parts = append(parts, fmt.Sprintf("tlLayerSupports(%s, %d, %d)", layerName, interval.MinLayer, interval.MaxLayer))
+	}
+	return "(" + strings.Join(parts, " || ") + ")"
+}
+
+func containsBareReference(reference parser.TypeRef) bool {
+	if reference.IsVector && reference.Generic != nil {
+		return containsBareReference(*reference.Generic)
+	}
+	return reference.IsBare
+}
+
 func requestName(namer *naming.Namer, function parser.FuncDecl) string {
-	return namer.RequestName(function.Name) + variantSuffix(function.VariantLayer)
+	return namer.RequestName(function.Name) + variantSuffix(function.RequestVariantLayer)
 }
 
 func methodName(namer *naming.Namer, function parser.FuncDecl) string {

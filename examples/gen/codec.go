@@ -11,6 +11,11 @@ import (
 )
 
 // Static constructor map for efficient decoding
+func tlLayerSupports(layer, minLayer, maxLayer int) bool {
+
+	return (minLayer == 0 || layer >= minLayer) && (maxLayer == 0 || layer <= maxLayer)
+}
+
 var staticConstructors = map[uint32]func() tlrpc.TLObject{
 	// Base MTProto types
 	0x3fedd339: func() tlrpc.TLObject { return &types.True{} },
@@ -1495,726 +1500,7310 @@ func GetStaticConstructors() map[uint32]func() tlrpc.TLObject {
 	return staticConstructors
 }
 
+type tlConstructorLayerVariant struct {
+	minLayer  int
+	maxLayer  int
+	newObject func() tlrpc.TLObject
+}
+
+var constructorLayerVariants = map[uint32][]tlConstructorLayerVariant{
+	0x004a8537: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecurePasswordKdfAlgoUnknown{} }},
+	},
+	0x007efe0e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileJpeg{} }},
+	},
+	0x0084cd5a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateTranscribedAudio{} }},
+	},
+	0x008c703f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserStatusOffline{} }},
+	},
+	0x009fd736: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeFirebaseSms{} }},
+	},
+	0x00be3dfa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorFrontSide{} }},
+	},
+	0x00f49ca0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesDifference{} }},
+	},
+	0x00f8ed08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPeerColors{} }},
+	},
+	0x01190cf1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputQuickReplyShortcutID{} }},
+	},
+	0x0194cb3b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBusinessGreetingMessage{} }},
+	},
+	0x01eb3758: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpUserInfo{} }},
+	},
+	0x01f2bf4a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PublicForwardMessage{} }},
+	},
+	0x020b1422: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &User{} }},
+	},
+	0x021e1ad6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoCachedSize{} }},
+	},
+	0x023f109b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ForumTopicDeleted{} }},
+	},
+	0x027477b4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureRequiredTypeOneOf{} }},
+	},
+	0x028703c8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetAnimatedEmoji{} }},
+	},
+	0x02cc6383: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleForum{} }},
+	},
+	0x031224c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatJoinedByLink{} }},
+	},
+	0x031f9590: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockSlideshow{} }},
+	},
+	0x032c3e77: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGameID{} }},
+	},
+	0x034b8621: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextMarked{} }},
+	},
+	0x0352dafa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyPhoneNumber{} }},
+	},
+	0x037c9330: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaUploadedDocument{} }},
+	},
+	0x0438865b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickeredMediaDocument{} }},
+	},
+	0x049ee584: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Invoice{} }},
+	},
+	0x04c4d4ce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetEmojiGenericAnimations{} }},
+	},
+	0x0509113f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuPeerTypeChat{} }},
+	},
+	0x050a9839: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequirementToContactEmpty{} }},
+	},
+	0x050c7ac8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeLinkedChat{} }},
+	},
+	0x051846fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageMediaGeo{} }},
+	},
+	0x05416d58: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsSubscriptionPricing{} }},
+	},
+	0x05492a13: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateUserPhone{} }},
+	},
+	0x0598a92a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGroupCallStream{} }},
+	},
+	0x0637b7ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryCorrespondents{} }},
+	},
+	0x0656ac4b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsSearch{} }},
+	},
+	0x068e9916: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthLoginTokenMigrateTo{} }},
+	},
+	0x0697102b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &QuickReply{} }},
+	},
+	0x0697f414: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyVoiceMessages{} }},
+	},
+	0x06e425c4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeDriverLicense{} }},
+	},
+	0x06ed998c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCodeTypeFragmentSms{} }},
+	},
+	0x07141dbf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEmojiStatusCollectible{} }},
+	},
+	0x07761198: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatParticipants{} }},
+	},
+	0x07b68920: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelViewForumAsMessages{} }},
+	},
+	0x07df587c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotEditBusinessMessage{} }},
+	},
+	0x081ccf4f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextImage{} }},
+	},
+	0x08a4d87a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPromoData{} }},
+	},
+	0x093bcf34: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiGroupPremium{} }},
+	},
+	0x096a18d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadFile{} }},
+	},
+	0x09c469cd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBusinessIntro{} }},
+	},
+	0x09cb7759: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotMessageReactions{} }},
+	},
+	0x09d05049: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserStatusEmpty{} }},
+	},
+	0x0a1321f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopePeerUser{} }},
+	},
+	0x0a339f0b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageReactions{} }},
+	},
+	0x0a4f63c0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFilePng{} }},
+	},
+	0x0a8eb2be: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonIllegalDrugs{} }},
+	},
+	0x0aa1c39f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPaymentCredentialsApplePay{} }},
+	},
+	0x0ade1591: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsBlocked{} }},
+	},
+	0x0ae30253: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageRange{} }},
+	},
+	0x0b17f890: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRecentStickersNotModified{} }},
+	},
+	0x0b783982: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateGroupCallConnection{} }},
+	},
+	0x0ba52007: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueDisallowContacts{} }},
+	},
+	0x0bb2d201: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStickerSetsOrder{} }},
+	},
+	0x0bd915c0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTopupOption{} }},
+	},
+	0x0c5181ac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ExportedChatlistInvite{} }},
+	},
+	0x0c94511c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebViewMessageSent{} }},
+	},
+	0x0ca71d64: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsPreviewInfo{} }},
+	},
+	0x0cde3739: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetAnimatedEmojiAnimations{} }},
+	},
+	0x0d09e07b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowContacts{} }},
+	},
+	0x0d54b65d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFoundStickerSetsNotModified{} }},
+	},
+	0x0d999256: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionTopicCreate{} }},
+	},
+	0x0da082fe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &VideoSizeStickerMarkup{} }},
+	},
+	0x0e0310d7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpRecentMeUrls{} }},
+	},
+	0x0e17e23c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoSizeEmpty{} }},
+	},
+	0x0e3b2d0c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineQueryPeerTypeBotPm{} }},
+	},
+	0x0e5af939: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageReplyStoryHeader{} }},
+	},
+	0x0e6b76ae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeLocation{} }},
+	},
+	0x0e8e37e5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SuggestedPost{} }},
+	},
+	0x0f94e5f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaPoll{} }},
+	},
+	0x1081464c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileWebp{} }},
+	},
+	0x108d941f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelTooLong{} }},
+	},
+	0x10ab6dc7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsExportedInvites{} }},
+	},
+	0x10b78d29: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonURLAuth{} }},
+	},
+	0x10e6e3a6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsExportedChatlistInvite{} }},
+	},
+	0x1117dd5f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GeoPointEmpty{} }},
+	},
+	0x1142bd56: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SavedContact{} }},
+	},
+	0x114ff30d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsContactBirthdays{} }},
+	},
+	0x1158fe3e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesAllStoriesNotModified{} }},
+	},
+	0x11679fa7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBusinessChatLink{} }},
+	},
+	0x11965f3a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineResult{} }},
+	},
+	0x11b58939: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeAnimated{} }},
+	},
+	0x11dfa986: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotChatInviteRequester{} }},
+	},
+	0x120b1ab9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessWeeklyOpen{} }},
+	},
+	0x12b299d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerPack{} }},
+	},
+	0x12bcbd9a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewEncryptedMessage{} }},
+	},
+	0x12f12a07: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotInlineSend{} }},
+	},
+	0x131cc67f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowUsers{} }},
+	},
+	0x13567e8a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockUnsupported{} }},
+	},
+	0x13659eb0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransaction{} }},
+	},
+	0x13767230: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonWebView{} }},
+	},
+	0x137948a5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthPasswordRecovery{} }},
+	},
+	0x13acff19: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributePattern{} }},
+	},
+	0x1427a5e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsBanned{} }},
+	},
+	0x14455871: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaSuggestedReaction{} }},
+	},
+	0x145ade0b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Contact{} }},
+	},
+	0x147ee23c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchResultsCalendar{} }},
+	},
+	0x148677e2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryBotsInline{} }},
+	},
+	0x14b0ed0c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallRequested{} }},
+	},
+	0x14b85813: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotMenuButton{} }},
+	},
+	0x15051f54: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosPhotosSlice{} }},
+	},
+	0x1527bcac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureSecretSettings{} }},
+	},
+	0x15590068: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeFilename{} }},
+	},
+	0x1592b79d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateWebViewResultSent{} }},
+	},
+	0x15ba6c40: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDialogs{} }},
+	},
+	0x15cefd00: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatAddUser{} }},
+	},
+	0x160544ca: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentPremiumGiveaway{} }},
+	},
+	0x16115a96: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockRelatedArticles{} }},
+	},
+	0x161d9628: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryChannels{} }},
+	},
+	0x1662af0b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesHistoryImport{} }},
+	},
+	0x167bd90b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarGiftUpgradePreview{} }},
+	},
+	0x16bf744e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageTypingAction{} }},
+	},
+	0x16d9703b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactStatus{} }},
+	},
+	0x1710f156: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateEncryptedChatTyping{} }},
+	},
+	0x1759c560: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockPhoto{} }},
+	},
+	0x176f8ba1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageGeoLocationAction{} }},
+	},
+	0x17b7a20b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateAttachMenuBots{} }},
+	},
+	0x17c6b5f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpSupport{} }},
+	},
+	0x17d348d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyNoPaidMessages{} }},
+	},
+	0x17d493d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelForbidden{} }},
+	},
+	0x17d7f87b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountConnectedBots{} }},
+	},
+	0x17db940b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMediaResult{} }},
+	},
+	0x1824e40b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewStoryReaction{} }},
+	},
+	0x183040d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantJoin{} }},
+	},
+	0x1837c364: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEncryptedFileEmpty{} }},
+	},
+	0x1839490f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSponsoredMessagesEmpty{} }},
+	},
+	0x184b35ce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowAll{} }},
+	},
+	0x1871be50: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesExportedChatInvite{} }},
+	},
+	0x187fa0ca: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValue{} }},
+	},
+	0x18b7a10d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DcOption{} }},
+	},
+	0x18cb9f78: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpInviteText{} }},
+	},
+	0x18d1cdc2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageMediaContact{} }},
+	},
+	0x192efbe3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelPinnedTopic{} }},
+	},
+	0x19360dc0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateFolderPeers{} }},
+	},
+	0x193b4417: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputNotifyUsers{} }},
+	},
+	0x1991b13b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsPopularAppBots{} }},
+	},
+	0x19a13f71: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ConnectedBotStarRef{} }},
+	},
+	0x19a9b572: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SavedStarGift{} }},
+	},
+	0x1abfb575: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputDocument{} }},
+	},
+	0x1b03f006: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantLeft{} }},
+	},
+	0x1b0c841a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DraftMessageEmpty{} }},
+	},
+	0x1b0e4f07: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsRating{} }},
+	},
+	0x1b2286b8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionEmoji{} }},
+	},
+	0x1b287353: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSecureValuesSentMe{} }},
+	},
+	0x1b3f4df7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateEditChannelMessage{} }},
+	},
+	0x1b7907ae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleInvites{} }},
+	},
+	0x1bb00451: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterPinned{} }},
+	},
+	0x1bf335b9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStoryID{} }},
+	},
+	0x1c199183: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountWallPapersNotModified{} }},
+	},
+	0x1c570ed1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebDocument{} }},
+	},
+	0x1c6e1c11: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatPhoto{} }},
+	},
+	0x1ca48f57: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChatPhotoEmpty{} }},
+	},
+	0x1cc6e91f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSingleMedia{} }},
+	},
+	0x1ccb966a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextPhone{} }},
+	},
+	0x1cd7bf0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPhotoEmpty{} }},
+	},
+	0x1cf671a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetTonGifts{} }},
+	},
+	0x1d1b1245: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputAppEvent{} }},
+	},
+	0x1d741ef7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentStarsGift{} }},
+	},
+	0x1d998733: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactBirthday{} }},
+	},
+	0x1da448e2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputUserFromMessage{} }},
+	},
+	0x1dab80b7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarsRevenueWithdrawalURL{} }},
+	},
+	0x1e109708: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountPaidMessagesRevenue{} }},
+	},
+	0x1e148390: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockKicker{} }},
+	},
+	0x1e1c7c45: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedChatDiscarded{} }},
+	},
+	0x1e22c78d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonViolence{} }},
+	},
+	0x1e287d04: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaUploadedPhoto{} }},
+	},
+	0x1e297bfa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMessageReactions{} }},
+	},
+	0x1e36fded: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPhoneCall{} }},
+	},
+	0x1e76a78c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryPhoneCalls{} }},
+	},
+	0x1e8caaeb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PostAddress{} }},
+	},
+	0x1ea2fda7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBusinessBotCallbackQuery{} }},
+	},
+	0x1f01c757: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeIDBackdrop{} }},
+	},
+	0x1f0c1ad9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaidReactionPrivacyAnonymous{} }},
+	},
+	0x1f2b0afd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewMessage{} }},
+	},
+	0x1f307eb7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSavedRingtoneConverted{} }},
+	},
+	0x1fad68cd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEvent{} }},
+	},
+	0x2000a518: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyBirthday{} }},
+	},
+	0x20212ca8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosPhoto{} }},
+	},
+	0x204bd158: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneExportedGroupCallInvite{} }},
+	},
+	0x20529438: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateUser{} }},
+	},
+	0x2064674e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesChannelDifference{} }},
+	},
+	0x206ad49e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaidReactionPrivacyDefault{} }},
+	},
+	0x206ae6d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStarsTransaction{} }},
+	},
+	0x2085c238: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSavedStarGiftSlug{} }},
+	},
+	0x208e68c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessageEntityMentionName{} }},
+	},
+	0x209b82db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelLocation{} }},
+	},
+	0x21108ff7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessRecipients{} }},
+	},
+	0x211a1788: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageEmpty{} }},
+	},
+	0x21461b5d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowBots{} }},
+	},
+	0x21e753bc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadWebFile{} }},
+	},
+	0x21ec5a5f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecurePlainEmail{} }},
+	},
+	0x222600ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesExportedChatInviteReplaced{} }},
+	},
+	0x226ccefb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCodeTypeFlashCall{} }},
+	},
+	0x226e6308: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotifyForumTopic{} }},
+	},
+	0x2271f2bf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaAreaChannelPost{} }},
+	},
+	0x23209745: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionStartGroupCall{} }},
+	},
+	0x2331b22d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoEmpty{} }},
+	},
+	0x236df622: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiKeywordDeleted{} }},
+	},
+	0x23734b06: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedMessageService{} }},
+	},
+	0x2390fe44: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeSuccess{} }},
+	},
+	0x23e91ba3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotPreviewMedia{} }},
+	},
+	0x243e1c66: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageUploadRoundAction{} }},
+	},
+	0x24596d41: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputQuickReplyShortcut{} }},
+	},
+	0x24f40e77: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMessagePollVote{} }},
+	},
+	0x250dbaf8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerPremiumBot{} }},
+	},
+	0x257e962b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumGiftCodeOption{} }},
+	},
+	0x258aff05: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonURL{} }},
+	},
+	0x25972bcb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageEmojiInteraction{} }},
+	},
+	0x25e073fc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageListItemBlocks{} }},
+	},
+	0x25f324f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelReadMessagesContents{} }},
+	},
+	0x26219a58: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPeerColorSet{} }},
+	},
+	0x2633421b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatFull{} }},
+	},
+	0x263d7c26: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockBlockquote{} }},
+	},
+	0x2661bf09: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePhoneCallSignalingData{} }},
+	},
+	0x26a5553e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftUnique{} }},
+	},
+	0x26ae0971: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleSignatures{} }},
+	},
+	0x26b5dde6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMessageEditData{} }},
+	},
+	0x26ffde7d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDialogFilter{} }},
+	},
+	0x278f2868: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionSendMessage{} }},
+	},
+	0x27bcbbfc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerChannel{} }},
+	},
+	0x28373599: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateUserEmojiStatus{} }},
+	},
+	0x283bd312: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotPurchasedPaidMedia{} }},
+	},
+	0x284a1096: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCheckedGiftCode{} }},
+	},
+	0x28a20571: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityCode{} }},
+	},
+	0x28ecf961: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpTermsOfServiceUpdate{} }},
+	},
+	0x29562865: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatEmpty{} }},
+	},
+	0x2979eeb2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangPackStringDeleted{} }},
+	},
+	0x29be5899: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputTakeoutFileLocation{} }},
+	},
+	0x29d0f5ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetEmojiDefaultStatuses{} }},
+	},
+	0x2ad93719: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDialogFilters{} }},
+	},
+	0x2aee9191: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsStatus{} }},
+	},
+	0x2b96cd1b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountEmailVerified{} }},
+	},
+	0x2ba1f5ce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPeerColorsNotModified{} }},
+	},
+	0x2be0dfa4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONNumber{} }},
+	},
+	0x2c084dc1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStoriesStealthMode{} }},
+	},
+	0x2c221edd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDhConfig{} }},
+	},
+	0x2ca4fdf8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyStarGiftsAutoSave{} }},
+	},
+	0x2cb51097: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFavedStickers{} }},
+	},
+	0x2dbf3432: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGroupCallStreamRtmpURL{} }},
+	},
+	0x2dc173c8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEncryptedFileBigUploaded{} }},
+	},
+	0x2dd14edc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerSet{} }},
+	},
+	0x2de11aae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiStatusEmpty{} }},
+	},
+	0x2df5fc0a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionDefaultBannedRights{} }},
+	},
+	0x2e59d922: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonPornography{} }},
+	},
+	0x2e6eab1a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsSubscription{} }},
+	},
+	0x2e94c3e7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageAttributeStory{} }},
+	},
+	0x2ea2c0d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthAuthorization{} }},
+	},
+	0x2eb1b658: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeCounter{} }},
+	},
+	0x2ec0533f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaVenue{} }},
+	},
+	0x2ed82995: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarGifts{} }},
+	},
+	0x2f2ba99f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelWebPage{} }},
+	},
+	0x2f2f21bf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadHistoryOutbox{} }},
+	},
+	0x2f453e49: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowCloseFriends{} }},
+	},
+	0x2f6cb2ab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopeDefault{} }},
+	},
+	0x2fe601d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantCreator{} }},
+	},
+	0x2ffe2f7a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionConferenceCall{} }},
+	},
+	0x30535af5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCall{} }},
+	},
+	0x3081ed9d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineQueryPeerTypeSameBotPm{} }},
+	},
+	0x308660c1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonUserProfile{} }},
+	},
+	0x30a6ec7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStickers{} }},
+	},
+	0x30f443db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateRecentEmojiStatuses{} }},
+	},
+	0x313bc7f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateShortMessage{} }},
+	},
+	0x31518e9b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionRequestedPeer{} }},
+	},
+	0x315a4974: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersUsersSlice{} }},
+	},
+	0x31bb5d52: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeWallpaper{} }},
+	},
+	0x31bd492d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMessageReactionsList{} }},
+	},
+	0x31c24808: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStickerSets{} }},
+	},
+	0x31cad303: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageAttributeStarGiftCollection{} }},
+	},
+	0x3259950a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedReactionTags{} }},
+	},
+	0x32ca960f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntitySpoiler{} }},
+	},
+	0x32da9e9c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetItem{} }},
+	},
+	0x3334b0f0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSecureFileUploaded{} }},
+	},
+	0x3354678f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePtsChanged{} }},
+	},
+	0x3371c354: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesPeerDialogs{} }},
+	},
+	0x3380c786: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageMediaAuto{} }},
+	},
+	0x339bef6c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequestPeerTypeBroadcast{} }},
+	},
+	0x33db32f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesTranslatedText{} }},
+	},
+	0x33f0ea47: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureCredentialsEncrypted{} }},
+	},
+	0x3407e51b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerSetMultiCovered{} }},
+	},
+	0x3417d728: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPaymentCredentials{} }},
+	},
+	0x34566b6a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageTableCell{} }},
+	},
+	0x34636dd8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorTranslationFiles{} }},
+	},
+	0x34a2f297: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersSavedMusic{} }},
+	},
+	0x34c3bb53: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantAdmin{} }},
+	},
+	0x34e793f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceChatInviteSubscription{} }},
+	},
+	0x34f762f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionStarGiftUnique{} }},
+	},
+	0x3504914f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDialogFilters{} }},
+	},
+	0x354a9b09: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageMediaInvoice{} }},
+	},
+	0x35553762: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextAnchor{} }},
+	},
+	0x35a95cb9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerChat{} }},
+	},
+	0x35bbdb6b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonCallback{} }},
+	},
+	0x35e410a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStickerSetInstallResultArchive{} }},
+	},
+	0x363293ae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogFilterDefault{} }},
+	},
+	0x36585ea4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesBotCallbackAnswer{} }},
+	},
+	0x3660c311: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallAccepted{} }},
+	},
+	0x367617d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesForumTopics{} }},
+	},
+	0x36c6019a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerChat{} }},
+	},
+	0x36f8c871: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentEmpty{} }},
+	},
+	0x37257e99: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerPhotoFileLocation{} }},
+	},
+	0x372efcd0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WallPaperSettings{} }},
+	},
+	0x37381085: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaURL{} }},
+	},
+	0x374fa7ad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCheckCanSendGiftResultOk{} }},
+	},
+	0x3751b49e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterMusic{} }},
+	},
+	0x37c1011c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatPhotoEmpty{} }},
+	},
+	0x3823cc40: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyAbout{} }},
+	},
+	0x38641628: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStickerSetInstallResultSuccess{} }},
+	},
+	0x38fe25b7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateEncryptedMessagesRead{} }},
+	},
+	0x390d5c5e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthLoginTokenSuccess{} }},
+	},
+	0x39491cc8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyPhoneP2P{} }},
+	},
+	0x394e7f21: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarsRevenueAdsAccountURL{} }},
+	},
+	0x396ca5fc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsBroadcastStats{} }},
+	},
+	0x39a51dfb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewScheduledMessage{} }},
+	},
+	0x39c67432: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSavedReactionTags{} }},
+	},
+	0x39d99013: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeModel{} }},
+	},
+	0x39f23300: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockCover{} }},
+	},
+	0x3a20ecb8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterChatPhotos{} }},
+	},
+	0x3a912d4a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PasswordKdfAlgoSha256Sha256Pbkdf2Hmacsha512Iter100000Sha256ModPow{} }},
+	},
+	0x3b6d152e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersUserFull{} }},
+	},
+	0x3b6ddad2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PollAnswerVoters{} }},
+	},
+	0x3bb3b94a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPhoto{} }},
+	},
+	0x3bb842ac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &OutboxReadDate{} }},
+	},
+	0x3c134d7b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSetMessagesTTL{} }},
+	},
+	0x3c20629f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineBotSwitchPm{} }},
+	},
+	0x3c2884c1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextURL{} }},
+	},
+	0x3c4301c0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuBots{} }},
+	},
+	0x3c4f04d8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopeUsers{} }},
+	},
+	0x3c5693e9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputTheme{} }},
+	},
+	0x3cbc93f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatParticipants{} }},
+	},
+	0x3d662b7b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyPhoneCall{} }},
+	},
+	0x3dac6a00: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypePassport{} }},
+	},
+	0x3dbb5986: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeApp{} }},
+	},
+	0x3dcd7a87: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageText{} }},
+	},
+	0x3dda5451: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatParticipantAdd{} }},
+	},
+	0x3ded6320: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaEmpty{} }},
+	},
+	0x3e050d0f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateQuickReplyMessage{} }},
+	},
+	0x3e0b5b6a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SearchPostsFlood{} }},
+	},
+	0x3e11affb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesChannelDifferenceEmpty{} }},
+	},
+	0x3e24e573: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsBankCardData{} }},
+	},
+	0x3e3bcf2f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSponsoredMessageReportResultAdsHidden{} }},
+	},
+	0x3e7f6847: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantVolume{} }},
+	},
+	0x3ea9feb1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeEmojiStatus{} }},
+	},
+	0x3f6d7b68: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONNull{} }},
+	},
+	0x3f7ee58b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaDice{} }},
+	},
+	0x3fc9053b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ExportedStoryLink{} }},
+	},
+	0x3fd81e28: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserFull{} }},
+	},
+	0x3fd863d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopePeerAdmins{} }},
+	},
+	0x40181ffe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPhotoFileLocation{} }},
+	},
+	0x405fef0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaInvoice{} }},
+	},
+	0x40bc6f52: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFilePartial{} }},
+	},
+	0x40d13c0e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerSetFullCovered{} }},
+	},
+	0x410a134e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionExportedInviteRevoke{} }},
+	},
+	0x416c56e8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsUniqueStarGift{} }},
+	},
+	0x417bbf11: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageMediaVenue{} }},
+	},
+	0x41b3e202: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPaymentRefunded{} }},
+	},
+	0x41bf109b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ExportedContactToken{} }},
+	},
+	0x41c87565: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueDisallowChatParticipants{} }},
+	},
+	0x41cbf256: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Chat{} }},
+	},
+	0x4203c5ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpCountryCode{} }},
+	},
+	0x4258c205: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotMenuButtonCommands{} }},
+	},
+	0x42e047bb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionDeleteMessage{} }},
+	},
+	0x42ffd42b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyAddedByPhone{} }},
+	},
+	0x430d3150: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SponsoredMessageReportOption{} }},
+	},
+	0x4345be73: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmailVerifyPurposeLoginSetup{} }},
+	},
+	0x434bd2af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangePhoto{} }},
+	},
+	0x4367daa0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGiveawayInfo{} }},
+	},
+	0x43b46b20: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DefaultHistoryTTL{} }},
+	},
+	0x43c57c48: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeVideo{} }},
+	},
+	0x44747e9a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthAuthorizationSignUpRequired{} }},
+	},
+	0x44ba9dd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedDialogsSlice{} }},
+	},
+	0x44c1f8e9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetEmojiDefaultTopicIcons{} }},
+	},
+	0x455b853d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageViews{} }},
+	},
+	0x4576f3f0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuBotIconColor{} }},
+	},
+	0x45d5b021: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGiftStars{} }},
+	},
+	0x4628f6e6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagePeerVoteMultiple{} }},
+	},
+	0x46560264: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateLangPackTooLong{} }},
+	},
+	0x467a0766: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockParagraph{} }},
+	},
+	0x46d840ab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeEmojiStickerSet{} }},
+	},
+	0x46e1d13d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RecentMeURLUnknown{} }},
+	},
+	0x4792929b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionScreenshotTaken{} }},
+	},
+	0x47a971e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsURL{} }},
+	},
+	0x47dd8079: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionWebViewDataSentMe{} }},
+	},
+	0x481eadfa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiListNotModified{} }},
+	},
+	0x48222faf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGeoPoint{} }},
+	},
+	0x48870999: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockFooter{} }},
+	},
+	0x4899484e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesVotesList{} }},
+	},
+	0x48a30254: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReplyInlineMarkup{} }},
+	},
+	0x48aaae3c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeIDModel{} }},
+	},
+	0x48f1d94c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedChatRequested{} }},
+	},
+	0x4959427a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumBoostsStatus{} }},
+	},
+	0x496f379c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotInlineQuery{} }},
+	},
+	0x49748553: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetEmojiChannelDefaultStatuses{} }},
+	},
+	0x49a6549c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaWeather{} }},
+	},
+	0x49b92a26: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TodoList{} }},
+	},
+	0x4a162433: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeIDPattern{} }},
+	},
+	0x4a27eb2d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGraphAsync{} }},
+	},
+	0x4a4ff172: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReadParticipantDate{} }},
+	},
+	0x4a5f5bd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceStarGiftTransfer{} }},
+	},
+	0x4a95e84e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputNotifyChats{} }},
+	},
+	0x4a992157: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickeredMediaPhoto{} }},
+	},
+	0x4afe8f6d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesDifferenceTooLong{} }},
+	},
+	0x4b09ebbc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileMov{} }},
+	},
+	0x4b3e14d6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Boost{} }},
+	},
+	0x4b425864: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageGame{} }},
+	},
+	0x4b9e22a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionNotificationsFromAll{} }},
+	},
+	0x4ba3a95a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageReactor{} }},
+	},
+	0x4bd6e798: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaPoll{} }},
+	},
+	0x4bff8ea0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountAuthorizations{} }},
+	},
+	0x4c3e069d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountAutoSaveSettings{} }},
+	},
+	0x4c4e743f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityCashtag{} }},
+	},
+	0x4cc120b7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TodoCompletion{} }},
+	},
+	0x4d22ff98: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebViewResult{} }},
+	},
+	0x4d4bd46a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabGifts{} }},
+	},
+	0x4d6deea5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateShortChatMessage{} }},
+	},
+	0x4d712f2e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotCommands{} }},
+	},
+	0x4d818d5d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceStarGiftUpgrade{} }},
+	},
+	0x4d8a0299: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInfo{} }},
+	},
+	0x4dba4501: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountTakeout{} }},
+	},
+	0x4e4df4bb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageFwdHeader{} }},
+	},
+	0x4e5f810d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentResult{} }},
+	},
+	0x4e80a379: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStarsBalance{} }},
+	},
+	0x4e90bfd6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMessageID{} }},
+	},
+	0x4f11bae1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserProfilePhotoEmpty{} }},
+	},
+	0x4f4456d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockPullquote{} }},
+	},
+	0x4f607bef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantSelf{} }},
+	},
+	0x4f96cb18: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyStatusTimestamp{} }},
+	},
+	0x4fa417f2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineResultGame{} }},
+	},
+	0x4fc81d6e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSavedMusicIdsNotModified{} }},
+	},
+	0x4fcba9c8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesArchivedStickers{} }},
+	},
+	0x500e6dfa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyChatInvite{} }},
+	},
+	0x502f92f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionInviteToGroupCall{} }},
+	},
+	0x504aa18f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSentPhoneCode{} }},
+	},
+	0x5060a3f4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSetChatWallPaper{} }},
+	},
+	0x50a04e45: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountPrivacyRules{} }},
+	},
+	0x50ca4de1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallDiscarded{} }},
+	},
+	0x50cc03d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageAttributeStickerSet{} }},
+	},
+	0x50cd067c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsStoryStats{} }},
+	},
+	0x50f41ccf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonGame{} }},
+	},
+	0x50f5c392: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterVoice{} }},
+	},
+	0x512fe446: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsUniqueStarGiftValueInfo{} }},
+	},
+	0x514519e2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogPeerFolder{} }},
+	},
+	0x51e6ee4f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryItemDeleted{} }},
+	},
+	0x523da4eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionPaid{} }},
+	},
+	0x527d22eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmailVerifyPurposeLoginChange{} }},
+	},
+	0x528a0677: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileMp3{} }},
+	},
+	0x52928bca: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatReactionsAll{} }},
+	},
+	0x52d8ccd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaDocument{} }},
+	},
+	0x5334759c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPremiumPromo{} }},
+	},
+	0x5353e5a7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeCall{} }},
+	},
+	0x535f779d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGroupTopInviter{} }},
+	},
+	0x5366c915: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallEmpty{} }},
+	},
+	0x5367e5be: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSecureFile{} }},
+	},
+	0x53909779: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleSlowMode{} }},
+	},
+	0x53b22baf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchResultsPositions{} }},
+	},
+	0x53d7bfd8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonRequestPeer{} }},
+	},
+	0x53e6f1ec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDeleteQuickReply{} }},
+	},
+	0x541a1d1a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserStatusLastWeek{} }},
+	},
+	0x54236209: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsGiveawayWinnersOption{} }},
+	},
+	0x54b56617: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageAttributeTheme{} }},
+	},
+	0x54c01850: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatDefaultBannedRights{} }},
+	},
+	0x55188a2e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeAbout{} }},
+	},
+	0x553b0ba1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GroupCall{} }},
+	},
+	0x56022f4d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateLangPack{} }},
+	},
+	0x560f8935: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSentEncryptedMessage{} }},
+	},
+	0x564edaeb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesAlbumsNotModified{} }},
+	},
+	0x564fe691: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateLoginToken{} }},
+	},
+	0x566fe7cd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDeleteQuickReplyMessages{} }},
+	},
+	0x56d03994: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGiftCode{} }},
+	},
+	0x56d6a247: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleGroupCallSetting{} }},
+	},
+	0x56e0d474: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaGeo{} }},
+	},
+	0x56e34970: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionsNotifySettings{} }},
+	},
+	0x56e9f0e4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterPhotoVideo{} }},
+	},
+	0x5719bacc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyProfilePhoto{} }},
+	},
+	0x571d2742: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadFeaturedStickers{} }},
+	},
+	0x5725e40a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &CdnConfig{} }},
+	},
+	0x5787686d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaStarGift{} }},
+	},
+	0x5796e780: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangePeerColor{} }},
+	},
+	0x57adc690: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallDiscardReasonHangup{} }},
+	},
+	0x57de635e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSuggestProfilePhoto{} }},
+	},
+	0x57e28221: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountContentSettings{} }},
+	},
+	0x57e2f66c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterEmpty{} }},
+	},
+	0x58707d28: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionCreateTopic{} }},
+	},
+	0x58747131: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Poll{} }},
+	},
+	0x5881323a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReplyToStory{} }},
+	},
+	0x58dbcab8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonSpam{} }},
+	},
+	0x59511722: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerUser{} }},
+	},
+	0x59d78fc5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesStoryViewsList{} }},
+	},
+	0x5a0a066d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessIntro{} }},
+	},
+	0x5a17b5e5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEncryptedFile{} }},
+	},
+	0x5a4fcce5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowBots{} }},
+	},
+	0x5a50fca4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionExportedInviteDelete{} }},
+	},
+	0x5a686d7c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatInviteAlready{} }},
+	},
+	0x5b11125a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BaseThemeArctic{} }},
+	},
+	0x5b934f9d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChannelFromMessage{} }},
+	},
+	0x5bb98608: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePinnedChannelMessages{} }},
+	},
+	0x5c467992: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputNotifyForumTopic{} }},
+	},
+	0x5c9d3702: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatInvite{} }},
+	},
+	0x5cc761bd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiKeywordsDifference{} }},
+	},
+	0x5ce14175: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PopularContact{} }},
+	},
+	0x5d75a138: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesDifferenceEmpty{} }},
+	},
+	0x5d8d353b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionPinTopic{} }},
+	},
+	0x5da674b7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotAppNotModified{} }},
+	},
+	0x5dab1af4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ExportedMessageLink{} }},
+	},
+	0x5e002502: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCode{} }},
+	},
+	0x5e0589f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsGiftOption{} }},
+	},
+	0x5e068047: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageListOrderedItemText{} }},
+	},
+	0x5e0fb7b9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesHistoryImportParsed{} }},
+	},
+	0x5e477b25: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeProfilePeerColor{} }},
+	},
+	0x5ec4be43: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineQueryPeerTypeMegagroup{} }},
+	},
+	0x5f2d1df2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumSubscriptionOption{} }},
+	},
+	0x5f3b8a00: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequestPeerTypeUser{} }},
+	},
+	0x5f5c95f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionTogglePreHistoryHidden{} }},
+	},
+	0x5f91eb5b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesQuickRepliesNotModified{} }},
+	},
+	0x5fb224d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatAdminRights{} }},
+	},
+	0x6010c534: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFoundStickersNotModified{} }},
+	},
+	0x60682812: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerAds{} }},
+	},
+	0x6090d6d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryReaction{} }},
+	},
+	0x60a79c79: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleSignatureProfiles{} }},
+	},
+	0x61695cb0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatInvitePeek{} }},
+	},
+	0x616f7fe8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentGiftPremium{} }},
+	},
+	0x61f0d4c7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedChat{} }},
+	},
+	0x628c9224: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MissingInvitee{} }},
+	},
+	0x628cbc6f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageChooseContactAction{} }},
+	},
+	0x629f1980: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthLoginToken{} }},
+	},
+	0x62ba04d9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewChannelMessage{} }},
+	},
+	0x62d706b8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersUsers{} }},
+	},
+	0x62dc8b48: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputFileStoryDocument{} }},
+	},
+	0x6319d612: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeSticker{} }},
+	},
+	0x6334ee9a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineQueryPeerTypeBroadcast{} }},
+	},
+	0x635b4c09: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannel{} }},
+	},
+	0x635fe375: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneConnectionWebrtc{} }},
+	},
+	0x63c3dd0a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesStories{} }},
+	},
+	0x63cacf26: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountAutoDownloadSettings{} }},
+	},
+	0x6410a5d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerSetCovered{} }},
+	},
+	0x64199744: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureFileEmpty{} }},
+	},
+	0x64407ea7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MonoForumDialog{} }},
+	},
+	0x64600527: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputDialogPeerFolder{} }},
+	},
+	0x64642db3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantSubExtend{} }},
+	},
+	0x64bd0306: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEncryptedFileUploaded{} }},
+	},
+	0x64e475c2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityEmail{} }},
+	},
+	0x64f36dfc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleAntiSpam{} }},
+	},
+	0x64ff9fd5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesChats{} }},
+	},
+	0x65427b82: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowAll{} }},
+	},
+	0x65899777: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserStatusLastMonth{} }},
+	},
+	0x6592a1a7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatForbidden{} }},
+	},
+	0x65a0fa4d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockCollage{} }},
+	},
+	0x65f00ce3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceStars{} }},
+	},
+	0x661d4037: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatReactionsSome{} }},
+	},
+	0x666220e9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorFiles{} }},
+	},
+	0x66afa166: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpDeepLinkInfoEmpty{} }},
+	},
+	0x66b25953: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedChatWaiting{} }},
+	},
+	0x6724abc4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextBold{} }},
+	},
+	0x67753ac8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GroupCallParticipantVideo{} }},
+	},
+	0x686c85a6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePinnedSavedDialogs{} }},
+	},
+	0x6880b94d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesPeerSettings{} }},
+	},
+	0x688a30aa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewStickerSet{} }},
+	},
+	0x68cb6283: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaStory{} }},
+	},
+	0x6917560b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageReplyHeader{} }},
+	},
+	0x691e9052: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateInlineBotCallbackQuery{} }},
+	},
+	0x69279795: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSavedStarGiftUser{} }},
+	},
+	0x695150d7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaPhoto{} }},
+	},
+	0x695c9e7c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadChannelDiscussionOutbox{} }},
+	},
+	0x69d66c45: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReplyToMonoForum{} }},
+	},
+	0x69ec56a3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyForwards{} }},
+	},
+	0x69f916f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSuggestedPostRefund{} }},
+	},
+	0x6a4afc38: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeUsername{} }},
+	},
+	0x6a4ee832: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpDeepLinkInfo{} }},
+	},
+	0x6a7e7366: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePeerSettings{} }},
+	},
+	0x6b134e8e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowChatParticipants{} }},
+	},
+	0x6c207376: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarsRevenueStats{} }},
+	},
+	0x6c37c15c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeImageSize{} }},
+	},
+	0x6c3f19b9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextFixed{} }},
+	},
+	0x6c47ac9f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangPackStringPluralized{} }},
+	},
+	0x6c6274fa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGiftPremium{} }},
+	},
+	0x6c8e1e06: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Birthday{} }},
+	},
+	0x6c9ce8ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarsStatus{} }},
+	},
+	0x6cef8ac7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityBotCommand{} }},
+	},
+	0x6d5f77ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BaseThemeTinted{} }},
+	},
+	0x6df8014e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantBanned{} }},
+	},
+	0x6e153f16: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStickerSet{} }},
+	},
+	0x6e6fe51c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDialogPinned{} }},
+	},
+	0x6e941a38: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeHistoryTTL{} }},
+	},
+	0x6ebdff91: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FragmentCollectibleInfo{} }},
+	},
+	0x6ed02538: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityURL{} }},
+	},
+	0x6efc5e81: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesAllStories{} }},
+	},
+	0x6f09ac31: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReportResultAddComment{} }},
+	},
+	0x6f0c34df: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotificationSoundNone{} }},
+	},
+	0x6f635b0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityHashtag{} }},
+	},
+	0x6f747657: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageCaption{} }},
+	},
+	0x6f7863f4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateRecentReactions{} }},
+	},
+	0x6f8b32aa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBusinessRecipients{} }},
+	},
+	0x6fb4ad87: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEmojiGroupsNotModified{} }},
+	},
+	0x6fe1a881: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopeChats{} }},
+	},
+	0x70322949: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaContact{} }},
+	},
+	0x7063c3db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePendingJoinRequests{} }},
+	},
+	0x7084a7be: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateContactsReset{} }},
+	},
+	0x709b2405: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionEditMessage{} }},
+	},
+	0x70abc3fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockTitle{} }},
+	},
+	0x70b772a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsTopPeers{} }},
+	},
+	0x70c4fe03: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentReceipt{} }},
+	},
+	0x712e27fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesStealthMode{} }},
+	},
+	0x71701da9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ForumTopic{} }},
+	},
+	0x7184603b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiStatusCollectible{} }},
+	},
+	0x71bd134c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogFolder{} }},
+	},
+	0x71e094f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDialogsSlice{} }},
+	},
+	0x71f276c4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DisallowedGiftsSettings{} }},
+	},
+	0x72091c80: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWallPaperSlug{} }},
+	},
+	0x725b04c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesCombined{} }},
+	},
+	0x72a3158c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCodeTypeSms{} }},
+	},
+	0x72c64955: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabMedia{} }},
+	},
+	0x72f0eaae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputDocumentEmpty{} }},
+	},
+	0x7307544f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequestedPeerChat{} }},
+	},
+	0x7311ca11: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageNotModified{} }},
+	},
+	0x73924be0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityPre{} }},
+	},
+	0x73a379eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HighScore{} }},
+	},
+	0x741cd3e3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCodeTypeCall{} }},
+	},
+	0x744694e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextPlain{} }},
+	},
+	0x74535f21: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMessagesNotModified{} }},
+	},
+	0x74ae4240: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Updates{} }},
+	},
+	0x74aee3e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTonAmount{} }},
+	},
+	0x74cda504: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagePeerVoteInputOption{} }},
+	},
+	0x74d8be99: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSavedRingtones{} }},
+	},
+	0x751f08fa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentStarsGiveaway{} }},
+	},
+	0x751f3146: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextWithEntities{} }},
+	},
+	0x7533a588: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotMenuButtonDefault{} }},
+	},
+	0x75588b3f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputClientProxy{} }},
+	},
+	0x75b3b798: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStory{} }},
+	},
+	0x75c78e60: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoSize{} }},
+	},
+	0x75d2698e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonCopy{} }},
+	},
+	0x761e6af4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityBankCard{} }},
+	},
+	0x762b263d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMessagesSlice{} }},
+	},
+	0x764cf810: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageMediaAuto{} }},
+	},
+	0x76768bed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockDetails{} }},
+	},
+	0x767d61eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPeerColorProfileSet{} }},
+	},
+	0x768e3aad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAvailableReactions{} }},
+	},
+	0x76a6d327: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityTextURL{} }},
+	},
+	0x770416af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaChannelPost{} }},
+	},
+	0x77608b83: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonRow{} }},
+	},
+	0x77744d4a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogFilterSuggested{} }},
+	},
+	0x7780bcb4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GroupCallDiscarded{} }},
+	},
+	0x779600f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaDocumentExternal{} }},
+	},
+	0x77b0e372: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadMonoForumInbox{} }},
+	},
+	0x77b15d1c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerSetNoCovered{} }},
+	},
+	0x77cdc9f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowPremium{} }},
+	},
+	0x77d01c3b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsImportedContacts{} }},
+	},
+	0x780a0310: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpTermsOfService{} }},
+	},
+	0x78d4dec1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateShort{} }},
+	},
+	0x7903e3d9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageReportOption{} }},
+	},
+	0x79f5d419: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionEmpty{} }},
+	},
+	0x7a0d7f42: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGroupCall{} }},
+	},
+	0x7a1e11d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiList{} }},
+	},
+	0x7a700873: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorFile{} }},
+	},
+	0x7a7c17a4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterRoundVoice{} }},
+	},
+	0x7a800e0a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageService{} }},
+	},
+	0x7a9abda9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiGroup{} }},
+	},
+	0x7adf2420: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PollResults{} }},
+	},
+	0x7b197dc8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserStatusRecently{} }},
+	},
+	0x7b560a0b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerPlayMarket{} }},
+	},
+	0x7b74ed71: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpTimezonesList{} }},
+	},
+	0x7bf6b15c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentFormStars{} }},
+	},
+	0x7bfbdefc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuPeerTypeBroadcast{} }},
+	},
+	0x7c8fe7b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockVideo{} }},
+	},
+	0x7cde641d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpAppConfigNotModified{} }},
+	},
+	0x7d09c27e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureFile{} }},
+	},
+	0x7d6099dd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecurePlainPhone{} }},
+	},
+	0x7d627683: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSentStoryReaction{} }},
+	},
+	0x7d6be90e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuPeerTypeSameBotPm{} }},
+	},
+	0x7d748d04: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DataJSON{} }},
+	},
+	0x7da07ec9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerSelf{} }},
+	},
+	0x7dbf8673: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SponsoredMessage{} }},
+	},
+	0x7e6260d7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextConcat{} }},
+	},
+	0x7ef0dd87: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterURL{} }},
+	},
+	0x7f077ad9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsResolvedPeer{} }},
+	},
+	0x7f3b18ea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerEmpty{} }},
+	},
+	0x7f5defa6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesInvitedUsers{} }},
+	},
+	0x7f648b67: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SearchResultsPosition{} }},
+	},
+	0x7f891213: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateWebPage{} }},
+	},
+	0x7fcb13a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatEditPhoto{} }},
+	},
+	0x7fe91c14: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsMessageStats{} }},
+	},
+	0x804361ea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockAudio{} }},
+	},
+	0x809ad9a6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageMediaWebPage{} }},
+	},
+	0x80ac53c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGift{} }},
+	},
+	0x80c99768: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterPhoneCalls{} }},
+	},
+	0x80d26cc7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiGroupGreeting{} }},
+	},
+	0x80e11a7f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPhoneCall{} }},
+	},
+	0x80eb48af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GroupCallStreamChannel{} }},
+	},
+	0x811f854f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSentEmailCode{} }},
+	},
+	0x81602d47: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AutoSaveException{} }},
+	},
+	0x81b6b00a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesChatInviteImporters{} }},
+	},
+	0x82006484: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeMissedCall{} }},
+	},
+	0x8216fba3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateTheme{} }},
+	},
+	0x826f8b60: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityItalic{} }},
+	},
+	0x829d99da: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureRequiredType{} }},
+	},
+	0x82c9e290: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFoundStickers{} }},
+	},
+	0x82d1f706: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserProfilePhoto{} }},
+	},
+	0x830b9ae4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotificationSoundLocal{} }},
+	},
+	0x8317c0c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotWebhookJSON{} }},
+	},
+	0x832175e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBusinessAwayMessage{} }},
+	},
+	0x833c0fac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineQueryPeerTypePm{} }},
+	},
+	0x83487af0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatUserTyping{} }},
+	},
+	0x83d60fc2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageReplies{} }},
+	},
+	0x840649cf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueAllowChatParticipants{} }},
+	},
+	0x846f9e42: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSponsoredMessageReportResultChooseOption{} }},
+	},
+	0x84a02a0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedGifs{} }},
+	},
+	0x84aa3a9c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarGiftWithdrawalURL{} }},
+	},
+	0x84b88578: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPaidMessagesPrice{} }},
+	},
+	0x84d19185: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAffectedMessages{} }},
+	},
+	0x85dd99d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReplyKeyboardMarkup{} }},
+	},
+	0x85e42301: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallDiscardReasonMissed{} }},
+	},
+	0x85fea03f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersSuggestedShortName{} }},
+	},
+	0x861cc8a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetShortName{} }},
+	},
+	0x86471d92: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecurePasswordKdfAlgoSha512{} }},
+	},
+	0x86872538: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagePinned{} }},
+	},
+	0x868a2aa5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorReverseSide{} }},
+	},
+	0x869d758f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueError{} }},
+	},
+	0x869fbe10: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReplyToMessage{} }},
+	},
+	0x86b40b08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReplyKeyboardForceReply{} }},
+	},
+	0x86f8613c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumBoostsList{} }},
+	},
+	0x86fccf85: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMoveStickerSetToTop{} }},
+	},
+	0x871fb939: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateGeoLiveViewed{} }},
+	},
+	0x8763d3e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatParticipantsForbidden{} }},
+	},
+	0x87d0759e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpCountriesList{} }},
+	},
+	0x87e2f155: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGiveawayResults{} }},
+	},
+	0x881fb94b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEmojiGroups{} }},
+	},
+	0x889b59ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedReactionTagsNotModified{} }},
+	},
+	0x88bf9319: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineResult{} }},
+	},
+	0x88d37c56: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRecentStickers{} }},
+	},
+	0x88f27fbc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageRecordRoundAction{} }},
+	},
+	0x88f8f21b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentFormMethod{} }},
+	},
+	0x890c3d89: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageID{} }},
+	},
+	0x89137c0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeBankStatement{} }},
+	},
+	0x8935fc73: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionCustomEmoji{} }},
+	},
+	0x8951abef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewAuthorization{} }},
+	},
+	0x8953ad37: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChatPhoto{} }},
+	},
+	0x89fdd778: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaStory{} }},
+	},
+	0x8a2932f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarGiftCollections{} }},
+	},
+	0x8a480e27: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PostInteractionCountersStory{} }},
+	},
+	0x8a53b014: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaToDo{} }},
+	},
+	0x8a86659c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageMediaVenue{} }},
+	},
+	0x8ac32801: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPaymentCredentialsGooglePay{} }},
+	},
+	0x8ae5c97a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotBusinessConnect{} }},
+	},
+	0x8aeabec3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureData{} }},
+	},
+	0x8af09dd2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFoundStickerSets{} }},
+	},
+	0x8b725fce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePaidReactionPrivacy{} }},
+	},
+	0x8b73e763: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueDisallowAll{} }},
+	},
+	0x8b883488: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeRentalAgreement{} }},
+	},
+	0x8ba403e4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequestedPeerChannel{} }},
+	},
+	0x8c05f1c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpSupportName{} }},
+	},
+	0x8c10603f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGroupCallInviteMessage{} }},
+	},
+	0x8c5adfd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatInviteImporter{} }},
+	},
+	0x8c718e87: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMessages{} }},
+	},
+	0x8c79b63c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagePeerReaction{} }},
+	},
+	0x8c7f65e2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotInlineMessageText{} }},
+	},
+	0x8c88c923: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelUserTyping{} }},
+	},
+	0x8c92b098: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessWorkHours{} }},
+	},
+	0x8c9a88ac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesWebPagePreview{} }},
+	},
+	0x8caa9a96: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotPrecheckoutQuery{} }},
+	},
+	0x8d595cd6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryViews{} }},
+	},
+	0x8db33c4b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReportResultReported{} }},
+	},
+	0x8dca6aa5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosPhotos{} }},
+	},
+	0x8e1a1775: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NearestDc{} }},
+	},
+	0x8e3ca7ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeEmail{} }},
+	},
+	0x8e5e9873: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDcOptions{} }},
+	},
+	0x8ea464b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGraph{} }},
+	},
+	0x8ecf0511: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesBotPreparedInlineMessage{} }},
+	},
+	0x8f079643: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionStopPoll{} }},
+	},
+	0x8f34b2f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotBusinessConnection{} }},
+	},
+	0x8f8c0e4e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &URLAuthResultAccepted{} }},
+	},
+	0x8fd4c4d8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Document{} }},
+	},
+	0x8fde504f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputThemeSettings{} }},
+	},
+	0x8ffa9a1f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockSubtitle{} }},
+	},
+	0x90110467: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueDisallowUsers{} }},
+	},
+	0x9015e101: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateShortSentMessage{} }},
+	},
+	0x904dd49c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotChatBoost{} }},
+	},
+	0x9083670b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryViewPublicForward{} }},
+	},
+	0x908c0407: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotAppShortName{} }},
+	},
+	0x909c3f94: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentRequestedInfo{} }},
+	},
+	0x90a6ca84: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEmpty{} }},
+	},
+	0x90c467d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountEmojiStatuses{} }},
+	},
+	0x922e55a9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmailVerificationCode{} }},
+	},
+	0x922e6e10: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadChannelInbox{} }},
+	},
+	0x92a72876: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGameScore{} }},
+	},
+	0x92d33a0e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &URLAuthResultRequest{} }},
+	},
+	0x93037e20: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsPublicForwards{} }},
+	},
+	0x9325705a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryAlbum{} }},
+	},
+	0x9375341e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSavedGifs{} }},
+	},
+	0x93b31848: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionRequestedPeerSentMe{} }},
+	},
+	0x93b9fbb5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonSwitchInline{} }},
+	},
+	0x93bd878d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsChatlistUpdates{} }},
+	},
+	0x93bf667f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuBotsBot{} }},
+	},
+	0x93c3e27e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AvailableEffect{} }},
+	},
+	0x93cc1f32: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpCountriesListNotModified{} }},
+	},
+	0x947a12df: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsResaleStarGifts{} }},
+	},
+	0x9493ff32: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSentEncryptedFile{} }},
+	},
+	0x94bd38ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPinMessage{} }},
+	},
+	0x94ce852a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsGiveawayOption{} }},
+	},
+	0x94d42ee7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelMessagesFilterEmpty{} }},
+	},
+	0x957b50fb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountPassword{} }},
+	},
+	0x95d2ac92: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChannelCreate{} }},
+	},
+	0x95ddcf69: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSuggestedPostSuccess{} }},
+	},
+	0x95e3fbef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatDeletePhoto{} }},
+	},
+	0x95f2bfe4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerUnsupported{} }},
+	},
+	0x95f389b1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsSavedStarGifts{} }},
+	},
+	0x95fcd1d6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotApp{} }},
+	},
+	0x9609a51c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterPhotos{} }},
+	},
+	0x96151fed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyProfilePhoto{} }},
+	},
+	0x96537bd7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogFilterChatlist{} }},
+	},
+	0x9664f57f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaEmpty{} }},
+	},
+	0x967a462e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWallPaperNoFile{} }},
+	},
+	0x96929a85: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageMediaGeo{} }},
+	},
+	0x96d074fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmailVerificationApple{} }},
+	},
+	0x96eaa5eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DraftMessage{} }},
+	},
+	0x970708cc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpTimezonesListNotModified{} }},
+	},
+	0x971fa843: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaGeoLive{} }},
+	},
+	0x97d64341: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateGroupCall{} }},
+	},
+	0x97e8bebe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotificationSoundDefault{} }},
+	},
+	0x9801d2f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeHasStickers{} }},
+	},
+	0x9815cec8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Message{} }},
+	},
+	0x9852f9c6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeAudio{} }},
+	},
+	0x985d3abb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelParticipant{} }},
+	},
+	0x98657f0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Page{} }},
+	},
+	0x9880f658: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputCheckPasswordEmpty{} }},
+	},
+	0x98986c0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoicePremiumGiftCode{} }},
+	},
+	0x98d5ea1d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsConnectedStarRefBots{} }},
+	},
+	0x98dd8936: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageListOrderedItemBlocks{} }},
+	},
+	0x98e0d697: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGeoProximityReached{} }},
+	},
+	0x98f6ac75: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPromoDataEmpty{} }},
+	},
+	0x99622c0c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerNotifySettings{} }},
+	},
+	0x998d6636: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSavedMusicIds{} }},
+	},
+	0x99a48f23: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeInternalPassport{} }},
+	},
+	0x99c1d49d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONObject{} }},
+	},
+	0x99e3806a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypePassportRegistration{} }},
+	},
+	0x9a0b48b8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceStarGiftPrepaidUpgrade{} }},
+	},
+	0x9a23af21: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResolvedBusinessChatLinks{} }},
+	},
+	0x9a35e999: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerStories{} }},
+	},
+	0x9a3bfd99: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesHighScores{} }},
+	},
+	0x9a3d8c6d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountThemes{} }},
+	},
+	0x9a422c20: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateRecentStickers{} }},
+	},
+	0x9a5c33e5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountPasswordSettings{} }},
+	},
+	0x9a8ae1e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockOrderedList{} }},
+	},
+	0x9a9d77e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrepaidStarsGiveaway{} }},
+	},
+	0x9ab0feaf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsChannelParticipants{} }},
+	},
+	0x9ae228e2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumMyBoosts{} }},
+	},
+	0x9b69e34b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityPhone{} }},
+	},
+	0x9b89f93a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonCopyright{} }},
+	},
+	0x9b9240a6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotWebhookJSONQuery{} }},
+	},
+	0x9bb2636d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentAuthCode{} }},
+	},
+	0x9bed434d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWebDocument{} }},
+	},
+	0x9bf8bb95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextStrike{} }},
+	},
+	0x9c4e7e8b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityUnderline{} }},
+	},
+	0x9c974fdf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadHistoryInbox{} }},
+	},
+	0x9cc123c7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneConnection{} }},
+	},
+	0x9cd81144: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesChatsSlice{} }},
+	},
+	0x9d04af9b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGroupTopPoster{} }},
+	},
+	0x9d2a81e3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypePersonalDetails{} }},
+	},
+	0x9d6b13b0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftCollection{} }},
+	},
+	0x9d84f3db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetThumb{} }},
+	},
+	0x9ddb347c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotNewBusinessMessage{} }},
+	},
+	0x9de7a269: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetID{} }},
+	},
+	0x9e727aad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGroupCall{} }},
+	},
+	0x9e8fa6d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFavedStickersNotModified{} }},
+	},
+	0x9ec7863d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonPersonalDetails{} }},
+	},
+	0x9eddf188: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterDocument{} }},
+	},
+	0x9f071957: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAvailableReactionsNotModified{} }},
+	},
+	0x9f120418: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatBannedRights{} }},
+	},
+	0x9f2221c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWebFileGeoPointLocation{} }},
+	},
+	0x9f27d26e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabMusic{} }},
+	},
+	0x9f812b08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMonoForumNoPaidException{} }},
+	},
+	0x9f84f49e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaUnsupported{} }},
+	},
+	0x9fbab604: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionHistoryClear{} }},
+	},
+	0x9fbbf1f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallDiscardReasonMigrateConferenceCall{} }},
+	},
+	0x9fc00e65: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterVideo{} }},
+	},
+	0x9fc55fde: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaTodo{} }},
+	},
+	0x9fd40bd8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotifyPeer{} }},
+	},
+	0xa0058751: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentForm{} }},
+	},
+	0xa00e67d6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Theme{} }},
+	},
+	0xa02a982e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotDeleteBusinessMessage{} }},
+	},
+	0xa03e5b85: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReplyKeyboardHide{} }},
+	},
+	0xa0624cf7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessBotRights{} }},
+	},
+	0xa0933f5b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatParticipantAdmin{} }},
+	},
+	0xa098d6af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPassportConfig{} }},
+	},
+	0xa0ba4f17: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarGiftCollectionsNotModified{} }},
+	},
+	0xa0c0505c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonSimpleWebView{} }},
+	},
+	0xa0d0744b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeIdentityCard{} }},
+	},
+	0xa1144770: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorTranslationFile{} }},
+	},
+	0xa187d66f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageRecordVideoAction{} }},
+	},
+	0xa20db0e5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDeleteMessages{} }},
+	},
+	0xa229dd06: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateConfig{} }},
+	},
+	0xa22cbd96: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatInviteExported{} }},
+	},
+	0xa24de717: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesCheckedHistoryImportPeer{} }},
+	},
+	0xa2a5371e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerChannel{} }},
+	},
+	0xa2c0f695: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabGifs{} }},
+	},
+	0xa2e214a4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputCollectiblePhone{} }},
+	},
+	0xa2fa4880: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButton{} }},
+	},
+	0xa384b779: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReceivedNotifyMessage{} }},
+	},
+	0xa388a368: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsStarGiftsNotModified{} }},
+	},
+	0xa3b54985: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsKicked{} }},
+	},
+	0xa3d1cb80: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionCount{} }},
+	},
+	0xa416ac81: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeSmsWord{} }},
+	},
+	0xa437c3ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WallPaper{} }},
+	},
+	0xa43f30cc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatDeleteUser{} }},
+	},
+	0xa44f3ef6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockMap{} }},
+	},
+	0xa477288f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateGroupCallChainBlocks{} }},
+	},
+	0xa486b761: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyAbout{} }},
+	},
+	0xa4a79376: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadMonoForumOutbox{} }},
+	},
+	0xa4bcc6fe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesChannelDifferenceTooLong{} }},
+	},
+	0xa4dd4c08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyForwards{} }},
+	},
+	0xa5491dea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeSetUpEmailRequired{} }},
+	},
+	0xa56c2a3e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesState{} }},
+	},
+	0xa575739d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiURL{} }},
+	},
+	0xa584b019: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateStarsRevenueStatus{} }},
+	},
+	0xa5d72105: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDialogFilterOrder{} }},
+	},
+	0xa6341782: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDiscussionMessage{} }},
+	},
+	0xa6751e66: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentPremiumSubscription{} }},
+	},
+	0xa676a322: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessageID{} }},
+	},
+	0xa6edbffd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageMediaContact{} }},
+	},
+	0xa6f8f452: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebAuthorization{} }},
+	},
+	0xa7848924: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateUserName{} }},
+	},
+	0xa8008cd8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedFile{} }},
+	},
+	0xa80f51e4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGiveawayLaunch{} }},
+	},
+	0xa8406ca9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryForwardUsers{} }},
+	},
+	0xa8718dc5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockEmbed{} }},
+	},
+	0xa8763ab5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaDocument{} }},
+	},
+	0xa87b0a1c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerUserFromMessage{} }},
+	},
+	0xa8852491: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaPaidMedia{} }},
+	},
+	0xa8a3c699: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGiftTon{} }},
+	},
+	0xa8d864a7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineResultPhoto{} }},
+	},
+	0xa8fb1981: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesDifferenceSlice{} }},
+	},
+	0xa920bd7a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotAppID{} }},
+	},
+	0xa927fec5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesInactiveChats{} }},
+	},
+	0xa99fca4f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadCdnFile{} }},
+	},
+	0xa9d6db1f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &URLAuthResultDefault{} }},
+	},
+	0xaa073beb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaGiveaway{} }},
+	},
+	0xaa0cd9e4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageUploadDocumentAction{} }},
+	},
+	0xaa472651: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogFilter{} }},
+	},
+	0xaa5f789c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesStoryReactionsList{} }},
+	},
+	0xaa786345: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSetChatTheme{} }},
+	},
+	0xaa963b05: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileUnknown{} }},
+	},
+	0xab03c6d9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeFlashCall{} }},
+	},
+	0xab0f6b1e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePhoneCall{} }},
+	},
+	0xab339c00: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabFiles{} }},
+	},
+	0xab661b5b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryBotsPm{} }},
+	},
+	0xab7ec0a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedChatEmpty{} }},
+	},
+	0xac1f1fcd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPaidMessagesRefunded{} }},
+	},
+	0xac21d3ce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotMessageReaction{} }},
+	},
+	0xac5c1af7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessLocation{} }},
+	},
+	0xaca1657b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMessagePoll{} }},
+	},
+	0xacfa1a7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessageCallbackQuery{} }},
+	},
+	0xad01d61d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Authorization{} }},
+	},
+	0xad253d78: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &CodeSettings{} }},
+	},
+	0xad2e1cd8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountAuthorizationForm{} }},
+	},
+	0xad628cc8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageExtendedMediaPreview{} }},
+	},
+	0xad798849: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSponsoredMessageReportResultReported{} }},
+	},
+	0xadec6ebe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPeerColorOption{} }},
+	},
+	0xadf44ee3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonChildAbuse{} }},
+	},
+	0xae168909: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionDeleteTopic{} }},
+	},
+	0xae1e508d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFilePdf{} }},
+	},
+	0xae3f101d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePeerWallpaper{} }},
+	},
+	0xaeaf9e74: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSavedDialogPinned{} }},
+	},
+	0xaed0cbd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsExportedInvoice{} }},
+	},
+	0xaed6dbb2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MaskCoords{} }},
+	},
+	0xaee69d68: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyVoiceMessages{} }},
+	},
+	0xafb6144a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantJoinByRequest{} }},
+	},
+	0xafd93fbb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonBuy{} }},
+	},
+	0xafe5623f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneJoinAsPeers{} }},
+	},
+	0xb00c47a2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPrizeStars{} }},
+	},
+	0xb05ac6b1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageChooseStickerAction{} }},
+	},
+	0xb06fdbdf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReactionsNotModified{} }},
+	},
+	0xb0bdeac5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryView{} }},
+	},
+	0xb0cd6617: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotVerifierSettings{} }},
+	},
+	0xb0d13e47: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPagePending{} }},
+	},
+	0xb0d1865b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsBots{} }},
+	},
+	0xb16a6c29: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonRequestPhone{} }},
+	},
+	0xb1c3caa7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeStickerSet{} }},
+	},
+	0xb1db7c7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputNotifyBroadcasts{} }},
+	},
+	0xb23fc698: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelAvailableMessages{} }},
+	},
+	0xb2539d54: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrepaidGiveaway{} }},
+	},
+	0xb282217f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaAreaVenue{} }},
+	},
+	0xb2a2f663: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GeoPoint{} }},
+	},
+	0xb2a7386b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuBotIcon{} }},
+	},
+	0xb2da71d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RecentMeURLChat{} }},
+	},
+	0xb3134d9d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsFound{} }},
+	},
+	0xb320aadb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypePhone{} }},
+	},
+	0xb37794af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeSmsPhrase{} }},
+	},
+	0xb390dc08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageRelatedArticle{} }},
+	},
+	0xb3a07661: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionGroupCallScheduled{} }},
+	},
+	0xb3ba0635: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaPhoto{} }},
+	},
+	0xb3cea0e4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileMp4{} }},
+	},
+	0xb3fb5361: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiLanguage{} }},
+	},
+	0xb4073647: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Username{} }},
+	},
+	0xb425cfe1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentFormStarGift{} }},
+	},
+	0xb434e2b8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthExportedAuthorization{} }},
+	},
+	0xb457b375: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerAppStore{} }},
+	},
+	0xb45c69d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAffectedHistory{} }},
+	},
+	0xb4608969: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsAdmins{} }},
+	},
+	0xb4a2e88d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateEncryption{} }},
+	},
+	0xb4ae666f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessChatLink{} }},
+	},
+	0xb4afcfb0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePeerLocated{} }},
+	},
+	0xb4c38cb5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionWebViewDataSent{} }},
+	},
+	0xb4c83b4c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotifyUsers{} }},
+	},
+	0xb4d5d859: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsSuggestedStarRefBots{} }},
+	},
+	0xb4f67e93: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequirementToContactPaidMessages{} }},
+	},
+	0xb52c939d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsTopPeersDisabled{} }},
+	},
+	0xb549da53: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterRoundVideo{} }},
+	},
+	0xb54b5acf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerColor{} }},
+	},
+	0xb57295d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineBotWebView{} }},
+	},
+	0xb5a1ce5a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatEditTitle{} }},
+	},
+	0xb5aefd7d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotShippingQuery{} }},
+	},
+	0xb6213cdf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ShippingOption{} }},
+	},
+	0xb637edaf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsDateRangeDays{} }},
+	},
+	0xb658f23e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDialogUnreadMark{} }},
+	},
+	0xb665902e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageEmojiInteractionSeen{} }},
+	},
+	0xb69b72d7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesChatAdminsWithInvites{} }},
+	},
+	0xb6aef7b0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionEmpty{} }},
+	},
+	0xb6c4f543: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMessageViews{} }},
+	},
+	0xb6cc2d5c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagePeerVote{} }},
+	},
+	0xb6d915d7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageID64{} }},
+	},
+	0xb71e767a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONString{} }},
+	},
+	0xb7263f6d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSavedRingtone{} }},
+	},
+	0xb74ba9d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsContactsNotModified{} }},
+	},
+	0xb75f99a9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadChannelOutbox{} }},
+	},
+	0xb7b31ea8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BaseThemeNight{} }},
+	},
+	0xb81c7034: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendAsPeer{} }},
+	},
+	0xb826e150: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryFwdHeader{} }},
+	},
+	0xb88cf373: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessBotRecipients{} }},
+	},
+	0xb8905fb2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowUsers{} }},
+	},
+	0xb89bfccf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FactCheck{} }},
+	},
+	0xb8bc5b0c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputNotifyPeer{} }},
+	},
+	0xb8d0afdf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDaysTTL{} }},
+	},
+	0xb92c09e2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RecentMeURLUser{} }},
+	},
+	0xb92fb6cd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageListItemText{} }},
+	},
+	0xb940c666: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaGeoLive{} }},
+	},
+	0xb98886cf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputUserEmpty{} }},
+	},
+	0xb98cd696: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabPosts{} }},
+	},
+	0xb9aa606a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopeChatAdmins{} }},
+	},
+	0xb9cfc48d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotCallbackQuery{} }},
+	},
+	0xbaa57628: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AutoDownloadSettings{} }},
+	},
+	0xbaafe5e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockAuthorDate{} }},
+	},
+	0xbac3a61a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReactionNotificationsFromContacts{} }},
+	},
+	0xbad07584: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputDocumentFileLocation{} }},
+	},
+	0xbad88395: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessageReplyTo{} }},
+	},
+	0xbb6ae88d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsContacts{} }},
+	},
+	0xbb92ba95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityUnknown{} }},
+	},
+	0xbb9bb9a5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePeerHistoryTTL{} }},
+	},
+	0xbbab2643: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryReactionPublicForward{} }},
+	},
+	0xbbb6b4a3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsAmount{} }},
+	},
+	0xbbc7515d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonRequestPoll{} }},
+	},
+	0xbbf2dda0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecurePasswordKdfAlgoPbkdf2Hmacsha512Iter100000{} }},
+	},
+	0xbbf51685: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmailVerifyPurposePassport{} }},
+	},
+	0xbc0a57dc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RecentMeURLStickerSet{} }},
+	},
+	0xbc2eab30: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyStatusTimestamp{} }},
+	},
+	0xbd17a14a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryGroups{} }},
+	},
+	0xbd2a0840: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerChannelFromMessage{} }},
+	},
+	0xbd47cbad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatCreate{} }},
+	},
+	0xbd610bc9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityBold{} }},
+	},
+	0xbd74cf49: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryViewPublicRepost{} }},
+	},
+	0xbd87cb6c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SavedDialog{} }},
+	},
+	0xbdc597b4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyNoPaidMessages{} }},
+	},
+	0xbdc62dcc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesExportedChatInvites{} }},
+	},
+	0xbdcdaec0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChatUploadedPhoto{} }},
+	},
+	0xbddb616e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAvailableEffects{} }},
+	},
+	0xbddcc510: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageMediaWebPage{} }},
+	},
+	0xbdf9653b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Game{} }},
+	},
+	0xbdfb0426: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyChatInvite{} }},
+	},
+	0xbe382906: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFeaturedStickers{} }},
+	},
+	0xbe4e0ef8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeAvailableReactions{} }},
+	},
+	0xbe82db9c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaVenue{} }},
+	},
+	0xbec268ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNotifySettings{} }},
+	},
+	0xbedc9822: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGraphError{} }},
+	},
+	0xbf0693d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityStrike{} }},
+	},
+	0xbf4dea82: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockTable{} }},
+	},
+	0xbfb5ad8b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelLocationEmpty{} }},
+	},
+	0xbfb9f457: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpPassportConfigNotModified{} }},
+	},
+	0xbfd064ec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockHeader{} }},
+	},
+	0xc000bba2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeSms{} }},
+	},
+	0xc007cec3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotifyChats{} }},
+	},
+	0xc01e857f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateUserTyping{} }},
+	},
+	0xc01f6fe8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedDialogsNotModified{} }},
+	},
+	0xc02d4007: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatParticipant{} }},
+	},
+	0xc070d93e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockPreformatted{} }},
+	},
+	0xc077ec01: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AvailableReaction{} }},
+	},
+	0xc0944820: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionTopicEdit{} }},
+	},
+	0xc0de1bd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONObjectValue{} }},
+	},
+	0xc0e24635: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDhConfigNotModified{} }},
+	},
+	0xc10eb2cf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPaymentCredentialsSaved{} }},
+	},
+	0xc12622c4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextUnderline{} }},
+	},
+	0xc13d1c11: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaVenue{} }},
+	},
+	0xc13e3c50: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ImportedContact{} }},
+	},
+	0xc1e4a2b1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonOther{} }},
+	},
+	0xc1e92cc5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSavedRingtones{} }},
+	},
+	0xc1f8e69a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterMyMentions{} }},
+	},
+	0xc21b8849: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaWebPage{} }},
+	},
+	0xc21f497e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedFileEmpty{} }},
+	},
+	0xc23727c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountPasswordInputSettings{} }},
+	},
+	0xc239d686: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWebFileLocation{} }},
+	},
+	0xc27ac8c7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommand{} }},
+	},
+	0xc326caef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceSlug{} }},
+	},
+	0xc32bfa1a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuPeerTypeBotPm{} }},
+	},
+	0xc32d5b12: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDeleteChannelMessages{} }},
+	},
+	0xc331e80a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGameShortName{} }},
+	},
+	0xc3878e23: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpCountry{} }},
+	},
+	0xc387c04e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesCanSendStoryCount{} }},
+	},
+	0xc3987a3a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesAlbums{} }},
+	},
+	0xc39f5324: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceStarGiftResale{} }},
+	},
+	0xc3a12462: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BaseThemeClassic{} }},
+	},
+	0xc3a2835f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthLoggedOut{} }},
+	},
+	0xc3f2f501: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessAwayMessageScheduleOutsideWorkHours{} }},
+	},
+	0xc4103386: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaPaidMedia{} }},
+	},
+	0xc448415c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MyBoost{} }},
+	},
+	0xc45a6536: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpNoAppUpdate{} }},
+	},
+	0xc4870a49: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateBotStopped{} }},
+	},
+	0xc4e57915: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueDisallowBots{} }},
+	},
+	0xc4e5921e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBusinessBotRecipients{} }},
+	},
+	0xc516d679: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionBotAllowed{} }},
+	},
+	0xc517f77e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleAutotranslation{} }},
+	},
+	0xc5226f17: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallWaiting{} }},
+	},
+	0xc5b56859: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceMessage{} }},
+	},
+	0xc624b16e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPaymentSent{} }},
+	},
+	0xc68d6695: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesQuickReplies{} }},
+	},
+	0xc69708d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SponsoredPeer{} }},
+	},
+	0xc6dc0c66: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFeaturedStickersNotModified{} }},
+	},
+	0xc7345e6a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONBool{} }},
+	},
+	0xc776ba4e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesChannelMessages{} }},
+	},
+	0xc7b57ce6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotMenuButton{} }},
+	},
+	0xc7edbc83: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionTodoAppendTasks{} }},
+	},
+	0xc7fb5e01: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextSuperscript{} }},
+	},
+	0xc84834ce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AutoSaveSettings{} }},
+	},
+	0xc88b3b02: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetPremiumGifts{} }},
+	},
+	0xc8cf05f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityCustomEmoji{} }},
+	},
+	0xc9662d05: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputKeyboardButtonRequestPeer{} }},
+	},
+	0xc982eaba: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &CdnPublicKey{} }},
+	},
+	0xc99b1950: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotAppSettings{} }},
+	},
+	0xc9b0539f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SearchResultsCalendarPeriod{} }},
+	},
+	0xc9b9e2b9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessAwayMessageScheduleAlways{} }},
+	},
+	0xc9f06e1b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequestPeerTypeChat{} }},
+	},
+	0xca461b5d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerLocated{} }},
+	},
+	0xcacb6ae2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerNotifySettings{} }},
+	},
+	0xcad181f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangPackString{} }},
+	},
+	0xcad5452d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaGeoPoint{} }},
+	},
+	0xcae1aadf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StorageFileGif{} }},
+	},
+	0xcae68768: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesPeerStories{} }},
+	},
+	0xcb296bf8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LabeledPrice{} }},
+	},
+	0xcb2ac766: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionToggleNoForwards{} }},
+	},
+	0xcb397619: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipant{} }},
+	},
+	0xcb43acde: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsAbsValueAndPrev{} }},
+	},
+	0xcb6ff828: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SavedReactionTag{} }},
+	},
+	0xcba9a52f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TodoItem{} }},
+	},
+	0xcbc7ee28: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSecureFileLocation{} }},
+	},
+	0xcbce2fe0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsPercentValue{} }},
+	},
+	0xcbe31e26: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeAddress{} }},
+	},
+	0xcc02aa6d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionBoostApply{} }},
+	},
+	0xcc1a241e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Config{} }},
+	},
+	0xcc4d9ecc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessAwayMessageScheduleCustom{} }},
+	},
+	0xcc7c5c89: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionTodoCompletions{} }},
+	},
+	0xccbbce30: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpAppUpdate{} }},
+	},
+	0xcd64636c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ConnectedBot{} }},
+	},
+	0xcd77d957: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelMessagesFilter{} }},
+	},
+	0xcdbbcebb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAllStickers{} }},
+	},
+	0xcdc27a1f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentSavedCredentials{} }},
+	},
+	0xcdc3858c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountWallPapers{} }},
+	},
+	0xce0d37b0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockAnchor{} }},
+	},
+	0xceaa3ea1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaGiveawayResults{} }},
+	},
+	0xcf6f6db8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPageAttributeUniqueStarGift{} }},
+	},
+	0xcfb9d957: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesTranscribedAudio{} }},
+	},
+	0xcfc9e002: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MediaAreaCoordinates{} }},
+	},
+	0xcfcd0f13: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryReactionPublicRepost{} }},
+	},
+	0xd02e7fd4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputKeyboardButtonURLAuth{} }},
+	},
+	0xd072acb4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RestrictionReason{} }},
+	},
+	0xd087663a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatParticipant{} }},
+	},
+	0xd08ce645: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountEmojiStatusesNotModified{} }},
+	},
+	0xd0e482b2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGroupCallStreamChannels{} }},
+	},
+	0xd1219bdd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyAddedByPhone{} }},
+	},
+	0xd1451883: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsValidatedRequestedInfo{} }},
+	},
+	0xd19ae46d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyKeyPhoneNumber{} }},
+	},
+	0xd1d34a26: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageUploadPhotoAction{} }},
+	},
+	0xd1ed9a5b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAvailableEffectsNotModified{} }},
+	},
+	0xd27ff082: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputCheckPasswordSrp{} }},
+	},
+	0xd29a27f4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelMessageForwards{} }},
+	},
+	0xd33f43f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaGame{} }},
+	},
+	0xd3656499: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabLinks{} }},
+	},
+	0xd3bc4b7a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserEmpty{} }},
+	},
+	0xd3f924eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStickerSetNotModified{} }},
+	},
+	0xd45ab096: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PasswordKdfAlgoUnknown{} }},
+	},
+	0xd52f73f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageRecordAudioAction{} }},
+	},
+	0xd5676710: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantToggleAdmin{} }},
+	},
+	0xd58a08c6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Dialog{} }},
+	},
+	0xd5a41724: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateMessageExtendedMedia{} }},
+	},
+	0xd5b3b9f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiKeyword{} }},
+	},
+	0xd5e58274: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCheckCanSendGiftResultFail{} }},
+	},
+	0xd612e8ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotifyBroadcasts{} }},
+	},
+	0xd61ad6ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCodeTypeMissedCall{} }},
+	},
+	0xd62ff46a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequestedPeerUser{} }},
+	},
+	0xd65a11cc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyBirthday{} }},
+	},
+	0xd66b66c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueDisallowAll{} }},
+	},
+	0xd6b19546: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadChannelDiscussionInbox{} }},
+	},
+	0xd7584c87: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGroupTopAdmin{} }},
+	},
+	0xd766c50a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InlineQueryPeerTypeChat{} }},
+	},
+	0xd7a2fcf9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodePaymentRequired{} }},
+	},
+	0xd7ca61a2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatParticipantAdmin{} }},
+	},
+	0xd7e78225: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineMessageMediaInvoice{} }},
+	},
+	0xd80da15d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeer{} }},
+	},
+	0xd8214d41: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoPathSize{} }},
+	},
+	0xd83466f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPhotoLegacyFileLocation{} }},
+	},
+	0xd8411139: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentVerificationNeeded{} }},
+	},
+	0xd8aa840f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGroupCall{} }},
+	},
+	0xd90d8dfe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuBot{} }},
+	},
+	0xd912a59c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextItalic{} }},
+	},
+	0xd92c2285: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SpeakingInGroupCallAction{} }},
+	},
+	0xd93d859c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeBackdrop{} }},
+	},
+	0xd9565c39: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeFragmentSms{} }},
+	},
+	0xd95c6154: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSecureValuesSent{} }},
+	},
+	0xdabab2ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoicePremiumGiftStars{} }},
+	},
+	0xdabbf83a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsPaymentReceiptStars{} }},
+	},
+	0xdb20b188: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockDivider{} }},
+	},
+	0xdb21d0a7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSecureValue{} }},
+	},
+	0xdb64fd34: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountTmpPassword{} }},
+	},
+	0xdb909ec2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmailVerificationGoogle{} }},
+	},
+	0xdb9d897d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotCommandScopePeer{} }},
+	},
+	0xdb9e70d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyPhoneP2P{} }},
+	},
+	0xdb9f9140: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionDiscardGroupCall{} }},
+	},
+	0xdbd4feed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonGeoIrrelevant{} }},
+	},
+	0xdbda9246: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageHistoryImportAction{} }},
+	},
+	0xdc3d824f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextEmpty{} }},
+	},
+	0xdc6cfcf0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaidReactionPrivacyPeer{} }},
+	},
+	0xdc7b1140: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityMentionName{} }},
+	},
+	0xdc8b44cf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsEligibilityToJoin{} }},
+	},
+	0xdcb118b7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GroupCallParticipantVideoSourceGroup{} }},
+	},
+	0xdd0c66f2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarRefProgram{} }},
+	},
+	0xdd18782e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpAppConfig{} }},
+	},
+	0xdd6a8f48: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageGamePlayAction{} }},
+	},
+	0xdde8a54c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPeerUser{} }},
+	},
+	0xddf10c3b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaWebPage{} }},
+	},
+	0xde266ef5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsTopPeersNotModified{} }},
+	},
+	0xde33b094: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &VideoSize{} }},
+	},
+	0xde3f3c79: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsRecent{} }},
+	},
+	0xde4c5d93: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GeoPointAddress{} }},
+	},
+	0xde5a0dd6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextEmail{} }},
+	},
+	0xde9eed1d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesStoryViews{} }},
+	},
+	0xdfb80317: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsChannelParticipant{} }},
+	},
+	0xdfdaabe1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputFileLocation{} }},
+	},
+	0xe021f2f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesBotResults{} }},
+	},
+	0xe04b5ceb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelParticipantsMentions{} }},
+	},
+	0xe062db83: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterContacts{} }},
+	},
+	0xe0804116: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WallPaperNoFile{} }},
+	},
+	0xe095c1a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallDiscardReasonDisconnect{} }},
+	},
+	0xe0b0bc2e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoStrippedSize{} }},
+	},
+	0xe0bff26c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarGiftAttributeOriginalDetails{} }},
+	},
+	0xe0c0c5e5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageTableRow{} }},
+	},
+	0xe1037f92: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatMigrateTo{} }},
+	},
+	0xe1664194: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsBlockedSlice{} }},
+	},
+	0xe1732341: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyStarGiftsAutoSave{} }},
+	},
+	0xe175e66f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGiveawayInfoResults{} }},
+	},
+	0xe1bb0d61: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountEmailVerifiedLogin{} }},
+	},
+	0xe2de7737: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesFoundStories{} }},
+	},
+	0xe317af7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesTooLong{} }},
+	},
+	0xe31c34d8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantInvite{} }},
+	},
+	0xe32f3d77: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChatParticipantDelete{} }},
+	},
+	0xe3309f7f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpTermsOfServiceUpdateEmpty{} }},
+	},
+	0xe3779861: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetPasswordFailedWait{} }},
+	},
+	0xe3878aa4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersSavedMusicNotModified{} }},
+	},
+	0xe39460a9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputCollectibleUsername{} }},
+	},
+	0xe40370a3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateEditMessage{} }},
+	},
+	0xe4621141: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueDisallowUsers{} }},
+	},
+	0xe46bcee4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatParticipantCreator{} }},
+	},
+	0xe477092e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ProfileTabVoice{} }},
+	},
+	0xe4c123d6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGeoPointEmpty{} }},
+	},
+	0xe4e0b29d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelFull{} }},
+	},
+	0xe4e88011: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockList{} }},
+	},
+	0xe511996d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateFavedStickers{} }},
+	},
+	0xe519abab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessGreetingMessage{} }},
+	},
+	0xe537ced6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorSelfie{} }},
+	},
+	0xe56dbf05: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DialogPeer{} }},
+	},
+	0xe581e4e9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RequirementToContactPremium{} }},
+	},
+	0xe5bbfe1a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaPhotoExternal{} }},
+	},
+	0xe5bdf8de: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateUserStatus{} }},
+	},
+	0xe5d7d19c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesChatFull{} }},
+	},
+	0xe630b979: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWallPaper{} }},
+	},
+	0xe64429c0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantUnmute{} }},
+	},
+	0xe66fbf7b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaDice{} }},
+	},
+	0xe67f520e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetDice{} }},
+	},
+	0xe6a1eeb8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsJob{} }},
+	},
+	0xe6d83d7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantToggleBan{} }},
+	},
+	0xe6dfb825: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeTitle{} }},
+	},
+	0xe7026d0d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterGeo{} }},
+	},
+	0xe7058e7f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PostInteractionCountersMessage{} }},
+	},
+	0xe7e82e12: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PendingSuggestion{} }},
+	},
+	0xe7ff068a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EmojiStatus{} }},
+	},
+	0xe8025ca2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedGifsNotModified{} }},
+	},
+	0xe844ebff: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchCounter{} }},
+	},
+	0xe8625e92: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceStarGift{} }},
+	},
+	0xe86602c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAllStickersNotModified{} }},
+	},
+	0xe87acbc0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FoundStory{} }},
+	},
+	0xe89c45b2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebPage{} }},
+	},
+	0xe8a40bd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueErrorData{} }},
+	},
+	0xe8a775b0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsBotInfo{} }},
+	},
+	0xe8fd8014: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerBlocked{} }},
+	},
+	0xe90ebb59: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionExportedInviteEdit{} }},
+	},
+	0xe926d63e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetPasswordOk{} }},
+	},
+	0xe92fd902: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerFragment{} }},
+	},
+	0xe94f0f86: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyValueDisallowChatParticipants{} }},
+	},
+	0xe9763aec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageUploadVideoAction{} }},
+	},
+	0xe988037b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputKeyboardButtonUserProfile{} }},
+	},
+	0xe9baa668: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FolderPeer{} }},
+	},
+	0xe9e82c18: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionUpdatePinned{} }},
+	},
+	0xe9effc7d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetPasswordRequestedWait{} }},
+	},
+	0xea02c27e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentCharge{} }},
+	},
+	0xea02ec33: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeTemporaryRegistration{} }},
+	},
+	0xea107ae4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventsFilter{} }},
+	},
+	0xea32b4b1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsSponsoredPeersEmpty{} }},
+	},
+	0xea3948e9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChannelMigrateFrom{} }},
+	},
+	0xeae87e42: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsContacts{} }},
+	},
+	0xeafc32bc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatReactionsNone{} }},
+	},
+	0xeafdf716: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReactions{} }},
+	},
+	0xeb032884: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsSponsoredPeers{} }},
+	},
+	0xeb49081d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &RecentMeURLChatInvite{} }},
+	},
+	0xeb50adf5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesBotApp{} }},
+	},
+	0xeba636fe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GroupCallParticipant{} }},
+	},
+	0xebbca3cb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionChatJoinedByRequest{} }},
+	},
+	0xebe07752: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePeerBlocked{} }},
+	},
+	0xebe46819: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateServiceNotification{} }},
+	},
+	0xec05b097: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateAutoSaveSettings{} }},
+	},
+	0xec43a2d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountBusinessChatLinks{} }},
+	},
+	0xec82e140: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhonePhoneCall{} }},
+	},
+	0xece9814b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowPremium{} }},
+	},
+	0xed107ab7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatInvitePublicJoinRequests{} }},
+	},
+	0xed18c118: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EncryptedMessage{} }},
+	},
+	0xed1ecdb0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueHash{} }},
+	},
+	0xed56c9fc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountWebAuthorizations{} }},
+	},
+	0xed6a8504: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TextSubscript{} }},
+	},
+	0xed85eab5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePinnedMessages{} }},
+	},
+	0xed8af74d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsAdminLogResults{} }},
+	},
+	0xedb93949: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UserStatusOnline{} }},
+	},
+	0xedcdc05b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeer{} }},
+	},
+	0xedf164f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryItem{} }},
+	},
+	0xedf3add0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PublicForwardStory{} }},
+	},
+	0xedfc111e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDraftMessage{} }},
+	},
+	0xee3b272a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePrivacy{} }},
+	},
+	0xee479c64: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageExtendedMedia{} }},
+	},
+	0xee7a1596: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionSuggestedPostApproval{} }},
+	},
+	0xee8c1e86: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChannelEmpty{} }},
+	},
+	0xeea8e46e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadCdnFileReuploadNeeded{} }},
+	},
+	0xeeca5ce3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangPackLanguage{} }},
+	},
+	0xef156a5c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BusinessAwayMessage{} }},
+	},
+	0xef1751b5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockChannel{} }},
+	},
+	0xef7ff916: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsMegagroupStats{} }},
+	},
+	0xef8d3e6c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAffectedFoundMessages{} }},
+	},
+	0xf0173fe9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsChannelParticipantsNotModified{} }},
+	},
+	0xf041e250: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatOnlines{} }},
+	},
+	0xf04fb3a9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionChangeUsernames{} }},
+	},
+	0xf06fe208: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionEditTopic{} }},
+	},
+	0xf0e3e596: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDialogsNotModified{} }},
+	},
+	0xf0e4e0b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ReportResultChooseOption{} }},
+	},
+	0xf101aa7f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputSavedStarGiftChat{} }},
+	},
+	0xf10ece2f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsChatlistInvite{} }},
+	},
+	0xf12bb6e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockSubheader{} }},
+	},
+	0xf141b5e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEncryptedChat{} }},
+	},
+	0xf146d31f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuPeerTypePm{} }},
+	},
+	0xf16269d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateSmsJob{} }},
+	},
+	0xf1749a22: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStickersNotModified{} }},
+	},
+	0xf18cda44: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadFileCdnRedirect{} }},
+	},
+	0xf1ccaaac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityBlockquote{} }},
+	},
+	0xf1d88a5c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AttachMenuBotsNotModified{} }},
+	},
+	0xf21158c6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputUser{} }},
+	},
+	0xf226ac08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelMessageViews{} }},
+	},
+	0xf24de7fa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionStarGift{} }},
+	},
+	0xf259a80b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PageBlockEmbedPost{} }},
+	},
+	0xf2a71983: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateDeleteScheduledMessages{} }},
+	},
+	0xf2ebdb4e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateGroupCallParticipants{} }},
+	},
+	0xf2ecef23: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatAdminWithInvites{} }},
+	},
+	0xf351d7ab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageUploadAudioAction{} }},
+	},
+	0xf35aec28: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChannel{} }},
+	},
+	0xf385c1f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangPackDifference{} }},
+	},
+	0xf392b7f4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputContact{} }},
+	},
+	0xf39b035c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FileHash{} }},
+	},
+	0xf3ae2eed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpUserInfoEmpty{} }},
+	},
+	0xf3e0da33: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputChatlist{} }},
+	},
+	0xf3f25f76: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionContactSignUp{} }},
+	},
+	0xf41eb622: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountThemesNotModified{} }},
+	},
+	0xf450f59b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSentCodeTypeEmailCode{} }},
+	},
+	0xf46fe924: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputWebFileAudioAlbumThumbLocation{} }},
+	},
+	0xf47741f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerSettings{} }},
+	},
+	0xf47751b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGroupParticipants{} }},
+	},
+	0xf496b0c6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSendAsPeers{} }},
+	},
+	0xf4997e42: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputInvoiceBusinessBotTransferStars{} }},
+	},
+	0xf5235d55: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputEncryptedFileLocation{} }},
+	},
+	0xf52ff27f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputFile{} }},
+	},
+	0xf53da717: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateNewQuickReply{} }},
+	},
+	0xf568028a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BankCardOpenURL{} }},
+	},
+	0xf5890df1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputThemeSlug{} }},
+	},
+	0xf5ddd6e7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputReportReasonFake{} }},
+	},
+	0xf6a548d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaInvoice{} }},
+	},
+	0xf6a5f82f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueDisallowBots{} }},
+	},
+	0xf7444763: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JSONArray{} }},
+	},
+	0xf74e932b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadStories{} }},
+	},
+	0xf7c1b13f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputUserSelf{} }},
+	},
+	0xf7e8d89b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowCloseFriends{} }},
+	},
+	0xf8227181: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadMessagesContents{} }},
+	},
+	0xf83ae221: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavedDialogs{} }},
+	},
+	0xf85c413c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &VideoSizeEmojiMarkup{} }},
+	},
+	0xf888fa1a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueDisallowContacts{} }},
+	},
+	0xf89777f2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantLeave{} }},
+	},
+	0xf89a6a4e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChat{} }},
+	},
+	0xf8ab7dfb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaContact{} }},
+	},
+	0xf8ec284b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PeerSelfLocated{} }},
+	},
+	0xf92424d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantMute{} }},
+	},
+	0xf93cd45c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotVerification{} }},
+	},
+	0xf9470ab2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateQuickReplies{} }},
+	},
+	0xf9677aad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsTransactionPeerAPI{} }},
+	},
+	0xf9a2a6cb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentStarsTopup{} }},
+	},
+	0xf9c44144: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMediaGeoPoint{} }},
+	},
+	0xf9c8bcc6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WebDocumentNoProxy{} }},
+	},
+	0xfa04579d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageEntityMention{} }},
+	},
+	0xfa0f3ca2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatePinnedDialogs{} }},
+	},
+	0xfa3efb95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotoSizeProgressive{} }},
+	},
+	0xfa4f0bb5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputFileBig{} }},
+	},
+	0xfa58b6d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ThemeSettings{} }},
+	},
+	0xfa87f659: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsChatlistInviteAlready{} }},
+	},
+	0xfabadc5f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputPrivacyKeyPhoneCall{} }},
+	},
+	0xfae69f56: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionCustomAction{} }},
+	},
+	0xfaf7e8c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallDiscardReasonBusy{} }},
+	},
+	0xfaff629d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMyStickers{} }},
+	},
+	0xfb197a65: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Photo{} }},
+	},
+	0xfb4c496c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateReadFeaturedEmojiStickers{} }},
+	},
+	0xfb790393: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStorePaymentPremiumGiftCode{} }},
+	},
+	0xfb834291: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryPeers{} }},
+	},
+	0xfb8fe43c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsSavedInfo{} }},
+	},
+	0xfbd2c296: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputFolderPeer{} }},
+	},
+	0xfbd81688: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BaseThemeDay{} }},
+	},
+	0xfbeec0f0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryForwardChats{} }},
+	},
+	0xfbf6e8b1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSavedRingtonesNotModified{} }},
+	},
+	0xfc36954e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SecureValueTypeUtilityBill{} }},
+	},
+	0xfc796b3f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &KeyboardButtonRequestGeoLocation{} }},
+	},
+	0xfc878fc8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCallProtocol{} }},
+	},
+	0xfcaafeb7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputDialogPeer{} }},
+	},
+	0xfcfeb29c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickerKeyword{} }},
+	},
+	0xfd149899: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &DocumentAttributeCustomEmoji{} }},
+	},
+	0xfd5e12bd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesWebPage{} }},
+	},
+	0xfd5ec8f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SendMessageCancelAction{} }},
+	},
+	0xfd9e7bec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &TopPeerCategoryBotsApp{} }},
+	},
+	0xfdb19008: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageMediaGame{} }},
+	},
+	0xfe06823f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputGroupCallSlug{} }},
+	},
+	0xfe198602: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdateChannelPinnedTopics{} }},
+	},
+	0xfe41b34f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &GlobalPrivacySettings{} }},
+	},
+	0xfe685355: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Channel{} }},
+	},
+	0xfe9fc158: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelAdminLogEventActionParticipantJoinByInvite{} }},
+	},
+	0xfebe5491: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StarsRevenueStatus{} }},
+	},
+	0xff16e2ca: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PollAnswer{} }},
+	},
+	0xff544e65: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Folder{} }},
+	},
+	0xff57708d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesPreparedInlineMessage{} }},
+	},
+	0xff6c8049: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &NotificationSoundRingtone{} }},
+	},
+	0xff9289f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &Timezone{} }},
+	},
+	0xffa00ccc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessageActionPaymentSentMe{} }},
+	},
+	0xffadc913: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoryItemSkipped{} }},
+	},
+	0xffb62b95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputStickerSetEmpty{} }},
+	},
+	0xffc86587: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputMessagesFilterGif{} }},
+	},
+	0xffda656d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSponsoredMessages{} }},
+	},
+	0xfff8fdc4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &InputBotInlineResultDocument{} }},
+	},
+	0xfffe1bac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PrivacyValueAllowContacts{} }},
+	},
+}
+
+// NewConstructorForLayer constructs the wire shape selected by an incoming
+// constructor ID and the negotiated session layer.
+func NewConstructorForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	variants, hasLayerVariants := constructorLayerVariants[id]
+	for _, variant := range variants {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
+			return variant.newObject(), true
+		}
+	}
+	if hasLayerVariants {
+		return nil, false
+	}
+	constructor, ok := staticConstructors[id]
+	if !ok {
+		return nil, false
+	}
+	return constructor(), true
+}
+
 // Static method constructor map for RPC request deserialization
 var staticMethods = map[string]func() tlrpc.TLObject{
-	"account.acceptAuthorization":               func() tlrpc.TLObject { return &AccountAcceptAuthorizationRequest{} },
-	"account.cancelPasswordEmail":               func() tlrpc.TLObject { return &AccountCancelPasswordEmailRequest{} },
-	"account.changeAuthorizationSettings":       func() tlrpc.TLObject { return &AccountChangeAuthorizationSettingsRequest{} },
-	"account.changePhone":                       func() tlrpc.TLObject { return &AccountChangePhoneRequest{} },
-	"account.checkUsername":                     func() tlrpc.TLObject { return &AccountCheckUsernameRequest{} },
-	"account.clearRecentEmojiStatuses":          func() tlrpc.TLObject { return &AccountClearRecentEmojiStatusesRequest{} },
-	"account.confirmPasswordEmail":              func() tlrpc.TLObject { return &AccountConfirmPasswordEmailRequest{} },
-	"account.confirmPhone":                      func() tlrpc.TLObject { return &AccountConfirmPhoneRequest{} },
-	"account.createBusinessChatLink":            func() tlrpc.TLObject { return &AccountCreateBusinessChatLinkRequest{} },
-	"account.createTheme":                       func() tlrpc.TLObject { return &AccountCreateThemeRequest{} },
-	"account.declinePasswordReset":              func() tlrpc.TLObject { return &AccountDeclinePasswordResetRequest{} },
-	"account.deleteAccount":                     func() tlrpc.TLObject { return &AccountDeleteAccountRequest{} },
-	"account.deleteAutoSaveExceptions":          func() tlrpc.TLObject { return &AccountDeleteAutoSaveExceptionsRequest{} },
-	"account.deleteBusinessChatLink":            func() tlrpc.TLObject { return &AccountDeleteBusinessChatLinkRequest{} },
-	"account.deleteSecureValue":                 func() tlrpc.TLObject { return &AccountDeleteSecureValueRequest{} },
-	"account.disablePeerConnectedBot":           func() tlrpc.TLObject { return &AccountDisablePeerConnectedBotRequest{} },
-	"account.editBusinessChatLink":              func() tlrpc.TLObject { return &AccountEditBusinessChatLinkRequest{} },
-	"account.finishTakeoutSession":              func() tlrpc.TLObject { return &AccountFinishTakeoutSessionRequest{} },
-	"account.getAccountTTL":                     func() tlrpc.TLObject { return &AccountGetAccountTTLRequest{} },
-	"account.getAllSecureValues":                func() tlrpc.TLObject { return &AccountGetAllSecureValuesRequest{} },
-	"account.getAuthorizationForm":              func() tlrpc.TLObject { return &AccountGetAuthorizationFormRequest{} },
-	"account.getAuthorizations":                 func() tlrpc.TLObject { return &AccountGetAuthorizationsRequest{} },
-	"account.getAutoDownloadSettings":           func() tlrpc.TLObject { return &AccountGetAutoDownloadSettingsRequest{} },
-	"account.getAutoSaveSettings":               func() tlrpc.TLObject { return &AccountGetAutoSaveSettingsRequest{} },
-	"account.getBotBusinessConnection":          func() tlrpc.TLObject { return &AccountGetBotBusinessConnectionRequest{} },
-	"account.getBusinessChatLinks":              func() tlrpc.TLObject { return &AccountGetBusinessChatLinksRequest{} },
-	"account.getChannelDefaultEmojiStatuses":    func() tlrpc.TLObject { return &AccountGetChannelDefaultEmojiStatusesRequest{} },
-	"account.getChannelRestrictedStatusEmojis":  func() tlrpc.TLObject { return &AccountGetChannelRestrictedStatusEmojisRequest{} },
-	"account.getChatThemes":                     func() tlrpc.TLObject { return &AccountGetChatThemesRequest{} },
-	"account.getCollectibleEmojiStatuses":       func() tlrpc.TLObject { return &AccountGetCollectibleEmojiStatusesRequest{} },
-	"account.getConnectedBots":                  func() tlrpc.TLObject { return &AccountGetConnectedBotsRequest{} },
-	"account.getContactSignUpNotification":      func() tlrpc.TLObject { return &AccountGetContactSignUpNotificationRequest{} },
-	"account.getContentSettings":                func() tlrpc.TLObject { return &AccountGetContentSettingsRequest{} },
-	"account.getDefaultBackgroundEmojis":        func() tlrpc.TLObject { return &AccountGetDefaultBackgroundEmojisRequest{} },
-	"account.getDefaultEmojiStatuses":           func() tlrpc.TLObject { return &AccountGetDefaultEmojiStatusesRequest{} },
-	"account.getDefaultGroupPhotoEmojis":        func() tlrpc.TLObject { return &AccountGetDefaultGroupPhotoEmojisRequest{} },
-	"account.getDefaultProfilePhotoEmojis":      func() tlrpc.TLObject { return &AccountGetDefaultProfilePhotoEmojisRequest{} },
-	"account.getGlobalPrivacySettings":          func() tlrpc.TLObject { return &AccountGetGlobalPrivacySettingsRequest{} },
-	"account.getMultiWallPapers":                func() tlrpc.TLObject { return &AccountGetMultiWallPapersRequest{} },
-	"account.getNotifyExceptions":               func() tlrpc.TLObject { return &AccountGetNotifyExceptionsRequest{} },
-	"account.getNotifySettings":                 func() tlrpc.TLObject { return &AccountGetNotifySettingsRequest{} },
-	"account.getPaidMessagesRevenue":            func() tlrpc.TLObject { return &AccountGetPaidMessagesRevenueRequest{} },
-	"account.getPassword":                       func() tlrpc.TLObject { return &AccountGetPasswordRequest{} },
-	"account.getPasswordSettings":               func() tlrpc.TLObject { return &AccountGetPasswordSettingsRequest{} },
-	"account.getPrivacy":                        func() tlrpc.TLObject { return &AccountGetPrivacyRequest{} },
-	"account.getReactionsNotifySettings":        func() tlrpc.TLObject { return &AccountGetReactionsNotifySettingsRequest{} },
-	"account.getRecentEmojiStatuses":            func() tlrpc.TLObject { return &AccountGetRecentEmojiStatusesRequest{} },
-	"account.getSavedMusicIds":                  func() tlrpc.TLObject { return &AccountGetSavedMusicIdsRequest{} },
-	"account.getSavedRingtones":                 func() tlrpc.TLObject { return &AccountGetSavedRingtonesRequest{} },
-	"account.getSecureValue":                    func() tlrpc.TLObject { return &AccountGetSecureValueRequest{} },
-	"account.getTheme":                          func() tlrpc.TLObject { return &AccountGetThemeRequest{} },
-	"account.getThemes":                         func() tlrpc.TLObject { return &AccountGetThemesRequest{} },
-	"account.getTmpPassword":                    func() tlrpc.TLObject { return &AccountGetTmpPasswordRequest{} },
-	"account.getWallPaper":                      func() tlrpc.TLObject { return &AccountGetWallPaperRequest{} },
-	"account.getWallPapers":                     func() tlrpc.TLObject { return &AccountGetWallPapersRequest{} },
-	"account.getWebAuthorizations":              func() tlrpc.TLObject { return &AccountGetWebAuthorizationsRequest{} },
-	"account.initTakeoutSession":                func() tlrpc.TLObject { return &AccountInitTakeoutSessionRequest{} },
-	"account.installTheme":                      func() tlrpc.TLObject { return &AccountInstallThemeRequest{} },
-	"account.installWallPaper":                  func() tlrpc.TLObject { return &AccountInstallWallPaperRequest{} },
-	"account.invalidateSignInCodes":             func() tlrpc.TLObject { return &AccountInvalidateSignInCodesRequest{} },
-	"account.registerDevice":                    func() tlrpc.TLObject { return &AccountRegisterDeviceRequest{} },
-	"account.reorderUsernames":                  func() tlrpc.TLObject { return &AccountReorderUsernamesRequest{} },
-	"account.reportPeer":                        func() tlrpc.TLObject { return &AccountReportPeerRequest{} },
-	"account.reportProfilePhoto":                func() tlrpc.TLObject { return &AccountReportProfilePhotoRequest{} },
-	"account.resendPasswordEmail":               func() tlrpc.TLObject { return &AccountResendPasswordEmailRequest{} },
-	"account.resetAuthorization":                func() tlrpc.TLObject { return &AccountResetAuthorizationRequest{} },
-	"account.resetNotifySettings":               func() tlrpc.TLObject { return &AccountResetNotifySettingsRequest{} },
-	"account.resetPassword":                     func() tlrpc.TLObject { return &AccountResetPasswordRequest{} },
-	"account.resetWallPapers":                   func() tlrpc.TLObject { return &AccountResetWallPapersRequest{} },
-	"account.resetWebAuthorization":             func() tlrpc.TLObject { return &AccountResetWebAuthorizationRequest{} },
-	"account.resetWebAuthorizations":            func() tlrpc.TLObject { return &AccountResetWebAuthorizationsRequest{} },
-	"account.resolveBusinessChatLink":           func() tlrpc.TLObject { return &AccountResolveBusinessChatLinkRequest{} },
-	"account.saveAutoDownloadSettings":          func() tlrpc.TLObject { return &AccountSaveAutoDownloadSettingsRequest{} },
-	"account.saveAutoSaveSettings":              func() tlrpc.TLObject { return &AccountSaveAutoSaveSettingsRequest{} },
-	"account.saveMusic":                         func() tlrpc.TLObject { return &AccountSaveMusicRequest{} },
-	"account.saveRingtone":                      func() tlrpc.TLObject { return &AccountSaveRingtoneRequest{} },
-	"account.saveSecureValue":                   func() tlrpc.TLObject { return &AccountSaveSecureValueRequest{} },
-	"account.saveTheme":                         func() tlrpc.TLObject { return &AccountSaveThemeRequest{} },
-	"account.saveWallPaper":                     func() tlrpc.TLObject { return &AccountSaveWallPaperRequest{} },
-	"account.sendChangePhoneCode":               func() tlrpc.TLObject { return &AccountSendChangePhoneCodeRequest{} },
-	"account.sendConfirmPhoneCode":              func() tlrpc.TLObject { return &AccountSendConfirmPhoneCodeRequest{} },
-	"account.sendVerifyEmailCode":               func() tlrpc.TLObject { return &AccountSendVerifyEmailCodeRequest{} },
-	"account.sendVerifyPhoneCode":               func() tlrpc.TLObject { return &AccountSendVerifyPhoneCodeRequest{} },
-	"account.setAccountTTL":                     func() tlrpc.TLObject { return &AccountSetAccountTTLRequest{} },
-	"account.setAuthorizationTTL":               func() tlrpc.TLObject { return &AccountSetAuthorizationTTLRequest{} },
-	"account.setContactSignUpNotification":      func() tlrpc.TLObject { return &AccountSetContactSignUpNotificationRequest{} },
-	"account.setContentSettings":                func() tlrpc.TLObject { return &AccountSetContentSettingsRequest{} },
-	"account.setGlobalPrivacySettings":          func() tlrpc.TLObject { return &AccountSetGlobalPrivacySettingsRequest{} },
-	"account.setMainProfileTab":                 func() tlrpc.TLObject { return &AccountSetMainProfileTabRequest{} },
-	"account.setPrivacy":                        func() tlrpc.TLObject { return &AccountSetPrivacyRequest{} },
-	"account.setReactionsNotifySettings":        func() tlrpc.TLObject { return &AccountSetReactionsNotifySettingsRequest{} },
-	"account.toggleConnectedBotPaused":          func() tlrpc.TLObject { return &AccountToggleConnectedBotPausedRequest{} },
-	"account.toggleNoPaidMessagesException":     func() tlrpc.TLObject { return &AccountToggleNoPaidMessagesExceptionRequest{} },
-	"account.toggleSponsoredMessages":           func() tlrpc.TLObject { return &AccountToggleSponsoredMessagesRequest{} },
-	"account.toggleUsername":                    func() tlrpc.TLObject { return &AccountToggleUsernameRequest{} },
-	"account.unregisterDevice":                  func() tlrpc.TLObject { return &AccountUnregisterDeviceRequest{} },
-	"account.updateBirthday":                    func() tlrpc.TLObject { return &AccountUpdateBirthdayRequest{} },
-	"account.updateBusinessAwayMessage":         func() tlrpc.TLObject { return &AccountUpdateBusinessAwayMessageRequest{} },
-	"account.updateBusinessGreetingMessage":     func() tlrpc.TLObject { return &AccountUpdateBusinessGreetingMessageRequest{} },
-	"account.updateBusinessIntro":               func() tlrpc.TLObject { return &AccountUpdateBusinessIntroRequest{} },
-	"account.updateBusinessLocation":            func() tlrpc.TLObject { return &AccountUpdateBusinessLocationRequest{} },
-	"account.updateBusinessWorkHours":           func() tlrpc.TLObject { return &AccountUpdateBusinessWorkHoursRequest{} },
-	"account.updateColor":                       func() tlrpc.TLObject { return &AccountUpdateColorRequest{} },
-	"account.updateConnectedBot":                func() tlrpc.TLObject { return &AccountUpdateConnectedBotRequest{} },
-	"account.updateDeviceLocked":                func() tlrpc.TLObject { return &AccountUpdateDeviceLockedRequest{} },
-	"account.updateEmojiStatus":                 func() tlrpc.TLObject { return &AccountUpdateEmojiStatusRequest{} },
-	"account.updateNotifySettings":              func() tlrpc.TLObject { return &AccountUpdateNotifySettingsRequest{} },
-	"account.updatePasswordSettings":            func() tlrpc.TLObject { return &AccountUpdatePasswordSettingsRequest{} },
-	"account.updatePersonalChannel":             func() tlrpc.TLObject { return &AccountUpdatePersonalChannelRequest{} },
-	"account.updateProfile":                     func() tlrpc.TLObject { return &AccountUpdateProfileRequest{} },
-	"account.updateStatus":                      func() tlrpc.TLObject { return &AccountUpdateStatusRequest{} },
-	"account.updateTheme":                       func() tlrpc.TLObject { return &AccountUpdateThemeRequest{} },
-	"account.updateUsername":                    func() tlrpc.TLObject { return &AccountUpdateUsernameRequest{} },
-	"account.uploadRingtone":                    func() tlrpc.TLObject { return &AccountUploadRingtoneRequest{} },
-	"account.uploadTheme":                       func() tlrpc.TLObject { return &AccountUploadThemeRequest{} },
-	"account.uploadWallPaper":                   func() tlrpc.TLObject { return &AccountUploadWallPaperRequest{} },
-	"account.verifyEmail":                       func() tlrpc.TLObject { return &AccountVerifyEmailRequest{} },
-	"account.verifyPhone":                       func() tlrpc.TLObject { return &AccountVerifyPhoneRequest{} },
-	"auth.acceptLoginToken":                     func() tlrpc.TLObject { return &AuthAcceptLoginTokenRequest{} },
-	"auth.bindTempAuthKey":                      func() tlrpc.TLObject { return &AuthBindTempAuthKeyRequest{} },
-	"auth.cancelCode":                           func() tlrpc.TLObject { return &AuthCancelCodeRequest{} },
-	"auth.checkPassword":                        func() tlrpc.TLObject { return &AuthCheckPasswordRequest{} },
-	"auth.checkRecoveryPassword":                func() tlrpc.TLObject { return &AuthCheckRecoveryPasswordRequest{} },
-	"auth.dropTempAuthKeys":                     func() tlrpc.TLObject { return &AuthDropTempAuthKeysRequest{} },
-	"auth.exportAuthorization":                  func() tlrpc.TLObject { return &AuthExportAuthorizationRequest{} },
-	"auth.exportLoginToken":                     func() tlrpc.TLObject { return &AuthExportLoginTokenRequest{} },
-	"auth.importAuthorization":                  func() tlrpc.TLObject { return &AuthImportAuthorizationRequest{} },
-	"auth.importBotAuthorization":               func() tlrpc.TLObject { return &AuthImportBotAuthorizationRequest{} },
-	"auth.importLoginToken":                     func() tlrpc.TLObject { return &AuthImportLoginTokenRequest{} },
-	"auth.importWebTokenAuthorization":          func() tlrpc.TLObject { return &AuthImportWebTokenAuthorizationRequest{} },
-	"auth.logOut":                               func() tlrpc.TLObject { return &AuthLogOutRequest{} },
-	"auth.recoverPassword":                      func() tlrpc.TLObject { return &AuthRecoverPasswordRequest{} },
-	"auth.reportMissingCode":                    func() tlrpc.TLObject { return &AuthReportMissingCodeRequest{} },
-	"auth.requestFirebaseSms":                   func() tlrpc.TLObject { return &AuthRequestFirebaseSmsRequest{} },
-	"auth.requestPasswordRecovery":              func() tlrpc.TLObject { return &AuthRequestPasswordRecoveryRequest{} },
-	"auth.resendCode":                           func() tlrpc.TLObject { return &AuthResendCodeRequest{} },
-	"auth.resetAuthorizations":                  func() tlrpc.TLObject { return &AuthResetAuthorizationsRequest{} },
-	"auth.resetLoginEmail":                      func() tlrpc.TLObject { return &AuthResetLoginEmailRequest{} },
-	"auth.sendCode":                             func() tlrpc.TLObject { return &AuthSendCodeRequest{} },
-	"auth.signIn":                               func() tlrpc.TLObject { return &AuthSignInRequest{} },
-	"auth.signUp":                               func() tlrpc.TLObject { return &AuthSignUpRequest{} },
-	"bots.addPreviewMedia":                      func() tlrpc.TLObject { return &BotsAddPreviewMediaRequest{} },
-	"bots.allowSendMessage":                     func() tlrpc.TLObject { return &BotsAllowSendMessageRequest{} },
-	"bots.answerWebhookJSONQuery":               func() tlrpc.TLObject { return &BotsAnswerWebhookJSONQueryRequest{} },
-	"bots.canSendMessage":                       func() tlrpc.TLObject { return &BotsCanSendMessageRequest{} },
-	"bots.checkDownloadFileParams":              func() tlrpc.TLObject { return &BotsCheckDownloadFileParamsRequest{} },
-	"bots.deletePreviewMedia":                   func() tlrpc.TLObject { return &BotsDeletePreviewMediaRequest{} },
-	"bots.editPreviewMedia":                     func() tlrpc.TLObject { return &BotsEditPreviewMediaRequest{} },
-	"bots.getAdminedBots":                       func() tlrpc.TLObject { return &BotsGetAdminedBotsRequest{} },
-	"bots.getBotCommands":                       func() tlrpc.TLObject { return &BotsGetBotCommandsRequest{} },
-	"bots.getBotInfo":                           func() tlrpc.TLObject { return &BotsGetBotInfoRequest{} },
-	"bots.getBotMenuButton":                     func() tlrpc.TLObject { return &BotsGetBotMenuButtonRequest{} },
-	"bots.getBotRecommendations":                func() tlrpc.TLObject { return &BotsGetBotRecommendationsRequest{} },
-	"bots.getPopularAppBots":                    func() tlrpc.TLObject { return &BotsGetPopularAppBotsRequest{} },
-	"bots.getPreviewInfo":                       func() tlrpc.TLObject { return &BotsGetPreviewInfoRequest{} },
-	"bots.getPreviewMedias":                     func() tlrpc.TLObject { return &BotsGetPreviewMediasRequest{} },
-	"bots.invokeWebViewCustomMethod":            func() tlrpc.TLObject { return &BotsInvokeWebViewCustomMethodRequest{} },
-	"bots.reorderPreviewMedias":                 func() tlrpc.TLObject { return &BotsReorderPreviewMediasRequest{} },
-	"bots.reorderUsernames":                     func() tlrpc.TLObject { return &BotsReorderUsernamesRequest{} },
-	"bots.resetBotCommands":                     func() tlrpc.TLObject { return &BotsResetBotCommandsRequest{} },
-	"bots.sendCustomRequest":                    func() tlrpc.TLObject { return &BotsSendCustomRequestRequest{} },
-	"bots.setBotBroadcastDefaultAdminRights":    func() tlrpc.TLObject { return &BotsSetBotBroadcastDefaultAdminRightsRequest{} },
-	"bots.setBotCommands":                       func() tlrpc.TLObject { return &BotsSetBotCommandsRequest{} },
-	"bots.setBotGroupDefaultAdminRights":        func() tlrpc.TLObject { return &BotsSetBotGroupDefaultAdminRightsRequest{} },
-	"bots.setBotInfo":                           func() tlrpc.TLObject { return &BotsSetBotInfoRequest{} },
-	"bots.setBotMenuButton":                     func() tlrpc.TLObject { return &BotsSetBotMenuButtonRequest{} },
-	"bots.setCustomVerification":                func() tlrpc.TLObject { return &BotsSetCustomVerificationRequest{} },
-	"bots.toggleUserEmojiStatusPermission":      func() tlrpc.TLObject { return &BotsToggleUserEmojiStatusPermissionRequest{} },
-	"bots.toggleUsername":                       func() tlrpc.TLObject { return &BotsToggleUsernameRequest{} },
-	"bots.updateStarRefProgram":                 func() tlrpc.TLObject { return &BotsUpdateStarRefProgramRequest{} },
-	"bots.updateUserEmojiStatus":                func() tlrpc.TLObject { return &BotsUpdateUserEmojiStatusRequest{} },
-	"channels.checkSearchPostsFlood":            func() tlrpc.TLObject { return &ChannelsCheckSearchPostsFloodRequest{} },
-	"channels.checkUsername":                    func() tlrpc.TLObject { return &ChannelsCheckUsernameRequest{} },
-	"channels.convertToGigagroup":               func() tlrpc.TLObject { return &ChannelsConvertToGigagroupRequest{} },
-	"channels.createChannel":                    func() tlrpc.TLObject { return &ChannelsCreateChannelRequest{} },
-	"channels.createForumTopic":                 func() tlrpc.TLObject { return &ChannelsCreateForumTopicRequest{} },
-	"channels.deactivateAllUsernames":           func() tlrpc.TLObject { return &ChannelsDeactivateAllUsernamesRequest{} },
-	"channels.deleteChannel":                    func() tlrpc.TLObject { return &ChannelsDeleteChannelRequest{} },
-	"channels.deleteHistory":                    func() tlrpc.TLObject { return &ChannelsDeleteHistoryRequest{} },
-	"channels.deleteMessages":                   func() tlrpc.TLObject { return &ChannelsDeleteMessagesRequest{} },
-	"channels.deleteParticipantHistory":         func() tlrpc.TLObject { return &ChannelsDeleteParticipantHistoryRequest{} },
-	"channels.deleteTopicHistory":               func() tlrpc.TLObject { return &ChannelsDeleteTopicHistoryRequest{} },
-	"channels.editAdmin":                        func() tlrpc.TLObject { return &ChannelsEditAdminRequest{} },
-	"channels.editBanned":                       func() tlrpc.TLObject { return &ChannelsEditBannedRequest{} },
-	"channels.editCreator":                      func() tlrpc.TLObject { return &ChannelsEditCreatorRequest{} },
-	"channels.editForumTopic":                   func() tlrpc.TLObject { return &ChannelsEditForumTopicRequest{} },
-	"channels.editLocation":                     func() tlrpc.TLObject { return &ChannelsEditLocationRequest{} },
-	"channels.editPhoto":                        func() tlrpc.TLObject { return &ChannelsEditPhotoRequest{} },
-	"channels.editTitle":                        func() tlrpc.TLObject { return &ChannelsEditTitleRequest{} },
-	"channels.exportMessageLink":                func() tlrpc.TLObject { return &ChannelsExportMessageLinkRequest{} },
-	"channels.getAdminLog":                      func() tlrpc.TLObject { return &ChannelsGetAdminLogRequest{} },
-	"channels.getAdminedPublicChannels":         func() tlrpc.TLObject { return &ChannelsGetAdminedPublicChannelsRequest{} },
-	"channels.getChannelRecommendations":        func() tlrpc.TLObject { return &ChannelsGetChannelRecommendationsRequest{} },
-	"channels.getChannels":                      func() tlrpc.TLObject { return &ChannelsGetChannelsRequest{} },
-	"channels.getForumTopics":                   func() tlrpc.TLObject { return &ChannelsGetForumTopicsRequest{} },
-	"channels.getForumTopicsByID":               func() tlrpc.TLObject { return &ChannelsGetForumTopicsByIDRequest{} },
-	"channels.getFullChannel":                   func() tlrpc.TLObject { return &ChannelsGetFullChannelRequest{} },
-	"channels.getGroupsForDiscussion":           func() tlrpc.TLObject { return &ChannelsGetGroupsForDiscussionRequest{} },
-	"channels.getInactiveChannels":              func() tlrpc.TLObject { return &ChannelsGetInactiveChannelsRequest{} },
-	"channels.getLeftChannels":                  func() tlrpc.TLObject { return &ChannelsGetLeftChannelsRequest{} },
-	"channels.getMessageAuthor":                 func() tlrpc.TLObject { return &ChannelsGetMessageAuthorRequest{} },
-	"channels.getMessages":                      func() tlrpc.TLObject { return &ChannelsGetMessagesRequest{} },
-	"channels.getParticipant":                   func() tlrpc.TLObject { return &ChannelsGetParticipantRequest{} },
-	"channels.getParticipants":                  func() tlrpc.TLObject { return &ChannelsGetParticipantsRequest{} },
-	"channels.getSendAs":                        func() tlrpc.TLObject { return &ChannelsGetSendAsRequest{} },
-	"channels.inviteToChannel":                  func() tlrpc.TLObject { return &ChannelsInviteToChannelRequest{} },
-	"channels.joinChannel":                      func() tlrpc.TLObject { return &ChannelsJoinChannelRequest{} },
-	"channels.leaveChannel":                     func() tlrpc.TLObject { return &ChannelsLeaveChannelRequest{} },
-	"channels.readHistory":                      func() tlrpc.TLObject { return &ChannelsReadHistoryRequest{} },
-	"channels.readMessageContents":              func() tlrpc.TLObject { return &ChannelsReadMessageContentsRequest{} },
-	"channels.reorderPinnedForumTopics":         func() tlrpc.TLObject { return &ChannelsReorderPinnedForumTopicsRequest{} },
-	"channels.reorderUsernames":                 func() tlrpc.TLObject { return &ChannelsReorderUsernamesRequest{} },
-	"channels.reportAntiSpamFalsePositive":      func() tlrpc.TLObject { return &ChannelsReportAntiSpamFalsePositiveRequest{} },
-	"channels.reportSpam":                       func() tlrpc.TLObject { return &ChannelsReportSpamRequest{} },
-	"channels.restrictSponsoredMessages":        func() tlrpc.TLObject { return &ChannelsRestrictSponsoredMessagesRequest{} },
-	"channels.searchPosts":                      func() tlrpc.TLObject { return &ChannelsSearchPostsRequest{} },
-	"channels.setBoostsToUnblockRestrictions":   func() tlrpc.TLObject { return &ChannelsSetBoostsToUnblockRestrictionsRequest{} },
-	"channels.setDiscussionGroup":               func() tlrpc.TLObject { return &ChannelsSetDiscussionGroupRequest{} },
-	"channels.setEmojiStickers":                 func() tlrpc.TLObject { return &ChannelsSetEmojiStickersRequest{} },
-	"channels.setMainProfileTab":                func() tlrpc.TLObject { return &ChannelsSetMainProfileTabRequest{} },
-	"channels.setStickers":                      func() tlrpc.TLObject { return &ChannelsSetStickersRequest{} },
-	"channels.toggleAntiSpam":                   func() tlrpc.TLObject { return &ChannelsToggleAntiSpamRequest{} },
-	"channels.toggleAutotranslation":            func() tlrpc.TLObject { return &ChannelsToggleAutotranslationRequest{} },
-	"channels.toggleForum":                      func() tlrpc.TLObject { return &ChannelsToggleForumRequest{} },
-	"channels.toggleJoinRequest":                func() tlrpc.TLObject { return &ChannelsToggleJoinRequestRequest{} },
-	"channels.toggleJoinToSend":                 func() tlrpc.TLObject { return &ChannelsToggleJoinToSendRequest{} },
-	"channels.toggleParticipantsHidden":         func() tlrpc.TLObject { return &ChannelsToggleParticipantsHiddenRequest{} },
-	"channels.togglePreHistoryHidden":           func() tlrpc.TLObject { return &ChannelsTogglePreHistoryHiddenRequest{} },
-	"channels.toggleSignatures":                 func() tlrpc.TLObject { return &ChannelsToggleSignaturesRequest{} },
-	"channels.toggleSlowMode":                   func() tlrpc.TLObject { return &ChannelsToggleSlowModeRequest{} },
-	"channels.toggleUsername":                   func() tlrpc.TLObject { return &ChannelsToggleUsernameRequest{} },
-	"channels.toggleViewForumAsMessages":        func() tlrpc.TLObject { return &ChannelsToggleViewForumAsMessagesRequest{} },
-	"channels.updateColor":                      func() tlrpc.TLObject { return &ChannelsUpdateColorRequest{} },
-	"channels.updateEmojiStatus":                func() tlrpc.TLObject { return &ChannelsUpdateEmojiStatusRequest{} },
-	"channels.updatePaidMessagesPrice":          func() tlrpc.TLObject { return &ChannelsUpdatePaidMessagesPriceRequest{} },
-	"channels.updatePinnedForumTopic":           func() tlrpc.TLObject { return &ChannelsUpdatePinnedForumTopicRequest{} },
-	"channels.updateUsername":                   func() tlrpc.TLObject { return &ChannelsUpdateUsernameRequest{} },
-	"chatlists.checkChatlistInvite":             func() tlrpc.TLObject { return &ChatlistsCheckChatlistInviteRequest{} },
-	"chatlists.deleteExportedInvite":            func() tlrpc.TLObject { return &ChatlistsDeleteExportedInviteRequest{} },
-	"chatlists.editExportedInvite":              func() tlrpc.TLObject { return &ChatlistsEditExportedInviteRequest{} },
-	"chatlists.exportChatlistInvite":            func() tlrpc.TLObject { return &ChatlistsExportChatlistInviteRequest{} },
-	"chatlists.getChatlistUpdates":              func() tlrpc.TLObject { return &ChatlistsGetChatlistUpdatesRequest{} },
-	"chatlists.getExportedInvites":              func() tlrpc.TLObject { return &ChatlistsGetExportedInvitesRequest{} },
-	"chatlists.getLeaveChatlistSuggestions":     func() tlrpc.TLObject { return &ChatlistsGetLeaveChatlistSuggestionsRequest{} },
-	"chatlists.hideChatlistUpdates":             func() tlrpc.TLObject { return &ChatlistsHideChatlistUpdatesRequest{} },
-	"chatlists.joinChatlistInvite":              func() tlrpc.TLObject { return &ChatlistsJoinChatlistInviteRequest{} },
-	"chatlists.joinChatlistUpdates":             func() tlrpc.TLObject { return &ChatlistsJoinChatlistUpdatesRequest{} },
-	"chatlists.leaveChatlist":                   func() tlrpc.TLObject { return &ChatlistsLeaveChatlistRequest{} },
-	"contacts.acceptContact":                    func() tlrpc.TLObject { return &ContactsAcceptContactRequest{} },
-	"contacts.addContact":                       func() tlrpc.TLObject { return &ContactsAddContactRequest{} },
-	"contacts.block":                            func() tlrpc.TLObject { return &ContactsBlockRequest{} },
-	"contacts.blockFromReplies":                 func() tlrpc.TLObject { return &ContactsBlockFromRepliesRequest{} },
-	"contacts.deleteByPhones":                   func() tlrpc.TLObject { return &ContactsDeleteByPhonesRequest{} },
-	"contacts.deleteContacts":                   func() tlrpc.TLObject { return &ContactsDeleteContactsRequest{} },
-	"contacts.editCloseFriends":                 func() tlrpc.TLObject { return &ContactsEditCloseFriendsRequest{} },
-	"contacts.exportContactToken":               func() tlrpc.TLObject { return &ContactsExportContactTokenRequest{} },
-	"contacts.getBirthdays":                     func() tlrpc.TLObject { return &ContactsGetBirthdaysRequest{} },
-	"contacts.getBlocked":                       func() tlrpc.TLObject { return &ContactsGetBlockedRequest{} },
-	"contacts.getContactIDs":                    func() tlrpc.TLObject { return &ContactsGetContactIDsRequest{} },
-	"contacts.getContacts":                      func() tlrpc.TLObject { return &ContactsGetContactsRequest{} },
-	"contacts.getLocated":                       func() tlrpc.TLObject { return &ContactsGetLocatedRequest{} },
-	"contacts.getSaved":                         func() tlrpc.TLObject { return &ContactsGetSavedRequest{} },
-	"contacts.getSponsoredPeers":                func() tlrpc.TLObject { return &ContactsGetSponsoredPeersRequest{} },
-	"contacts.getStatuses":                      func() tlrpc.TLObject { return &ContactsGetStatusesRequest{} },
-	"contacts.getTopPeers":                      func() tlrpc.TLObject { return &ContactsGetTopPeersRequest{} },
-	"contacts.importContactToken":               func() tlrpc.TLObject { return &ContactsImportContactTokenRequest{} },
-	"contacts.importContacts":                   func() tlrpc.TLObject { return &ContactsImportContactsRequest{} },
-	"contacts.resetSaved":                       func() tlrpc.TLObject { return &ContactsResetSavedRequest{} },
-	"contacts.resetTopPeerRating":               func() tlrpc.TLObject { return &ContactsResetTopPeerRatingRequest{} },
-	"contacts.resolvePhone":                     func() tlrpc.TLObject { return &ContactsResolvePhoneRequest{} },
-	"contacts.resolveUsername":                  func() tlrpc.TLObject { return &ContactsResolveUsernameRequest{} },
-	"contacts.search":                           func() tlrpc.TLObject { return &ContactsSearchRequest{} },
-	"contacts.setBlocked":                       func() tlrpc.TLObject { return &ContactsSetBlockedRequest{} },
-	"contacts.toggleTopPeers":                   func() tlrpc.TLObject { return &ContactsToggleTopPeersRequest{} },
-	"contacts.unblock":                          func() tlrpc.TLObject { return &ContactsUnblockRequest{} },
-	"folders.editPeerFolders":                   func() tlrpc.TLObject { return &FoldersEditPeerFoldersRequest{} },
-	"fragment.getCollectibleInfo":               func() tlrpc.TLObject { return &FragmentGetCollectibleInfoRequest{} },
-	"help.acceptTermsOfService":                 func() tlrpc.TLObject { return &HelpAcceptTermsOfServiceRequest{} },
-	"help.dismissSuggestion":                    func() tlrpc.TLObject { return &HelpDismissSuggestionRequest{} },
-	"help.editUserInfo":                         func() tlrpc.TLObject { return &HelpEditUserInfoRequest{} },
-	"help.getAppConfig":                         func() tlrpc.TLObject { return &HelpGetAppConfigRequest{} },
-	"help.getAppUpdate":                         func() tlrpc.TLObject { return &HelpGetAppUpdateRequest{} },
-	"help.getCdnConfig":                         func() tlrpc.TLObject { return &HelpGetCdnConfigRequest{} },
-	"help.getConfig":                            func() tlrpc.TLObject { return &HelpGetConfigRequest{} },
-	"help.getCountriesList":                     func() tlrpc.TLObject { return &HelpGetCountriesListRequest{} },
-	"help.getDeepLinkInfo":                      func() tlrpc.TLObject { return &HelpGetDeepLinkInfoRequest{} },
-	"help.getInviteText":                        func() tlrpc.TLObject { return &HelpGetInviteTextRequest{} },
-	"help.getNearestDc":                         func() tlrpc.TLObject { return &HelpGetNearestDcRequest{} },
-	"help.getPassportConfig":                    func() tlrpc.TLObject { return &HelpGetPassportConfigRequest{} },
-	"help.getPeerColors":                        func() tlrpc.TLObject { return &HelpGetPeerColorsRequest{} },
-	"help.getPeerProfileColors":                 func() tlrpc.TLObject { return &HelpGetPeerProfileColorsRequest{} },
-	"help.getPremiumPromo":                      func() tlrpc.TLObject { return &HelpGetPremiumPromoRequest{} },
-	"help.getPromoData":                         func() tlrpc.TLObject { return &HelpGetPromoDataRequest{} },
-	"help.getRecentMeUrls":                      func() tlrpc.TLObject { return &HelpGetRecentMeUrlsRequest{} },
-	"help.getSupport":                           func() tlrpc.TLObject { return &HelpGetSupportRequest{} },
-	"help.getSupportName":                       func() tlrpc.TLObject { return &HelpGetSupportNameRequest{} },
-	"help.getTermsOfServiceUpdate":              func() tlrpc.TLObject { return &HelpGetTermsOfServiceUpdateRequest{} },
-	"help.getTimezonesList":                     func() tlrpc.TLObject { return &HelpGetTimezonesListRequest{} },
-	"help.getUserInfo":                          func() tlrpc.TLObject { return &HelpGetUserInfoRequest{} },
-	"help.hidePromoData":                        func() tlrpc.TLObject { return &HelpHidePromoDataRequest{} },
-	"help.saveAppLog":                           func() tlrpc.TLObject { return &HelpSaveAppLogRequest{} },
-	"help.setBotUpdatesStatus":                  func() tlrpc.TLObject { return &HelpSetBotUpdatesStatusRequest{} },
-	"langpack.getDifference":                    func() tlrpc.TLObject { return &LangpackGetDifferenceRequest{} },
-	"langpack.getLangPack":                      func() tlrpc.TLObject { return &LangpackGetLangPackRequest{} },
-	"langpack.getLanguage":                      func() tlrpc.TLObject { return &LangpackGetLanguageRequest{} },
-	"langpack.getLanguages":                     func() tlrpc.TLObject { return &LangpackGetLanguagesRequest{} },
-	"langpack.getStrings":                       func() tlrpc.TLObject { return &LangpackGetStringsRequest{} },
-	"messages.acceptEncryption":                 func() tlrpc.TLObject { return &MessagesAcceptEncryptionRequest{} },
-	"messages.acceptUrlAuth":                    func() tlrpc.TLObject { return &MessagesAcceptURLAuthRequest{} },
-	"messages.addChatUser":                      func() tlrpc.TLObject { return &MessagesAddChatUserRequest{} },
-	"messages.appendTodoList":                   func() tlrpc.TLObject { return &MessagesAppendTodoListRequest{} },
-	"messages.checkChatInvite":                  func() tlrpc.TLObject { return &MessagesCheckChatInviteRequest{} },
-	"messages.checkHistoryImport":               func() tlrpc.TLObject { return &MessagesCheckHistoryImportRequest{} },
-	"messages.checkHistoryImportPeer":           func() tlrpc.TLObject { return &MessagesCheckHistoryImportPeerRequest{} },
-	"messages.checkQuickReplyShortcut":          func() tlrpc.TLObject { return &MessagesCheckQuickReplyShortcutRequest{} },
-	"messages.clearAllDrafts":                   func() tlrpc.TLObject { return &MessagesClearAllDraftsRequest{} },
-	"messages.clearRecentReactions":             func() tlrpc.TLObject { return &MessagesClearRecentReactionsRequest{} },
-	"messages.clearRecentStickers":              func() tlrpc.TLObject { return &MessagesClearRecentStickersRequest{} },
-	"messages.clickSponsoredMessage":            func() tlrpc.TLObject { return &MessagesClickSponsoredMessageRequest{} },
-	"messages.createChat":                       func() tlrpc.TLObject { return &MessagesCreateChatRequest{} },
-	"messages.deleteChat":                       func() tlrpc.TLObject { return &MessagesDeleteChatRequest{} },
-	"messages.deleteChatUser":                   func() tlrpc.TLObject { return &MessagesDeleteChatUserRequest{} },
-	"messages.deleteExportedChatInvite":         func() tlrpc.TLObject { return &MessagesDeleteExportedChatInviteRequest{} },
-	"messages.deleteFactCheck":                  func() tlrpc.TLObject { return &MessagesDeleteFactCheckRequest{} },
-	"messages.deleteHistory":                    func() tlrpc.TLObject { return &MessagesDeleteHistoryRequest{} },
-	"messages.deleteMessages":                   func() tlrpc.TLObject { return &MessagesDeleteMessagesRequest{} },
-	"messages.deletePhoneCallHistory":           func() tlrpc.TLObject { return &MessagesDeletePhoneCallHistoryRequest{} },
-	"messages.deleteQuickReplyMessages":         func() tlrpc.TLObject { return &MessagesDeleteQuickReplyMessagesRequest{} },
-	"messages.deleteQuickReplyShortcut":         func() tlrpc.TLObject { return &MessagesDeleteQuickReplyShortcutRequest{} },
-	"messages.deleteRevokedExportedChatInvites": func() tlrpc.TLObject { return &MessagesDeleteRevokedExportedChatInvitesRequest{} },
-	"messages.deleteSavedHistory":               func() tlrpc.TLObject { return &MessagesDeleteSavedHistoryRequest{} },
-	"messages.deleteScheduledMessages":          func() tlrpc.TLObject { return &MessagesDeleteScheduledMessagesRequest{} },
-	"messages.discardEncryption":                func() tlrpc.TLObject { return &MessagesDiscardEncryptionRequest{} },
-	"messages.editChatAbout":                    func() tlrpc.TLObject { return &MessagesEditChatAboutRequest{} },
-	"messages.editChatAdmin":                    func() tlrpc.TLObject { return &MessagesEditChatAdminRequest{} },
-	"messages.editChatDefaultBannedRights":      func() tlrpc.TLObject { return &MessagesEditChatDefaultBannedRightsRequest{} },
-	"messages.editChatPhoto":                    func() tlrpc.TLObject { return &MessagesEditChatPhotoRequest{} },
-	"messages.editChatTitle":                    func() tlrpc.TLObject { return &MessagesEditChatTitleRequest{} },
-	"messages.editExportedChatInvite":           func() tlrpc.TLObject { return &MessagesEditExportedChatInviteRequest{} },
-	"messages.editFactCheck":                    func() tlrpc.TLObject { return &MessagesEditFactCheckRequest{} },
-	"messages.editInlineBotMessage":             func() tlrpc.TLObject { return &MessagesEditInlineBotMessageRequest{} },
-	"messages.editMessage":                      func() tlrpc.TLObject { return &MessagesEditMessageRequest{} },
-	"messages.editQuickReplyShortcut":           func() tlrpc.TLObject { return &MessagesEditQuickReplyShortcutRequest{} },
-	"messages.exportChatInvite":                 func() tlrpc.TLObject { return &MessagesExportChatInviteRequest{} },
-	"messages.faveSticker":                      func() tlrpc.TLObject { return &MessagesFaveStickerRequest{} },
-	"messages.forwardMessages":                  func() tlrpc.TLObject { return &MessagesForwardMessagesRequest{} },
-	"messages.getAdminsWithInvites":             func() tlrpc.TLObject { return &MessagesGetAdminsWithInvitesRequest{} },
-	"messages.getAllDrafts":                     func() tlrpc.TLObject { return &MessagesGetAllDraftsRequest{} },
-	"messages.getAllStickers":                   func() tlrpc.TLObject { return &MessagesGetAllStickersRequest{} },
-	"messages.getArchivedStickers":              func() tlrpc.TLObject { return &MessagesGetArchivedStickersRequest{} },
-	"messages.getAttachMenuBot":                 func() tlrpc.TLObject { return &MessagesGetAttachMenuBotRequest{} },
-	"messages.getAttachMenuBots":                func() tlrpc.TLObject { return &MessagesGetAttachMenuBotsRequest{} },
-	"messages.getAttachedStickers":              func() tlrpc.TLObject { return &MessagesGetAttachedStickersRequest{} },
-	"messages.getAvailableEffects":              func() tlrpc.TLObject { return &MessagesGetAvailableEffectsRequest{} },
-	"messages.getAvailableReactions":            func() tlrpc.TLObject { return &MessagesGetAvailableReactionsRequest{} },
-	"messages.getBotApp":                        func() tlrpc.TLObject { return &MessagesGetBotAppRequest{} },
-	"messages.getBotCallbackAnswer":             func() tlrpc.TLObject { return &MessagesGetBotCallbackAnswerRequest{} },
-	"messages.getChatInviteImporters":           func() tlrpc.TLObject { return &MessagesGetChatInviteImportersRequest{} },
-	"messages.getChats":                         func() tlrpc.TLObject { return &MessagesGetChatsRequest{} },
-	"messages.getCommonChats":                   func() tlrpc.TLObject { return &MessagesGetCommonChatsRequest{} },
-	"messages.getCustomEmojiDocuments":          func() tlrpc.TLObject { return &MessagesGetCustomEmojiDocumentsRequest{} },
-	"messages.getDefaultHistoryTTL":             func() tlrpc.TLObject { return &MessagesGetDefaultHistoryTTLRequest{} },
-	"messages.getDefaultTagReactions":           func() tlrpc.TLObject { return &MessagesGetDefaultTagReactionsRequest{} },
-	"messages.getDhConfig":                      func() tlrpc.TLObject { return &MessagesGetDhConfigRequest{} },
-	"messages.getDialogFilters":                 func() tlrpc.TLObject { return &MessagesGetDialogFiltersRequest{} },
-	"messages.getDialogUnreadMarks":             func() tlrpc.TLObject { return &MessagesGetDialogUnreadMarksRequest{} },
-	"messages.getDialogs":                       func() tlrpc.TLObject { return &MessagesGetDialogsRequest{} },
-	"messages.getDiscussionMessage":             func() tlrpc.TLObject { return &MessagesGetDiscussionMessageRequest{} },
-	"messages.getDocumentByHash":                func() tlrpc.TLObject { return &MessagesGetDocumentByHashRequest{} },
-	"messages.getEmojiGroups":                   func() tlrpc.TLObject { return &MessagesGetEmojiGroupsRequest{} },
-	"messages.getEmojiKeywords":                 func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsRequest{} },
-	"messages.getEmojiKeywordsDifference":       func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsDifferenceRequest{} },
-	"messages.getEmojiKeywordsLanguages":        func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsLanguagesRequest{} },
-	"messages.getEmojiProfilePhotoGroups":       func() tlrpc.TLObject { return &MessagesGetEmojiProfilePhotoGroupsRequest{} },
-	"messages.getEmojiStatusGroups":             func() tlrpc.TLObject { return &MessagesGetEmojiStatusGroupsRequest{} },
-	"messages.getEmojiStickerGroups":            func() tlrpc.TLObject { return &MessagesGetEmojiStickerGroupsRequest{} },
-	"messages.getEmojiStickers":                 func() tlrpc.TLObject { return &MessagesGetEmojiStickersRequest{} },
-	"messages.getEmojiURL":                      func() tlrpc.TLObject { return &MessagesGetEmojiURLRequest{} },
-	"messages.getExportedChatInvite":            func() tlrpc.TLObject { return &MessagesGetExportedChatInviteRequest{} },
-	"messages.getExportedChatInvites":           func() tlrpc.TLObject { return &MessagesGetExportedChatInvitesRequest{} },
-	"messages.getExtendedMedia":                 func() tlrpc.TLObject { return &MessagesGetExtendedMediaRequest{} },
-	"messages.getFactCheck":                     func() tlrpc.TLObject { return &MessagesGetFactCheckRequest{} },
-	"messages.getFavedStickers":                 func() tlrpc.TLObject { return &MessagesGetFavedStickersRequest{} },
-	"messages.getFeaturedEmojiStickers":         func() tlrpc.TLObject { return &MessagesGetFeaturedEmojiStickersRequest{} },
-	"messages.getFeaturedStickers":              func() tlrpc.TLObject { return &MessagesGetFeaturedStickersRequest{} },
-	"messages.getFullChat":                      func() tlrpc.TLObject { return &MessagesGetFullChatRequest{} },
-	"messages.getGameHighScores":                func() tlrpc.TLObject { return &MessagesGetGameHighScoresRequest{} },
-	"messages.getHistory":                       func() tlrpc.TLObject { return &MessagesGetHistoryRequest{} },
-	"messages.getInlineBotResults":              func() tlrpc.TLObject { return &MessagesGetInlineBotResultsRequest{} },
-	"messages.getInlineGameHighScores":          func() tlrpc.TLObject { return &MessagesGetInlineGameHighScoresRequest{} },
-	"messages.getMaskStickers":                  func() tlrpc.TLObject { return &MessagesGetMaskStickersRequest{} },
-	"messages.getMessageEditData":               func() tlrpc.TLObject { return &MessagesGetMessageEditDataRequest{} },
-	"messages.getMessageReactionsList":          func() tlrpc.TLObject { return &MessagesGetMessageReactionsListRequest{} },
-	"messages.getMessageReadParticipants":       func() tlrpc.TLObject { return &MessagesGetMessageReadParticipantsRequest{} },
-	"messages.getMessages":                      func() tlrpc.TLObject { return &MessagesGetMessagesRequest{} },
-	"messages.getMessagesReactions":             func() tlrpc.TLObject { return &MessagesGetMessagesReactionsRequest{} },
-	"messages.getMessagesViews":                 func() tlrpc.TLObject { return &MessagesGetMessagesViewsRequest{} },
-	"messages.getMyStickers":                    func() tlrpc.TLObject { return &MessagesGetMyStickersRequest{} },
-	"messages.getOldFeaturedStickers":           func() tlrpc.TLObject { return &MessagesGetOldFeaturedStickersRequest{} },
-	"messages.getOnlines":                       func() tlrpc.TLObject { return &MessagesGetOnlinesRequest{} },
-	"messages.getOutboxReadDate":                func() tlrpc.TLObject { return &MessagesGetOutboxReadDateRequest{} },
-	"messages.getPaidReactionPrivacy":           func() tlrpc.TLObject { return &MessagesGetPaidReactionPrivacyRequest{} },
-	"messages.getPeerDialogs":                   func() tlrpc.TLObject { return &MessagesGetPeerDialogsRequest{} },
-	"messages.getPeerSettings":                  func() tlrpc.TLObject { return &MessagesGetPeerSettingsRequest{} },
-	"messages.getPinnedDialogs":                 func() tlrpc.TLObject { return &MessagesGetPinnedDialogsRequest{} },
-	"messages.getPinnedSavedDialogs":            func() tlrpc.TLObject { return &MessagesGetPinnedSavedDialogsRequest{} },
-	"messages.getPollResults":                   func() tlrpc.TLObject { return &MessagesGetPollResultsRequest{} },
-	"messages.getPollVotes":                     func() tlrpc.TLObject { return &MessagesGetPollVotesRequest{} },
-	"messages.getPreparedInlineMessage":         func() tlrpc.TLObject { return &MessagesGetPreparedInlineMessageRequest{} },
-	"messages.getQuickReplies":                  func() tlrpc.TLObject { return &MessagesGetQuickRepliesRequest{} },
-	"messages.getQuickReplyMessages":            func() tlrpc.TLObject { return &MessagesGetQuickReplyMessagesRequest{} },
-	"messages.getRecentLocations":               func() tlrpc.TLObject { return &MessagesGetRecentLocationsRequest{} },
-	"messages.getRecentReactions":               func() tlrpc.TLObject { return &MessagesGetRecentReactionsRequest{} },
-	"messages.getRecentStickers":                func() tlrpc.TLObject { return &MessagesGetRecentStickersRequest{} },
-	"messages.getReplies":                       func() tlrpc.TLObject { return &MessagesGetRepliesRequest{} },
-	"messages.getSavedDialogs":                  func() tlrpc.TLObject { return &MessagesGetSavedDialogsRequest{} },
-	"messages.getSavedDialogsByID":              func() tlrpc.TLObject { return &MessagesGetSavedDialogsByIDRequest{} },
-	"messages.getSavedGifs":                     func() tlrpc.TLObject { return &MessagesGetSavedGifsRequest{} },
-	"messages.getSavedHistory":                  func() tlrpc.TLObject { return &MessagesGetSavedHistoryRequest{} },
-	"messages.getSavedReactionTags":             func() tlrpc.TLObject { return &MessagesGetSavedReactionTagsRequest{} },
-	"messages.getScheduledHistory":              func() tlrpc.TLObject { return &MessagesGetScheduledHistoryRequest{} },
-	"messages.getScheduledMessages":             func() tlrpc.TLObject { return &MessagesGetScheduledMessagesRequest{} },
-	"messages.getSearchCounters":                func() tlrpc.TLObject { return &MessagesGetSearchCountersRequest{} },
-	"messages.getSearchResultsCalendar":         func() tlrpc.TLObject { return &MessagesGetSearchResultsCalendarRequest{} },
-	"messages.getSearchResultsPositions":        func() tlrpc.TLObject { return &MessagesGetSearchResultsPositionsRequest{} },
-	"messages.getSplitRanges":                   func() tlrpc.TLObject { return &MessagesGetSplitRangesRequest{} },
-	"messages.getSponsoredMessages":             func() tlrpc.TLObject { return &MessagesGetSponsoredMessagesRequest{} },
-	"messages.getStickerSet":                    func() tlrpc.TLObject { return &MessagesGetStickerSetRequest{} },
-	"messages.getStickers":                      func() tlrpc.TLObject { return &MessagesGetStickersRequest{} },
-	"messages.getSuggestedDialogFilters":        func() tlrpc.TLObject { return &MessagesGetSuggestedDialogFiltersRequest{} },
-	"messages.getTopReactions":                  func() tlrpc.TLObject { return &MessagesGetTopReactionsRequest{} },
-	"messages.getUnreadMentions":                func() tlrpc.TLObject { return &MessagesGetUnreadMentionsRequest{} },
-	"messages.getUnreadReactions":               func() tlrpc.TLObject { return &MessagesGetUnreadReactionsRequest{} },
-	"messages.getWebPage":                       func() tlrpc.TLObject { return &MessagesGetWebPageRequest{} },
-	"messages.getWebPagePreview":                func() tlrpc.TLObject { return &MessagesGetWebPagePreviewRequest{} },
-	"messages.hideAllChatJoinRequests":          func() tlrpc.TLObject { return &MessagesHideAllChatJoinRequestsRequest{} },
-	"messages.hideChatJoinRequest":              func() tlrpc.TLObject { return &MessagesHideChatJoinRequestRequest{} },
-	"messages.hidePeerSettingsBar":              func() tlrpc.TLObject { return &MessagesHidePeerSettingsBarRequest{} },
-	"messages.importChatInvite":                 func() tlrpc.TLObject { return &MessagesImportChatInviteRequest{} },
-	"messages.initHistoryImport":                func() tlrpc.TLObject { return &MessagesInitHistoryImportRequest{} },
-	"messages.installStickerSet":                func() tlrpc.TLObject { return &MessagesInstallStickerSetRequest{} },
-	"messages.markDialogUnread":                 func() tlrpc.TLObject { return &MessagesMarkDialogUnreadRequest{} },
-	"messages.migrateChat":                      func() tlrpc.TLObject { return &MessagesMigrateChatRequest{} },
-	"messages.prolongWebView":                   func() tlrpc.TLObject { return &MessagesProlongWebViewRequest{} },
-	"messages.rateTranscribedAudio":             func() tlrpc.TLObject { return &MessagesRateTranscribedAudioRequest{} },
-	"messages.readDiscussion":                   func() tlrpc.TLObject { return &MessagesReadDiscussionRequest{} },
-	"messages.readEncryptedHistory":             func() tlrpc.TLObject { return &MessagesReadEncryptedHistoryRequest{} },
-	"messages.readFeaturedStickers":             func() tlrpc.TLObject { return &MessagesReadFeaturedStickersRequest{} },
-	"messages.readHistory":                      func() tlrpc.TLObject { return &MessagesReadHistoryRequest{} },
-	"messages.readMentions":                     func() tlrpc.TLObject { return &MessagesReadMentionsRequest{} },
-	"messages.readMessageContents":              func() tlrpc.TLObject { return &MessagesReadMessageContentsRequest{} },
-	"messages.readReactions":                    func() tlrpc.TLObject { return &MessagesReadReactionsRequest{} },
-	"messages.readSavedHistory":                 func() tlrpc.TLObject { return &MessagesReadSavedHistoryRequest{} },
-	"messages.receivedMessages":                 func() tlrpc.TLObject { return &MessagesReceivedMessagesRequest{} },
-	"messages.receivedQueue":                    func() tlrpc.TLObject { return &MessagesReceivedQueueRequest{} },
-	"messages.reorderPinnedDialogs":             func() tlrpc.TLObject { return &MessagesReorderPinnedDialogsRequest{} },
-	"messages.reorderPinnedSavedDialogs":        func() tlrpc.TLObject { return &MessagesReorderPinnedSavedDialogsRequest{} },
-	"messages.reorderQuickReplies":              func() tlrpc.TLObject { return &MessagesReorderQuickRepliesRequest{} },
-	"messages.reorderStickerSets":               func() tlrpc.TLObject { return &MessagesReorderStickerSetsRequest{} },
-	"messages.report":                           func() tlrpc.TLObject { return &MessagesReportRequest{} },
-	"messages.reportEncryptedSpam":              func() tlrpc.TLObject { return &MessagesReportEncryptedSpamRequest{} },
-	"messages.reportMessagesDelivery":           func() tlrpc.TLObject { return &MessagesReportMessagesDeliveryRequest{} },
-	"messages.reportReaction":                   func() tlrpc.TLObject { return &MessagesReportReactionRequest{} },
-	"messages.reportSpam":                       func() tlrpc.TLObject { return &MessagesReportSpamRequest{} },
-	"messages.reportSponsoredMessage":           func() tlrpc.TLObject { return &MessagesReportSponsoredMessageRequest{} },
-	"messages.requestAppWebView":                func() tlrpc.TLObject { return &MessagesRequestAppWebViewRequest{} },
-	"messages.requestEncryption":                func() tlrpc.TLObject { return &MessagesRequestEncryptionRequest{} },
-	"messages.requestMainWebView":               func() tlrpc.TLObject { return &MessagesRequestMainWebViewRequest{} },
-	"messages.requestSimpleWebView":             func() tlrpc.TLObject { return &MessagesRequestSimpleWebViewRequest{} },
-	"messages.requestUrlAuth":                   func() tlrpc.TLObject { return &MessagesRequestURLAuthRequest{} },
-	"messages.requestWebView":                   func() tlrpc.TLObject { return &MessagesRequestWebViewRequest{} },
-	"messages.saveDefaultSendAs":                func() tlrpc.TLObject { return &MessagesSaveDefaultSendAsRequest{} },
-	"messages.saveDraft":                        func() tlrpc.TLObject { return &MessagesSaveDraftRequest{} },
-	"messages.saveGif":                          func() tlrpc.TLObject { return &MessagesSaveGifRequest{} },
-	"messages.savePreparedInlineMessage":        func() tlrpc.TLObject { return &MessagesSavePreparedInlineMessageRequest{} },
-	"messages.saveRecentSticker":                func() tlrpc.TLObject { return &MessagesSaveRecentStickerRequest{} },
-	"messages.search":                           func() tlrpc.TLObject { return &MessagesSearchRequest{} },
-	"messages.searchCustomEmoji":                func() tlrpc.TLObject { return &MessagesSearchCustomEmojiRequest{} },
-	"messages.searchEmojiStickerSets":           func() tlrpc.TLObject { return &MessagesSearchEmojiStickerSetsRequest{} },
-	"messages.searchGlobal":                     func() tlrpc.TLObject { return &MessagesSearchGlobalRequest{} },
-	"messages.searchSentMedia":                  func() tlrpc.TLObject { return &MessagesSearchSentMediaRequest{} },
-	"messages.searchStickerSets":                func() tlrpc.TLObject { return &MessagesSearchStickerSetsRequest{} },
-	"messages.searchStickers":                   func() tlrpc.TLObject { return &MessagesSearchStickersRequest{} },
-	"messages.sendBotRequestedPeer":             func() tlrpc.TLObject { return &MessagesSendBotRequestedPeerRequest{} },
-	"messages.sendEncrypted":                    func() tlrpc.TLObject { return &MessagesSendEncryptedRequest{} },
-	"messages.sendEncryptedFile":                func() tlrpc.TLObject { return &MessagesSendEncryptedFileRequest{} },
-	"messages.sendEncryptedService":             func() tlrpc.TLObject { return &MessagesSendEncryptedServiceRequest{} },
-	"messages.sendInlineBotResult":              func() tlrpc.TLObject { return &MessagesSendInlineBotResultRequest{} },
-	"messages.sendMedia":                        func() tlrpc.TLObject { return &MessagesSendMediaRequest{} },
-	"messages.sendMessage":                      func() tlrpc.TLObject { return &MessagesSendMessageRequest{} },
-	"messages.sendMultiMedia":                   func() tlrpc.TLObject { return &MessagesSendMultiMediaRequest{} },
-	"messages.sendPaidReaction":                 func() tlrpc.TLObject { return &MessagesSendPaidReactionRequest{} },
-	"messages.sendQuickReplyMessages":           func() tlrpc.TLObject { return &MessagesSendQuickReplyMessagesRequest{} },
-	"messages.sendReaction":                     func() tlrpc.TLObject { return &MessagesSendReactionRequest{} },
-	"messages.sendScheduledMessages":            func() tlrpc.TLObject { return &MessagesSendScheduledMessagesRequest{} },
-	"messages.sendScreenshotNotification":       func() tlrpc.TLObject { return &MessagesSendScreenshotNotificationRequest{} },
-	"messages.sendVote":                         func() tlrpc.TLObject { return &MessagesSendVoteRequest{} },
-	"messages.sendWebViewData":                  func() tlrpc.TLObject { return &MessagesSendWebViewDataRequest{} },
-	"messages.sendWebViewResultMessage":         func() tlrpc.TLObject { return &MessagesSendWebViewResultMessageRequest{} },
-	"messages.setBotCallbackAnswer":             func() tlrpc.TLObject { return &MessagesSetBotCallbackAnswerRequest{} },
-	"messages.setBotPrecheckoutResults":         func() tlrpc.TLObject { return &MessagesSetBotPrecheckoutResultsRequest{} },
-	"messages.setBotShippingResults":            func() tlrpc.TLObject { return &MessagesSetBotShippingResultsRequest{} },
-	"messages.setChatAvailableReactions":        func() tlrpc.TLObject { return &MessagesSetChatAvailableReactionsRequest{} },
-	"messages.setChatTheme":                     func() tlrpc.TLObject { return &MessagesSetChatThemeRequest{} },
-	"messages.setChatWallPaper":                 func() tlrpc.TLObject { return &MessagesSetChatWallPaperRequest{} },
-	"messages.setDefaultHistoryTTL":             func() tlrpc.TLObject { return &MessagesSetDefaultHistoryTTLRequest{} },
-	"messages.setDefaultReaction":               func() tlrpc.TLObject { return &MessagesSetDefaultReactionRequest{} },
-	"messages.setEncryptedTyping":               func() tlrpc.TLObject { return &MessagesSetEncryptedTypingRequest{} },
-	"messages.setGameScore":                     func() tlrpc.TLObject { return &MessagesSetGameScoreRequest{} },
-	"messages.setHistoryTTL":                    func() tlrpc.TLObject { return &MessagesSetHistoryTTLRequest{} },
-	"messages.setInlineBotResults":              func() tlrpc.TLObject { return &MessagesSetInlineBotResultsRequest{} },
-	"messages.setInlineGameScore":               func() tlrpc.TLObject { return &MessagesSetInlineGameScoreRequest{} },
-	"messages.setTyping":                        func() tlrpc.TLObject { return &MessagesSetTypingRequest{} },
-	"messages.startBot":                         func() tlrpc.TLObject { return &MessagesStartBotRequest{} },
-	"messages.startHistoryImport":               func() tlrpc.TLObject { return &MessagesStartHistoryImportRequest{} },
-	"messages.toggleBotInAttachMenu":            func() tlrpc.TLObject { return &MessagesToggleBotInAttachMenuRequest{} },
-	"messages.toggleDialogFilterTags":           func() tlrpc.TLObject { return &MessagesToggleDialogFilterTagsRequest{} },
-	"messages.toggleDialogPin":                  func() tlrpc.TLObject { return &MessagesToggleDialogPinRequest{} },
-	"messages.toggleNoForwards":                 func() tlrpc.TLObject { return &MessagesToggleNoForwardsRequest{} },
-	"messages.togglePaidReactionPrivacy":        func() tlrpc.TLObject { return &MessagesTogglePaidReactionPrivacyRequest{} },
-	"messages.togglePeerTranslations":           func() tlrpc.TLObject { return &MessagesTogglePeerTranslationsRequest{} },
-	"messages.toggleSavedDialogPin":             func() tlrpc.TLObject { return &MessagesToggleSavedDialogPinRequest{} },
-	"messages.toggleStickerSets":                func() tlrpc.TLObject { return &MessagesToggleStickerSetsRequest{} },
-	"messages.toggleSuggestedPostApproval":      func() tlrpc.TLObject { return &MessagesToggleSuggestedPostApprovalRequest{} },
-	"messages.toggleTodoCompleted":              func() tlrpc.TLObject { return &MessagesToggleTodoCompletedRequest{} },
-	"messages.transcribeAudio":                  func() tlrpc.TLObject { return &MessagesTranscribeAudioRequest{} },
-	"messages.translateText":                    func() tlrpc.TLObject { return &MessagesTranslateTextRequest{} },
-	"messages.uninstallStickerSet":              func() tlrpc.TLObject { return &MessagesUninstallStickerSetRequest{} },
-	"messages.unpinAllMessages":                 func() tlrpc.TLObject { return &MessagesUnpinAllMessagesRequest{} },
-	"messages.updateDialogFilter":               func() tlrpc.TLObject { return &MessagesUpdateDialogFilterRequest{} },
-	"messages.updateDialogFiltersOrder":         func() tlrpc.TLObject { return &MessagesUpdateDialogFiltersOrderRequest{} },
-	"messages.updatePinnedMessage":              func() tlrpc.TLObject { return &MessagesUpdatePinnedMessageRequest{} },
-	"messages.updateSavedReactionTag":           func() tlrpc.TLObject { return &MessagesUpdateSavedReactionTagRequest{} },
-	"messages.uploadEncryptedFile":              func() tlrpc.TLObject { return &MessagesUploadEncryptedFileRequest{} },
-	"messages.uploadImportedMedia":              func() tlrpc.TLObject { return &MessagesUploadImportedMediaRequest{} },
-	"messages.uploadMedia":                      func() tlrpc.TLObject { return &MessagesUploadMediaRequest{} },
-	"messages.viewSponsoredMessage":             func() tlrpc.TLObject { return &MessagesViewSponsoredMessageRequest{} },
-	"payments.applyGiftCode":                    func() tlrpc.TLObject { return &PaymentsApplyGiftCodeRequest{} },
-	"payments.assignAppStoreTransaction":        func() tlrpc.TLObject { return &PaymentsAssignAppStoreTransactionRequest{} },
-	"payments.assignPlayMarketTransaction":      func() tlrpc.TLObject { return &PaymentsAssignPlayMarketTransactionRequest{} },
-	"payments.botCancelStarsSubscription":       func() tlrpc.TLObject { return &PaymentsBotCancelStarsSubscriptionRequest{} },
-	"payments.canPurchaseStore":                 func() tlrpc.TLObject { return &PaymentsCanPurchaseStoreRequest{} },
-	"payments.changeStarsSubscription":          func() tlrpc.TLObject { return &PaymentsChangeStarsSubscriptionRequest{} },
-	"payments.checkCanSendGift":                 func() tlrpc.TLObject { return &PaymentsCheckCanSendGiftRequest{} },
-	"payments.checkGiftCode":                    func() tlrpc.TLObject { return &PaymentsCheckGiftCodeRequest{} },
-	"payments.clearSavedInfo":                   func() tlrpc.TLObject { return &PaymentsClearSavedInfoRequest{} },
-	"payments.connectStarRefBot":                func() tlrpc.TLObject { return &PaymentsConnectStarRefBotRequest{} },
-	"payments.convertStarGift":                  func() tlrpc.TLObject { return &PaymentsConvertStarGiftRequest{} },
-	"payments.createStarGiftCollection":         func() tlrpc.TLObject { return &PaymentsCreateStarGiftCollectionRequest{} },
-	"payments.deleteStarGiftCollection":         func() tlrpc.TLObject { return &PaymentsDeleteStarGiftCollectionRequest{} },
-	"payments.editConnectedStarRefBot":          func() tlrpc.TLObject { return &PaymentsEditConnectedStarRefBotRequest{} },
-	"payments.exportInvoice":                    func() tlrpc.TLObject { return &PaymentsExportInvoiceRequest{} },
-	"payments.fulfillStarsSubscription":         func() tlrpc.TLObject { return &PaymentsFulfillStarsSubscriptionRequest{} },
-	"payments.getBankCardData":                  func() tlrpc.TLObject { return &PaymentsGetBankCardDataRequest{} },
-	"payments.getConnectedStarRefBot":           func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotRequest{} },
-	"payments.getConnectedStarRefBots":          func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotsRequest{} },
-	"payments.getGiveawayInfo":                  func() tlrpc.TLObject { return &PaymentsGetGiveawayInfoRequest{} },
-	"payments.getPaymentForm":                   func() tlrpc.TLObject { return &PaymentsGetPaymentFormRequest{} },
-	"payments.getPaymentReceipt":                func() tlrpc.TLObject { return &PaymentsGetPaymentReceiptRequest{} },
-	"payments.getPremiumGiftCodeOptions":        func() tlrpc.TLObject { return &PaymentsGetPremiumGiftCodeOptionsRequest{} },
-	"payments.getResaleStarGifts":               func() tlrpc.TLObject { return &PaymentsGetResaleStarGiftsRequest{} },
-	"payments.getSavedInfo":                     func() tlrpc.TLObject { return &PaymentsGetSavedInfoRequest{} },
-	"payments.getSavedStarGift":                 func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftRequest{} },
-	"payments.getSavedStarGifts":                func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftsRequest{} },
-	"payments.getStarGiftCollections":           func() tlrpc.TLObject { return &PaymentsGetStarGiftCollectionsRequest{} },
-	"payments.getStarGiftUpgradePreview":        func() tlrpc.TLObject { return &PaymentsGetStarGiftUpgradePreviewRequest{} },
-	"payments.getStarGiftWithdrawalUrl":         func() tlrpc.TLObject { return &PaymentsGetStarGiftWithdrawalURLRequest{} },
-	"payments.getStarGifts":                     func() tlrpc.TLObject { return &PaymentsGetStarGiftsRequest{} },
-	"payments.getStarsGiftOptions":              func() tlrpc.TLObject { return &PaymentsGetStarsGiftOptionsRequest{} },
-	"payments.getStarsGiveawayOptions":          func() tlrpc.TLObject { return &PaymentsGetStarsGiveawayOptionsRequest{} },
-	"payments.getStarsRevenueAdsAccountUrl":     func() tlrpc.TLObject { return &PaymentsGetStarsRevenueAdsAccountURLRequest{} },
-	"payments.getStarsRevenueStats":             func() tlrpc.TLObject { return &PaymentsGetStarsRevenueStatsRequest{} },
-	"payments.getStarsRevenueWithdrawalUrl":     func() tlrpc.TLObject { return &PaymentsGetStarsRevenueWithdrawalURLRequest{} },
-	"payments.getStarsStatus":                   func() tlrpc.TLObject { return &PaymentsGetStarsStatusRequest{} },
-	"payments.getStarsSubscriptions":            func() tlrpc.TLObject { return &PaymentsGetStarsSubscriptionsRequest{} },
-	"payments.getStarsTopupOptions":             func() tlrpc.TLObject { return &PaymentsGetStarsTopupOptionsRequest{} },
-	"payments.getStarsTransactions":             func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsRequest{} },
-	"payments.getStarsTransactionsByID":         func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsByIDRequest{} },
-	"payments.getSuggestedStarRefBots":          func() tlrpc.TLObject { return &PaymentsGetSuggestedStarRefBotsRequest{} },
-	"payments.getUniqueStarGift":                func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftRequest{} },
-	"payments.getUniqueStarGiftValueInfo":       func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftValueInfoRequest{} },
-	"payments.launchPrepaidGiveaway":            func() tlrpc.TLObject { return &PaymentsLaunchPrepaidGiveawayRequest{} },
-	"payments.refundStarsCharge":                func() tlrpc.TLObject { return &PaymentsRefundStarsChargeRequest{} },
-	"payments.reorderStarGiftCollections":       func() tlrpc.TLObject { return &PaymentsReorderStarGiftCollectionsRequest{} },
-	"payments.saveStarGift":                     func() tlrpc.TLObject { return &PaymentsSaveStarGiftRequest{} },
-	"payments.sendPaymentForm":                  func() tlrpc.TLObject { return &PaymentsSendPaymentFormRequest{} },
-	"payments.sendStarsForm":                    func() tlrpc.TLObject { return &PaymentsSendStarsFormRequest{} },
-	"payments.toggleChatStarGiftNotifications":  func() tlrpc.TLObject { return &PaymentsToggleChatStarGiftNotificationsRequest{} },
-	"payments.toggleStarGiftsPinnedToTop":       func() tlrpc.TLObject { return &PaymentsToggleStarGiftsPinnedToTopRequest{} },
-	"payments.transferStarGift":                 func() tlrpc.TLObject { return &PaymentsTransferStarGiftRequest{} },
-	"payments.updateStarGiftCollection":         func() tlrpc.TLObject { return &PaymentsUpdateStarGiftCollectionRequest{} },
-	"payments.updateStarGiftPrice":              func() tlrpc.TLObject { return &PaymentsUpdateStarGiftPriceRequest{} },
-	"payments.upgradeStarGift":                  func() tlrpc.TLObject { return &PaymentsUpgradeStarGiftRequest{} },
-	"payments.validateRequestedInfo":            func() tlrpc.TLObject { return &PaymentsValidateRequestedInfoRequest{} },
-	"phone.acceptCall":                          func() tlrpc.TLObject { return &PhoneAcceptCallRequest{} },
-	"phone.checkGroupCall":                      func() tlrpc.TLObject { return &PhoneCheckGroupCallRequest{} },
-	"phone.confirmCall":                         func() tlrpc.TLObject { return &PhoneConfirmCallRequest{} },
-	"phone.createConferenceCall":                func() tlrpc.TLObject { return &PhoneCreateConferenceCallRequest{} },
-	"phone.createGroupCall":                     func() tlrpc.TLObject { return &PhoneCreateGroupCallRequest{} },
-	"phone.declineConferenceCallInvite":         func() tlrpc.TLObject { return &PhoneDeclineConferenceCallInviteRequest{} },
-	"phone.deleteConferenceCallParticipants":    func() tlrpc.TLObject { return &PhoneDeleteConferenceCallParticipantsRequest{} },
-	"phone.discardCall":                         func() tlrpc.TLObject { return &PhoneDiscardCallRequest{} },
-	"phone.discardGroupCall":                    func() tlrpc.TLObject { return &PhoneDiscardGroupCallRequest{} },
-	"phone.editGroupCallParticipant":            func() tlrpc.TLObject { return &PhoneEditGroupCallParticipantRequest{} },
-	"phone.editGroupCallTitle":                  func() tlrpc.TLObject { return &PhoneEditGroupCallTitleRequest{} },
-	"phone.exportGroupCallInvite":               func() tlrpc.TLObject { return &PhoneExportGroupCallInviteRequest{} },
-	"phone.getCallConfig":                       func() tlrpc.TLObject { return &PhoneGetCallConfigRequest{} },
-	"phone.getGroupCall":                        func() tlrpc.TLObject { return &PhoneGetGroupCallRequest{} },
-	"phone.getGroupCallChainBlocks":             func() tlrpc.TLObject { return &PhoneGetGroupCallChainBlocksRequest{} },
-	"phone.getGroupCallJoinAs":                  func() tlrpc.TLObject { return &PhoneGetGroupCallJoinAsRequest{} },
-	"phone.getGroupCallStreamChannels":          func() tlrpc.TLObject { return &PhoneGetGroupCallStreamChannelsRequest{} },
-	"phone.getGroupCallStreamRtmpUrl":           func() tlrpc.TLObject { return &PhoneGetGroupCallStreamRtmpURLRequest{} },
-	"phone.getGroupParticipants":                func() tlrpc.TLObject { return &PhoneGetGroupParticipantsRequest{} },
-	"phone.inviteConferenceCallParticipant":     func() tlrpc.TLObject { return &PhoneInviteConferenceCallParticipantRequest{} },
-	"phone.inviteToGroupCall":                   func() tlrpc.TLObject { return &PhoneInviteToGroupCallRequest{} },
-	"phone.joinGroupCall":                       func() tlrpc.TLObject { return &PhoneJoinGroupCallRequest{} },
-	"phone.joinGroupCallPresentation":           func() tlrpc.TLObject { return &PhoneJoinGroupCallPresentationRequest{} },
-	"phone.leaveGroupCall":                      func() tlrpc.TLObject { return &PhoneLeaveGroupCallRequest{} },
-	"phone.leaveGroupCallPresentation":          func() tlrpc.TLObject { return &PhoneLeaveGroupCallPresentationRequest{} },
-	"phone.receivedCall":                        func() tlrpc.TLObject { return &PhoneReceivedCallRequest{} },
-	"phone.requestCall":                         func() tlrpc.TLObject { return &PhoneRequestCallRequest{} },
-	"phone.saveCallDebug":                       func() tlrpc.TLObject { return &PhoneSaveCallDebugRequest{} },
-	"phone.saveCallLog":                         func() tlrpc.TLObject { return &PhoneSaveCallLogRequest{} },
-	"phone.saveDefaultGroupCallJoinAs":          func() tlrpc.TLObject { return &PhoneSaveDefaultGroupCallJoinAsRequest{} },
-	"phone.sendConferenceCallBroadcast":         func() tlrpc.TLObject { return &PhoneSendConferenceCallBroadcastRequest{} },
-	"phone.sendSignalingData":                   func() tlrpc.TLObject { return &PhoneSendSignalingDataRequest{} },
-	"phone.setCallRating":                       func() tlrpc.TLObject { return &PhoneSetCallRatingRequest{} },
-	"phone.startScheduledGroupCall":             func() tlrpc.TLObject { return &PhoneStartScheduledGroupCallRequest{} },
-	"phone.toggleGroupCallRecord":               func() tlrpc.TLObject { return &PhoneToggleGroupCallRecordRequest{} },
-	"phone.toggleGroupCallSettings":             func() tlrpc.TLObject { return &PhoneToggleGroupCallSettingsRequest{} },
-	"phone.toggleGroupCallStartSubscription":    func() tlrpc.TLObject { return &PhoneToggleGroupCallStartSubscriptionRequest{} },
-	"photos.deletePhotos":                       func() tlrpc.TLObject { return &PhotosDeletePhotosRequest{} },
-	"photos.getUserPhotos":                      func() tlrpc.TLObject { return &PhotosGetUserPhotosRequest{} },
-	"photos.updateProfilePhoto":                 func() tlrpc.TLObject { return &PhotosUpdateProfilePhotoRequest{} },
-	"photos.uploadContactProfilePhoto":          func() tlrpc.TLObject { return &PhotosUploadContactProfilePhotoRequest{} },
-	"photos.uploadProfilePhoto":                 func() tlrpc.TLObject { return &PhotosUploadProfilePhotoRequest{} },
-	"premium.applyBoost":                        func() tlrpc.TLObject { return &PremiumApplyBoostRequest{} },
-	"premium.getBoostsList":                     func() tlrpc.TLObject { return &PremiumGetBoostsListRequest{} },
-	"premium.getBoostsStatus":                   func() tlrpc.TLObject { return &PremiumGetBoostsStatusRequest{} },
-	"premium.getMyBoosts":                       func() tlrpc.TLObject { return &PremiumGetMyBoostsRequest{} },
-	"premium.getUserBoosts":                     func() tlrpc.TLObject { return &PremiumGetUserBoostsRequest{} },
-	"smsjobs.finishJob":                         func() tlrpc.TLObject { return &SmsjobsFinishJobRequest{} },
-	"smsjobs.getSmsJob":                         func() tlrpc.TLObject { return &SmsjobsGetSmsJobRequest{} },
-	"smsjobs.getStatus":                         func() tlrpc.TLObject { return &SmsjobsGetStatusRequest{} },
-	"smsjobs.isEligibleToJoin":                  func() tlrpc.TLObject { return &SmsjobsIsEligibleToJoinRequest{} },
-	"smsjobs.join":                              func() tlrpc.TLObject { return &SmsjobsJoinRequest{} },
-	"smsjobs.leave":                             func() tlrpc.TLObject { return &SmsjobsLeaveRequest{} },
-	"smsjobs.updateSettings":                    func() tlrpc.TLObject { return &SmsjobsUpdateSettingsRequest{} },
-	"stats.getBroadcastStats":                   func() tlrpc.TLObject { return &StatsGetBroadcastStatsRequest{} },
-	"stats.getMegagroupStats":                   func() tlrpc.TLObject { return &StatsGetMegagroupStatsRequest{} },
-	"stats.getMessagePublicForwards":            func() tlrpc.TLObject { return &StatsGetMessagePublicForwardsRequest{} },
-	"stats.getMessageStats":                     func() tlrpc.TLObject { return &StatsGetMessageStatsRequest{} },
-	"stats.getStoryPublicForwards":              func() tlrpc.TLObject { return &StatsGetStoryPublicForwardsRequest{} },
-	"stats.getStoryStats":                       func() tlrpc.TLObject { return &StatsGetStoryStatsRequest{} },
-	"stats.loadAsyncGraph":                      func() tlrpc.TLObject { return &StatsLoadAsyncGraphRequest{} },
-	"stickers.addStickerToSet":                  func() tlrpc.TLObject { return &StickersAddStickerToSetRequest{} },
-	"stickers.changeSticker":                    func() tlrpc.TLObject { return &StickersChangeStickerRequest{} },
-	"stickers.changeStickerPosition":            func() tlrpc.TLObject { return &StickersChangeStickerPositionRequest{} },
-	"stickers.checkShortName":                   func() tlrpc.TLObject { return &StickersCheckShortNameRequest{} },
-	"stickers.createStickerSet":                 func() tlrpc.TLObject { return &StickersCreateStickerSetRequest{} },
-	"stickers.deleteStickerSet":                 func() tlrpc.TLObject { return &StickersDeleteStickerSetRequest{} },
-	"stickers.removeStickerFromSet":             func() tlrpc.TLObject { return &StickersRemoveStickerFromSetRequest{} },
-	"stickers.renameStickerSet":                 func() tlrpc.TLObject { return &StickersRenameStickerSetRequest{} },
-	"stickers.replaceSticker":                   func() tlrpc.TLObject { return &StickersReplaceStickerRequest{} },
-	"stickers.setStickerSetThumb":               func() tlrpc.TLObject { return &StickersSetStickerSetThumbRequest{} },
-	"stickers.suggestShortName":                 func() tlrpc.TLObject { return &StickersSuggestShortNameRequest{} },
-	"stories.activateStealthMode":               func() tlrpc.TLObject { return &StoriesActivateStealthModeRequest{} },
-	"stories.canSendStory":                      func() tlrpc.TLObject { return &StoriesCanSendStoryRequest{} },
-	"stories.createAlbum":                       func() tlrpc.TLObject { return &StoriesCreateAlbumRequest{} },
-	"stories.deleteAlbum":                       func() tlrpc.TLObject { return &StoriesDeleteAlbumRequest{} },
-	"stories.deleteStories":                     func() tlrpc.TLObject { return &StoriesDeleteStoriesRequest{} },
-	"stories.editStory":                         func() tlrpc.TLObject { return &StoriesEditStoryRequest{} },
-	"stories.exportStoryLink":                   func() tlrpc.TLObject { return &StoriesExportStoryLinkRequest{} },
-	"stories.getAlbumStories":                   func() tlrpc.TLObject { return &StoriesGetAlbumStoriesRequest{} },
-	"stories.getAlbums":                         func() tlrpc.TLObject { return &StoriesGetAlbumsRequest{} },
-	"stories.getAllReadPeerStories":             func() tlrpc.TLObject { return &StoriesGetAllReadPeerStoriesRequest{} },
-	"stories.getAllStories":                     func() tlrpc.TLObject { return &StoriesGetAllStoriesRequest{} },
-	"stories.getChatsToSend":                    func() tlrpc.TLObject { return &StoriesGetChatsToSendRequest{} },
-	"stories.getPeerMaxIDs":                     func() tlrpc.TLObject { return &StoriesGetPeerMaxIDsRequest{} },
-	"stories.getPeerStories":                    func() tlrpc.TLObject { return &StoriesGetPeerStoriesRequest{} },
-	"stories.getPinnedStories":                  func() tlrpc.TLObject { return &StoriesGetPinnedStoriesRequest{} },
-	"stories.getStoriesArchive":                 func() tlrpc.TLObject { return &StoriesGetStoriesArchiveRequest{} },
-	"stories.getStoriesByID":                    func() tlrpc.TLObject { return &StoriesGetStoriesByIDRequest{} },
-	"stories.getStoriesViews":                   func() tlrpc.TLObject { return &StoriesGetStoriesViewsRequest{} },
-	"stories.getStoryReactionsList":             func() tlrpc.TLObject { return &StoriesGetStoryReactionsListRequest{} },
-	"stories.getStoryViewsList":                 func() tlrpc.TLObject { return &StoriesGetStoryViewsListRequest{} },
-	"stories.incrementStoryViews":               func() tlrpc.TLObject { return &StoriesIncrementStoryViewsRequest{} },
-	"stories.readStories":                       func() tlrpc.TLObject { return &StoriesReadStoriesRequest{} },
-	"stories.reorderAlbums":                     func() tlrpc.TLObject { return &StoriesReorderAlbumsRequest{} },
-	"stories.report":                            func() tlrpc.TLObject { return &StoriesReportRequest{} },
-	"stories.searchPosts":                       func() tlrpc.TLObject { return &StoriesSearchPostsRequest{} },
-	"stories.sendReaction":                      func() tlrpc.TLObject { return &StoriesSendReactionRequest{} },
-	"stories.sendStory":                         func() tlrpc.TLObject { return &StoriesSendStoryRequest{} },
-	"stories.toggleAllStoriesHidden":            func() tlrpc.TLObject { return &StoriesToggleAllStoriesHiddenRequest{} },
-	"stories.togglePeerStoriesHidden":           func() tlrpc.TLObject { return &StoriesTogglePeerStoriesHiddenRequest{} },
-	"stories.togglePinned":                      func() tlrpc.TLObject { return &StoriesTogglePinnedRequest{} },
-	"stories.togglePinnedToTop":                 func() tlrpc.TLObject { return &StoriesTogglePinnedToTopRequest{} },
-	"stories.updateAlbum":                       func() tlrpc.TLObject { return &StoriesUpdateAlbumRequest{} },
 	"updates.getChannelDifference":              func() tlrpc.TLObject { return &UpdatesGetChannelDifferenceRequest{} },
-	"updates.getDifference":                     func() tlrpc.TLObject { return &UpdatesGetDifferenceRequest{} },
-	"updates.getState":                          func() tlrpc.TLObject { return &UpdatesGetStateRequest{} },
-	"upload.getCdnFile":                         func() tlrpc.TLObject { return &UploadGetCdnFileRequest{} },
-	"upload.getCdnFileHashes":                   func() tlrpc.TLObject { return &UploadGetCdnFileHashesRequest{} },
-	"upload.getFile":                            func() tlrpc.TLObject { return &UploadGetFileRequest{} },
-	"upload.getFileHashes":                      func() tlrpc.TLObject { return &UploadGetFileHashesRequest{} },
-	"upload.getWebFile":                         func() tlrpc.TLObject { return &UploadGetWebFileRequest{} },
-	"upload.reuploadCdnFile":                    func() tlrpc.TLObject { return &UploadReuploadCdnFileRequest{} },
-	"upload.saveBigFilePart":                    func() tlrpc.TLObject { return &UploadSaveBigFilePartRequest{} },
-	"upload.saveFilePart":                       func() tlrpc.TLObject { return &UploadSaveFilePartRequest{} },
-	"users.getFullUser":                         func() tlrpc.TLObject { return &UsersGetFullUserRequest{} },
-	"users.getRequirementsToContact":            func() tlrpc.TLObject { return &UsersGetRequirementsToContactRequest{} },
-	"users.getSavedMusic":                       func() tlrpc.TLObject { return &UsersGetSavedMusicRequest{} },
-	"users.getSavedMusicByID":                   func() tlrpc.TLObject { return &UsersGetSavedMusicByIDRequest{} },
+	"payments.getStarsSubscriptions":            func() tlrpc.TLObject { return &PaymentsGetStarsSubscriptionsRequest{} },
+	"account.verifyEmail":                       func() tlrpc.TLObject { return &AccountVerifyEmailRequest{} },
+	"photos.uploadProfilePhoto":                 func() tlrpc.TLObject { return &PhotosUploadProfilePhotoRequest{} },
+	"help.getUserInfo":                          func() tlrpc.TLObject { return &HelpGetUserInfoRequest{} },
+	"phone.getGroupCall":                        func() tlrpc.TLObject { return &PhoneGetGroupCallRequest{} },
+	"premium.getBoostsStatus":                   func() tlrpc.TLObject { return &PremiumGetBoostsStatusRequest{} },
+	"messages.getFavedStickers":                 func() tlrpc.TLObject { return &MessagesGetFavedStickersRequest{} },
+	"bots.setBotCommands":                       func() tlrpc.TLObject { return &BotsSetBotCommandsRequest{} },
+	"bots.toggleUsername":                       func() tlrpc.TLObject { return &BotsToggleUsernameRequest{} },
+	"messages.editFactCheck":                    func() tlrpc.TLObject { return &MessagesEditFactCheckRequest{} },
+	"messages.receivedMessages":                 func() tlrpc.TLObject { return &MessagesReceivedMessagesRequest{} },
+	"messages.unpinAllMessages":                 func() tlrpc.TLObject { return &MessagesUnpinAllMessagesRequest{} },
+	"account.getReactionsNotifySettings":        func() tlrpc.TLObject { return &AccountGetReactionsNotifySettingsRequest{} },
+	"bots.toggleUserEmojiStatusPermission":      func() tlrpc.TLObject { return &BotsToggleUserEmojiStatusPermissionRequest{} },
+	"account.getWallPapers":                     func() tlrpc.TLObject { return &AccountGetWallPapersRequest{} },
+	"channels.getFullChannel":                   func() tlrpc.TLObject { return &ChannelsGetFullChannelRequest{} },
+	"bots.invokeWebViewCustomMethod":            func() tlrpc.TLObject { return &BotsInvokeWebViewCustomMethodRequest{} },
+	"account.getAccountTTL":                     func() tlrpc.TLObject { return &AccountGetAccountTTLRequest{} },
+	"smsjobs.updateSettings":                    func() tlrpc.TLObject { return &SmsjobsUpdateSettingsRequest{} },
+	"contacts.deleteContacts":                   func() tlrpc.TLObject { return &ContactsDeleteContactsRequest{} },
+	"messages.setBotPrecheckoutResults":         func() tlrpc.TLObject { return &MessagesSetBotPrecheckoutResultsRequest{} },
+	"photos.updateProfilePhoto":                 func() tlrpc.TLObject { return &PhotosUpdateProfilePhotoRequest{} },
+	"channels.deactivateAllUsernames":           func() tlrpc.TLObject { return &ChannelsDeactivateAllUsernamesRequest{} },
+	"messages.sendWebViewResultMessage":         func() tlrpc.TLObject { return &MessagesSendWebViewResultMessageRequest{} },
+	"channels.getChannels":                      func() tlrpc.TLObject { return &ChannelsGetChannelsRequest{} },
+	"channels.convertToGigagroup":               func() tlrpc.TLObject { return &ChannelsConvertToGigagroupRequest{} },
+	"stories.togglePinnedToTop":                 func() tlrpc.TLObject { return &StoriesTogglePinnedToTopRequest{} },
+	"premium.getMyBoosts":                       func() tlrpc.TLObject { return &PremiumGetMyBoostsRequest{} },
+	"auth.checkRecoveryPassword":                func() tlrpc.TLObject { return &AuthCheckRecoveryPasswordRequest{} },
+	"payments.getSuggestedStarRefBots":          func() tlrpc.TLObject { return &PaymentsGetSuggestedStarRefBotsRequest{} },
 	"users.getUsers":                            func() tlrpc.TLObject { return &UsersGetUsersRequest{} },
+	"channels.getForumTopics":                   func() tlrpc.TLObject { return &ChannelsGetForumTopicsRequest{} },
+	"messages.readHistory":                      func() tlrpc.TLObject { return &MessagesReadHistoryRequest{} },
+	"messages.getFeaturedEmojiStickers":         func() tlrpc.TLObject { return &MessagesGetFeaturedEmojiStickersRequest{} },
+	"smsjobs.isEligibleToJoin":                  func() tlrpc.TLObject { return &SmsjobsIsEligibleToJoinRequest{} },
+	"account.getRecentEmojiStatuses":            func() tlrpc.TLObject { return &AccountGetRecentEmojiStatusesRequest{} },
+	"messages.getInlineGameHighScores":          func() tlrpc.TLObject { return &MessagesGetInlineGameHighScoresRequest{} },
+	"payments.exportInvoice":                    func() tlrpc.TLObject { return &PaymentsExportInvoiceRequest{} },
+	"contacts.deleteByPhones":                   func() tlrpc.TLObject { return &ContactsDeleteByPhonesRequest{} },
+	"messages.searchSentMedia":                  func() tlrpc.TLObject { return &MessagesSearchSentMediaRequest{} },
+	"smsjobs.getStatus":                         func() tlrpc.TLObject { return &SmsjobsGetStatusRequest{} },
+	"bots.setBotInfo":                           func() tlrpc.TLObject { return &BotsSetBotInfoRequest{} },
+	"channels.checkUsername":                    func() tlrpc.TLObject { return &ChannelsCheckUsernameRequest{} },
+	"messages.sendVote":                         func() tlrpc.TLObject { return &MessagesSendVoteRequest{} },
+	"channels.getInactiveChannels":              func() tlrpc.TLObject { return &ChannelsGetInactiveChannelsRequest{} },
+	"contacts.search":                           func() tlrpc.TLObject { return &ContactsSearchRequest{} },
+	"stickers.renameStickerSet":                 func() tlrpc.TLObject { return &StickersRenameStickerSetRequest{} },
+	"account.getNotifySettings":                 func() tlrpc.TLObject { return &AccountGetNotifySettingsRequest{} },
+	"messages.reportSponsoredMessage":           func() tlrpc.TLObject { return &MessagesReportSponsoredMessageRequest{} },
+	"contacts.importContactToken":               func() tlrpc.TLObject { return &ContactsImportContactTokenRequest{} },
+	"bots.canSendMessage":                       func() tlrpc.TLObject { return &BotsCanSendMessageRequest{} },
+	"messages.uploadMedia":                      func() tlrpc.TLObject { return &MessagesUploadMediaRequest{} },
+	"messages.getEmojiKeywordsDifference":       func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsDifferenceRequest{} },
+	"payments.toggleStarGiftsPinnedToTop":       func() tlrpc.TLObject { return &PaymentsToggleStarGiftsPinnedToTopRequest{} },
+	"messages.setInlineGameScore":               func() tlrpc.TLObject { return &MessagesSetInlineGameScoreRequest{} },
+	"channels.toggleAutotranslation":            func() tlrpc.TLObject { return &ChannelsToggleAutotranslationRequest{} },
+	"messages.getAttachMenuBots":                func() tlrpc.TLObject { return &MessagesGetAttachMenuBotsRequest{} },
+	"bots.addPreviewMedia":                      func() tlrpc.TLObject { return &BotsAddPreviewMediaRequest{} },
+	"phone.receivedCall":                        func() tlrpc.TLObject { return &PhoneReceivedCallRequest{} },
+	"account.clearRecentEmojiStatuses":          func() tlrpc.TLObject { return &AccountClearRecentEmojiStatusesRequest{} },
+	"account.getWebAuthorizations":              func() tlrpc.TLObject { return &AccountGetWebAuthorizationsRequest{} },
+	"messages.getAvailableReactions":            func() tlrpc.TLObject { return &MessagesGetAvailableReactionsRequest{} },
+	"messages.requestUrlAuth":                   func() tlrpc.TLObject { return &MessagesRequestURLAuthRequest{} },
+	"account.getPaidMessagesRevenue":            func() tlrpc.TLObject { return &AccountGetPaidMessagesRevenueRequest{} },
+	"updates.getDifference":                     func() tlrpc.TLObject { return &UpdatesGetDifferenceRequest{} },
+	"stories.report":                            func() tlrpc.TLObject { return &StoriesReportRequest{} },
+	"phone.getGroupCallStreamChannels":          func() tlrpc.TLObject { return &PhoneGetGroupCallStreamChannelsRequest{} },
+	"messages.updateDialogFilter":               func() tlrpc.TLObject { return &MessagesUpdateDialogFilterRequest{} },
+	"contacts.resetTopPeerRating":               func() tlrpc.TLObject { return &ContactsResetTopPeerRatingRequest{} },
+	"account.sendConfirmPhoneCode":              func() tlrpc.TLObject { return &AccountSendConfirmPhoneCodeRequest{} },
+	"messages.getSearchCounters":                func() tlrpc.TLObject { return &MessagesGetSearchCountersRequest{} },
+	"messages.sendMultiMedia":                   func() tlrpc.TLObject { return &MessagesSendMultiMediaRequest{} },
+	"account.uploadTheme":                       func() tlrpc.TLObject { return &AccountUploadThemeRequest{} },
+	"phone.leaveGroupCallPresentation":          func() tlrpc.TLObject { return &PhoneLeaveGroupCallPresentationRequest{} },
+	"phone.editGroupCallTitle":                  func() tlrpc.TLObject { return &PhoneEditGroupCallTitleRequest{} },
+	"messages.getSplitRanges":                   func() tlrpc.TLObject { return &MessagesGetSplitRangesRequest{} },
+	"account.finishTakeoutSession":              func() tlrpc.TLObject { return &AccountFinishTakeoutSessionRequest{} },
+	"messages.getEmojiStickerGroups":            func() tlrpc.TLObject { return &MessagesGetEmojiStickerGroupsRequest{} },
+	"help.hidePromoData":                        func() tlrpc.TLObject { return &HelpHidePromoDataRequest{} },
+	"messages.getSavedDialogs":                  func() tlrpc.TLObject { return &MessagesGetSavedDialogsRequest{} },
+	"account.setGlobalPrivacySettings":          func() tlrpc.TLObject { return &AccountSetGlobalPrivacySettingsRequest{} },
+	"auth.cancelCode":                           func() tlrpc.TLObject { return &AuthCancelCodeRequest{} },
+	"payments.createStarGiftCollection":         func() tlrpc.TLObject { return &PaymentsCreateStarGiftCollectionRequest{} },
+	"help.getNearestDc":                         func() tlrpc.TLObject { return &HelpGetNearestDcRequest{} },
+	"messages.getDialogUnreadMarks":             func() tlrpc.TLObject { return &MessagesGetDialogUnreadMarksRequest{} },
+	"phone.toggleGroupCallStartSubscription":    func() tlrpc.TLObject { return &PhoneToggleGroupCallStartSubscriptionRequest{} },
+	"messages.getEmojiProfilePhotoGroups":       func() tlrpc.TLObject { return &MessagesGetEmojiProfilePhotoGroupsRequest{} },
+	"messages.appendTodoList":                   func() tlrpc.TLObject { return &MessagesAppendTodoListRequest{} },
+	"channels.checkSearchPostsFlood":            func() tlrpc.TLObject { return &ChannelsCheckSearchPostsFloodRequest{} },
+	"payments.getSavedInfo":                     func() tlrpc.TLObject { return &PaymentsGetSavedInfoRequest{} },
+	"messages.getReplies":                       func() tlrpc.TLObject { return &MessagesGetRepliesRequest{} },
+	"payments.getStarsRevenueWithdrawalUrl":     func() tlrpc.TLObject { return &PaymentsGetStarsRevenueWithdrawalURLRequest{} },
+	"account.setAccountTTL":                     func() tlrpc.TLObject { return &AccountSetAccountTTLRequest{} },
+	"payments.getPaymentReceipt":                func() tlrpc.TLObject { return &PaymentsGetPaymentReceiptRequest{} },
+	"channels.joinChannel":                      func() tlrpc.TLObject { return &ChannelsJoinChannelRequest{} },
+	"upload.getWebFile":                         func() tlrpc.TLObject { return &UploadGetWebFileRequest{} },
+	"channels.getChannelRecommendations":        func() tlrpc.TLObject { return &ChannelsGetChannelRecommendationsRequest{} },
+	"payments.refundStarsCharge":                func() tlrpc.TLObject { return &PaymentsRefundStarsChargeRequest{} },
+	"stories.getAlbums":                         func() tlrpc.TLObject { return &StoriesGetAlbumsRequest{} },
+	"messages.requestWebView":                   func() tlrpc.TLObject { return &MessagesRequestWebViewRequest{} },
+	"messages.viewSponsoredMessage":             func() tlrpc.TLObject { return &MessagesViewSponsoredMessageRequest{} },
+	"messages.transcribeAudio":                  func() tlrpc.TLObject { return &MessagesTranscribeAudioRequest{} },
+	"messages.getDhConfig":                      func() tlrpc.TLObject { return &MessagesGetDhConfigRequest{} },
+	"account.checkUsername":                     func() tlrpc.TLObject { return &AccountCheckUsernameRequest{} },
+	"payments.getPremiumGiftCodeOptions":        func() tlrpc.TLObject { return &PaymentsGetPremiumGiftCodeOptionsRequest{} },
+	"phone.saveCallDebug":                       func() tlrpc.TLObject { return &PhoneSaveCallDebugRequest{} },
+	"stickers.checkShortName":                   func() tlrpc.TLObject { return &StickersCheckShortNameRequest{} },
+	"stories.getStoriesViews":                   func() tlrpc.TLObject { return &StoriesGetStoriesViewsRequest{} },
+	"channels.reorderPinnedForumTopics":         func() tlrpc.TLObject { return &ChannelsReorderPinnedForumTopicsRequest{} },
+	"contacts.blockFromReplies":                 func() tlrpc.TLObject { return &ContactsBlockFromRepliesRequest{} },
+	"messages.searchStickers":                   func() tlrpc.TLObject { return &MessagesSearchStickersRequest{} },
+	"messages.search":                           func() tlrpc.TLObject { return &MessagesSearchRequest{} },
+	"payments.saveStarGift":                     func() tlrpc.TLObject { return &PaymentsSaveStarGiftRequest{} },
+	"messages.uploadImportedMedia":              func() tlrpc.TLObject { return &MessagesUploadImportedMediaRequest{} },
+	"account.updateTheme":                       func() tlrpc.TLObject { return &AccountUpdateThemeRequest{} },
+	"messages.searchCustomEmoji":                func() tlrpc.TLObject { return &MessagesSearchCustomEmojiRequest{} },
+	"stories.getPeerStories":                    func() tlrpc.TLObject { return &StoriesGetPeerStoriesRequest{} },
+	"contacts.importContacts":                   func() tlrpc.TLObject { return &ContactsImportContactsRequest{} },
+	"help.getTermsOfServiceUpdate":              func() tlrpc.TLObject { return &HelpGetTermsOfServiceUpdateRequest{} },
+	"bots.deletePreviewMedia":                   func() tlrpc.TLObject { return &BotsDeletePreviewMediaRequest{} },
+	"account.resetWebAuthorization":             func() tlrpc.TLObject { return &AccountResetWebAuthorizationRequest{} },
+	"payments.sendPaymentForm":                  func() tlrpc.TLObject { return &PaymentsSendPaymentFormRequest{} },
+	"auth.importWebTokenAuthorization":          func() tlrpc.TLObject { return &AuthImportWebTokenAuthorizationRequest{} },
+	"payments.getStarsTransactionsByID":         func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsByIDRequest{} },
+	"contacts.block":                            func() tlrpc.TLObject { return &ContactsBlockRequest{} },
+	"payments.getBankCardData":                  func() tlrpc.TLObject { return &PaymentsGetBankCardDataRequest{} },
+	"account.getCollectibleEmojiStatuses":       func() tlrpc.TLObject { return &AccountGetCollectibleEmojiStatusesRequest{} },
+	"messages.getEmojiStatusGroups":             func() tlrpc.TLObject { return &MessagesGetEmojiStatusGroupsRequest{} },
+	"phone.confirmCall":                         func() tlrpc.TLObject { return &PhoneConfirmCallRequest{} },
+	"stories.canSendStory":                      func() tlrpc.TLObject { return &StoriesCanSendStoryRequest{} },
+	"account.setReactionsNotifySettings":        func() tlrpc.TLObject { return &AccountSetReactionsNotifySettingsRequest{} },
+	"messages.getMessageReadParticipants":       func() tlrpc.TLObject { return &MessagesGetMessageReadParticipantsRequest{} },
+	"messages.saveGif":                          func() tlrpc.TLObject { return &MessagesSaveGifRequest{} },
+	"messages.sendEncryptedService":             func() tlrpc.TLObject { return &MessagesSendEncryptedServiceRequest{} },
+	"channels.getAdminLog":                      func() tlrpc.TLObject { return &ChannelsGetAdminLogRequest{} },
+	"messages.initHistoryImport":                func() tlrpc.TLObject { return &MessagesInitHistoryImportRequest{} },
+	"channels.deleteTopicHistory":               func() tlrpc.TLObject { return &ChannelsDeleteTopicHistoryRequest{} },
+	"messages.getBotApp":                        func() tlrpc.TLObject { return &MessagesGetBotAppRequest{} },
+	"channels.updateUsername":                   func() tlrpc.TLObject { return &ChannelsUpdateUsernameRequest{} },
+	"messages.searchStickerSets":                func() tlrpc.TLObject { return &MessagesSearchStickerSetsRequest{} },
+	"channels.setMainProfileTab":                func() tlrpc.TLObject { return &ChannelsSetMainProfileTabRequest{} },
+	"messages.getEmojiKeywords":                 func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsRequest{} },
+	"account.getChannelRestrictedStatusEmojis":  func() tlrpc.TLObject { return &AccountGetChannelRestrictedStatusEmojisRequest{} },
+	"messages.editChatPhoto":                    func() tlrpc.TLObject { return &MessagesEditChatPhotoRequest{} },
+	"messages.getSavedReactionTags":             func() tlrpc.TLObject { return &MessagesGetSavedReactionTagsRequest{} },
+	"channels.deleteParticipantHistory":         func() tlrpc.TLObject { return &ChannelsDeleteParticipantHistoryRequest{} },
+	"messages.readMessageContents":              func() tlrpc.TLObject { return &MessagesReadMessageContentsRequest{} },
+	"messages.readMentions":                     func() tlrpc.TLObject { return &MessagesReadMentionsRequest{} },
+	"auth.recoverPassword":                      func() tlrpc.TLObject { return &AuthRecoverPasswordRequest{} },
+	"payments.getPaymentForm":                   func() tlrpc.TLObject { return &PaymentsGetPaymentFormRequest{} },
+	"stats.getStoryStats":                       func() tlrpc.TLObject { return &StatsGetStoryStatsRequest{} },
+	"account.updateDeviceLocked":                func() tlrpc.TLObject { return &AccountUpdateDeviceLockedRequest{} },
+	"messages.getAdminsWithInvites":             func() tlrpc.TLObject { return &MessagesGetAdminsWithInvitesRequest{} },
+	"messages.saveRecentSticker":                func() tlrpc.TLObject { return &MessagesSaveRecentStickerRequest{} },
+	"messages.getRecentReactions":               func() tlrpc.TLObject { return &MessagesGetRecentReactionsRequest{} },
+	"upload.getCdnFile":                         func() tlrpc.TLObject { return &UploadGetCdnFileRequest{} },
+	"premium.getUserBoosts":                     func() tlrpc.TLObject { return &PremiumGetUserBoostsRequest{} },
+	"account.getTheme":                          func() tlrpc.TLObject { return &AccountGetThemeRequest{} },
+	"messages.reorderPinnedDialogs":             func() tlrpc.TLObject { return &MessagesReorderPinnedDialogsRequest{} },
+	"phone.acceptCall":                          func() tlrpc.TLObject { return &PhoneAcceptCallRequest{} },
+	"phone.declineConferenceCallInvite":         func() tlrpc.TLObject { return &PhoneDeclineConferenceCallInviteRequest{} },
+	"messages.deleteQuickReplyShortcut":         func() tlrpc.TLObject { return &MessagesDeleteQuickReplyShortcutRequest{} },
+	"channels.setEmojiStickers":                 func() tlrpc.TLObject { return &ChannelsSetEmojiStickersRequest{} },
+	"messages.getSponsoredMessages":             func() tlrpc.TLObject { return &MessagesGetSponsoredMessagesRequest{} },
+	"bots.resetBotCommands":                     func() tlrpc.TLObject { return &BotsResetBotCommandsRequest{} },
+	"messages.acceptEncryption":                 func() tlrpc.TLObject { return &MessagesAcceptEncryptionRequest{} },
+	"help.getRecentMeUrls":                      func() tlrpc.TLObject { return &HelpGetRecentMeUrlsRequest{} },
+	"account.saveRingtone":                      func() tlrpc.TLObject { return &AccountSaveRingtoneRequest{} },
+	"account.updateUsername":                    func() tlrpc.TLObject { return &AccountUpdateUsernameRequest{} },
+	"auth.logOut":                               func() tlrpc.TLObject { return &AuthLogOutRequest{} },
+	"messages.checkChatInvite":                  func() tlrpc.TLObject { return &MessagesCheckChatInviteRequest{} },
+	"messages.reportReaction":                   func() tlrpc.TLObject { return &MessagesReportReactionRequest{} },
+	"help.getDeepLinkInfo":                      func() tlrpc.TLObject { return &HelpGetDeepLinkInfoRequest{} },
+	"channels.toggleForum":                      func() tlrpc.TLObject { return &ChannelsToggleForumRequest{} },
+	"channels.setDiscussionGroup":               func() tlrpc.TLObject { return &ChannelsSetDiscussionGroupRequest{} },
+	"account.changeAuthorizationSettings":       func() tlrpc.TLObject { return &AccountChangeAuthorizationSettingsRequest{} },
+	"phone.saveCallLog":                         func() tlrpc.TLObject { return &PhoneSaveCallLogRequest{} },
+	"messages.requestSimpleWebView":             func() tlrpc.TLObject { return &MessagesRequestSimpleWebViewRequest{} },
+	"channels.toggleSignatures":                 func() tlrpc.TLObject { return &ChannelsToggleSignaturesRequest{} },
+	"chatlists.checkChatlistInvite":             func() tlrpc.TLObject { return &ChatlistsCheckChatlistInviteRequest{} },
+	"bots.getPreviewInfo":                       func() tlrpc.TLObject { return &BotsGetPreviewInfoRequest{} },
+	"langpack.getLanguages":                     func() tlrpc.TLObject { return &LangpackGetLanguagesRequest{} },
+	"phone.requestCall":                         func() tlrpc.TLObject { return &PhoneRequestCallRequest{} },
+	"messages.togglePaidReactionPrivacy":        func() tlrpc.TLObject { return &MessagesTogglePaidReactionPrivacyRequest{} },
+	"payments.getUniqueStarGiftValueInfo":       func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftValueInfoRequest{} },
+	"messages.checkHistoryImport":               func() tlrpc.TLObject { return &MessagesCheckHistoryImportRequest{} },
+	"messages.getHistory":                       func() tlrpc.TLObject { return &MessagesGetHistoryRequest{} },
+	"messages.getDiscussionMessage":             func() tlrpc.TLObject { return &MessagesGetDiscussionMessageRequest{} },
+	"account.getTmpPassword":                    func() tlrpc.TLObject { return &AccountGetTmpPasswordRequest{} },
+	"messages.sendEncrypted":                    func() tlrpc.TLObject { return &MessagesSendEncryptedRequest{} },
+	"bots.setBotMenuButton":                     func() tlrpc.TLObject { return &BotsSetBotMenuButtonRequest{} },
+	"messages.getMessageReactionsList":          func() tlrpc.TLObject { return &MessagesGetMessageReactionsListRequest{} },
+	"stickers.replaceSticker":                   func() tlrpc.TLObject { return &StickersReplaceStickerRequest{} },
+	"messages.getPaidReactionPrivacy":           func() tlrpc.TLObject { return &MessagesGetPaidReactionPrivacyRequest{} },
+	"phone.createGroupCall":                     func() tlrpc.TLObject { return &PhoneCreateGroupCallRequest{} },
+	"help.getTimezonesList":                     func() tlrpc.TLObject { return &HelpGetTimezonesListRequest{} },
+	"messages.getChats":                         func() tlrpc.TLObject { return &MessagesGetChatsRequest{} },
+	"account.updateBusinessWorkHours":           func() tlrpc.TLObject { return &AccountUpdateBusinessWorkHoursRequest{} },
+	"messages.reportEncryptedSpam":              func() tlrpc.TLObject { return &MessagesReportEncryptedSpamRequest{} },
+	"channels.updatePaidMessagesPrice":          func() tlrpc.TLObject { return &ChannelsUpdatePaidMessagesPriceRequest{} },
+	"messages.searchGlobal":                     func() tlrpc.TLObject { return &MessagesSearchGlobalRequest{} },
+	"channels.toggleJoinRequest":                func() tlrpc.TLObject { return &ChannelsToggleJoinRequestRequest{} },
+	"account.declinePasswordReset":              func() tlrpc.TLObject { return &AccountDeclinePasswordResetRequest{} },
+	"help.getInviteText":                        func() tlrpc.TLObject { return &HelpGetInviteTextRequest{} },
+	"stickers.suggestShortName":                 func() tlrpc.TLObject { return &StickersSuggestShortNameRequest{} },
+	"messages.deleteSavedHistory":               func() tlrpc.TLObject { return &MessagesDeleteSavedHistoryRequest{} },
+	"account.verifyPhone":                       func() tlrpc.TLObject { return &AccountVerifyPhoneRequest{} },
+	"messages.getEmojiKeywordsLanguages":        func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsLanguagesRequest{} },
+	"account.getConnectedBots":                  func() tlrpc.TLObject { return &AccountGetConnectedBotsRequest{} },
+	"payments.getStarsStatus":                   func() tlrpc.TLObject { return &PaymentsGetStarsStatusRequest{} },
+	"smsjobs.finishJob":                         func() tlrpc.TLObject { return &SmsjobsFinishJobRequest{} },
+	"messages.setDefaultReaction":               func() tlrpc.TLObject { return &MessagesSetDefaultReactionRequest{} },
+	"messages.hidePeerSettingsBar":              func() tlrpc.TLObject { return &MessagesHidePeerSettingsBarRequest{} },
+	"payments.canPurchaseStore":                 func() tlrpc.TLObject { return &PaymentsCanPurchaseStoreRequest{} },
+	"payments.updateStarGiftCollection":         func() tlrpc.TLObject { return &PaymentsUpdateStarGiftCollectionRequest{} },
+	"phone.leaveGroupCall":                      func() tlrpc.TLObject { return &PhoneLeaveGroupCallRequest{} },
+	"bots.checkDownloadFileParams":              func() tlrpc.TLObject { return &BotsCheckDownloadFileParamsRequest{} },
+	"messages.uploadEncryptedFile":              func() tlrpc.TLObject { return &MessagesUploadEncryptedFileRequest{} },
+	"channels.toggleUsername":                   func() tlrpc.TLObject { return &ChannelsToggleUsernameRequest{} },
+	"messages.getInlineBotResults":              func() tlrpc.TLObject { return &MessagesGetInlineBotResultsRequest{} },
+	"help.getCdnConfig":                         func() tlrpc.TLObject { return &HelpGetCdnConfigRequest{} },
+	"help.getAppUpdate":                         func() tlrpc.TLObject { return &HelpGetAppUpdateRequest{} },
+	"account.getNotifyExceptions":               func() tlrpc.TLObject { return &AccountGetNotifyExceptionsRequest{} },
+	"stories.getPeerMaxIDs":                     func() tlrpc.TLObject { return &StoriesGetPeerMaxIDsRequest{} },
+	"messages.requestAppWebView":                func() tlrpc.TLObject { return &MessagesRequestAppWebViewRequest{} },
+	"account.deleteAutoSaveExceptions":          func() tlrpc.TLObject { return &AccountDeleteAutoSaveExceptionsRequest{} },
+	"account.getPassword":                       func() tlrpc.TLObject { return &AccountGetPasswordRequest{} },
+	"account.resolveBusinessChatLink":           func() tlrpc.TLObject { return &AccountResolveBusinessChatLinkRequest{} },
+	"messages.saveDraft":                        func() tlrpc.TLObject { return &MessagesSaveDraftRequest{} },
+	"phone.getCallConfig":                       func() tlrpc.TLObject { return &PhoneGetCallConfigRequest{} },
+	"messages.sendEncryptedFile":                func() tlrpc.TLObject { return &MessagesSendEncryptedFileRequest{} },
+	"messages.receivedQueue":                    func() tlrpc.TLObject { return &MessagesReceivedQueueRequest{} },
+	"channels.editTitle":                        func() tlrpc.TLObject { return &ChannelsEditTitleRequest{} },
+	"phone.startScheduledGroupCall":             func() tlrpc.TLObject { return &PhoneStartScheduledGroupCallRequest{} },
+	"messages.deleteRevokedExportedChatInvites": func() tlrpc.TLObject { return &MessagesDeleteRevokedExportedChatInvitesRequest{} },
+	"account.getAutoDownloadSettings":           func() tlrpc.TLObject { return &AccountGetAutoDownloadSettingsRequest{} },
+	"messages.getWebPagePreview":                func() tlrpc.TLObject { return &MessagesGetWebPagePreviewRequest{} },
+	"phone.saveDefaultGroupCallJoinAs":          func() tlrpc.TLObject { return &PhoneSaveDefaultGroupCallJoinAsRequest{} },
+	"stories.getStoriesByID":                    func() tlrpc.TLObject { return &StoriesGetStoriesByIDRequest{} },
+	"messages.getMessagesViews":                 func() tlrpc.TLObject { return &MessagesGetMessagesViewsRequest{} },
+	"stories.activateStealthMode":               func() tlrpc.TLObject { return &StoriesActivateStealthModeRequest{} },
+	"messages.getArchivedStickers":              func() tlrpc.TLObject { return &MessagesGetArchivedStickersRequest{} },
+	"stories.getPinnedStories":                  func() tlrpc.TLObject { return &StoriesGetPinnedStoriesRequest{} },
+	"payments.getConnectedStarRefBots":          func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotsRequest{} },
+	"messages.setTyping":                        func() tlrpc.TLObject { return &MessagesSetTypingRequest{} },
+	"messages.sendPaidReaction":                 func() tlrpc.TLObject { return &MessagesSendPaidReactionRequest{} },
+	"account.toggleUsername":                    func() tlrpc.TLObject { return &AccountToggleUsernameRequest{} },
+	"channels.editLocation":                     func() tlrpc.TLObject { return &ChannelsEditLocationRequest{} },
+	"messages.deleteScheduledMessages":          func() tlrpc.TLObject { return &MessagesDeleteScheduledMessagesRequest{} },
+	"phone.setCallRating":                       func() tlrpc.TLObject { return &PhoneSetCallRatingRequest{} },
+	"messages.reportMessagesDelivery":           func() tlrpc.TLObject { return &MessagesReportMessagesDeliveryRequest{} },
+	"messages.readFeaturedStickers":             func() tlrpc.TLObject { return &MessagesReadFeaturedStickersRequest{} },
+	"messages.deleteChat":                       func() tlrpc.TLObject { return &MessagesDeleteChatRequest{} },
+	"messages.editQuickReplyShortcut":           func() tlrpc.TLObject { return &MessagesEditQuickReplyShortcutRequest{} },
+	"messages.getSavedGifs":                     func() tlrpc.TLObject { return &MessagesGetSavedGifsRequest{} },
+	"messages.checkHistoryImportPeer":           func() tlrpc.TLObject { return &MessagesCheckHistoryImportPeerRequest{} },
+	"contacts.getContacts":                      func() tlrpc.TLObject { return &ContactsGetContactsRequest{} },
+	"account.setMainProfileTab":                 func() tlrpc.TLObject { return &AccountSetMainProfileTabRequest{} },
+	"account.disablePeerConnectedBot":           func() tlrpc.TLObject { return &AccountDisablePeerConnectedBotRequest{} },
+	"stories.updateAlbum":                       func() tlrpc.TLObject { return &StoriesUpdateAlbumRequest{} },
+	"stats.getMessagePublicForwards":            func() tlrpc.TLObject { return &StatsGetMessagePublicForwardsRequest{} },
+	"account.confirmPhone":                      func() tlrpc.TLObject { return &AccountConfirmPhoneRequest{} },
+	"payments.launchPrepaidGiveaway":            func() tlrpc.TLObject { return &PaymentsLaunchPrepaidGiveawayRequest{} },
+	"account.deleteBusinessChatLink":            func() tlrpc.TLObject { return &AccountDeleteBusinessChatLinkRequest{} },
+	"messages.updateSavedReactionTag":           func() tlrpc.TLObject { return &MessagesUpdateSavedReactionTagRequest{} },
+	"messages.reorderQuickReplies":              func() tlrpc.TLObject { return &MessagesReorderQuickRepliesRequest{} },
+	"payments.toggleChatStarGiftNotifications":  func() tlrpc.TLObject { return &PaymentsToggleChatStarGiftNotificationsRequest{} },
+	"premium.getBoostsList":                     func() tlrpc.TLObject { return &PremiumGetBoostsListRequest{} },
+	"help.getAppConfig":                         func() tlrpc.TLObject { return &HelpGetAppConfigRequest{} },
+	"stats.loadAsyncGraph":                      func() tlrpc.TLObject { return &StatsLoadAsyncGraphRequest{} },
+	"messages.translateText":                    func() tlrpc.TLObject { return &MessagesTranslateTextRequest{} },
+	"messages.getMessages":                      func() tlrpc.TLObject { return &MessagesGetMessagesRequest{} },
+	"messages.getMaskStickers":                  func() tlrpc.TLObject { return &MessagesGetMaskStickersRequest{} },
+	"account.toggleConnectedBotPaused":          func() tlrpc.TLObject { return &AccountToggleConnectedBotPausedRequest{} },
+	"messages.getFeaturedStickers":              func() tlrpc.TLObject { return &MessagesGetFeaturedStickersRequest{} },
+	"account.createTheme":                       func() tlrpc.TLObject { return &AccountCreateThemeRequest{} },
+	"chatlists.editExportedInvite":              func() tlrpc.TLObject { return &ChatlistsEditExportedInviteRequest{} },
+	"messages.getDefaultHistoryTTL":             func() tlrpc.TLObject { return &MessagesGetDefaultHistoryTTLRequest{} },
+	"account.getMultiWallPapers":                func() tlrpc.TLObject { return &AccountGetMultiWallPapersRequest{} },
+	"account.updateStatus":                      func() tlrpc.TLObject { return &AccountUpdateStatusRequest{} },
+	"account.updateConnectedBot":                func() tlrpc.TLObject { return &AccountUpdateConnectedBotRequest{} },
+	"help.editUserInfo":                         func() tlrpc.TLObject { return &HelpEditUserInfoRequest{} },
+	"account.updateBusinessGreetingMessage":     func() tlrpc.TLObject { return &AccountUpdateBusinessGreetingMessageRequest{} },
+	"chatlists.hideChatlistUpdates":             func() tlrpc.TLObject { return &ChatlistsHideChatlistUpdatesRequest{} },
+	"auth.importBotAuthorization":               func() tlrpc.TLObject { return &AuthImportBotAuthorizationRequest{} },
+	"account.resetWebAuthorizations":            func() tlrpc.TLObject { return &AccountResetWebAuthorizationsRequest{} },
+	"folders.editPeerFolders":                   func() tlrpc.TLObject { return &FoldersEditPeerFoldersRequest{} },
+	"channels.toggleAntiSpam":                   func() tlrpc.TLObject { return &ChannelsToggleAntiSpamRequest{} },
+	"payments.getStarsTransactions":             func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsRequest{} },
+	"messages.toggleBotInAttachMenu":            func() tlrpc.TLObject { return &MessagesToggleBotInAttachMenuRequest{} },
+	"account.unregisterDevice":                  func() tlrpc.TLObject { return &AccountUnregisterDeviceRequest{} },
+	"messages.getAllDrafts":                     func() tlrpc.TLObject { return &MessagesGetAllDraftsRequest{} },
+	"langpack.getLanguage":                      func() tlrpc.TLObject { return &LangpackGetLanguageRequest{} },
+	"channels.toggleParticipantsHidden":         func() tlrpc.TLObject { return &ChannelsToggleParticipantsHiddenRequest{} },
+	"messages.getSearchResultsCalendar":         func() tlrpc.TLObject { return &MessagesGetSearchResultsCalendarRequest{} },
+	"premium.applyBoost":                        func() tlrpc.TLObject { return &PremiumApplyBoostRequest{} },
+	"channels.updatePinnedForumTopic":           func() tlrpc.TLObject { return &ChannelsUpdatePinnedForumTopicRequest{} },
+	"messages.importChatInvite":                 func() tlrpc.TLObject { return &MessagesImportChatInviteRequest{} },
+	"account.saveWallPaper":                     func() tlrpc.TLObject { return &AccountSaveWallPaperRequest{} },
+	"messages.sendQuickReplyMessages":           func() tlrpc.TLObject { return &MessagesSendQuickReplyMessagesRequest{} },
+	"payments.botCancelStarsSubscription":       func() tlrpc.TLObject { return &PaymentsBotCancelStarsSubscriptionRequest{} },
+	"messages.getOnlines":                       func() tlrpc.TLObject { return &MessagesGetOnlinesRequest{} },
+	"help.saveAppLog":                           func() tlrpc.TLObject { return &HelpSaveAppLogRequest{} },
+	"messages.getSavedDialogsByID":              func() tlrpc.TLObject { return &MessagesGetSavedDialogsByIDRequest{} },
+	"account.getBusinessChatLinks":              func() tlrpc.TLObject { return &AccountGetBusinessChatLinksRequest{} },
+	"messages.getRecentLocations":               func() tlrpc.TLObject { return &MessagesGetRecentLocationsRequest{} },
+	"account.changePhone":                       func() tlrpc.TLObject { return &AccountChangePhoneRequest{} },
+	"chatlists.deleteExportedInvite":            func() tlrpc.TLObject { return &ChatlistsDeleteExportedInviteRequest{} },
+	"account.getThemes":                         func() tlrpc.TLObject { return &AccountGetThemesRequest{} },
+	"contacts.resolveUsername":                  func() tlrpc.TLObject { return &ContactsResolveUsernameRequest{} },
+	"help.getCountriesList":                     func() tlrpc.TLObject { return &HelpGetCountriesListRequest{} },
+	"account.getSecureValue":                    func() tlrpc.TLObject { return &AccountGetSecureValueRequest{} },
+	"messages.getExportedChatInvite":            func() tlrpc.TLObject { return &MessagesGetExportedChatInviteRequest{} },
+	"messages.editChatTitle":                    func() tlrpc.TLObject { return &MessagesEditChatTitleRequest{} },
+	"stories.sendStory":                         func() tlrpc.TLObject { return &StoriesSendStoryRequest{} },
+	"messages.getPollResults":                   func() tlrpc.TLObject { return &MessagesGetPollResultsRequest{} },
+	"messages.getEmojiGroups":                   func() tlrpc.TLObject { return &MessagesGetEmojiGroupsRequest{} },
+	"phone.toggleGroupCallSettings":             func() tlrpc.TLObject { return &PhoneToggleGroupCallSettingsRequest{} },
+	"payments.convertStarGift":                  func() tlrpc.TLObject { return &PaymentsConvertStarGiftRequest{} },
+	"chatlists.leaveChatlist":                   func() tlrpc.TLObject { return &ChatlistsLeaveChatlistRequest{} },
+	"users.getSavedMusicByID":                   func() tlrpc.TLObject { return &UsersGetSavedMusicByIDRequest{} },
+	"account.getBotBusinessConnection":          func() tlrpc.TLObject { return &AccountGetBotBusinessConnectionRequest{} },
+	"account.saveAutoDownloadSettings":          func() tlrpc.TLObject { return &AccountSaveAutoDownloadSettingsRequest{} },
+	"messages.getAttachMenuBot":                 func() tlrpc.TLObject { return &MessagesGetAttachMenuBotRequest{} },
+	"account.getChannelDefaultEmojiStatuses":    func() tlrpc.TLObject { return &AccountGetChannelDefaultEmojiStatusesRequest{} },
+	"bots.updateStarRefProgram":                 func() tlrpc.TLObject { return &BotsUpdateStarRefProgramRequest{} },
+	"smsjobs.getSmsJob":                         func() tlrpc.TLObject { return &SmsjobsGetSmsJobRequest{} },
+	"channels.getParticipants":                  func() tlrpc.TLObject { return &ChannelsGetParticipantsRequest{} },
+	"messages.reorderStickerSets":               func() tlrpc.TLObject { return &MessagesReorderStickerSetsRequest{} },
+	"account.updateProfile":                     func() tlrpc.TLObject { return &AccountUpdateProfileRequest{} },
+	"bots.setBotBroadcastDefaultAdminRights":    func() tlrpc.TLObject { return &BotsSetBotBroadcastDefaultAdminRightsRequest{} },
+	"users.getSavedMusic":                       func() tlrpc.TLObject { return &UsersGetSavedMusicRequest{} },
+	"messages.setEncryptedTyping":               func() tlrpc.TLObject { return &MessagesSetEncryptedTypingRequest{} },
+	"payments.sendStarsForm":                    func() tlrpc.TLObject { return &PaymentsSendStarsFormRequest{} },
+	"payments.getResaleStarGifts":               func() tlrpc.TLObject { return &PaymentsGetResaleStarGiftsRequest{} },
+	"phone.discardGroupCall":                    func() tlrpc.TLObject { return &PhoneDiscardGroupCallRequest{} },
+	"account.resendPasswordEmail":               func() tlrpc.TLObject { return &AccountResendPasswordEmailRequest{} },
+	"contacts.getContactIDs":                    func() tlrpc.TLObject { return &ContactsGetContactIDsRequest{} },
+	"phone.inviteToGroupCall":                   func() tlrpc.TLObject { return &PhoneInviteToGroupCallRequest{} },
+	"stories.exportStoryLink":                   func() tlrpc.TLObject { return &StoriesExportStoryLinkRequest{} },
+	"stories.toggleAllStoriesHidden":            func() tlrpc.TLObject { return &StoriesToggleAllStoriesHiddenRequest{} },
+	"account.updateColor":                       func() tlrpc.TLObject { return &AccountUpdateColorRequest{} },
+	"phone.createConferenceCall":                func() tlrpc.TLObject { return &PhoneCreateConferenceCallRequest{} },
+	"messages.clearAllDrafts":                   func() tlrpc.TLObject { return &MessagesClearAllDraftsRequest{} },
+	"auth.resetLoginEmail":                      func() tlrpc.TLObject { return &AuthResetLoginEmailRequest{} },
+	"messages.getOldFeaturedStickers":           func() tlrpc.TLObject { return &MessagesGetOldFeaturedStickersRequest{} },
+	"stories.getStoryViewsList":                 func() tlrpc.TLObject { return &StoriesGetStoryViewsListRequest{} },
+	"payments.connectStarRefBot":                func() tlrpc.TLObject { return &PaymentsConnectStarRefBotRequest{} },
+	"payments.transferStarGift":                 func() tlrpc.TLObject { return &PaymentsTransferStarGiftRequest{} },
+	"messages.rateTranscribedAudio":             func() tlrpc.TLObject { return &MessagesRateTranscribedAudioRequest{} },
+	"messages.readEncryptedHistory":             func() tlrpc.TLObject { return &MessagesReadEncryptedHistoryRequest{} },
+	"stories.sendReaction":                      func() tlrpc.TLObject { return &StoriesSendReactionRequest{} },
+	"messages.hideChatJoinRequest":              func() tlrpc.TLObject { return &MessagesHideChatJoinRequestRequest{} },
+	"payments.assignAppStoreTransaction":        func() tlrpc.TLObject { return &PaymentsAssignAppStoreTransactionRequest{} },
+	"messages.toggleSuggestedPostApproval":      func() tlrpc.TLObject { return &MessagesToggleSuggestedPostApprovalRequest{} },
+	"messages.clickSponsoredMessage":            func() tlrpc.TLObject { return &MessagesClickSponsoredMessageRequest{} },
+	"account.sendChangePhoneCode":               func() tlrpc.TLObject { return &AccountSendChangePhoneCodeRequest{} },
+	"contacts.getSaved":                         func() tlrpc.TLObject { return &ContactsGetSavedRequest{} },
+	"account.uploadRingtone":                    func() tlrpc.TLObject { return &AccountUploadRingtoneRequest{} },
+	"channels.getLeftChannels":                  func() tlrpc.TLObject { return &ChannelsGetLeftChannelsRequest{} },
+	"messages.editInlineBotMessage":             func() tlrpc.TLObject { return &MessagesEditInlineBotMessageRequest{} },
+	"chatlists.exportChatlistInvite":            func() tlrpc.TLObject { return &ChatlistsExportChatlistInviteRequest{} },
+	"account.updateNotifySettings":              func() tlrpc.TLObject { return &AccountUpdateNotifySettingsRequest{} },
+	"channels.deleteMessages":                   func() tlrpc.TLObject { return &ChannelsDeleteMessagesRequest{} },
+	"messages.getExtendedMedia":                 func() tlrpc.TLObject { return &MessagesGetExtendedMediaRequest{} },
+	"contacts.toggleTopPeers":                   func() tlrpc.TLObject { return &ContactsToggleTopPeersRequest{} },
+	"bots.editPreviewMedia":                     func() tlrpc.TLObject { return &BotsEditPreviewMediaRequest{} },
+	"stories.reorderAlbums":                     func() tlrpc.TLObject { return &StoriesReorderAlbumsRequest{} },
+	"messages.getPreparedInlineMessage":         func() tlrpc.TLObject { return &MessagesGetPreparedInlineMessageRequest{} },
+	"messages.setChatAvailableReactions":        func() tlrpc.TLObject { return &MessagesSetChatAvailableReactionsRequest{} },
+	"stickers.addStickerToSet":                  func() tlrpc.TLObject { return &StickersAddStickerToSetRequest{} },
+	"stickers.deleteStickerSet":                 func() tlrpc.TLObject { return &StickersDeleteStickerSetRequest{} },
+	"contacts.resetSaved":                       func() tlrpc.TLObject { return &ContactsResetSavedRequest{} },
+	"photos.deletePhotos":                       func() tlrpc.TLObject { return &PhotosDeletePhotosRequest{} },
+	"account.createBusinessChatLink":            func() tlrpc.TLObject { return &AccountCreateBusinessChatLinkRequest{} },
+	"chatlists.getChatlistUpdates":              func() tlrpc.TLObject { return &ChatlistsGetChatlistUpdatesRequest{} },
+	"messages.clearRecentStickers":              func() tlrpc.TLObject { return &MessagesClearRecentStickersRequest{} },
+	"account.saveSecureValue":                   func() tlrpc.TLObject { return &AccountSaveSecureValueRequest{} },
+	"contacts.resolvePhone":                     func() tlrpc.TLObject { return &ContactsResolvePhoneRequest{} },
+	"messages.reorderPinnedSavedDialogs":        func() tlrpc.TLObject { return &MessagesReorderPinnedSavedDialogsRequest{} },
+	"bots.setCustomVerification":                func() tlrpc.TLObject { return &BotsSetCustomVerificationRequest{} },
+	"account.getContentSettings":                func() tlrpc.TLObject { return &AccountGetContentSettingsRequest{} },
+	"messages.getMessagesReactions":             func() tlrpc.TLObject { return &MessagesGetMessagesReactionsRequest{} },
+	"account.editBusinessChatLink":              func() tlrpc.TLObject { return &AccountEditBusinessChatLinkRequest{} },
+	"messages.getOutboxReadDate":                func() tlrpc.TLObject { return &MessagesGetOutboxReadDateRequest{} },
+	"messages.markDialogUnread":                 func() tlrpc.TLObject { return &MessagesMarkDialogUnreadRequest{} },
+	"phone.deleteConferenceCallParticipants":    func() tlrpc.TLObject { return &PhoneDeleteConferenceCallParticipantsRequest{} },
+	"stories.deleteAlbum":                       func() tlrpc.TLObject { return &StoriesDeleteAlbumRequest{} },
+	"auth.signIn":                               func() tlrpc.TLObject { return &AuthSignInRequest{} },
+	"messages.getWebPage":                       func() tlrpc.TLObject { return &MessagesGetWebPageRequest{} },
+	"auth.requestFirebaseSms":                   func() tlrpc.TLObject { return &AuthRequestFirebaseSmsRequest{} },
+	"auth.dropTempAuthKeys":                     func() tlrpc.TLObject { return &AuthDropTempAuthKeysRequest{} },
+	"payments.checkGiftCode":                    func() tlrpc.TLObject { return &PaymentsCheckGiftCodeRequest{} },
+	"account.initTakeoutSession":                func() tlrpc.TLObject { return &AccountInitTakeoutSessionRequest{} },
+	"messages.setGameScore":                     func() tlrpc.TLObject { return &MessagesSetGameScoreRequest{} },
+	"channels.editCreator":                      func() tlrpc.TLObject { return &ChannelsEditCreatorRequest{} },
+	"phone.joinGroupCall":                       func() tlrpc.TLObject { return &PhoneJoinGroupCallRequest{} },
+	"account.confirmPasswordEmail":              func() tlrpc.TLObject { return &AccountConfirmPasswordEmailRequest{} },
+	"messages.setChatWallPaper":                 func() tlrpc.TLObject { return &MessagesSetChatWallPaperRequest{} },
+	"stickers.createStickerSet":                 func() tlrpc.TLObject { return &StickersCreateStickerSetRequest{} },
 	"users.setSecureValueErrors":                func() tlrpc.TLObject { return &UsersSetSecureValueErrorsRequest{} },
+	"channels.createChannel":                    func() tlrpc.TLObject { return &ChannelsCreateChannelRequest{} },
+	"upload.getFileHashes":                      func() tlrpc.TLObject { return &UploadGetFileHashesRequest{} },
+	"account.getDefaultGroupPhotoEmojis":        func() tlrpc.TLObject { return &AccountGetDefaultGroupPhotoEmojisRequest{} },
+	"messages.sendBotRequestedPeer":             func() tlrpc.TLObject { return &MessagesSendBotRequestedPeerRequest{} },
+	"photos.getUserPhotos":                      func() tlrpc.TLObject { return &PhotosGetUserPhotosRequest{} },
+	"upload.getCdnFileHashes":                   func() tlrpc.TLObject { return &UploadGetCdnFileHashesRequest{} },
+	"bots.setBotGroupDefaultAdminRights":        func() tlrpc.TLObject { return &BotsSetBotGroupDefaultAdminRightsRequest{} },
+	"messages.searchEmojiStickerSets":           func() tlrpc.TLObject { return &MessagesSearchEmojiStickerSetsRequest{} },
+	"messages.createChat":                       func() tlrpc.TLObject { return &MessagesCreateChatRequest{} },
+	"account.resetPassword":                     func() tlrpc.TLObject { return &AccountResetPasswordRequest{} },
+	"messages.getBotCallbackAnswer":             func() tlrpc.TLObject { return &MessagesGetBotCallbackAnswerRequest{} },
+	"messages.getQuickReplyMessages":            func() tlrpc.TLObject { return &MessagesGetQuickReplyMessagesRequest{} },
+	"contacts.setBlocked":                       func() tlrpc.TLObject { return &ContactsSetBlockedRequest{} },
+	"auth.importLoginToken":                     func() tlrpc.TLObject { return &AuthImportLoginTokenRequest{} },
+	"channels.editBanned":                       func() tlrpc.TLObject { return &ChannelsEditBannedRequest{} },
+	"bots.reorderUsernames":                     func() tlrpc.TLObject { return &BotsReorderUsernamesRequest{} },
+	"contacts.getTopPeers":                      func() tlrpc.TLObject { return &ContactsGetTopPeersRequest{} },
+	"channels.toggleViewForumAsMessages":        func() tlrpc.TLObject { return &ChannelsToggleViewForumAsMessagesRequest{} },
+	"messages.forwardMessages":                  func() tlrpc.TLObject { return &MessagesForwardMessagesRequest{} },
+	"payments.getStarGiftCollections":           func() tlrpc.TLObject { return &PaymentsGetStarGiftCollectionsRequest{} },
+	"smsjobs.leave":                             func() tlrpc.TLObject { return &SmsjobsLeaveRequest{} },
+	"account.sendVerifyEmailCode":               func() tlrpc.TLObject { return &AccountSendVerifyEmailCodeRequest{} },
+	"messages.getSavedHistory":                  func() tlrpc.TLObject { return &MessagesGetSavedHistoryRequest{} },
+	"stories.togglePinned":                      func() tlrpc.TLObject { return &StoriesTogglePinnedRequest{} },
+	"contacts.getBlocked":                       func() tlrpc.TLObject { return &ContactsGetBlockedRequest{} },
+	"channels.restrictSponsoredMessages":        func() tlrpc.TLObject { return &ChannelsRestrictSponsoredMessagesRequest{} },
+	"upload.reuploadCdnFile":                    func() tlrpc.TLObject { return &UploadReuploadCdnFileRequest{} },
+	"stories.getAllReadPeerStories":             func() tlrpc.TLObject { return &StoriesGetAllReadPeerStoriesRequest{} },
+	"channels.deleteHistory":                    func() tlrpc.TLObject { return &ChannelsDeleteHistoryRequest{} },
+	"bots.getBotMenuButton":                     func() tlrpc.TLObject { return &BotsGetBotMenuButtonRequest{} },
+	"messages.getSearchResultsPositions":        func() tlrpc.TLObject { return &MessagesGetSearchResultsPositionsRequest{} },
+	"payments.getStarGiftUpgradePreview":        func() tlrpc.TLObject { return &PaymentsGetStarGiftUpgradePreviewRequest{} },
+	"account.getPasswordSettings":               func() tlrpc.TLObject { return &AccountGetPasswordSettingsRequest{} },
+	"help.getSupport":                           func() tlrpc.TLObject { return &HelpGetSupportRequest{} },
+	"messages.getRecentStickers":                func() tlrpc.TLObject { return &MessagesGetRecentStickersRequest{} },
+	"messages.clearRecentReactions":             func() tlrpc.TLObject { return &MessagesClearRecentReactionsRequest{} },
+	"account.updateBusinessLocation":            func() tlrpc.TLObject { return &AccountUpdateBusinessLocationRequest{} },
+	"messages.setDefaultHistoryTTL":             func() tlrpc.TLObject { return &MessagesSetDefaultHistoryTTLRequest{} },
+	"messages.readReactions":                    func() tlrpc.TLObject { return &MessagesReadReactionsRequest{} },
+	"account.getContactSignUpNotification":      func() tlrpc.TLObject { return &AccountGetContactSignUpNotificationRequest{} },
+	"auth.resetAuthorizations":                  func() tlrpc.TLObject { return &AuthResetAuthorizationsRequest{} },
+	"channels.getParticipant":                   func() tlrpc.TLObject { return &ChannelsGetParticipantRequest{} },
+	"messages.getDialogs":                       func() tlrpc.TLObject { return &MessagesGetDialogsRequest{} },
+	"messages.sendScreenshotNotification":       func() tlrpc.TLObject { return &MessagesSendScreenshotNotificationRequest{} },
+	"payments.getUniqueStarGift":                func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftRequest{} },
+	"bots.getBotRecommendations":                func() tlrpc.TLObject { return &BotsGetBotRecommendationsRequest{} },
+	"messages.deleteChatUser":                   func() tlrpc.TLObject { return &MessagesDeleteChatUserRequest{} },
+	"account.updateBusinessAwayMessage":         func() tlrpc.TLObject { return &AccountUpdateBusinessAwayMessageRequest{} },
+	"messages.migrateChat":                      func() tlrpc.TLObject { return &MessagesMigrateChatRequest{} },
+	"messages.getSuggestedDialogFilters":        func() tlrpc.TLObject { return &MessagesGetSuggestedDialogFiltersRequest{} },
+	"bots.getPreviewMedias":                     func() tlrpc.TLObject { return &BotsGetPreviewMediasRequest{} },
+	"messages.getExportedChatInvites":           func() tlrpc.TLObject { return &MessagesGetExportedChatInvitesRequest{} },
+	"account.deleteAccount":                     func() tlrpc.TLObject { return &AccountDeleteAccountRequest{} },
+	"payments.getSavedStarGifts":                func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftsRequest{} },
+	"stories.createAlbum":                       func() tlrpc.TLObject { return &StoriesCreateAlbumRequest{} },
+	"messages.exportChatInvite":                 func() tlrpc.TLObject { return &MessagesExportChatInviteRequest{} },
+	"phone.editGroupCallParticipant":            func() tlrpc.TLObject { return &PhoneEditGroupCallParticipantRequest{} },
+	"stories.readStories":                       func() tlrpc.TLObject { return &StoriesReadStoriesRequest{} },
+	"stories.getChatsToSend":                    func() tlrpc.TLObject { return &StoriesGetChatsToSendRequest{} },
+	"auth.importAuthorization":                  func() tlrpc.TLObject { return &AuthImportAuthorizationRequest{} },
+	"messages.editChatDefaultBannedRights":      func() tlrpc.TLObject { return &MessagesEditChatDefaultBannedRightsRequest{} },
+	"account.updatePasswordSettings":            func() tlrpc.TLObject { return &AccountUpdatePasswordSettingsRequest{} },
+	"account.sendVerifyPhoneCode":               func() tlrpc.TLObject { return &AccountSendVerifyPhoneCodeRequest{} },
+	"account.getDefaultBackgroundEmojis":        func() tlrpc.TLObject { return &AccountGetDefaultBackgroundEmojisRequest{} },
+	"account.updateBusinessIntro":               func() tlrpc.TLObject { return &AccountUpdateBusinessIntroRequest{} },
+	"stats.getStoryPublicForwards":              func() tlrpc.TLObject { return &StatsGetStoryPublicForwardsRequest{} },
+	"auth.sendCode":                             func() tlrpc.TLObject { return &AuthSendCodeRequest{} },
+	"chatlists.joinChatlistInvite":              func() tlrpc.TLObject { return &ChatlistsJoinChatlistInviteRequest{} },
+	"messages.toggleDialogPin":                  func() tlrpc.TLObject { return &MessagesToggleDialogPinRequest{} },
+	"smsjobs.join":                              func() tlrpc.TLObject { return &SmsjobsJoinRequest{} },
+	"stickers.setStickerSetThumb":               func() tlrpc.TLObject { return &StickersSetStickerSetThumbRequest{} },
+	"channels.reportAntiSpamFalsePositive":      func() tlrpc.TLObject { return &ChannelsReportAntiSpamFalsePositiveRequest{} },
+	"messages.editChatAdmin":                    func() tlrpc.TLObject { return &MessagesEditChatAdminRequest{} },
+	"account.getAuthorizationForm":              func() tlrpc.TLObject { return &AccountGetAuthorizationFormRequest{} },
+	"bots.sendCustomRequest":                    func() tlrpc.TLObject { return &BotsSendCustomRequestRequest{} },
+	"auth.signUp":                               func() tlrpc.TLObject { return &AuthSignUpRequest{} },
+	"stats.getBroadcastStats":                   func() tlrpc.TLObject { return &StatsGetBroadcastStatsRequest{} },
+	"help.getPeerProfileColors":                 func() tlrpc.TLObject { return &HelpGetPeerProfileColorsRequest{} },
+	"messages.sendMedia":                        func() tlrpc.TLObject { return &MessagesSendMediaRequest{} },
+	"stories.getAlbumStories":                   func() tlrpc.TLObject { return &StoriesGetAlbumStoriesRequest{} },
+	"messages.toggleSavedDialogPin":             func() tlrpc.TLObject { return &MessagesToggleSavedDialogPinRequest{} },
+	"channels.setBoostsToUnblockRestrictions":   func() tlrpc.TLObject { return &ChannelsSetBoostsToUnblockRestrictionsRequest{} },
+	"payments.deleteStarGiftCollection":         func() tlrpc.TLObject { return &PaymentsDeleteStarGiftCollectionRequest{} },
+	"channels.getMessages":                      func() tlrpc.TLObject { return &ChannelsGetMessagesRequest{} },
+	"account.getAutoSaveSettings":               func() tlrpc.TLObject { return &AccountGetAutoSaveSettingsRequest{} },
+	"stories.deleteStories":                     func() tlrpc.TLObject { return &StoriesDeleteStoriesRequest{} },
+	"messages.getFullChat":                      func() tlrpc.TLObject { return &MessagesGetFullChatRequest{} },
+	"payments.upgradeStarGift":                  func() tlrpc.TLObject { return &PaymentsUpgradeStarGiftRequest{} },
+	"bots.getAdminedBots":                       func() tlrpc.TLObject { return &BotsGetAdminedBotsRequest{} },
+	"channels.getForumTopicsByID":               func() tlrpc.TLObject { return &ChannelsGetForumTopicsByIDRequest{} },
+	"messages.deleteHistory":                    func() tlrpc.TLObject { return &MessagesDeleteHistoryRequest{} },
+	"messages.prolongWebView":                   func() tlrpc.TLObject { return &MessagesProlongWebViewRequest{} },
+	"messages.toggleNoForwards":                 func() tlrpc.TLObject { return &MessagesToggleNoForwardsRequest{} },
+	"messages.acceptUrlAuth":                    func() tlrpc.TLObject { return &MessagesAcceptURLAuthRequest{} },
+	"messages.getDocumentByHash":                func() tlrpc.TLObject { return &MessagesGetDocumentByHashRequest{} },
+	"stories.incrementStoryViews":               func() tlrpc.TLObject { return &StoriesIncrementStoryViewsRequest{} },
+	"account.saveMusic":                         func() tlrpc.TLObject { return &AccountSaveMusicRequest{} },
+	"account.getAllSecureValues":                func() tlrpc.TLObject { return &AccountGetAllSecureValuesRequest{} },
+	"phone.discardCall":                         func() tlrpc.TLObject { return &PhoneDiscardCallRequest{} },
+	"upload.saveFilePart":                       func() tlrpc.TLObject { return &UploadSaveFilePartRequest{} },
+	"stories.getStoriesArchive":                 func() tlrpc.TLObject { return &StoriesGetStoriesArchiveRequest{} },
+	"messages.startHistoryImport":               func() tlrpc.TLObject { return &MessagesStartHistoryImportRequest{} },
+	"payments.getSavedStarGift":                 func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftRequest{} },
+	"channels.reorderUsernames":                 func() tlrpc.TLObject { return &ChannelsReorderUsernamesRequest{} },
+	"messages.toggleStickerSets":                func() tlrpc.TLObject { return &MessagesToggleStickerSetsRequest{} },
+	"contacts.unblock":                          func() tlrpc.TLObject { return &ContactsUnblockRequest{} },
+	"account.setContentSettings":                func() tlrpc.TLObject { return &AccountSetContentSettingsRequest{} },
+	"stories.editStory":                         func() tlrpc.TLObject { return &StoriesEditStoryRequest{} },
+	"phone.checkGroupCall":                      func() tlrpc.TLObject { return &PhoneCheckGroupCallRequest{} },
+	"users.getFullUser":                         func() tlrpc.TLObject { return &UsersGetFullUserRequest{} },
+	"bots.reorderPreviewMedias":                 func() tlrpc.TLObject { return &BotsReorderPreviewMediasRequest{} },
+	"contacts.getSponsoredPeers":                func() tlrpc.TLObject { return &ContactsGetSponsoredPeersRequest{} },
+	"payments.validateRequestedInfo":            func() tlrpc.TLObject { return &PaymentsValidateRequestedInfoRequest{} },
+	"stats.getMessageStats":                     func() tlrpc.TLObject { return &StatsGetMessageStatsRequest{} },
+	"payments.getConnectedStarRefBot":           func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotRequest{} },
+	"auth.exportLoginToken":                     func() tlrpc.TLObject { return &AuthExportLoginTokenRequest{} },
+	"messages.setHistoryTTL":                    func() tlrpc.TLObject { return &MessagesSetHistoryTTLRequest{} },
+	"help.getPremiumPromo":                      func() tlrpc.TLObject { return &HelpGetPremiumPromoRequest{} },
+	"messages.getPollVotes":                     func() tlrpc.TLObject { return &MessagesGetPollVotesRequest{} },
+	"account.deleteSecureValue":                 func() tlrpc.TLObject { return &AccountDeleteSecureValueRequest{} },
+	"messages.getAllStickers":                   func() tlrpc.TLObject { return &MessagesGetAllStickersRequest{} },
+	"stories.getStoryReactionsList":             func() tlrpc.TLObject { return &StoriesGetStoryReactionsListRequest{} },
+	"messages.getFactCheck":                     func() tlrpc.TLObject { return &MessagesGetFactCheckRequest{} },
+	"account.toggleSponsoredMessages":           func() tlrpc.TLObject { return &AccountToggleSponsoredMessagesRequest{} },
+	"messages.faveSticker":                      func() tlrpc.TLObject { return &MessagesFaveStickerRequest{} },
+	"messages.readSavedHistory":                 func() tlrpc.TLObject { return &MessagesReadSavedHistoryRequest{} },
+	"contacts.editCloseFriends":                 func() tlrpc.TLObject { return &ContactsEditCloseFriendsRequest{} },
+	"messages.setInlineBotResults":              func() tlrpc.TLObject { return &MessagesSetInlineBotResultsRequest{} },
+	"account.resetWallPapers":                   func() tlrpc.TLObject { return &AccountResetWallPapersRequest{} },
+	"messages.getTopReactions":                  func() tlrpc.TLObject { return &MessagesGetTopReactionsRequest{} },
+	"phone.inviteConferenceCallParticipant":     func() tlrpc.TLObject { return &PhoneInviteConferenceCallParticipantRequest{} },
+	"stories.togglePeerStoriesHidden":           func() tlrpc.TLObject { return &StoriesTogglePeerStoriesHiddenRequest{} },
+	"payments.getStarsGiveawayOptions":          func() tlrpc.TLObject { return &PaymentsGetStarsGiveawayOptionsRequest{} },
+	"messages.sendScheduledMessages":            func() tlrpc.TLObject { return &MessagesSendScheduledMessagesRequest{} },
+	"messages.getUnreadReactions":               func() tlrpc.TLObject { return &MessagesGetUnreadReactionsRequest{} },
+	"messages.getScheduledMessages":             func() tlrpc.TLObject { return &MessagesGetScheduledMessagesRequest{} },
+	"messages.editExportedChatInvite":           func() tlrpc.TLObject { return &MessagesEditExportedChatInviteRequest{} },
+	"messages.getDefaultTagReactions":           func() tlrpc.TLObject { return &MessagesGetDefaultTagReactionsRequest{} },
+	"fragment.getCollectibleInfo":               func() tlrpc.TLObject { return &FragmentGetCollectibleInfoRequest{} },
+	"upload.getFile":                            func() tlrpc.TLObject { return &UploadGetFileRequest{} },
+	"account.setAuthorizationTTL":               func() tlrpc.TLObject { return &AccountSetAuthorizationTTLRequest{} },
+	"payments.getStarsTopupOptions":             func() tlrpc.TLObject { return &PaymentsGetStarsTopupOptionsRequest{} },
+	"channels.deleteChannel":                    func() tlrpc.TLObject { return &ChannelsDeleteChannelRequest{} },
+	"help.getPromoData":                         func() tlrpc.TLObject { return &HelpGetPromoDataRequest{} },
+	"payments.checkCanSendGift":                 func() tlrpc.TLObject { return &PaymentsCheckCanSendGiftRequest{} },
+	"messages.sendInlineBotResult":              func() tlrpc.TLObject { return &MessagesSendInlineBotResultRequest{} },
+	"account.cancelPasswordEmail":               func() tlrpc.TLObject { return &AccountCancelPasswordEmailRequest{} },
+	"bots.getPopularAppBots":                    func() tlrpc.TLObject { return &BotsGetPopularAppBotsRequest{} },
+	"payments.reorderStarGiftCollections":       func() tlrpc.TLObject { return &PaymentsReorderStarGiftCollectionsRequest{} },
+	"payments.getStarGifts":                     func() tlrpc.TLObject { return &PaymentsGetStarGiftsRequest{} },
+	"contacts.getStatuses":                      func() tlrpc.TLObject { return &ContactsGetStatusesRequest{} },
+	"help.getConfig":                            func() tlrpc.TLObject { return &HelpGetConfigRequest{} },
+	"phone.getGroupParticipants":                func() tlrpc.TLObject { return &PhoneGetGroupParticipantsRequest{} },
+	"messages.updateDialogFiltersOrder":         func() tlrpc.TLObject { return &MessagesUpdateDialogFiltersOrderRequest{} },
+	"account.reportPeer":                        func() tlrpc.TLObject { return &AccountReportPeerRequest{} },
+	"help.getPassportConfig":                    func() tlrpc.TLObject { return &HelpGetPassportConfigRequest{} },
+	"phone.sendConferenceCallBroadcast":         func() tlrpc.TLObject { return &PhoneSendConferenceCallBroadcastRequest{} },
+	"account.installTheme":                      func() tlrpc.TLObject { return &AccountInstallThemeRequest{} },
+	"payments.changeStarsSubscription":          func() tlrpc.TLObject { return &PaymentsChangeStarsSubscriptionRequest{} },
+	"messages.installStickerSet":                func() tlrpc.TLObject { return &MessagesInstallStickerSetRequest{} },
+	"messages.getStickerSet":                    func() tlrpc.TLObject { return &MessagesGetStickerSetRequest{} },
+	"messages.requestMainWebView":               func() tlrpc.TLObject { return &MessagesRequestMainWebViewRequest{} },
+	"channels.inviteToChannel":                  func() tlrpc.TLObject { return &ChannelsInviteToChannelRequest{} },
+	"account.setPrivacy":                        func() tlrpc.TLObject { return &AccountSetPrivacyRequest{} },
+	"account.invalidateSignInCodes":             func() tlrpc.TLObject { return &AccountInvalidateSignInCodesRequest{} },
+	"auth.resendCode":                           func() tlrpc.TLObject { return &AuthResendCodeRequest{} },
+	"auth.reportMissingCode":                    func() tlrpc.TLObject { return &AuthReportMissingCodeRequest{} },
+	"messages.addChatUser":                      func() tlrpc.TLObject { return &MessagesAddChatUserRequest{} },
+	"phone.joinGroupCallPresentation":           func() tlrpc.TLObject { return &PhoneJoinGroupCallPresentationRequest{} },
+	"channels.readHistory":                      func() tlrpc.TLObject { return &ChannelsReadHistoryRequest{} },
+	"messages.getAttachedStickers":              func() tlrpc.TLObject { return &MessagesGetAttachedStickersRequest{} },
+	"payments.fulfillStarsSubscription":         func() tlrpc.TLObject { return &PaymentsFulfillStarsSubscriptionRequest{} },
+	"account.updateBirthday":                    func() tlrpc.TLObject { return &AccountUpdateBirthdayRequest{} },
+	"messages.saveDefaultSendAs":                func() tlrpc.TLObject { return &MessagesSaveDefaultSendAsRequest{} },
+	"langpack.getDifference":                    func() tlrpc.TLObject { return &LangpackGetDifferenceRequest{} },
+	"auth.bindTempAuthKey":                      func() tlrpc.TLObject { return &AuthBindTempAuthKeyRequest{} },
+	"chatlists.getExportedInvites":              func() tlrpc.TLObject { return &ChatlistsGetExportedInvitesRequest{} },
+	"messages.reportSpam":                       func() tlrpc.TLObject { return &MessagesReportSpamRequest{} },
+	"account.setContactSignUpNotification":      func() tlrpc.TLObject { return &AccountSetContactSignUpNotificationRequest{} },
+	"payments.getStarGiftWithdrawalUrl":         func() tlrpc.TLObject { return &PaymentsGetStarGiftWithdrawalURLRequest{} },
+	"messages.getMyStickers":                    func() tlrpc.TLObject { return &MessagesGetMyStickersRequest{} },
+	"stories.searchPosts":                       func() tlrpc.TLObject { return &StoriesSearchPostsRequest{} },
+	"auth.checkPassword":                        func() tlrpc.TLObject { return &AuthCheckPasswordRequest{} },
+	"payments.getStarsRevenueAdsAccountUrl":     func() tlrpc.TLObject { return &PaymentsGetStarsRevenueAdsAccountURLRequest{} },
+	"messages.deleteFactCheck":                  func() tlrpc.TLObject { return &MessagesDeleteFactCheckRequest{} },
+	"messages.updatePinnedMessage":              func() tlrpc.TLObject { return &MessagesUpdatePinnedMessageRequest{} },
+	"messages.sendReaction":                     func() tlrpc.TLObject { return &MessagesSendReactionRequest{} },
+	"channels.editAdmin":                        func() tlrpc.TLObject { return &ChannelsEditAdminRequest{} },
+	"contacts.getLocated":                       func() tlrpc.TLObject { return &ContactsGetLocatedRequest{} },
+	"help.getSupportName":                       func() tlrpc.TLObject { return &HelpGetSupportNameRequest{} },
+	"payments.getStarsGiftOptions":              func() tlrpc.TLObject { return &PaymentsGetStarsGiftOptionsRequest{} },
+	"messages.toggleTodoCompleted":              func() tlrpc.TLObject { return &MessagesToggleTodoCompletedRequest{} },
+	"messages.deleteExportedChatInvite":         func() tlrpc.TLObject { return &MessagesDeleteExportedChatInviteRequest{} },
+	"messages.getQuickReplies":                  func() tlrpc.TLObject { return &MessagesGetQuickRepliesRequest{} },
+	"messages.setBotCallbackAnswer":             func() tlrpc.TLObject { return &MessagesSetBotCallbackAnswerRequest{} },
+	"messages.getStickers":                      func() tlrpc.TLObject { return &MessagesGetStickersRequest{} },
+	"messages.getEmojiURL":                      func() tlrpc.TLObject { return &MessagesGetEmojiURLRequest{} },
+	"account.getChatThemes":                     func() tlrpc.TLObject { return &AccountGetChatThemesRequest{} },
+	"messages.getPinnedSavedDialogs":            func() tlrpc.TLObject { return &MessagesGetPinnedSavedDialogsRequest{} },
+	"account.getDefaultEmojiStatuses":           func() tlrpc.TLObject { return &AccountGetDefaultEmojiStatusesRequest{} },
+	"account.saveAutoSaveSettings":              func() tlrpc.TLObject { return &AccountSaveAutoSaveSettingsRequest{} },
+	"messages.getPinnedDialogs":                 func() tlrpc.TLObject { return &MessagesGetPinnedDialogsRequest{} },
+	"payments.clearSavedInfo":                   func() tlrpc.TLObject { return &PaymentsClearSavedInfoRequest{} },
+	"auth.requestPasswordRecovery":              func() tlrpc.TLObject { return &AuthRequestPasswordRecoveryRequest{} },
+	"users.getRequirementsToContact":            func() tlrpc.TLObject { return &UsersGetRequirementsToContactRequest{} },
+	"channels.updateColor":                      func() tlrpc.TLObject { return &ChannelsUpdateColorRequest{} },
+	"payments.getStarsRevenueStats":             func() tlrpc.TLObject { return &PaymentsGetStarsRevenueStatsRequest{} },
+	"account.updatePersonalChannel":             func() tlrpc.TLObject { return &AccountUpdatePersonalChannelRequest{} },
+	"messages.getCustomEmojiDocuments":          func() tlrpc.TLObject { return &MessagesGetCustomEmojiDocumentsRequest{} },
+	"help.getPeerColors":                        func() tlrpc.TLObject { return &HelpGetPeerColorsRequest{} },
+	"account.getPrivacy":                        func() tlrpc.TLObject { return &AccountGetPrivacyRequest{} },
+	"contacts.getBirthdays":                     func() tlrpc.TLObject { return &ContactsGetBirthdaysRequest{} },
+	"account.resetNotifySettings":               func() tlrpc.TLObject { return &AccountResetNotifySettingsRequest{} },
+	"messages.sendWebViewData":                  func() tlrpc.TLObject { return &MessagesSendWebViewDataRequest{} },
+	"bots.getBotInfo":                           func() tlrpc.TLObject { return &BotsGetBotInfoRequest{} },
+	"stats.getMegagroupStats":                   func() tlrpc.TLObject { return &StatsGetMegagroupStatsRequest{} },
+	"upload.saveBigFilePart":                    func() tlrpc.TLObject { return &UploadSaveBigFilePartRequest{} },
+	"messages.getAvailableEffects":              func() tlrpc.TLObject { return &MessagesGetAvailableEffectsRequest{} },
+	"phone.getGroupCallStreamRtmpUrl":           func() tlrpc.TLObject { return &PhoneGetGroupCallStreamRtmpURLRequest{} },
+	"messages.editChatAbout":                    func() tlrpc.TLObject { return &MessagesEditChatAboutRequest{} },
+	"messages.getChatInviteImporters":           func() tlrpc.TLObject { return &MessagesGetChatInviteImportersRequest{} },
+	"account.resetAuthorization":                func() tlrpc.TLObject { return &AccountResetAuthorizationRequest{} },
+	"messages.editMessage":                      func() tlrpc.TLObject { return &MessagesEditMessageRequest{} },
+	"payments.assignPlayMarketTransaction":      func() tlrpc.TLObject { return &PaymentsAssignPlayMarketTransactionRequest{} },
+	"messages.hideAllChatJoinRequests":          func() tlrpc.TLObject { return &MessagesHideAllChatJoinRequestsRequest{} },
+	"chatlists.joinChatlistUpdates":             func() tlrpc.TLObject { return &ChatlistsJoinChatlistUpdatesRequest{} },
+	"account.getSavedMusicIds":                  func() tlrpc.TLObject { return &AccountGetSavedMusicIdsRequest{} },
+	"messages.deleteQuickReplyMessages":         func() tlrpc.TLObject { return &MessagesDeleteQuickReplyMessagesRequest{} },
+	"photos.uploadContactProfilePhoto":          func() tlrpc.TLObject { return &PhotosUploadContactProfilePhotoRequest{} },
+	"account.getSavedRingtones":                 func() tlrpc.TLObject { return &AccountGetSavedRingtonesRequest{} },
+	"account.getDefaultProfilePhotoEmojis":      func() tlrpc.TLObject { return &AccountGetDefaultProfilePhotoEmojisRequest{} },
+	"account.getAuthorizations":                 func() tlrpc.TLObject { return &AccountGetAuthorizationsRequest{} },
+	"bots.getBotCommands":                       func() tlrpc.TLObject { return &BotsGetBotCommandsRequest{} },
+	"account.uploadWallPaper":                   func() tlrpc.TLObject { return &AccountUploadWallPaperRequest{} },
+	"messages.getCommonChats":                   func() tlrpc.TLObject { return &MessagesGetCommonChatsRequest{} },
+	"messages.getPeerDialogs":                   func() tlrpc.TLObject { return &MessagesGetPeerDialogsRequest{} },
+	"messages.togglePeerTranslations":           func() tlrpc.TLObject { return &MessagesTogglePeerTranslationsRequest{} },
+	"channels.toggleJoinToSend":                 func() tlrpc.TLObject { return &ChannelsToggleJoinToSendRequest{} },
+	"payments.editConnectedStarRefBot":          func() tlrpc.TLObject { return &PaymentsEditConnectedStarRefBotRequest{} },
+	"messages.deleteMessages":                   func() tlrpc.TLObject { return &MessagesDeleteMessagesRequest{} },
+	"auth.exportAuthorization":                  func() tlrpc.TLObject { return &AuthExportAuthorizationRequest{} },
+	"messages.setBotShippingResults":            func() tlrpc.TLObject { return &MessagesSetBotShippingResultsRequest{} },
+	"bots.answerWebhookJSONQuery":               func() tlrpc.TLObject { return &BotsAnswerWebhookJSONQueryRequest{} },
+	"messages.setChatTheme":                     func() tlrpc.TLObject { return &MessagesSetChatThemeRequest{} },
+	"channels.exportMessageLink":                func() tlrpc.TLObject { return &ChannelsExportMessageLinkRequest{} },
+	"phone.exportGroupCallInvite":               func() tlrpc.TLObject { return &PhoneExportGroupCallInviteRequest{} },
+	"messages.startBot":                         func() tlrpc.TLObject { return &MessagesStartBotRequest{} },
+	"channels.getSendAs":                        func() tlrpc.TLObject { return &ChannelsGetSendAsRequest{} },
+	"messages.getGameHighScores":                func() tlrpc.TLObject { return &MessagesGetGameHighScoresRequest{} },
+	"auth.acceptLoginToken":                     func() tlrpc.TLObject { return &AuthAcceptLoginTokenRequest{} },
+	"contacts.addContact":                       func() tlrpc.TLObject { return &ContactsAddContactRequest{} },
+	"channels.setStickers":                      func() tlrpc.TLObject { return &ChannelsSetStickersRequest{} },
+	"channels.readMessageContents":              func() tlrpc.TLObject { return &ChannelsReadMessageContentsRequest{} },
+	"channels.togglePreHistoryHidden":           func() tlrpc.TLObject { return &ChannelsTogglePreHistoryHiddenRequest{} },
+	"account.getGlobalPrivacySettings":          func() tlrpc.TLObject { return &AccountGetGlobalPrivacySettingsRequest{} },
+	"help.setBotUpdatesStatus":                  func() tlrpc.TLObject { return &HelpSetBotUpdatesStatusRequest{} },
+	"account.registerDevice":                    func() tlrpc.TLObject { return &AccountRegisterDeviceRequest{} },
+	"channels.getMessageAuthor":                 func() tlrpc.TLObject { return &ChannelsGetMessageAuthorRequest{} },
+	"bots.updateUserEmojiStatus":                func() tlrpc.TLObject { return &BotsUpdateUserEmojiStatusRequest{} },
+	"payments.updateStarGiftPrice":              func() tlrpc.TLObject { return &PaymentsUpdateStarGiftPriceRequest{} },
+	"updates.getState":                          func() tlrpc.TLObject { return &UpdatesGetStateRequest{} },
+	"channels.toggleSlowMode":                   func() tlrpc.TLObject { return &ChannelsToggleSlowModeRequest{} },
+	"help.acceptTermsOfService":                 func() tlrpc.TLObject { return &HelpAcceptTermsOfServiceRequest{} },
+	"phone.getGroupCallChainBlocks":             func() tlrpc.TLObject { return &PhoneGetGroupCallChainBlocksRequest{} },
+	"stories.getAllStories":                     func() tlrpc.TLObject { return &StoriesGetAllStoriesRequest{} },
+	"account.reorderUsernames":                  func() tlrpc.TLObject { return &AccountReorderUsernamesRequest{} },
+	"phone.getGroupCallJoinAs":                  func() tlrpc.TLObject { return &PhoneGetGroupCallJoinAsRequest{} },
+	"messages.getDialogFilters":                 func() tlrpc.TLObject { return &MessagesGetDialogFiltersRequest{} },
+	"messages.getPeerSettings":                  func() tlrpc.TLObject { return &MessagesGetPeerSettingsRequest{} },
+	"langpack.getStrings":                       func() tlrpc.TLObject { return &LangpackGetStringsRequest{} },
+	"channels.updateEmojiStatus":                func() tlrpc.TLObject { return &ChannelsUpdateEmojiStatusRequest{} },
+	"messages.getUnreadMentions":                func() tlrpc.TLObject { return &MessagesGetUnreadMentionsRequest{} },
+	"phone.toggleGroupCallRecord":               func() tlrpc.TLObject { return &PhoneToggleGroupCallRecordRequest{} },
+	"channels.editPhoto":                        func() tlrpc.TLObject { return &ChannelsEditPhotoRequest{} },
+	"bots.allowSendMessage":                     func() tlrpc.TLObject { return &BotsAllowSendMessageRequest{} },
+	"messages.checkQuickReplyShortcut":          func() tlrpc.TLObject { return &MessagesCheckQuickReplyShortcutRequest{} },
+	"messages.savePreparedInlineMessage":        func() tlrpc.TLObject { return &MessagesSavePreparedInlineMessageRequest{} },
+	"account.saveTheme":                         func() tlrpc.TLObject { return &AccountSaveThemeRequest{} },
+	"channels.searchPosts":                      func() tlrpc.TLObject { return &ChannelsSearchPostsRequest{} },
+	"langpack.getLangPack":                      func() tlrpc.TLObject { return &LangpackGetLangPackRequest{} },
+	"messages.discardEncryption":                func() tlrpc.TLObject { return &MessagesDiscardEncryptionRequest{} },
+	"account.acceptAuthorization":               func() tlrpc.TLObject { return &AccountAcceptAuthorizationRequest{} },
+	"channels.createForumTopic":                 func() tlrpc.TLObject { return &ChannelsCreateForumTopicRequest{} },
+	"payments.getGiveawayInfo":                  func() tlrpc.TLObject { return &PaymentsGetGiveawayInfoRequest{} },
+	"channels.reportSpam":                       func() tlrpc.TLObject { return &ChannelsReportSpamRequest{} },
+	"channels.editForumTopic":                   func() tlrpc.TLObject { return &ChannelsEditForumTopicRequest{} },
+	"help.dismissSuggestion":                    func() tlrpc.TLObject { return &HelpDismissSuggestionRequest{} },
+	"messages.getScheduledHistory":              func() tlrpc.TLObject { return &MessagesGetScheduledHistoryRequest{} },
+	"stickers.changeSticker":                    func() tlrpc.TLObject { return &StickersChangeStickerRequest{} },
+	"channels.getGroupsForDiscussion":           func() tlrpc.TLObject { return &ChannelsGetGroupsForDiscussionRequest{} },
+	"messages.requestEncryption":                func() tlrpc.TLObject { return &MessagesRequestEncryptionRequest{} },
+	"payments.applyGiftCode":                    func() tlrpc.TLObject { return &PaymentsApplyGiftCodeRequest{} },
+	"messages.readDiscussion":                   func() tlrpc.TLObject { return &MessagesReadDiscussionRequest{} },
+	"stickers.removeStickerFromSet":             func() tlrpc.TLObject { return &StickersRemoveStickerFromSetRequest{} },
+	"contacts.acceptContact":                    func() tlrpc.TLObject { return &ContactsAcceptContactRequest{} },
+	"channels.leaveChannel":                     func() tlrpc.TLObject { return &ChannelsLeaveChannelRequest{} },
+	"contacts.exportContactToken":               func() tlrpc.TLObject { return &ContactsExportContactTokenRequest{} },
+	"channels.getAdminedPublicChannels":         func() tlrpc.TLObject { return &ChannelsGetAdminedPublicChannelsRequest{} },
+	"messages.uninstallStickerSet":              func() tlrpc.TLObject { return &MessagesUninstallStickerSetRequest{} },
+	"messages.deletePhoneCallHistory":           func() tlrpc.TLObject { return &MessagesDeletePhoneCallHistoryRequest{} },
+	"account.reportProfilePhoto":                func() tlrpc.TLObject { return &AccountReportProfilePhotoRequest{} },
+	"account.updateEmojiStatus":                 func() tlrpc.TLObject { return &AccountUpdateEmojiStatusRequest{} },
+	"messages.getEmojiStickers":                 func() tlrpc.TLObject { return &MessagesGetEmojiStickersRequest{} },
+	"messages.report":                           func() tlrpc.TLObject { return &MessagesReportRequest{} },
+	"account.getWallPaper":                      func() tlrpc.TLObject { return &AccountGetWallPaperRequest{} },
+	"messages.toggleDialogFilterTags":           func() tlrpc.TLObject { return &MessagesToggleDialogFilterTagsRequest{} },
+	"messages.getMessageEditData":               func() tlrpc.TLObject { return &MessagesGetMessageEditDataRequest{} },
+	"chatlists.getLeaveChatlistSuggestions":     func() tlrpc.TLObject { return &ChatlistsGetLeaveChatlistSuggestionsRequest{} },
+	"messages.sendMessage":                      func() tlrpc.TLObject { return &MessagesSendMessageRequest{} },
+	"account.toggleNoPaidMessagesException":     func() tlrpc.TLObject { return &AccountToggleNoPaidMessagesExceptionRequest{} },
+	"account.installWallPaper":                  func() tlrpc.TLObject { return &AccountInstallWallPaperRequest{} },
+	"phone.sendSignalingData":                   func() tlrpc.TLObject { return &PhoneSendSignalingDataRequest{} },
+	"stickers.changeStickerPosition":            func() tlrpc.TLObject { return &StickersChangeStickerPositionRequest{} },
 }
 
 // GetStaticMethods returns the static method constructor map
 func GetStaticMethods() map[string]func() tlrpc.TLObject {
 	return staticMethods
+}
+
+var methodLayerVariants = map[uint32][]tlConstructorLayerVariant{
+	0x03173d78: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesGetChannelDifferenceRequest{} }},
+	},
+	0x032512c5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsSubscriptionsRequest{} }},
+	},
+	0x032da4cf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountVerifyEmailRequest{} }},
+	},
+	0x0388a3b5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosUploadProfilePhotoRequest{} }},
+	},
+	0x038a08d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetUserInfoRequest{} }},
+	},
+	0x041845db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetGroupCallRequest{} }},
+	},
+	0x042f1f61: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumGetBoostsStatusRequest{} }},
+	},
+	0x04f1aaa9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetFavedStickersRequest{} }},
+	},
+	0x0517165a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSetBotCommandsRequest{} }},
+	},
+	0x053ca973: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsToggleUsernameRequest{} }},
+	},
+	0x0589ee75: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditFactCheckRequest{} }},
+	},
+	0x05a954c0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReceivedMessagesRequest{} }},
+	},
+	0x062dd747: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUnpinAllMessagesRequest{} }},
+	},
+	0x06dd654c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetReactionsNotifySettingsRequest{} }},
+	},
+	0x06de6392: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsToggleUserEmojiStatusPermissionRequest{} }},
+	},
+	0x07967d36: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetWallPapersRequest{} }},
+	},
+	0x08736a09: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetFullChannelRequest{} }},
+	},
+	0x087fc5e7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsInvokeWebViewCustomMethodRequest{} }},
+	},
+	0x08fc711d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetAccountTTLRequest{} }},
+	},
+	0x093fa0bf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsUpdateSettingsRequest{} }},
+	},
+	0x096a0e00: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsDeleteContactsRequest{} }},
+	},
+	0x09c2dd95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetBotPrecheckoutResultsRequest{} }},
+	},
+	0x09e82039: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosUpdateProfilePhotoRequest{} }},
+	},
+	0x0a245dd3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsDeactivateAllUsernamesRequest{} }},
+	},
+	0x0a4314f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendWebViewResultMessageRequest{} }},
+	},
+	0x0a7f6bbb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetChannelsRequest{} }},
+	},
+	0x0b290c69: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsConvertToGigagroupRequest{} }},
+	},
+	0x0b297e9b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesTogglePinnedToTopRequest{} }},
+	},
+	0x0be77b4a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumGetMyBoostsRequest{} }},
+	},
+	0x0d36bf79: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCheckRecoveryPasswordRequest{} }},
+	},
+	0x0d6b48f7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetSuggestedStarRefBotsRequest{} }},
+	},
+	0x0d91a548: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersGetUsersRequest{} }},
+	},
+	0x0de560d1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetForumTopicsRequest{} }},
+	},
+	0x0e306d3a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadHistoryRequest{} }},
+	},
+	0x0ecf6736: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetFeaturedEmojiStickersRequest{} }},
+	},
+	0x0edc39d0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsIsEligibleToJoinRequest{} }},
+	},
+	0x0f578105: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetRecentEmojiStatusesRequest{} }},
+	},
+	0x0f635e1b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetInlineGameHighScoresRequest{} }},
+	},
+	0x0f91b065: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsExportInvoiceRequest{} }},
+	},
+	0x1013fd9e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsDeleteByPhonesRequest{} }},
+	},
+	0x107e31a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchSentMediaRequest{} }},
+	},
+	0x10a698e8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsGetStatusRequest{} }},
+	},
+	0x10cf3123: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSetBotInfoRequest{} }},
+	},
+	0x10e6bd2c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsCheckUsernameRequest{} }},
+	},
+	0x10ea6184: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendVoteRequest{} }},
+	},
+	0x11e831ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetInactiveChannelsRequest{} }},
+	},
+	0x11f812d8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsSearchRequest{} }},
+	},
+	0x124b1c00: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersRenameStickerSetRequest{} }},
+	},
+	0x12b3ad31: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetNotifySettingsRequest{} }},
+	},
+	0x12cbf0c4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReportSponsoredMessageRequest{} }},
+	},
+	0x13005788: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsImportContactTokenRequest{} }},
+	},
+	0x1359f4e6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsCanSendMessageRequest{} }},
+	},
+	0x14967978: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUploadMediaRequest{} }},
+	},
+	0x1508b6af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsDifferenceRequest{} }},
+	},
+	0x1513e7b0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsToggleStarGiftsPinnedToTopRequest{} }},
+	},
+	0x15ad9f64: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetInlineGameScoreRequest{} }},
+	},
+	0x167fc0a1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleAutotranslationRequest{} }},
+	},
+	0x16fcc2cb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAttachMenuBotsRequest{} }},
+	},
+	0x17aeb75a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsAddPreviewMediaRequest{} }},
+	},
+	0x17d54f61: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneReceivedCallRequest{} }},
+	},
+	0x18201aae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountClearRecentEmojiStatusesRequest{} }},
+	},
+	0x182e6d6f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetWebAuthorizationsRequest{} }},
+	},
+	0x18dea0ac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAvailableReactionsRequest{} }},
+	},
+	0x198fb446: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRequestURLAuthRequest{} }},
+	},
+	0x19ba4a67: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetPaidMessagesRevenueRequest{} }},
+	},
+	0x19c2f763: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesGetDifferenceRequest{} }},
+	},
+	0x19d8eb45: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesReportRequest{} }},
+	},
+	0x1ab21940: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetGroupCallStreamChannelsRequest{} }},
+	},
+	0x1ad4a04a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUpdateDialogFilterRequest{} }},
+	},
+	0x1ae373ac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsResetTopPeerRatingRequest{} }},
+	},
+	0x1b3faa88: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSendConfirmPhoneCodeRequest{} }},
+	},
+	0x1bbcf300: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSearchCountersRequest{} }},
+	},
+	0x1bf89d74: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendMultiMediaRequest{} }},
+	},
+	0x1c3db333: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUploadThemeRequest{} }},
+	},
+	0x1c50d144: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneLeaveGroupCallPresentationRequest{} }},
+	},
+	0x1ca6ac0a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneEditGroupCallTitleRequest{} }},
+	},
+	0x1cff7e08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSplitRangesRequest{} }},
+	},
+	0x1d2652ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountFinishTakeoutSessionRequest{} }},
+	},
+	0x1dd840f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiStickerGroupsRequest{} }},
+	},
+	0x1e251c95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpHidePromoDataRequest{} }},
+	},
+	0x1e91fc99: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSavedDialogsRequest{} }},
+	},
+	0x1edaaac2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetGlobalPrivacySettingsRequest{} }},
+	},
+	0x1f040578: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCancelCodeRequest{} }},
+	},
+	0x1f4a0e87: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCreateStarGiftCollectionRequest{} }},
+	},
+	0x1fb33026: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetNearestDcRequest{} }},
+	},
+	0x21202222: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDialogUnreadMarksRequest{} }},
+	},
+	0x219c34e6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneToggleGroupCallStartSubscriptionRequest{} }},
+	},
+	0x21a548f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiProfilePhotoGroupsRequest{} }},
+	},
+	0x21a61057: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAppendTodoListRequest{} }},
+	},
+	0x22567115: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsCheckSearchPostsFloodRequest{} }},
+	},
+	0x227d824b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetSavedInfoRequest{} }},
+	},
+	0x22ddd30c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetRepliesRequest{} }},
+	},
+	0x2433dc92: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsRevenueWithdrawalURLRequest{} }},
+	},
+	0x2442485e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetAccountTTLRequest{} }},
+	},
+	0x2478d1cc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetPaymentReceiptRequest{} }},
+	},
+	0x24b524c5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsJoinChannelRequest{} }},
+	},
+	0x24e6818d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadGetWebFileRequest{} }},
+	},
+	0x25a71742: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetChannelRecommendationsRequest{} }},
+	},
+	0x25ae8f4a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsRefundStarsChargeRequest{} }},
+	},
+	0x25b3eac7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetAlbumsRequest{} }},
+	},
+	0x269dc2c1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRequestWebViewRequest{} }},
+	},
+	0x269e3643: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesViewSponsoredMessageRequest{} }},
+	},
+	0x269e9a49: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesTranscribeAudioRequest{} }},
+	},
+	0x26cf8950: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDhConfigRequest{} }},
+	},
+	0x2714d86c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountCheckUsernameRequest{} }},
+	},
+	0x2757ba54: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetPremiumGiftCodeOptionsRequest{} }},
+	},
+	0x277add7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneSaveCallDebugRequest{} }},
+	},
+	0x284b3639: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersCheckShortNameRequest{} }},
+	},
+	0x28e16cc8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetStoriesViewsRequest{} }},
+	},
+	0x2950a18f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsReorderPinnedForumTopicsRequest{} }},
+	},
+	0x29a8962c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsBlockFromRepliesRequest{} }},
+	},
+	0x29b1c66a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchStickersRequest{} }},
+	},
+	0x29ee847a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchRequest{} }},
+	},
+	0x2a2a697c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsSaveStarGiftRequest{} }},
+	},
+	0x2a862092: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUploadImportedMediaRequest{} }},
+	},
+	0x2bf40ccc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateThemeRequest{} }},
+	},
+	0x2c11c0d7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchCustomEmojiRequest{} }},
+	},
+	0x2c4ada50: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetPeerStoriesRequest{} }},
+	},
+	0x2c800be5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsImportContactsRequest{} }},
+	},
+	0x2ca51fd1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetTermsOfServiceUpdateRequest{} }},
+	},
+	0x2d0135b3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsDeletePreviewMediaRequest{} }},
+	},
+	0x2d01b9ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetWebAuthorizationRequest{} }},
+	},
+	0x2d03522f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsSendPaymentFormRequest{} }},
+	},
+	0x2db873a9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthImportWebTokenAuthorizationRequest{} }},
+	},
+	0x2dca16b8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsByIDRequest{} }},
+	},
+	0x2e2e8734: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsBlockRequest{} }},
+	},
+	0x2e79d779: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetBankCardDataRequest{} }},
+	},
+	0x2e7b4543: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetCollectibleEmojiStatusesRequest{} }},
+	},
+	0x2ecd56cd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiStatusGroupsRequest{} }},
+	},
+	0x2efe1722: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneConfirmCallRequest{} }},
+	},
+	0x30eb63f0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesCanSendStoryRequest{} }},
+	},
+	0x316ce548: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetReactionsNotifySettingsRequest{} }},
+	},
+	0x31c1c44f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMessageReadParticipantsRequest{} }},
+	},
+	0x327a30cb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSaveGifRequest{} }},
+	},
+	0x32d439a4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendEncryptedServiceRequest{} }},
+	},
+	0x33ddf480: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetAdminLogRequest{} }},
+	},
+	0x34090c3b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesInitHistoryImportRequest{} }},
+	},
+	0x34435f2d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsDeleteTopicHistoryRequest{} }},
+	},
+	0x34fdc5c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetBotAppRequest{} }},
+	},
+	0x3514b3de: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsUpdateUsernameRequest{} }},
+	},
+	0x35705b8a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchStickerSetsRequest{} }},
+	},
+	0x3583fcb1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSetMainProfileTabRequest{} }},
+	},
+	0x35a0e062: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsRequest{} }},
+	},
+	0x35a9e0d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetChannelRestrictedStatusEmojisRequest{} }},
+	},
+	0x35ddd674: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditChatPhotoRequest{} }},
+	},
+	0x3637e05b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSavedReactionTagsRequest{} }},
+	},
+	0x367544db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsDeleteParticipantHistoryRequest{} }},
+	},
+	0x36a73f77: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadMessageContentsRequest{} }},
+	},
+	0x36e5bf4d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadMentionsRequest{} }},
+	},
+	0x37096c70: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthRecoverPasswordRequest{} }},
+	},
+	0x37148dbb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetPaymentFormRequest{} }},
+	},
+	0x374fef40: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGetStoryStatsRequest{} }},
+	},
+	0x38df3532: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateDeviceLockedRequest{} }},
+	},
+	0x3920e6ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAdminsWithInvitesRequest{} }},
+	},
+	0x392718f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSaveRecentStickerRequest{} }},
+	},
+	0x39461db2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetRecentReactionsRequest{} }},
+	},
+	0x395f69da: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadGetCdnFileRequest{} }},
+	},
+	0x39854d1f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumGetUserBoostsRequest{} }},
+	},
+	0x3a5869ec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetThemeRequest{} }},
+	},
+	0x3b1adf37: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReorderPinnedDialogsRequest{} }},
+	},
+	0x3bd2b4a0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneAcceptCallRequest{} }},
+	},
+	0x3c479971: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneDeclineConferenceCallInviteRequest{} }},
+	},
+	0x3cc04740: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteQuickReplyShortcutRequest{} }},
+	},
+	0x3cd930b7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSetEmojiStickersRequest{} }},
+	},
+	0x3d6ce850: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSponsoredMessagesRequest{} }},
+	},
+	0x3d8de0f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsResetBotCommandsRequest{} }},
+	},
+	0x3dbc0415: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAcceptEncryptionRequest{} }},
+	},
+	0x3dc0f114: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetRecentMeUrlsRequest{} }},
+	},
+	0x3dea5b03: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveRingtoneRequest{} }},
+	},
+	0x3e0bdd7c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateUsernameRequest{} }},
+	},
+	0x3e72ba19: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthLogOutRequest{} }},
+	},
+	0x3eadb1bb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesCheckChatInviteRequest{} }},
+	},
+	0x3f64c076: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReportReactionRequest{} }},
+	},
+	0x3fedc75f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetDeepLinkInfoRequest{} }},
+	},
+	0x3ff75734: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleForumRequest{} }},
+	},
+	0x40582bb2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSetDiscussionGroupRequest{} }},
+	},
+	0x40f48462: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountChangeAuthorizationSettingsRequest{} }},
+	},
+	0x41248786: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneSaveCallLogRequest{} }},
+	},
+	0x413a3e73: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRequestSimpleWebViewRequest{} }},
+	},
+	0x418d549c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleSignaturesRequest{} }},
+	},
+	0x41c10fff: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsCheckChatlistInviteRequest{} }},
+	},
+	0x423ab3ad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetPreviewInfoRequest{} }},
+	},
+	0x42c6978f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangpackGetLanguagesRequest{} }},
+	},
+	0x42ff96ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneRequestCallRequest{} }},
+	},
+	0x435885b5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesTogglePaidReactionPrivacyRequest{} }},
+	},
+	0x4365af6b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftValueInfoRequest{} }},
+	},
+	0x43fe19f3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesCheckHistoryImportRequest{} }},
+	},
+	0x4423e6c5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetHistoryRequest{} }},
+	},
+	0x446972fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDiscussionMessageRequest{} }},
+	},
+	0x449e0b51: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetTmpPasswordRequest{} }},
+	},
+	0x44fa7a15: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendEncryptedRequest{} }},
+	},
+	0x4504d54f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSetBotMenuButtonRequest{} }},
+	},
+	0x461b3f48: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMessageReactionsListRequest{} }},
+	},
+	0x4696459a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersReplaceStickerRequest{} }},
+	},
+	0x472455aa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPaidReactionPrivacyRequest{} }},
+	},
+	0x48cdc6d8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCreateGroupCallRequest{} }},
+	},
+	0x49b30240: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetTimezonesListRequest{} }},
+	},
+	0x49e9528f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetChatsRequest{} }},
+	},
+	0x4b00e066: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateBusinessWorkHoursRequest{} }},
+	},
+	0x4b0c8c0f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReportEncryptedSpamRequest{} }},
+	},
+	0x4b12327b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsUpdatePaidMessagesPriceRequest{} }},
+	},
+	0x4bc6589a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchGlobalRequest{} }},
+	},
+	0x4c2985b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleJoinRequestRequest{} }},
+	},
+	0x4c9409f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDeclinePasswordResetRequest{} }},
+	},
+	0x4d392343: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetInviteTextRequest{} }},
+	},
+	0x4dafc503: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersSuggestShortNameRequest{} }},
+	},
+	0x4dc5085f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteSavedHistoryRequest{} }},
+	},
+	0x4dd3a7f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountVerifyPhoneRequest{} }},
+	},
+	0x4e9963b2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsLanguagesRequest{} }},
+	},
+	0x4ea4c80f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetConnectedBotsRequest{} }},
+	},
+	0x4ea9b3bf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsStatusRequest{} }},
+	},
+	0x4f1ebf24: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsFinishJobRequest{} }},
+	},
+	0x4f47a016: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetDefaultReactionRequest{} }},
+	},
+	0x4facb138: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesHidePeerSettingsBarRequest{} }},
+	},
+	0x4fdc5ea7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCanPurchaseStoreRequest{} }},
+	},
+	0x4fddbee7: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsUpdateStarGiftCollectionRequest{} }},
+	},
+	0x500377f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneLeaveGroupCallRequest{} }},
+	},
+	0x50077589: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsCheckDownloadFileParamsRequest{} }},
+	},
+	0x5057c497: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUploadEncryptedFileRequest{} }},
+	},
+	0x50f24105: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleUsernameRequest{} }},
+	},
+	0x514e999d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetInlineBotResultsRequest{} }},
+	},
+	0x52029342: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetCdnConfigRequest{} }},
+	},
+	0x522d5a7d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetAppUpdateRequest{} }},
+	},
+	0x53577479: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetNotifyExceptionsRequest{} }},
+	},
+	0x535983c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetPeerMaxIDsRequest{} }},
+	},
+	0x53618bce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRequestAppWebViewRequest{} }},
+	},
+	0x53bc0020: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDeleteAutoSaveExceptionsRequest{} }},
+	},
+	0x548a30f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetPasswordRequest{} }},
+	},
+	0x5492e5ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResolveBusinessChatLinkRequest{} }},
+	},
+	0x54ae308e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSaveDraftRequest{} }},
+	},
+	0x55451fa9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetCallConfigRequest{} }},
+	},
+	0x5559481d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendEncryptedFileRequest{} }},
+	},
+	0x55a5bb66: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReceivedQueueRequest{} }},
+	},
+	0x566decd0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditTitleRequest{} }},
+	},
+	0x5680e342: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneStartScheduledGroupCallRequest{} }},
+	},
+	0x56987bd5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteRevokedExportedChatInvitesRequest{} }},
+	},
+	0x56da0b3f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetAutoDownloadSettingsRequest{} }},
+	},
+	0x570d6f6f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetWebPagePreviewRequest{} }},
+	},
+	0x575e1f8c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneSaveDefaultGroupCallJoinAsRequest{} }},
+	},
+	0x5774ca74: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetStoriesByIDRequest{} }},
+	},
+	0x5784d3e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMessagesViewsRequest{} }},
+	},
+	0x57bbd166: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesActivateStealthModeRequest{} }},
+	},
+	0x57f17692: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetArchivedStickersRequest{} }},
+	},
+	0x5821a5dc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetPinnedStoriesRequest{} }},
+	},
+	0x5869a553: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotsRequest{} }},
+	},
+	0x58943ee2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetTypingRequest{} }},
+	},
+	0x58bbcb50: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendPaidReactionRequest{} }},
+	},
+	0x58d6b376: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountToggleUsernameRequest{} }},
+	},
+	0x58e63f6d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditLocationRequest{} }},
+	},
+	0x59ae2b16: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteScheduledMessagesRequest{} }},
+	},
+	0x59ead627: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneSetCallRatingRequest{} }},
+	},
+	0x5a6d7395: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReportMessagesDeliveryRequest{} }},
+	},
+	0x5b118126: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadFeaturedStickersRequest{} }},
+	},
+	0x5bd0ee50: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteChatRequest{} }},
+	},
+	0x5c003cef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditQuickReplyShortcutRequest{} }},
+	},
+	0x5cf09635: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSavedGifsRequest{} }},
+	},
+	0x5dc60f03: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesCheckHistoryImportPeerRequest{} }},
+	},
+	0x5dd69e12: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetContactsRequest{} }},
+	},
+	0x5dee78b0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetMainProfileTabRequest{} }},
+	},
+	0x5e437ed9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDisablePeerConnectedBotRequest{} }},
+	},
+	0x5e5259b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesUpdateAlbumRequest{} }},
+	},
+	0x5f150144: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGetMessagePublicForwardsRequest{} }},
+	},
+	0x5f2178c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountConfirmPhoneRequest{} }},
+	},
+	0x5ff58f20: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsLaunchPrepaidGiveawayRequest{} }},
+	},
+	0x60073674: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDeleteBusinessChatLinkRequest{} }},
+	},
+	0x60297dec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUpdateSavedReactionTagRequest{} }},
+	},
+	0x60331907: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReorderQuickRepliesRequest{} }},
+	},
+	0x60eaefa1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsToggleChatStarGiftNotificationsRequest{} }},
+	},
+	0x60f67660: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumGetBoostsListRequest{} }},
+	},
+	0x61e3f854: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetAppConfigRequest{} }},
+	},
+	0x621d5fa0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsLoadAsyncGraphRequest{} }},
+	},
+	0x63183030: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesTranslateTextRequest{} }},
+	},
+	0x63c66506: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMessagesRequest{} }},
+	},
+	0x640f82b8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMaskStickersRequest{} }},
+	},
+	0x646e1097: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountToggleConnectedBotPausedRequest{} }},
+	},
+	0x64780b14: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetFeaturedStickersRequest{} }},
+	},
+	0x652e4400: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountCreateThemeRequest{} }},
+	},
+	0x653db63d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsEditExportedInviteRequest{} }},
+	},
+	0x658b7188: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDefaultHistoryTTLRequest{} }},
+	},
+	0x65ad71dc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetMultiWallPapersRequest{} }},
+	},
+	0x6628562c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateStatusRequest{} }},
+	},
+	0x66a08c7e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateConnectedBotRequest{} }},
+	},
+	0x66b91b70: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpEditUserInfoRequest{} }},
+	},
+	0x66cdafc4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateBusinessGreetingMessageRequest{} }},
+	},
+	0x66e486fb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsHideChatlistUpdatesRequest{} }},
+	},
+	0x67a3ff2c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthImportBotAuthorizationRequest{} }},
+	},
+	0x682d2594: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetWebAuthorizationsRequest{} }},
+	},
+	0x6847d0ab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FoldersEditPeerFoldersRequest{} }},
+	},
+	0x68f3e4eb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleAntiSpamRequest{} }},
+	},
+	0x69da4557: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsRequest{} }},
+	},
+	0x69f59d69: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleBotInAttachMenuRequest{} }},
+	},
+	0x6a0d3206: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUnregisterDeviceRequest{} }},
+	},
+	0x6a3f8d65: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAllDraftsRequest{} }},
+	},
+	0x6a596502: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangpackGetLanguageRequest{} }},
+	},
+	0x6a6e7854: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleParticipantsHiddenRequest{} }},
+	},
+	0x6aa3f6bd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSearchResultsCalendarRequest{} }},
+	},
+	0x6b7da746: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PremiumApplyBoostRequest{} }},
+	},
+	0x6c2d9026: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsUpdatePinnedForumTopicRequest{} }},
+	},
+	0x6c50051c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesImportChatInviteRequest{} }},
+	},
+	0x6c5a5b37: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveWallPaperRequest{} }},
+	},
+	0x6c750de1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendQuickReplyMessagesRequest{} }},
+	},
+	0x6dfa0622: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsBotCancelStarsSubscriptionRequest{} }},
+	},
+	0x6e2be050: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetOnlinesRequest{} }},
+	},
+	0x6f02f748: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpSaveAppLogRequest{} }},
+	},
+	0x6f6f9c96: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSavedDialogsByIDRequest{} }},
+	},
+	0x6f70dde1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetBusinessChatLinksRequest{} }},
+	},
+	0x702a40e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetRecentLocationsRequest{} }},
+	},
+	0x70c32edb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountChangePhoneRequest{} }},
+	},
+	0x719c5c5e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsDeleteExportedInviteRequest{} }},
+	},
+	0x7206e458: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetThemesRequest{} }},
+	},
+	0x725afbbc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsResolveUsernameRequest{} }},
+	},
+	0x735787a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetCountriesListRequest{} }},
+	},
+	0x73665bc2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetSecureValueRequest{} }},
+	},
+	0x73746f5c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetExportedChatInviteRequest{} }},
+	},
+	0x73783ffd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditChatTitleRequest{} }},
+	},
+	0x737fc2ec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesSendStoryRequest{} }},
+	},
+	0x73bb643b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPollResultsRequest{} }},
+	},
+	0x7488ce5b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiGroupsRequest{} }},
+	},
+	0x74bbb43d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneToggleGroupCallSettingsRequest{} }},
+	},
+	0x74bf076b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsConvertStarGiftRequest{} }},
+	},
+	0x74fae13a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsLeaveChatlistRequest{} }},
+	},
+	0x7573a4e9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersGetSavedMusicByIDRequest{} }},
+	},
+	0x76a86270: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetBotBusinessConnectionRequest{} }},
+	},
+	0x76f36233: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveAutoDownloadSettingsRequest{} }},
+	},
+	0x77216192: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAttachMenuBotRequest{} }},
+	},
+	0x7727a7d5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetChannelDefaultEmojiStatusesRequest{} }},
+	},
+	0x778b5ab3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsUpdateStarRefProgramRequest{} }},
+	},
+	0x778d902f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsGetSmsJobRequest{} }},
+	},
+	0x77ced9d0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetParticipantsRequest{} }},
+	},
+	0x78337739: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReorderStickerSetsRequest{} }},
+	},
+	0x78515775: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateProfileRequest{} }},
+	},
+	0x788464e1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSetBotBroadcastDefaultAdminRightsRequest{} }},
+	},
+	0x788d7fe3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersGetSavedMusicRequest{} }},
+	},
+	0x791451ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetEncryptedTypingRequest{} }},
+	},
+	0x7998c914: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsSendStarsFormRequest{} }},
+	},
+	0x7a5fa236: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetResaleStarGiftsRequest{} }},
+	},
+	0x7a777135: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneDiscardGroupCallRequest{} }},
+	},
+	0x7a7f2a15: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResendPasswordEmailRequest{} }},
+	},
+	0x7adc669d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetContactIDsRequest{} }},
+	},
+	0x7b393160: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneInviteToGroupCallRequest{} }},
+	},
+	0x7b8def20: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesExportStoryLinkRequest{} }},
+	},
+	0x7c2557c4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesToggleAllStoriesHiddenRequest{} }},
+	},
+	0x7cefa15d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateColorRequest{} }},
+	},
+	0x7d0444bb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCreateConferenceCallRequest{} }},
+	},
+	0x7e58ee9c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesClearAllDraftsRequest{} }},
+	},
+	0x7e960193: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthResetLoginEmailRequest{} }},
+	},
+	0x7ed094a1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetOldFeaturedStickersRequest{} }},
+	},
+	0x7ed23c57: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetStoryViewsListRequest{} }},
+	},
+	0x7ed5348a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsConnectStarRefBotRequest{} }},
+	},
+	0x7f18176a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsTransferStarGiftRequest{} }},
+	},
+	0x7f1d072f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRateTranscribedAudioRequest{} }},
+	},
+	0x7f4b690a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadEncryptedHistoryRequest{} }},
+	},
+	0x7fd736b2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesSendReactionRequest{} }},
+	},
+	0x7fe7e815: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesHideChatJoinRequestRequest{} }},
+	},
+	0x80ed747d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsAssignAppStoreTransactionRequest{} }},
+	},
+	0x8107455c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleSuggestedPostApprovalRequest{} }},
+	},
+	0x8235057e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesClickSponsoredMessageRequest{} }},
+	},
+	0x82574ae5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSendChangePhoneCodeRequest{} }},
+	},
+	0x82f1e39f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetSavedRequest{} }},
+	},
+	0x831a83a2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUploadRingtoneRequest{} }},
+	},
+	0x8341ecc0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetLeftChannelsRequest{} }},
+	},
+	0x83557dba: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditInlineBotMessageRequest{} }},
+	},
+	0x8472478e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsExportChatlistInviteRequest{} }},
+	},
+	0x84be5b93: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateNotifySettingsRequest{} }},
+	},
+	0x84c1fd4e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsDeleteMessagesRequest{} }},
+	},
+	0x84f80814: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetExtendedMediaRequest{} }},
+	},
+	0x8514bdda: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsToggleTopPeersRequest{} }},
+	},
+	0x8525606f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsEditPreviewMediaRequest{} }},
+	},
+	0x8535fbd9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesReorderAlbumsRequest{} }},
+	},
+	0x857ebdb8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPreparedInlineMessageRequest{} }},
+	},
+	0x864b2581: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetChatAvailableReactionsRequest{} }},
+	},
+	0x8653febe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersAddStickerToSetRequest{} }},
+	},
+	0x87704394: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersDeleteStickerSetRequest{} }},
+	},
+	0x879537f1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsResetSavedRequest{} }},
+	},
+	0x87cf7f2f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosDeletePhotosRequest{} }},
+	},
+	0x8851e68e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountCreateBusinessChatLinkRequest{} }},
+	},
+	0x89419521: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsGetChatlistUpdatesRequest{} }},
+	},
+	0x8999602d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesClearRecentStickersRequest{} }},
+	},
+	0x899fe31d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveSecureValueRequest{} }},
+	},
+	0x8af94344: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsResolvePhoneRequest{} }},
+	},
+	0x8b716587: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReorderPinnedSavedDialogsRequest{} }},
+	},
+	0x8b89dfbd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSetCustomVerificationRequest{} }},
+	},
+	0x8b9b4dae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetContentSettingsRequest{} }},
+	},
+	0x8bba90e6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMessagesReactionsRequest{} }},
+	},
+	0x8c3410af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountEditBusinessChatLinkRequest{} }},
+	},
+	0x8c4bfe5d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetOutboxReadDateRequest{} }},
+	},
+	0x8c5006f8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMarkDialogUnreadRequest{} }},
+	},
+	0x8ca60525: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneDeleteConferenceCallParticipantsRequest{} }},
+	},
+	0x8d3456d0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesDeleteAlbumRequest{} }},
+	},
+	0x8d52a951: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSignInRequest{} }},
+	},
+	0x8d9692a3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetWebPageRequest{} }},
+	},
+	0x8e39261e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthRequestFirebaseSmsRequest{} }},
+	},
+	0x8e48a188: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthDropTempAuthKeysRequest{} }},
+	},
+	0x8e51b4c1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCheckGiftCodeRequest{} }},
+	},
+	0x8ef3eab0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountInitTakeoutSessionRequest{} }},
+	},
+	0x8ef8ecc0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetGameScoreRequest{} }},
+	},
+	0x8f38cd1f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditCreatorRequest{} }},
+	},
+	0x8fb53057: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneJoinGroupCallRequest{} }},
+	},
+	0x8fdf1920: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountConfirmPasswordEmailRequest{} }},
+	},
+	0x8ffacae1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetChatWallPaperRequest{} }},
+	},
+	0x9021ab67: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersCreateStickerSetRequest{} }},
+	},
+	0x90c894b5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersSetSecureValueErrorsRequest{} }},
+	},
+	0x91006707: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsCreateChannelRequest{} }},
+	},
+	0x9156982a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadGetFileHashesRequest{} }},
+	},
+	0x915860ae: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetDefaultGroupPhotoEmojisRequest{} }},
+	},
+	0x91b2d060: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendBotRequestedPeerRequest{} }},
+	},
+	0x91cd32a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosGetUserPhotosRequest{} }},
+	},
+	0x91dc3f31: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadGetCdnFileHashesRequest{} }},
+	},
+	0x925ec9ea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSetBotGroupDefaultAdminRightsRequest{} }},
+	},
+	0x92b4494c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSearchEmojiStickerSetsRequest{} }},
+	},
+	0x92ceddd4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesCreateChatRequest{} }},
+	},
+	0x9308ce1b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetPasswordRequest{} }},
+	},
+	0x9342ca07: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetBotCallbackAnswerRequest{} }},
+	},
+	0x94a495c3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetQuickReplyMessagesRequest{} }},
+	},
+	0x94c65c76: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsSetBlockedRequest{} }},
+	},
+	0x95ac5ce4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthImportLoginTokenRequest{} }},
+	},
+	0x96e6cd81: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditBannedRequest{} }},
+	},
+	0x9709b1c2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsReorderUsernamesRequest{} }},
+	},
+	0x973478b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetTopPeersRequest{} }},
+	},
+	0x9738bb15: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleViewForumAsMessagesRequest{} }},
+	},
+	0x978928ca: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesForwardMessagesRequest{} }},
+	},
+	0x981b91dd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarGiftCollectionsRequest{} }},
+	},
+	0x9898ad73: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsLeaveRequest{} }},
+	},
+	0x98e037bb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSendVerifyEmailCodeRequest{} }},
+	},
+	0x998ab009: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSavedHistoryRequest{} }},
+	},
+	0x9a75a1ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesTogglePinnedRequest{} }},
+	},
+	0x9a868f80: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetBlockedRequest{} }},
+	},
+	0x9ae91519: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsRestrictSponsoredMessagesRequest{} }},
+	},
+	0x9b2754a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadReuploadCdnFileRequest{} }},
+	},
+	0x9b5ae7f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetAllReadPeerStoriesRequest{} }},
+	},
+	0x9baa9647: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsDeleteHistoryRequest{} }},
+	},
+	0x9c60eb28: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetBotMenuButtonRequest{} }},
+	},
+	0x9c7f2f10: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSearchResultsPositionsRequest{} }},
+	},
+	0x9c9abcb1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarGiftUpgradePreviewRequest{} }},
+	},
+	0x9cd4eaf9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetPasswordSettingsRequest{} }},
+	},
+	0x9cdf08cd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetSupportRequest{} }},
+	},
+	0x9da9403b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetRecentStickersRequest{} }},
+	},
+	0x9dfeefb4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesClearRecentReactionsRequest{} }},
+	},
+	0x9e6b131a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateBusinessLocationRequest{} }},
+	},
+	0x9eb51445: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetDefaultHistoryTTLRequest{} }},
+	},
+	0x9ec44f93: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadReactionsRequest{} }},
+	},
+	0x9f07c728: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetContactSignUpNotificationRequest{} }},
+	},
+	0x9fab0d1a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthResetAuthorizationsRequest{} }},
+	},
+	0xa0ab6cc6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetParticipantRequest{} }},
+	},
+	0xa0f4cb4f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDialogsRequest{} }},
+	},
+	0xa1405817: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendScreenshotNotificationRequest{} }},
+	},
+	0xa1974d72: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftRequest{} }},
+	},
+	0xa1b70815: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetBotRecommendationsRequest{} }},
+	},
+	0xa2185cab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteChatUserRequest{} }},
+	},
+	0xa26a7fa5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateBusinessAwayMessageRequest{} }},
+	},
+	0xa2875319: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesMigrateChatRequest{} }},
+	},
+	0xa29cd42c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetSuggestedDialogFiltersRequest{} }},
+	},
+	0xa2a5594d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetPreviewMediasRequest{} }},
+	},
+	0xa2b5a3f6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetExportedChatInvitesRequest{} }},
+	},
+	0xa2c0cf74: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDeleteAccountRequest{} }},
+	},
+	0xa319e569: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftsRequest{} }},
+	},
+	0xa36396e5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesCreateAlbumRequest{} }},
+	},
+	0xa455de90: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesExportChatInviteRequest{} }},
+	},
+	0xa5273abf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneEditGroupCallParticipantRequest{} }},
+	},
+	0xa556dac8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesReadStoriesRequest{} }},
+	},
+	0xa56a8b60: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetChatsToSendRequest{} }},
+	},
+	0xa57a7dad: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthImportAuthorizationRequest{} }},
+	},
+	0xa5866b41: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditChatDefaultBannedRightsRequest{} }},
+	},
+	0xa59b102f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdatePasswordSettingsRequest{} }},
+	},
+	0xa5a356f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSendVerifyPhoneCodeRequest{} }},
+	},
+	0xa60ab9ce: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetDefaultBackgroundEmojisRequest{} }},
+	},
+	0xa614d034: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateBusinessIntroRequest{} }},
+	},
+	0xa6437ef6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGetStoryPublicForwardsRequest{} }},
+	},
+	0xa677244f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSendCodeRequest{} }},
+	},
+	0xa6b1e39a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsJoinChatlistInviteRequest{} }},
+	},
+	0xa731e257: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleDialogPinRequest{} }},
+	},
+	0xa74ece2d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &SmsjobsJoinRequest{} }},
+	},
+	0xa76a5392: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersSetStickerSetThumbRequest{} }},
+	},
+	0xa850a693: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsReportAntiSpamFalsePositiveRequest{} }},
+	},
+	0xa85bd1c2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditChatAdminRequest{} }},
+	},
+	0xa929597a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetAuthorizationFormRequest{} }},
+	},
+	0xaa2769ed: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsSendCustomRequestRequest{} }},
+	},
+	0xaac7b717: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthSignUpRequest{} }},
+	},
+	0xab42441a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGetBroadcastStatsRequest{} }},
+	},
+	0xabcfa9fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetPeerProfileColorsRequest{} }},
+	},
+	0xac55d9c1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendMediaRequest{} }},
+	},
+	0xac806d61: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetAlbumStoriesRequest{} }},
+	},
+	0xac81bbde: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleSavedDialogPinRequest{} }},
+	},
+	0xad399cee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSetBoostsToUnblockRestrictionsRequest{} }},
+	},
+	0xad5648e8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsDeleteStarGiftCollectionRequest{} }},
+	},
+	0xad8c9a23: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetMessagesRequest{} }},
+	},
+	0xadcbbcda: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetAutoSaveSettingsRequest{} }},
+	},
+	0xae59db5f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesDeleteStoriesRequest{} }},
+	},
+	0xaeb00b34: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetFullChatRequest{} }},
+	},
+	0xaed6e4f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsUpgradeStarGiftRequest{} }},
+	},
+	0xb0711d83: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetAdminedBotsRequest{} }},
+	},
+	0xb0831eb9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetForumTopicsByIDRequest{} }},
+	},
+	0xb08f922a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteHistoryRequest{} }},
+	},
+	0xb0d81a83: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesProlongWebViewRequest{} }},
+	},
+	0xb11eafa2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleNoForwardsRequest{} }},
+	},
+	0xb12c7125: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAcceptURLAuthRequest{} }},
+	},
+	0xb1f2061f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDocumentByHashRequest{} }},
+	},
+	0xb2028afb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesIncrementStoryViewsRequest{} }},
+	},
+	0xb26732a9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveMusicRequest{} }},
+	},
+	0xb288bc7d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetAllSecureValuesRequest{} }},
+	},
+	0xb2cbc1c0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneDiscardCallRequest{} }},
+	},
+	0xb304a621: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadSaveFilePartRequest{} }},
+	},
+	0xb4352016: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetStoriesArchiveRequest{} }},
+	},
+	0xb43df344: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStartHistoryImportRequest{} }},
+	},
+	0xb455a106: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftRequest{} }},
+	},
+	0xb45ced1d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsReorderUsernamesRequest{} }},
+	},
+	0xb5052fea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleStickerSetsRequest{} }},
+	},
+	0xb550d328: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsUnblockRequest{} }},
+	},
+	0xb574b16b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetContentSettingsRequest{} }},
+	},
+	0xb583ba46: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesEditStoryRequest{} }},
+	},
+	0xb59cf977: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneCheckGroupCallRequest{} }},
+	},
+	0xb60f5918: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersGetFullUserRequest{} }},
+	},
+	0xb627f3aa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsReorderPreviewMediasRequest{} }},
+	},
+	0xb6c8c393: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetSponsoredPeersRequest{} }},
+	},
+	0xb6c8f12b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsValidateRequestedInfoRequest{} }},
+	},
+	0xb6e0a3f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGetMessageStatsRequest{} }},
+	},
+	0xb7d998f0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotRequest{} }},
+	},
+	0xb7e085fe: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthExportLoginTokenRequest{} }},
+	},
+	0xb80e5fe4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetHistoryTTLRequest{} }},
+	},
+	0xb81b93d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetPremiumPromoRequest{} }},
+	},
+	0xb86e380e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPollVotesRequest{} }},
+	},
+	0xb880bc4b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountDeleteSecureValueRequest{} }},
+	},
+	0xb8a0a1a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAllStickersRequest{} }},
+	},
+	0xb9b2881f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetStoryReactionsListRequest{} }},
+	},
+	0xb9cdc5ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetFactCheckRequest{} }},
+	},
+	0xb9d9a38d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountToggleSponsoredMessagesRequest{} }},
+	},
+	0xb9ffc55b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesFaveStickerRequest{} }},
+	},
+	0xba4a3b5b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadSavedHistoryRequest{} }},
+	},
+	0xba6705f0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsEditCloseFriendsRequest{} }},
+	},
+	0xbb12a419: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetInlineBotResultsRequest{} }},
+	},
+	0xbb3b9804: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetWallPapersRequest{} }},
+	},
+	0xbb8125ba: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetTopReactionsRequest{} }},
+	},
+	0xbcf22685: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneInviteConferenceCallParticipantRequest{} }},
+	},
+	0xbd0415c4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesTogglePeerStoriesHiddenRequest{} }},
+	},
+	0xbd1efd3e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsGiveawayOptionsRequest{} }},
+	},
+	0xbd38850a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendScheduledMessagesRequest{} }},
+	},
+	0xbd7f90ac: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetUnreadReactionsRequest{} }},
+	},
+	0xbdbb0464: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetScheduledMessagesRequest{} }},
+	},
+	0xbdca2f75: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditExportedChatInviteRequest{} }},
+	},
+	0xbdf93428: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDefaultTagReactionsRequest{} }},
+	},
+	0xbe1e85ba: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &FragmentGetCollectibleInfoRequest{} }},
+	},
+	0xbe5335be: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadGetFileRequest{} }},
+	},
+	0xbf899aa0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetAuthorizationTTLRequest{} }},
+	},
+	0xc00ec7d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsTopupOptionsRequest{} }},
+	},
+	0xc0111fe3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsDeleteChannelRequest{} }},
+	},
+	0xc0977421: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetPromoDataRequest{} }},
+	},
+	0xc0c4edc9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsCheckCanSendGiftRequest{} }},
+	},
+	0xc0cf7646: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendInlineBotResultRequest{} }},
+	},
+	0xc1cbd5b6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountCancelPasswordEmailRequest{} }},
+	},
+	0xc2510192: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetPopularAppBotsRequest{} }},
+	},
+	0xc32af4cc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsReorderStarGiftCollectionsRequest{} }},
+	},
+	0xc4563590: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarGiftsRequest{} }},
+	},
+	0xc4a353ee: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetStatusesRequest{} }},
+	},
+	0xc4f9186b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetConfigRequest{} }},
+	},
+	0xc558d8ab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetGroupParticipantsRequest{} }},
+	},
+	0xc563c1e4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUpdateDialogFiltersOrderRequest{} }},
+	},
+	0xc5ba3d86: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountReportPeerRequest{} }},
+	},
+	0xc661ad08: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetPassportConfigRequest{} }},
+	},
+	0xc6701900: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneSendConferenceCallBroadcastRequest{} }},
+	},
+	0xc727bb3b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountInstallThemeRequest{} }},
+	},
+	0xc7770878: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsChangeStarsSubscriptionRequest{} }},
+	},
+	0xc78fe460: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesInstallStickerSetRequest{} }},
+	},
+	0xc8a0ec74: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetStickerSetRequest{} }},
+	},
+	0xc9e01e7b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRequestMainWebViewRequest{} }},
+	},
+	0xc9e33d54: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsInviteToChannelRequest{} }},
+	},
+	0xc9f81ce8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetPrivacyRequest{} }},
+	},
+	0xca8ae8ba: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountInvalidateSignInCodesRequest{} }},
+	},
+	0xcae47523: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthResendCodeRequest{} }},
+	},
+	0xcb9deff6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthReportMissingCodeRequest{} }},
+	},
+	0xcbc6d107: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesAddChatUserRequest{} }},
+	},
+	0xcbea6bc4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneJoinGroupCallPresentationRequest{} }},
+	},
+	0xcc104937: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsReadHistoryRequest{} }},
+	},
+	0xcc5b67cc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAttachedStickersRequest{} }},
+	},
+	0xcc5bebb3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsFulfillStarsSubscriptionRequest{} }},
+	},
+	0xcc6e0c11: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateBirthdayRequest{} }},
+	},
+	0xccfddf96: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSaveDefaultSendAsRequest{} }},
+	},
+	0xcd984aa5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangpackGetDifferenceRequest{} }},
+	},
+	0xcdd42a05: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthBindTempAuthKeyRequest{} }},
+	},
+	0xce03da83: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsGetExportedInvitesRequest{} }},
+	},
+	0xcf1592db: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReportSpamRequest{} }},
+	},
+	0xcff43f61: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSetContactSignUpNotificationRequest{} }},
+	},
+	0xd06e93a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarGiftWithdrawalURLRequest{} }},
+	},
+	0xd0b5e1fc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMyStickersRequest{} }},
+	},
+	0xd1810907: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesSearchPostsRequest{} }},
+	},
+	0xd18b4d16: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthCheckPasswordRequest{} }},
+	},
+	0xd1d7efc5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsRevenueAdsAccountURLRequest{} }},
+	},
+	0xd1da940c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteFactCheckRequest{} }},
+	},
+	0xd2aaf7ec: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUpdatePinnedMessageRequest{} }},
+	},
+	0xd30d78d4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendReactionRequest{} }},
+	},
+	0xd33c8902: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditAdminRequest{} }},
+	},
+	0xd348bc44: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetLocatedRequest{} }},
+	},
+	0xd360e72c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetSupportNameRequest{} }},
+	},
+	0xd3c96bc8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsGiftOptionsRequest{} }},
+	},
+	0xd3e03124: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleTodoCompletedRequest{} }},
+	},
+	0xd464a42b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteExportedChatInviteRequest{} }},
+	},
+	0xd483f2a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetQuickRepliesRequest{} }},
+	},
+	0xd58f130a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetBotCallbackAnswerRequest{} }},
+	},
+	0xd5a5d3a1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetStickersRequest{} }},
+	},
+	0xd5b10c26: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiURLRequest{} }},
+	},
+	0xd638de89: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetChatThemesRequest{} }},
+	},
+	0xd63d94e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPinnedSavedDialogsRequest{} }},
+	},
+	0xd6753386: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetDefaultEmojiStatusesRequest{} }},
+	},
+	0xd69b8361: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveAutoSaveSettingsRequest{} }},
+	},
+	0xd6b94df2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPinnedDialogsRequest{} }},
+	},
+	0xd83d70c1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsClearSavedInfoRequest{} }},
+	},
+	0xd897bc66: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthRequestPasswordRecoveryRequest{} }},
+	},
+	0xd89a83a3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UsersGetRequirementsToContactRequest{} }},
+	},
+	0xd8aa3671: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsUpdateColorRequest{} }},
+	},
+	0xd91ffad6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetStarsRevenueStatsRequest{} }},
+	},
+	0xd94305e0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdatePersonalChannelRequest{} }},
+	},
+	0xd9ab0f54: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetCustomEmojiDocumentsRequest{} }},
+	},
+	0xda80f42f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpGetPeerColorsRequest{} }},
+	},
+	0xdadbc950: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetPrivacyRequest{} }},
+	},
+	0xdaeda864: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsGetBirthdaysRequest{} }},
+	},
+	0xdb7e1747: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetNotifySettingsRequest{} }},
+	},
+	0xdc0242c8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendWebViewDataRequest{} }},
+	},
+	0xdcd914fd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetBotInfoRequest{} }},
+	},
+	0xdcdf8607: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StatsGetMegagroupStatsRequest{} }},
+	},
+	0xde7b673d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UploadSaveBigFilePartRequest{} }},
+	},
+	0xdea20a39: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetAvailableEffectsRequest{} }},
+	},
+	0xdeb3abbf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetGroupCallStreamRtmpURLRequest{} }},
+	},
+	0xdef60797: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditChatAboutRequest{} }},
+	},
+	0xdf04dd4e: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetChatInviteImportersRequest{} }},
+	},
+	0xdf77f3bc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountResetAuthorizationRequest{} }},
+	},
+	0xdfd14005: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesEditMessageRequest{} }},
+	},
+	0xdffd50d3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsAssignPlayMarketTransactionRequest{} }},
+	},
+	0xe085f4ea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesHideAllChatJoinRequestsRequest{} }},
+	},
+	0xe089f8f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsJoinChatlistUpdatesRequest{} }},
+	},
+	0xe09d5faf: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetSavedMusicIdsRequest{} }},
+	},
+	0xe105e910: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteQuickReplyMessagesRequest{} }},
+	},
+	0xe14c4a71: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhotosUploadContactProfilePhotoRequest{} }},
+	},
+	0xe1902288: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetSavedRingtonesRequest{} }},
+	},
+	0xe2750328: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetDefaultProfilePhotoEmojisRequest{} }},
+	},
+	0xe320c158: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetAuthorizationsRequest{} }},
+	},
+	0xe34c0dd6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsGetBotCommandsRequest{} }},
+	},
+	0xe39a8f03: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUploadWallPaperRequest{} }},
+	},
+	0xe40ca104: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetCommonChatsRequest{} }},
+	},
+	0xe470bcfd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPeerDialogsRequest{} }},
+	},
+	0xe47cb579: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesTogglePeerTranslationsRequest{} }},
+	},
+	0xe4cb9580: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleJoinToSendRequest{} }},
+	},
+	0xe4fca4a3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsEditConnectedStarRefBotRequest{} }},
+	},
+	0xe58e95d2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeleteMessagesRequest{} }},
+	},
+	0xe5bfffcd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthExportAuthorizationRequest{} }},
+	},
+	0xe5f672fa: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetBotShippingResultsRequest{} }},
+	},
+	0xe6213f4d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsAnswerWebhookJSONQueryRequest{} }},
+	},
+	0xe63be13f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSetChatThemeRequest{} }},
+	},
+	0xe63fadeb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsExportMessageLinkRequest{} }},
+	},
+	0xe6aa647f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneExportGroupCallInviteRequest{} }},
+	},
+	0xe6df7378: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesStartBotRequest{} }},
+	},
+	0xe785a43f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetSendAsRequest{} }},
+	},
+	0xe822649d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetGameHighScoresRequest{} }},
+	},
+	0xe894ad4d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AuthAcceptLoginTokenRequest{} }},
+	},
+	0xe8f463d0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsAddContactRequest{} }},
+	},
+	0xea8ca4f9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSetStickersRequest{} }},
+	},
+	0xeab5dc38: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsReadMessageContentsRequest{} }},
+	},
+	0xeabbb94c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsTogglePreHistoryHiddenRequest{} }},
+	},
+	0xeb2b4cf6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetGlobalPrivacySettingsRequest{} }},
+	},
+	0xec22cfcd: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpSetBotUpdatesStatusRequest{} }},
+	},
+	0xec86017a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountRegisterDeviceRequest{} }},
+	},
+	0xece2a0e6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetMessageAuthorRequest{} }},
+	},
+	0xed9f30c5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsUpdateUserEmojiStatusRequest{} }},
+	},
+	0xedbe6ccb: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsUpdateStarGiftPriceRequest{} }},
+	},
+	0xedd4882a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &UpdatesGetStateRequest{} }},
+	},
+	0xedd49ef0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsToggleSlowModeRequest{} }},
+	},
+	0xee72f79a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpAcceptTermsOfServiceRequest{} }},
+	},
+	0xee9f88a6: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetGroupCallChainBlocksRequest{} }},
+	},
+	0xeeb0d625: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StoriesGetAllStoriesRequest{} }},
+	},
+	0xef500eab: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountReorderUsernamesRequest{} }},
+	},
+	0xef7c213a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneGetGroupCallJoinAsRequest{} }},
+	},
+	0xefd48c89: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetDialogFiltersRequest{} }},
+	},
+	0xefd9a6a2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetPeerSettingsRequest{} }},
+	},
+	0xefea3803: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangpackGetStringsRequest{} }},
+	},
+	0xf0d3e6a8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsUpdateEmojiStatusRequest{} }},
+	},
+	0xf107e790: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetUnreadMentionsRequest{} }},
+	},
+	0xf128c708: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneToggleGroupCallRecordRequest{} }},
+	},
+	0xf12e57c9: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditPhotoRequest{} }},
+	},
+	0xf132e3ef: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &BotsAllowSendMessageRequest{} }},
+	},
+	0xf1d0fbd3: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesCheckQuickReplyShortcutRequest{} }},
+	},
+	0xf21f7f2f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSavePreparedInlineMessageRequest{} }},
+	},
+	0xf257106c: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountSaveThemeRequest{} }},
+	},
+	0xf2c4f24d: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsSearchPostsRequest{} }},
+	},
+	0xf2f2330a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &LangpackGetLangPackRequest{} }},
+	},
+	0xf393aea0: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDiscardEncryptionRequest{} }},
+	},
+	0xf3ed4c73: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountAcceptAuthorizationRequest{} }},
+	},
+	0xf40c0224: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsCreateForumTopicRequest{} }},
+	},
+	0xf4239425: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsGetGiveawayInfoRequest{} }},
+	},
+	0xf44a8315: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsReportSpamRequest{} }},
+	},
+	0xf4dfa185: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsEditForumTopicRequest{} }},
+	},
+	0xf50dbaa1: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &HelpDismissSuggestionRequest{} }},
+	},
+	0xf516760b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetScheduledHistoryRequest{} }},
+	},
+	0xf5537ebc: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersChangeStickerRequest{} }},
+	},
+	0xf5dad378: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetGroupsForDiscussionRequest{} }},
+	},
+	0xf64daf43: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesRequestEncryptionRequest{} }},
+	},
+	0xf6e26854: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PaymentsApplyGiftCodeRequest{} }},
+	},
+	0xf731a9f4: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReadDiscussionRequest{} }},
+	},
+	0xf7760f51: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersRemoveStickerFromSetRequest{} }},
+	},
+	0xf831a20f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsAcceptContactRequest{} }},
+	},
+	0xf836aa95: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsLeaveChannelRequest{} }},
+	},
+	0xf8654027: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ContactsExportContactTokenRequest{} }},
+	},
+	0xf8b036af: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChannelsGetAdminedPublicChannelsRequest{} }},
+	},
+	0xf96e55de: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesUninstallStickerSetRequest{} }},
+	},
+	0xf9cbe409: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesDeletePhoneCallHistoryRequest{} }},
+	},
+	0xfa8cc6f5: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountReportProfilePhotoRequest{} }},
+	},
+	0xfbd3de6b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountUpdateEmojiStatusRequest{} }},
+	},
+	0xfbfca18f: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetEmojiStickersRequest{} }},
+	},
+	0xfc78af9b: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesReportRequest{} }},
+	},
+	0xfc8ddbea: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountGetWallPaperRequest{} }},
+	},
+	0xfd2dda49: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesToggleDialogFilterTagsRequest{} }},
+	},
+	0xfda68d36: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesGetMessageEditDataRequest{} }},
+	},
+	0xfdbcd714: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &ChatlistsGetLeaveChatlistSuggestionsRequest{} }},
+	},
+	0xfe05dc9a: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &MessagesSendMessageRequest{} }},
+	},
+	0xfe2eda76: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountToggleNoPaidMessagesExceptionRequest{} }},
+	},
+	0xfeed5769: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AccountInstallWallPaperRequest{} }},
+	},
+	0xff7a9383: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &PhoneSendSignalingDataRequest{} }},
+	},
+	0xffb6d4ca: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &StickersChangeStickerPositionRequest{} }},
+	},
+}
+
+// NewMethodRequestForLayer constructs a typed request wire variant.
+func NewMethodRequestForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	for _, variant := range methodLayerVariants[id] {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
+			return variant.newObject(), true
+		}
+	}
+	return nil, false
 }

@@ -53,7 +53,9 @@ func DecodeFrame(frame []byte, authKeys AuthKeySource) (DecodedFrame, error) {
 	if authKey.ID() != keyID {
 		return DecodedFrame{}, ErrAuthKeyMismatch
 	}
-	message := &mtproto.EncryptedMessage{AuthKeyID: keyID, EncryptedData: append([]byte(nil), frame[24:]...)}
+	// Decryption reads ciphertext synchronously into separately allocated
+	// plaintext. This view never escapes DecodeFrame; returned data is owned.
+	message := &mtproto.EncryptedMessage{AuthKeyID: keyID, EncryptedData: frame[24:len(frame):len(frame)]}
 	copy(message.MsgKey[:], frame[8:24])
 	inner, err := message.DecryptFromClient(authKey)
 	if err != nil {

@@ -42,7 +42,7 @@ func newMixedLayerProjectionHarness(t *testing.T, service mixedLayerProjectionSe
 		Methods: []tlrpc.MethodDesc{{
 			MethodName: "LargePayload", ConstructorID: largePayloadReqID,
 			NewRequest: func() tlrpc.TLObject { return &largePayloadReq{} },
-			Handler:    largePayloadServiceHandler,
+			Handler:    tlrpc.BindMethod(largePayloadServiceHandler), EncodeResponse: encodeCompatResponse[*largePayloadResp],
 		}},
 	}, service)
 	lis, err := (&transport.TCPTransport{}).Listen("127.0.0.1:0")

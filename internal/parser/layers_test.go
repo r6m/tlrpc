@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -283,41 +284,40 @@ messages.newMethod#00000021 = Result;`)
 	assert.Equal(t, []int{228, 229}, layered.Layers)
 
 	childVariants := constructorsNamed(layered.Schema.Constructors, "child")
-	require.Len(t, childVariants, 1, "additive flag fields use one stable superset type")
+	require.Len(t, childVariants, 2, "optional additions are distinct fixed contracts")
 	assert.Equal(t, 0, childVariants[0].VariantLayer)
-	require.Len(t, childVariants[0].Params, 3)
-	assert.Equal(t, 229, childVariants[0].Params[2].MinLayer)
+	require.Len(t, childVariants[0].Params, 1)
+	assert.Equal(t, 229, childVariants[1].VariantLayer)
+	require.Len(t, childVariants[1].Params, 3)
 
 	removed := constructorsNamed(layered.Schema.Constructors, "childRemoved")
 	require.Len(t, removed, 1)
-	assert.Equal(t, 228, removed[0].MinLayer)
-	assert.Equal(t, 0, removed[0].MaxLayer, "a sole historical constructor remains accepted at later layers")
-	assert.Equal(t, 228, removed[0].OutputMinLayer)
-	assert.Equal(t, 228, removed[0].OutputMaxLayer)
+	assert.Equal(t, 228, removed[0].Intervals[0].MinLayer)
+	assert.Equal(t, 228, removed[0].Intervals[0].MaxLayer)
 	introduced := constructorsNamed(layered.Schema.Constructors, "currentNested")
 	require.Len(t, introduced, 1)
-	assert.Equal(t, 229, introduced[0].MinLayer, "a unique constructor introduced after the base must reject older sessions")
-	assert.Equal(t, 0, introduced[0].MaxLayer)
+	assert.Equal(t, 229, introduced[0].Intervals[0].MinLayer, "a unique constructor introduced after the base must reject older sessions")
+	assert.Equal(t, 0, introduced[0].Intervals[0].MaxLayer)
 
 	containerVariants := constructorsNamed(layered.Schema.Constructors, "container")
 	require.Len(t, containerVariants, 1, "compatible nested supersets must not force parent variants")
 
 	forwardVariants := functionsNamed(layered.Schema.Functions, "messages.forward")
 	require.Len(t, forwardVariants, 2)
-	assert.Equal(t, 228, forwardVariants[0].MaxLayer)
-	assert.Equal(t, 229, forwardVariants[1].MinLayer)
+	assert.Equal(t, 228, forwardVariants[0].Intervals[0].MaxLayer)
+	assert.Equal(t, 229, forwardVariants[1].Intervals[0].MinLayer)
 	assert.Equal(t, 229, forwardVariants[1].VariantLayer)
 
 	signupVariants := functionsNamed(layered.Schema.Functions, "auth.signUp")
 	require.Len(t, signupVariants, 2)
-	assert.Equal(t, 228, signupVariants[0].MinLayer)
-	assert.Equal(t, 0, signupVariants[0].MaxLayer)
-	assert.Equal(t, 229, signupVariants[1].MinLayer, "a changed method's new unique ID must reject the base layer")
-	assert.Equal(t, 0, signupVariants[1].MaxLayer)
+	assert.Equal(t, 228, signupVariants[0].Intervals[0].MinLayer)
+	assert.Equal(t, 228, signupVariants[0].Intervals[0].MaxLayer)
+	assert.Equal(t, 229, signupVariants[1].Intervals[0].MinLayer, "a changed method's new unique ID must reject the base layer")
+	assert.Equal(t, 0, signupVariants[1].Intervals[0].MaxLayer)
 	newMethods := functionsNamed(layered.Schema.Functions, "messages.newMethod")
 	require.Len(t, newMethods, 1)
-	assert.Equal(t, 229, newMethods[0].MinLayer, "a newly introduced unique method must reject the base layer")
-	assert.Equal(t, 0, newMethods[0].MaxLayer)
+	assert.Equal(t, 229, newMethods[0].Intervals[0].MinLayer, "a newly introduced unique method must reject the base layer")
+	assert.Equal(t, 0, newMethods[0].Intervals[0].MaxLayer)
 }
 
 func TestResolveLayersClosesTransitiveConcreteOutputRanges(t *testing.T) {
@@ -331,11 +331,9 @@ child#00000003 value:string = Child;`)
 	require.NoError(t, err)
 
 	parents := constructorsNamed(layered.Schema.Constructors, "parent")
-	require.Len(t, parents, 2)
-	assert.Equal(t, 228, parents[0].OutputMinLayer)
-	assert.Equal(t, 228, parents[0].OutputMaxLayer)
-	assert.Equal(t, 229, parents[1].OutputMinLayer)
-	assert.Equal(t, 0, parents[1].OutputMaxLayer)
+	require.Len(t, parents, 1, "boxed child evolution does not version its parent")
+	assert.Equal(t, 228, parents[0].Intervals[0].MinLayer)
+	assert.Equal(t, 0, parents[0].Intervals[0].MaxLayer)
 
 	var embedded []Constructor
 	for _, declaration := range layered.Schema.Types {
@@ -343,9 +341,7 @@ child#00000003 value:string = Child;`)
 			embedded = append(embedded, declaration.Constructors...)
 		}
 	}
-	require.Len(t, embedded, 2)
-	assert.Equal(t, 228, embedded[0].OutputMaxLayer)
-	assert.Equal(t, 229, embedded[1].OutputMinLayer)
+	require.Len(t, embedded, 1)
 }
 
 func TestResolveLayersKeepsUniqueIntroducedIDsValidUpward(t *testing.T) {
@@ -363,12 +359,12 @@ later.call#00000003 = Result;`)
 	require.NoError(t, err)
 	constructors := constructorsNamed(layered.Schema.Constructors, "later")
 	require.Len(t, constructors, 1)
-	assert.Equal(t, 229, constructors[0].MinLayer)
-	assert.Equal(t, 0, constructors[0].MaxLayer, "a distinct introduced constructor ID remains accepted upward")
+	assert.Equal(t, 229, constructors[0].Intervals[0].MinLayer)
+	assert.Equal(t, 229, constructors[0].Intervals[0].MaxLayer)
 	methods := functionsNamed(layered.Schema.Functions, "later.call")
 	require.Len(t, methods, 1)
-	assert.Equal(t, 229, methods[0].MinLayer)
-	assert.Equal(t, 0, methods[0].MaxLayer, "a distinct introduced method ID remains accepted upward")
+	assert.Equal(t, 229, methods[0].Intervals[0].MinLayer)
+	assert.Equal(t, 229, methods[0].Intervals[0].MaxLayer)
 }
 
 func TestResolveLayersStopsConcretePropagationAtStableUnion(t *testing.T) {
@@ -401,12 +397,12 @@ replyKeyboardMarkup#00000004 flags:# rows:vector<KeyboardButtonRow> force_reply:
 	require.Len(t, keyboardButton.Constructors, 3)
 	buttonVariants := constructorsNamed(keyboardButton.Constructors, "keyboardButton")
 	require.Len(t, buttonVariants, 2)
-	assert.Equal(t, 228, buttonVariants[0].OutputMaxLayer)
+	assert.Equal(t, 228, buttonVariants[0].Intervals[0].MaxLayer)
 	assert.Equal(t, 229, buttonVariants[1].VariantLayer)
-	assert.Equal(t, 229, buttonVariants[1].OutputMinLayer)
+	assert.Equal(t, 229, buttonVariants[1].Intervals[0].MinLayer)
 	removed := constructorsNamed(keyboardButton.Constructors, "keyboardButtonURL")
 	require.Len(t, removed, 1)
-	assert.Equal(t, 228, removed[0].OutputMaxLayer)
+	assert.Equal(t, 228, removed[0].Intervals[0].MaxLayer)
 
 	rows := constructorsNamed(layered.Schema.Constructors, "keyboardButtonRow")
 	require.Len(t, rows, 1, "a concrete parent that references a stable union remains shared")
@@ -414,9 +410,9 @@ replyKeyboardMarkup#00000004 flags:# rows:vector<KeyboardButtonRow> force_reply:
 	assert.Zero(t, rows[0].Params[0].Type.Generic.VariantLayer)
 
 	markups := constructorsNamed(layered.Schema.Constructors, "replyKeyboardMarkup")
-	require.Len(t, markups, 1, "same-ID additive parent remains a shared superset")
-	require.Len(t, markups[0].Params, 3)
-	assert.Equal(t, 229, markups[0].Params[2].MinLayer)
+	require.Len(t, markups, 2, "same-ID optional additions are distinct contracts")
+	require.Len(t, markups[0].Params, 1)
+	require.Len(t, markups[1].Params, 3)
 
 	methods := functionsNamed(layered.Schema.Functions, "messages.send")
 	require.Len(t, methods, 1, "a stable-union change must not duplicate an unchanged request")
@@ -429,7 +425,9 @@ func TestResolveLayersTelegramVariantBudget(t *testing.T) {
 	differenceInput, err := os.ReadFile("../../testdata/schemas/telegram_layer_229.tl")
 	require.NoError(t, err)
 
-	base, err := ParseBaselineSchema(string(baseInput), 228, "telegram_layer_228.tl")
+	baseline := strings.ReplaceAll(string(baseInput), "// @tlrpc variant-layer 172\n", "// @tlrpc variant-layer 172\n// @tlrpc accept-layers 228-229\n")
+	baseline = strings.ReplaceAll(baseline, "// @tlrpc variant-layer 158\n", "// @tlrpc variant-layer 158\n// @tlrpc accept-layers 228-229\n")
+	base, err := ParseBaselineSchema(baseline, 228, "telegram_layer_228.tl")
 	require.NoError(t, err)
 	difference, err := ParseLayerDifference(string(differenceInput), 229, "telegram_layer_229.tl")
 	require.NoError(t, err)
@@ -444,18 +442,21 @@ func TestResolveLayersTelegramVariantBudget(t *testing.T) {
 	}
 	sort.Strings(objectVariants)
 	assert.Equal(t, []string{
+		"channelFull@229",
+		"chatAdminRights@229",
+		"chatFull@229",
 		"ephemeralMessage@229",
 		"inputInvoiceStarGiftResale@229",
 		"inputSendMessageRichMessageDraftAction@229",
 		"keyboardButton@229",
 		"messageActionStarGiftUnique@229",
 		"pageBlockBlockquote@229",
+		"pageBlockTable@229",
 		"replyInlineMarkup@229",
+		"replyKeyboardMarkup@229",
 		"sendMessageRichMessageDraftAction@229",
 		"sendMessageTextDraftAction@229",
-		"updateEditEphemeralMessage@229",
 		"updateEphemeralBotCallbackQuery@229",
-		"updateNewEphemeralMessage@229",
 	}, objectVariants)
 
 	var requestVariants []string
@@ -489,6 +490,104 @@ func TestResolveLayersTelegramVariantBudget(t *testing.T) {
 		require.Len(t, methods, 1, "%s acquired a response/nested-only method variant", name)
 		assert.Zero(t, methods[0].VariantLayer)
 	}
+}
+
+func TestResolveLayersSeparatesRequestAndHandlerIdentity(t *testing.T) {
+	base := mustParseLayerSchema(t, 228, `---types---
+resultA#00000001 = ResultA;
+resultB#00000002 = ResultB;
+---functions---
+test.call#00000010 value:int = ResultA;`)
+	changedResult := mustParseDifference(t, 229, `---functions---
+test.call#00000010 value:int = ResultB;`)
+
+	layered, err := ResolveLayers(base, 228, []LayerDifference{changedResult})
+	require.NoError(t, err)
+	methods := functionsNamed(layered.Schema.Functions, "test.call")
+	require.Len(t, methods, 2)
+	assert.Zero(t, methods[0].RequestVariantLayer)
+	assert.Zero(t, methods[1].RequestVariantLayer)
+	assert.Zero(t, methods[0].VariantLayer)
+	assert.Equal(t, 229, methods[1].VariantLayer)
+	assert.Equal(t, []LayerInterval{{MinLayer: 228}}, methods[0].RequestIntervals)
+	assert.Equal(t, methods[0].RequestIntervals, methods[1].RequestIntervals)
+	assert.Equal(t, []LayerInterval{{MinLayer: 228, MaxLayer: 228}}, methods[0].Intervals)
+	assert.Equal(t, []LayerInterval{{MinLayer: 229}}, methods[1].Intervals)
+}
+
+func TestResolveLayersUsesSemanticKeysAndReusesReappearingContract(t *testing.T) {
+	base := mustParseLayerSchema(t, 228, `---types---
+item#00000001 flags:# labels:flags.0?vector<string> = Item;`)
+	removed := mustParseDifference(t, 229, `// @tlrpc remove constructor item`)
+	reappeared := mustParseDifference(t, 230, `---types---
+item#00000001 flags:# labels:flags.0?vector<string> = Item;`)
+
+	layered, err := ResolveLayers(base, 228, []LayerDifference{removed, reappeared})
+	require.NoError(t, err)
+	items := constructorsNamed(layered.Schema.Constructors, "item")
+	require.Len(t, items, 1)
+	assert.Zero(t, items[0].VariantLayer)
+	assert.Equal(t, []LayerInterval{{MinLayer: 228, MaxLayer: 228}, {MinLayer: 230}}, items[0].Intervals)
+}
+
+func TestResolveLayersRejectsRecursiveBareLayouts(t *testing.T) {
+	base := mustParseLayerSchema(t, 228, `---types---
+	alpha#1 beta:!Beta = Alpha;
+	beta#2 alpha:!Alpha = Beta;`)
+	_, err := ResolveLayers(base, 228, nil)
+	require.ErrorContains(t, err, "unsupported recursive bare layout")
+}
+
+func TestResolveLayersValidatesHistoricalRangesAndSameIDOverlap(t *testing.T) {
+	outside, err := ParseBaselineSchema(`---functions---
+// @tlrpc variant-layer 172
+// @tlrpc accept-layers 228-230
+a#1 old:int = X;
+a#2 current:int = X;`, 228, "baseline.tl")
+	require.NoError(t, err)
+	_, err = ResolveLayers(outside, 228, []LayerDifference{mustParseDifference(t, 229, "")})
+	require.ErrorContains(t, err, "outside supplied history")
+
+	overlap, err := ParseBaselineSchema(`---functions---
+// @tlrpc variant-layer 172
+// @tlrpc accept-layers 228-228
+a#1 old:int = X;
+a#1 current:string = X;`, 228, "baseline.tl")
+	require.NoError(t, err)
+	_, err = ResolveLayers(overlap, 228, nil)
+	require.ErrorContains(t, err, "function ID 0x00000001 has overlapping contracts")
+}
+
+func TestResolveSelectedLayerFiltersSameIDHistoryBeforeApplyingDifferences(t *testing.T) {
+	base, err := ParseBaselineSchema(`---functions---
+// @tlrpc variant-layer 227
+// @tlrpc accept-layers 229-229
+test.call#00000001 value:int = Result;
+test.call#00000001 value:string = Result;`, 228, "baseline.tl")
+	require.NoError(t, err)
+	difference := mustParseDifference(t, 229, `---functions---
+test.call#00000002 value:string = Result;`)
+
+	selected, err := ResolveSelectedLayer(base, 228, 229, []LayerDifference{difference})
+	require.NoError(t, err)
+	methods := functionsNamed(selected.Functions, "test.call")
+	require.Len(t, methods, 2)
+	assert.Equal(t, uint32(2), methods[0].ID)
+	assert.Zero(t, methods[0].VariantLayer)
+	assert.Equal(t, uint32(1), methods[1].ID)
+	assert.Equal(t, 227, methods[1].VariantLayer)
+}
+
+func TestResolveSelectedLayerValidatesFullSuppliedHistory(t *testing.T) {
+	base, err := ParseBaselineSchema(`---functions---
+// @tlrpc variant-layer 227
+// @tlrpc accept-layers 229-230
+test.call#00000001 value:int = Result;
+test.call#00000002 value:string = Result;`, 228, "baseline.tl")
+	require.NoError(t, err)
+
+	_, err = ResolveSelectedLayer(base, 228, 229, []LayerDifference{mustParseDifference(t, 229, "")})
+	require.ErrorContains(t, err, "outside supplied history 228-229")
 }
 
 func constructorsNamed(constructors []Constructor, name string) []Constructor {
@@ -539,4 +638,36 @@ func functionNames(functions []FuncDecl) []string {
 		names[i] = function.Name
 	}
 	return names
+}
+
+func TestHistoricalBareContractUsesItsAcceptedSnapshot(t *testing.T) {
+	base, err := ParseBaselineSchema(`---types---
+child#1 value:int = Child;
+result#2 = Result;
+---functions---
+// @tlrpc variant-layer 172
+// @tlrpc accept-layers 228-228
+call#3 child:!Child = Result;
+call#4 = Result;`, 228, "base.tl")
+	require.NoError(t, err)
+	delta := mustParseDifference(t, 229, "---types---\nchild#1 value:long = Child;")
+	resolved, err := ResolveLayers(base, 228, []LayerDifference{delta})
+	require.NoError(t, err)
+	for _, method := range resolved.Schema.Functions {
+		if method.VariantLayer == 172 {
+			assert.Zero(t, method.Params[0].Type.VariantLayer)
+		}
+	}
+	base.Functions[0].AcceptIntervals = []LayerInterval{{MinLayer: 228, MaxLayer: 229}}
+	_, err = ResolveLayers(base, 228, []LayerDifference{delta})
+	require.ErrorContains(t, err, "bare contract changes within accepted layers")
+	_, err = ResolveSelectedLayer(base, 228, 228, []LayerDifference{delta})
+	require.ErrorContains(t, err, "bare contract changes within accepted layers")
+}
+
+func TestBareFamilyConstructorRenameRejectsGeneration(t *testing.T) {
+	base := mustParseLayerSchema(t, 228, "---types---\nfirst#1 value:int = Child;\nparent#2 child:!Child = Parent;")
+	delta := mustParseDifference(t, 229, "---types---\n// @tlrpc remove constructor first\nsecond#3 value:long = Child;")
+	_, err := ResolveLayers(base, 228, []LayerDifference{delta})
+	require.ErrorContains(t, err, "replacing constructor name first with second is unsupported")
 }

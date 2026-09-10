@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/r6m/tlrpc/crypto"
+	"github.com/r6m/tlrpc/mtproto"
 	"github.com/r6m/tlrpc/session"
 )
 
@@ -50,6 +51,14 @@ func testServiceCallHandler(srv interface{}, ctx context.Context, req *testServi
 	return srv.(testServiceServer).Call(ctx, req)
 }
 
+var testServiceMethodHandler = BindMethod(testServiceCallHandler)
+
+func encodeTestServiceResponse(response any, layer int, limits EncodeLimits) ([]byte, error) {
+	return EncodeTypedResponse(response, layer, limits, func(encoder *mtproto.Encoder, value *testServiceRequest) error {
+		return encoder.WriteUint32(value.ConstructorID())
+	})
+}
+
 func completeServiceDesc(name string, layer int, constructorID uint32) ServiceDesc {
 	return ServiceDesc{
 		ServiceName: name,
@@ -62,7 +71,7 @@ func completeServiceDesc(name string, layer int, constructorID uint32) ServiceDe
 				NewRequest: func() TLObject {
 					return &testServiceRequest{constructorID: constructorID}
 				},
-				Handler: testServiceCallHandler,
+				Handler: testServiceMethodHandler, EncodeResponse: encodeTestServiceResponse,
 			},
 		},
 	}
@@ -180,6 +189,26 @@ func TestRegisterService(t *testing.T) {
 	})
 }
 
+func TestRegisteredMethodDispatchesThroughBoundImplementation(t *testing.T) {
+	const constructorID = uint32(0xf0010002)
+	server := NewServer()
+	implementation := testServiceImplementation{}
+	server.RegisterService(completeServiceDesc("DirectDispatch", 228, constructorID), implementation)
+
+	handler, ok := server.dispatcher.LookupMethod(constructorID)
+	if !ok {
+		t.Fatal("bound method was not registered")
+	}
+	request := &testServiceRequest{constructorID: constructorID}
+	response, err := handler(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response != request {
+		t.Fatalf("direct dispatch response = %p, want request %p", response, request)
+	}
+}
+
 func TestRegisterServiceValidation(t *testing.T) {
 	const constructorID = uint32(0xf0010010)
 	tests := []struct {
@@ -267,7 +296,7 @@ func TestRegisterServiceRejectsDescriptorAtomically(t *testing.T) {
 	desc.Methods = append(desc.Methods, MethodDesc{
 		MethodName:    "Incomplete",
 		ConstructorID: 0xf0010031,
-		Handler:       testServiceCallHandler,
+		Handler:       testServiceMethodHandler, EncodeResponse: encodeTestServiceResponse,
 	})
 
 	s := NewServer()
@@ -282,6 +311,18 @@ func TestRegisterServiceRejectsDescriptorAtomically(t *testing.T) {
 	}
 	if _, exists := s.dispatcher.LookupMethod(firstConstructorID); exists {
 		t.Fatal("invalid descriptor partially registered its first method")
+	}
+}
+
+func TestRegisterServiceRequiresGeneratedResponseEncoder(t *testing.T) {
+	desc := completeServiceDesc("MissingEncoder", 228, 0xf0010040)
+	desc.Methods[0].EncodeResponse = nil
+	server := NewServer()
+	requirePanicContains(t, "missing response encoder", func() {
+		server.RegisterService(desc, testServiceImplementation{})
+	})
+	if len(server.services) != 0 || server.schemaLayerSet {
+		t.Fatal("invalid descriptor partially registered")
 	}
 }
 
@@ -400,5 +441,17 @@ func TestResourceLimitsRejectInvalidValues(t *testing.T) {
 			}()
 			_ = NewServer(WithResourceLimits(limits))
 		})
+	}
+}
+
+func TestRegisterServiceRejectsTypedNilRequestAtomically(t *testing.T) {
+	server := NewServer()
+	desc := completeServiceDesc("nilRequest", 228, 0x12345678)
+	desc.Methods[0].NewRequest = func() TLObject { return (*testServiceRequest)(nil) }
+	requirePanicContains(t, "request constructor returned nil", func() {
+		server.RegisterService(desc, testServiceImplementation{})
+	})
+	if _, ok := server.dispatcher.LookupMethod(desc.Methods[0].ConstructorID); ok {
+		t.Fatal("malformed service was partially registered")
 	}
 }

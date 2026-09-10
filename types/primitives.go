@@ -6,6 +6,28 @@ import (
 	"github.com/r6m/tlrpc/mtproto"
 )
 
+// Int is a TL int result, serialized without a boxed constructor prefix.
+type Int int32
+
+func (*Int) ConstructorID() uint32           { return 0xa8509bda }
+func (v *Int) SerializeTL(w io.Writer) error { return mtproto.WriteInt32(w, int32(*v)) }
+func (v *Int) DeserializeTL(r io.Reader) error {
+	value, err := mtproto.ReadInt32(r)
+	*v = Int(value)
+	return err
+}
+
+// Long is a TL long result, serialized without a boxed constructor prefix.
+type Long int64
+
+func (*Long) ConstructorID() uint32           { return 0x22076cba }
+func (v *Long) SerializeTL(w io.Writer) error { return mtproto.WriteInt64(w, int64(*v)) }
+func (v *Long) DeserializeTL(r io.Reader) error {
+	value, err := mtproto.ReadInt64(r)
+	*v = Long(value)
+	return err
+}
+
 // String represents a string in MTProto
 type String string
 

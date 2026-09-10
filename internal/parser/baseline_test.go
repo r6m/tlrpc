@@ -13,10 +13,12 @@ result#00000001 = Result;
 ---functions---
 // Provenance: official Telegram Android tlscheme/172.json.
 // @tlrpc variant-layer 172
+// @tlrpc accept-layers 228-228
 auth.signUp#80eee427 phone:string = Result; // historical form
 auth.signUp#aac7b717 flags:# phone:string = Result;
 // Provenance: official Telegram Android tlscheme/158.json.
 // @tlrpc variant-layer 158
+// @tlrpc accept-layers 228-228
 updates.getDifference#25939651 pts:int = Result;
 updates.getDifference#19c2f763 flags:# pts:int = Result;`, 228, "baseline.tl")
 	require.NoError(t, err)
@@ -30,10 +32,10 @@ updates.getDifference#19c2f763 flags:# pts:int = Result;`, 228, "baseline.tl")
 	require.NoError(t, err)
 	variants := functionsNamedForBaselineTest(resolved.Schema.Functions, "auth.signUp")
 	require.Len(t, variants, 2)
-	assert.Equal(t, 228, variants[0].MinLayer)
-	assert.Equal(t, 0, variants[0].MaxLayer)
-	assert.Equal(t, 172, variants[0].VariantLayer)
-	assert.Equal(t, 0, variants[1].VariantLayer)
+	assert.Equal(t, 0, variants[0].VariantLayer)
+	assert.Equal(t, []LayerInterval{{MinLayer: 228}}, variants[0].Intervals)
+	assert.Equal(t, 172, variants[1].VariantLayer)
+	assert.Equal(t, []LayerInterval{{MinLayer: 228, MaxLayer: 228}}, variants[1].Intervals)
 }
 
 func TestParseBaselineSchemaRejectsAmbiguousVariants(t *testing.T) {
@@ -57,12 +59,12 @@ auth.signUp#80eee427 = X;`,
 			want: "no canonical declaration",
 		},
 		{
-			name: "same ID",
+			name: "historical acceptance required",
 			input: `---functions---
 // @tlrpc variant-layer 172
 auth.signUp#80eee427 = X;
 auth.signUp#80eee427 = X;`,
-			want: "duplicate function",
+			want: "requires accept-layers",
 		},
 		{
 			name: "not immediate",
@@ -77,7 +79,7 @@ auth.signUp#80eee427 = X;`,
 			input: `---types---
 // @tlrpc variant-layer 172
 item#00000001 = Item;`,
-			want: "only to functions",
+			want: "function declaration",
 		},
 		{
 			name: "future variant",
@@ -85,7 +87,7 @@ item#00000001 = Item;`,
 // @tlrpc variant-layer 229
 auth.signUp#80eee427 = X;
 auth.signUp#aac7b717 = X;`,
-			want: "exceeds baseline layer",
+			want: "invalid variant-layer",
 		},
 	}
 	for _, test := range tests {
@@ -98,7 +100,30 @@ auth.signUp#aac7b717 = X;`,
 // @tlrpc variant-layer 172
 auth.signUp#80eee427 = X;
 auth.signUp#aac7b717 = X;`, 0, "baseline.tl")
-	require.ErrorContains(t, err, "requires a positive baseline layer")
+	require.ErrorContains(t, err, "invalid variant-layer")
+}
+
+func TestParseBaselineSchemaValidatesAcceptIntervals(t *testing.T) {
+	for _, value := range []string{"228", "229-228", "228-229,229-230", "0-1"} {
+		_, err := ParseBaselineSchema("---functions---\n// @tlrpc variant-layer 172\n// @tlrpc accept-layers "+value+"\na#1 = X;\na#2 = X;", 228, "baseline.tl")
+		require.Error(t, err, value)
+	}
+}
+
+func TestSelectBaselineLayerFiltersHistoricalDeclarations(t *testing.T) {
+	schema, err := ParseBaselineSchema(`---functions---
+// @tlrpc variant-layer 172
+// @tlrpc accept-layers 228-229
+a#1 old:int = X;
+a#2 current:int = X;`, 228, "baseline.tl")
+	require.NoError(t, err)
+	selected, err := SelectBaselineLayer(schema, 230)
+	require.NoError(t, err)
+	require.Len(t, selected.Functions, 1)
+	assert.Zero(t, selected.Functions[0].VariantLayer)
+	selected, err = SelectBaselineLayer(schema, 229)
+	require.NoError(t, err)
+	require.Len(t, selected.Functions, 2)
 }
 
 func functionsNamedForBaselineTest(functions []FuncDecl, name string) []FuncDecl {

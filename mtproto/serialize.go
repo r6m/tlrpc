@@ -79,7 +79,7 @@ func WriteBytes(w io.Writer, v []byte) error {
 		return nil
 	}
 
-	if length > math.MaxInt32 {
+	if length > MaxTLBytesLength {
 		return ErrStringTooLong
 	}
 

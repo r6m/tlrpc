@@ -21,7 +21,9 @@ TLRPC Server / Runtime v2
 
 The dispatcher maps a method constructor ID from a generated `MethodDesc` to
 the registered generated handler. There is no dynamic raw-method registration
-and no secondary protobuf/gRPC contract.
+and no secondary protobuf/gRPC contract. Generated adapters invoke typed service
+methods directly. Result callbacks validate the exact declared return type after
+interceptors and encode it with generated field/vector operations.
 
 ## Connection and session ownership
 
@@ -80,9 +82,15 @@ bounded carrier frame
 ```
 
 The decode budget follows the logical request through container decoding,
-wrapper normalization, gzip expansion, constructor replay, and generated object
+wrapper normalization, gzip expansion, and generated object
 decoding. Bytes, wrappers, containers, aggregate vector elements, object nodes,
 object depth, gzip ratio, and gzip work are independent dimensions.
+
+Generated contracts share one concrete cursor codec. Buffered runtime calls and
+stream entry points use the same field implementation and layer/budget state.
+Boxed family decoding consumes the constructor once before selecting the exact
+contract by ID and layer. Ordinary decoded string and byte fields own their data;
+handlers may retain them without retaining a transport frame or a decoder.
 
 If a container cannot reserve all callable children, Runtime v2 emits
 correlated `500 SERVER_BUSY` errors and does not commit the candidate inbound
@@ -134,8 +142,11 @@ wait without dispatch.
 
 ## Outbound flow
 
-Handlers return typed results or structured RPC errors. Runtime v2 converts
-these to semantic intents. The per-session writer:
+Handlers return typed results or structured RPC errors. After interceptors,
+Runtime v2 invokes the generated method-specific response encoder to validate
+the declared Go result and encode it with the effective layer and output budget.
+Request-scoped senders also bind that layer and budget. Runtime v2 converts
+validated results to semantic intents. The per-session writer:
 
 1. allocates server message IDs and sequence numbers;
 2. creates correlated `rpc_result` or control objects;

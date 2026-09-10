@@ -6,13 +6,11 @@
 package gen
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/r6m/tlrpc/mtproto"
 	"io"
-)
 
-var _ = bytes.Buffer{}
+	"github.com/r6m/tlrpc/mtproto"
+)
 
 type EchoResponse struct {
 	Message string
@@ -23,30 +21,59 @@ func (v *EchoResponse) Method() string        { return "" }
 func (v *EchoResponse) TLName() string        { return "echo.response" }
 
 func (v *EchoResponse) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *EchoResponse) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize echo.response: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, v.Message); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
+		return err
+	}
+	return v.serializeTLBody(e)
+}
+
+func (v *EchoResponse) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteString(v.Message); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (v *EchoResponse) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *EchoResponse) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize echo.response: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *EchoResponse) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize echo.response body: nil receiver")
+	}
+	*v = EchoResponse{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadString(r)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}
@@ -64,30 +91,59 @@ func (v *EchoUpdate) Method() string        { return "" }
 func (v *EchoUpdate) TLName() string        { return "echo.update" }
 
 func (v *EchoUpdate) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *EchoUpdate) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize echo.update: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, v.Message); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
+		return err
+	}
+	return v.serializeTLBody(e)
+}
+
+func (v *EchoUpdate) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteString(v.Message); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (v *EchoUpdate) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *EchoUpdate) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize echo.update: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *EchoUpdate) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize echo.update body: nil receiver")
+	}
+	*v = EchoUpdate{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadString(r)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}

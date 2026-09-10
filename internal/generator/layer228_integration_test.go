@@ -44,7 +44,9 @@ func TestIntegration_TelegramLayer228(t *testing.T) {
 	require.Equal(t, telegramLayer228Constructors, sourceConstructors)
 	require.Equal(t, telegramLayer228Functions, sourceFunctions)
 
-	schema, err := parser.ParseBaselineSchema(string(fixture), telegramLayer228, telegramLayer228Fixture)
+	baseline := strings.ReplaceAll(string(fixture), "// @tlrpc variant-layer 172\n", "// @tlrpc variant-layer 172\n// @tlrpc accept-layers 228-228\n")
+	baseline = strings.ReplaceAll(baseline, "// @tlrpc variant-layer 158\n", "// @tlrpc variant-layer 158\n// @tlrpc accept-layers 228-228\n")
+	schema, err := parser.ParseBaselineSchema(baseline, telegramLayer228, telegramLayer228Fixture)
 	require.NoError(t, err)
 	require.NoError(t, parser.NewValidator(schema).Validate())
 	require.Equal(t, telegramLayer228, schema.Layer)

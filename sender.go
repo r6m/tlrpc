@@ -24,17 +24,25 @@ func SenderFromContext(ctx context.Context) (Sender, bool) {
 	return sender, ok
 }
 
-func withRuntimeSender(ctx context.Context, sender runtimev2.Sender) context.Context {
-	return context.WithValue(ctx, contextKeySender, runtimeSender{sender: sender})
+func withRuntimeSender(ctx context.Context, sender runtimev2.Sender, layer int, limits EncodeLimits) context.Context {
+	return context.WithValue(ctx, contextKeySender, runtimeSender{
+		sender: sender,
+		layer:  layer,
+		limits: limits,
+	})
 }
 
-type runtimeSender struct{ sender runtimev2.Sender }
+type runtimeSender struct {
+	sender runtimev2.Sender
+	layer  int
+	limits EncodeLimits
+}
 
 func (s runtimeSender) Send(ctx context.Context, object TLObject) error {
 	if s.sender == nil {
 		return ErrSenderUnavailable
 	}
-	body, err := encodeTLObject(object)
+	body, err := encodeTLObjectWithLimitsForLayer(object, s.limits, s.layer)
 	if err != nil {
 		return err
 	}

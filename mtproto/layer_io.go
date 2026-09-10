@@ -41,7 +41,8 @@ type layerWriter struct {
 	layer int
 }
 
-func (w *layerWriter) TLLayer() int { return w.layer }
+func (w *layerWriter) TLLayer() int              { return w.layer }
+func (w *layerWriter) encodeState() *encodeState { return encodeStateFromWriter(w.Writer) }
 
 // WithLayerWriter carries the output layer through nested generated encoders.
 func WithLayerWriter(w io.Writer, layer int) io.Writer { return &layerWriter{Writer: w, layer: layer} }

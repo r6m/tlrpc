@@ -367,11 +367,14 @@ child#00000001 flags:# active:flags.0?true = Child;
 legacyNested#00000002 value:int = Nested;
 container#00000003 child:Child nested:Nested = Container;
 result#00000004 = Result;
+matrix#00000006 values:Vector<Vector<int>> = Matrix;
 ---functions---
 messages.forward#00000020 flags:# silent:flags.0?true container:Container = Result;
 // @tlrpc variant-layer 172
+// @tlrpc accept-layers 228-229
 messages.forward#00000021 container:Container = Result;
 auth.check#00000030 value:int = Result;
+test.matrix#00000040 values:Vector<Vector<int>> = Matrix;
 `)
 	deltaPath := writeTestFile(t, "delta-229.tl", `
 // @tlrpc remove constructor legacyNested
@@ -423,13 +426,19 @@ const multiLayerRoundTripTest = `package multilayer_test
 
 import (
 	"bytes"
+	"encoding/hex"
+	"reflect"
 	"testing"
 
 	"example.com/multilayer-generation/gen"
+	"github.com/r6m/tlrpc"
 	"github.com/r6m/tlrpc/mtproto"
 )
 
 func TestGeneratedLayerSelectionAndNestedRoundTrip(t *testing.T) {
+	if _, ok := reflect.TypeOf(gen.Child{}).FieldByName("Label"); ok {
+		t.Fatal("base child retained a layer 229 field instead of using an exact variant")
+	}
 	oldRequest, ok := gen.NewMethodRequestForLayer(0x20, 228)
 	if !ok {
 		t.Fatal("missing layer 228 request")
@@ -477,8 +486,14 @@ func TestGeneratedLayerSelectionAndNestedRoundTrip(t *testing.T) {
 	if _, ok := changedUniqueRequest.(*gen.AuthCheckRequestLayer229); !ok {
 		t.Fatalf("changed layer 229 request type = %T", changedUniqueRequest)
 	}
-	if _, ok := gen.NewMethodRequestForLayer(0x30, 229); !ok {
-		t.Fatal("newer session rejected a unique baseline method ID")
+	if _, ok := gen.NewMethodRequestForLayer(0x30, 228); !ok {
+		t.Fatal("layer 228 rejected its original method ID")
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x30, 229); ok {
+		t.Fatal("layer 229 accepted the replaced layer 228 method ID")
+	}
+	if _, ok := gen.NewConstructorForLayer(0x02, 229); ok {
+		t.Fatal("layer 229 accepted the removed layer 228 constructor ID")
 	}
 	if _, ok := gen.NewConstructorForLayer(0x05, 228); ok {
 		t.Fatal("layer 228 accepted a nested constructor introduced at layer 229")
@@ -487,45 +502,94 @@ func TestGeneratedLayerSelectionAndNestedRoundTrip(t *testing.T) {
 		t.Fatal("layer 229 rejected its newly introduced nested constructor")
 	}
 
-	label := "new"
-	source := &gen.Container{Child: gen.Child{Active: true, Label: &label}, Nested: &gen.LegacyNested{Value: 7}}
+	oldSource := &gen.Container{Child: &gen.Child{Active: true}, Nested: &gen.LegacyNested{Value: 7}}
 	var oldWire bytes.Buffer
-	if err := source.SerializeTL(mtproto.WithLayerWriter(&oldWire, 228)); err != nil {
+	if err := oldSource.SerializeTL(mtproto.WithLayerWriter(&oldWire, 228)); err != nil {
 		t.Fatal(err)
 	}
 	var oldDecoded gen.Container
 	if err := oldDecoded.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(oldWire.Bytes()), 228)); err != nil {
 		t.Fatal(err)
 	}
-	if oldDecoded.Child.Label != nil {
-		t.Fatalf("layer 228 retained layer 229 field: %#v", oldDecoded.Child)
+	if _, ok := oldDecoded.Child.(*gen.Child); !ok {
+		t.Fatalf("layer 228 child type = %T", oldDecoded.Child)
 	}
 	var defaultWire bytes.Buffer
-	if err := source.SerializeTL(&defaultWire); err != nil {
+	if err := oldSource.SerializeTL(&defaultWire); err != nil {
 		t.Fatal(err)
 	}
 	var defaultDecoded gen.Container
 	if err := defaultDecoded.DeserializeTL(bytes.NewReader(defaultWire.Bytes())); err != nil {
 		t.Fatal(err)
 	}
-	if defaultDecoded.Child.Label != nil {
-		t.Fatal("zero layer did not use base compatibility output")
+	if _, ok := defaultDecoded.Child.(*gen.Child); !ok {
+		t.Fatalf("zero layer child type = %T", defaultDecoded.Child)
 	}
 	if _, ok := oldDecoded.Nested.(*gen.LegacyNested); !ok {
 		t.Fatalf("historical nested type = %T", oldDecoded.Nested)
 	}
 
+	label := "new"
+	newSource := &gen.Container{Child: &gen.ChildLayer229{Active: true, Label: &label}, Nested: &gen.CurrentNested{Text: "current"}}
 	var newWire bytes.Buffer
-	if err := source.SerializeTL(mtproto.WithLayerWriter(&newWire, 229)); err != nil {
+	if err := newSource.SerializeTL(mtproto.WithLayerWriter(&newWire, 229)); err != nil {
 		t.Fatal(err)
 	}
 	var newDecoded gen.Container
 	if err := newDecoded.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(newWire.Bytes()), 229)); err != nil {
 		t.Fatal(err)
 	}
-	if newDecoded.Child.Label == nil || *newDecoded.Child.Label != "new" {
-		t.Fatalf("layer 229 label = %#v", newDecoded.Child.Label)
+	child229, ok := newDecoded.Child.(*gen.ChildLayer229)
+	if !ok || child229.Label == nil || *child229.Label != "new" {
+		t.Fatalf("layer 229 child = %#v", newDecoded.Child)
 	}
+	if _, ok := newDecoded.Nested.(*gen.CurrentNested); !ok {
+		t.Fatalf("layer 229 nested type = %T", newDecoded.Nested)
+	}
+
+	wantOld, _ := hex.DecodeString("0300000001000000010000000200000007000000")
+	if !bytes.Equal(oldWire.Bytes(), wantOld) {
+		t.Fatalf("layer 228 exact bytes = %x, want %x", oldWire.Bytes(), wantOld)
+	}
+
+	matrix := &gen.Matrix{Values: [][]int32{{1, 2}, {3}}}
+	wantMatrix, _ := hex.DecodeString("0600000015c4b51c0200000015c4b51c02000000010000000200000015c4b51c0100000003000000")
+	var matrixWire bytes.Buffer
+	if err := matrix.SerializeTL(&matrixWire); err != nil { t.Fatal(err) }
+	if !bytes.Equal(matrixWire.Bytes(), wantMatrix) { t.Fatalf("matrix bytes = %x, want %x", matrixWire.Bytes(), wantMatrix) }
+	var decodedMatrix gen.Matrix
+	if err := decodedMatrix.DeserializeTL(bytes.NewReader(wantMatrix)); err != nil { t.Fatal(err) }
+	if !reflect.DeepEqual(matrix, &decodedMatrix) { t.Fatalf("matrix roundtrip = %#v", decodedMatrix) }
+
+	wantRequest, _ := hex.DecodeString("4000000015c4b51c0200000015c4b51c02000000010000000200000015c4b51c0100000003000000")
+	requestMatrix := &gen.TestMatrixRequest{Values: [][]int32{{1, 2}, {3}}}
+	var requestWire bytes.Buffer
+	if err := requestMatrix.SerializeTL(&requestWire); err != nil { t.Fatal(err) }
+	if !bytes.Equal(requestWire.Bytes(), wantRequest) { t.Fatalf("nested request bytes = %x, want %x", requestWire.Bytes(), wantRequest) }
+	var decodedRequest gen.TestMatrixRequest
+	if err := decodedRequest.DeserializeTL(bytes.NewReader(wantRequest)); err != nil { t.Fatal(err) }
+	if !reflect.DeepEqual(requestMatrix, &decodedRequest) { t.Fatalf("nested request roundtrip = %#v", decodedRequest) }
+	var encodedResponse []byte
+	for _, method := range gen.Test_ServiceDesc.Methods {
+		if method.ConstructorID == 0x40 {
+			var err error
+			encodedResponse, err = method.EncodeResponse(matrix, 228, tlrpc.EncodeLimits{})
+			if err != nil { t.Fatal(err) }
+		}
+	}
+	if !bytes.Equal(encodedResponse, wantMatrix) { t.Fatalf("nested response bytes = %x, want %x", encodedResponse, wantMatrix) }
+
+	stale := "stale"
+	reused := gen.ChildLayer229{Label: &stale}
+	var clearWire bytes.Buffer
+	_ = mtproto.WriteUint32(&clearWire, 0x00000001)
+	_ = mtproto.WriteUint32(&clearWire, 1)
+	if err := reused.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(clearWire.Bytes()), 229)); err != nil { t.Fatal(err) }
+	if reused.Label != nil || !reused.Active { t.Fatalf("reused receiver retained optional state: %#v", reused) }
+	reused.Label = &stale
+	truncated := clearWire.Bytes()[:4]
+	if err := reused.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(truncated), 229)); err == nil { t.Fatal("truncated decode succeeded") }
+	if reused.Label != nil || reused.Active { t.Fatalf("malformed decode retained receiver state: %#v", reused) }
 
 	var malformed bytes.Buffer
 	_ = mtproto.WriteUint32(&malformed, 0x00000001)

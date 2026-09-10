@@ -25,8 +25,11 @@ actionGone#00000012 = Action;
 envelope#00000013 action:Action = Envelope;
 rights#00000015 flags:# name:string = Rights;
 holder#00000016 rights:Rights = Holder;
+bareChild#00000031 value:int = BareChild;
+bareHolder#00000032 flags:# child:!BareChild optional:flags.0?!BareChild children:Vector<!BareChild> boxed:BareChild = BareHolder;
 ---functions---
 work.run#00000010 card:Card = Result;
+work.bare#00000033 flags:# child:!BareChild optional:flags.0?!BareChild children:Vector<!BareChild> = Result;
 `).ParseWithLayer(228)
 	if err != nil {
 		t.Fatalf("parse base schema: %v", err)
@@ -37,11 +40,16 @@ policy#00000005 flags:# name:string danger:flags.0?true = Policy;
 // @tlrpc remove constructor actionGone
 actionText#00000014 text:string extra:string = Action;
 rights#00000015 flags:# name:string welcome:flags.0?true = Rights;
+bareChild#00000031 value:long = BareChild;
 `, 229, "layer229.tl")
 	if err != nil {
 		t.Fatalf("parse layer difference: %v", err)
 	}
-	layered, err := parser.ResolveLayers(base, 228, []parser.LayerDifference{difference})
+	reappearance, err := parser.ParseLayerDifference("---types---\nactionGone#00000012 = Action;", 230, "layer230.tl")
+	if err != nil {
+		t.Fatalf("parse reappearance: %v", err)
+	}
+	layered, err := parser.ResolveLayers(base, 228, []parser.LayerDifference{difference, reappearance})
 	if err != nil {
 		t.Fatalf("resolve layered schema: %v", err)
 	}
@@ -96,8 +104,8 @@ func TestProjectionGeneratorValidation(t *testing.T) {
 	schema := parser.NewSchema(229)
 	schema.BaseLayer = 228
 	schema.IsLayered = true
-	first := parser.Constructor{Name: "item", ID: 1, ResultType: parser.NewTypeRef("Item"), OutputMinLayer: 228, OutputMaxLayer: 229}
-	second := parser.Constructor{Name: "item", ID: 2, ResultType: parser.NewTypeRef("Item"), VariantLayer: 229, OutputMinLayer: 229, OutputMaxLayer: 229}
+	first := parser.Constructor{Name: "item", ID: 1, ResultType: parser.NewTypeRef("Item"), Intervals: []parser.LayerInterval{{MinLayer: 228, MaxLayer: 229}}}
+	second := parser.Constructor{Name: "item", ID: 2, ResultType: parser.NewTypeRef("Item"), VariantLayer: 229, Intervals: []parser.LayerInterval{{MinLayer: 229, MaxLayer: 229}}}
 	schema.AddType(parser.TypeDecl{Name: "Item", Constructors: []parser.Constructor{first}, VariantLayer: 0})
 	schema.AddType(parser.TypeDecl{Name: "Item", Constructors: []parser.Constructor{second}, VariantLayer: 229})
 	if err := NewProjectionGenerator(namer, &output).Generate(schema); err == nil || !strings.Contains(err.Error(), "overlapping output ranges") {
@@ -139,12 +147,16 @@ func generateProjectionTestPackage(outDir string, schema *parser.Schema) error {
 const projectionRuntimeTest = `package projectionmini
 
 import (
+	"bytes"
+	"encoding/hex"
+	"io"
 	"errors"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/mtproto"
 )
 
 type unknownObject struct{}
@@ -198,8 +210,8 @@ func TestRecursiveProjectionClonesAndSelectsVariant(t *testing.T) {
 	}
 }
 
-func TestSameIDSupersetHookRunsBeforeLossCheck(t *testing.T) {
-	source := &Policy{Name: "policy", Danger: true}
+func TestSameIDVariantHookRunsBeforeLossCheck(t *testing.T) {
+	source := &PolicyLayer229{Name: "policy", Danger: true}
 	if _, err := ProjectTLObject(source, 228, nil); err == nil || !strings.Contains(err.Error(), "nonzero unsupported field") {
 		t.Fatalf("expected unsupported semantic field error, got %v", err)
 	}
@@ -222,7 +234,7 @@ func TestSameIDSupersetHookRunsBeforeLossCheck(t *testing.T) {
 	if projected == replacement {
 		t.Fatal("handled hook replacement was not independently cloned")
 	}
-	if projected.Name != "safe" || projected.Danger {
+	if projected.Name != "safe" {
 		t.Fatalf("unexpected projected policy: %#v", projected)
 	}
 
@@ -296,15 +308,21 @@ func TestChangedConstructorProjectsThroughStableUnion(t *testing.T) {
 	}); err == nil || !strings.Contains(err.Error(), "unavailable at output layer") {
 		t.Fatalf("expected unavailable hook replacement rejection, got %v", err)
 	}
-	if _, err := ProjectTLObject(&ActionGone{}, 228, nil); err != nil {
-		t.Fatalf("project historical union member at base layer: %v", err)
+	for _, layer := range []int{228, 230} {
+		projected, err := ProjectTLObject(&ActionGone{}, layer, nil)
+		if err != nil {
+			t.Fatalf("project recurring member at layer %d: %v", layer, err)
+		}
+		if _, ok := projected.(*ActionGone); !ok {
+			t.Fatalf("reappearing contract changed concrete type: %T", projected)
+		}
 	}
 }
 
 func TestHookReplacementIsRecursivelyValidated(t *testing.T) {
 	if _, err := ProjectTLObject(&Policy{}, 228, func(_ []string, object tlrpc.TLObject, _ int) (tlrpc.TLObject, bool, error) {
 		if _, ok := object.(*Policy); ok {
-			return &Holder{Rights: Rights{Name: "admin", Welcome: true}}, true, nil
+			return &Holder{Rights: &RightsLayer229{Name: "admin", Welcome: true}}, true, nil
 		}
 		return nil, false, nil
 	}); err == nil || !strings.Contains(err.Error(), "nonzero unsupported field") {
@@ -360,7 +378,7 @@ func TestUnknownRequestsErrorsAndDepthBound(t *testing.T) {
 	}
 
 	var childPath []string
-	tree := &Node{Label: "root", Children: []*Node{{Label: "child"}}}
+	tree := &Node{Label: "root", Children: []NodeType{&Node{Label: "child"}}}
 	projectedTreeObject, err := ProjectTLObject(tree, 228, func(path []string, object tlrpc.TLObject, _ int) (tlrpc.TLObject, bool, error) {
 		if value, ok := object.(*Node); ok && value.Label == "root" {
 			path[0] = "mutated-copy"
@@ -388,7 +406,7 @@ func TestUnknownRequestsErrorsAndDepthBound(t *testing.T) {
 		t.Fatalf("expected depth error, got %v", err)
 	}
 
-	for _, layer := range []int{227, 230} {
+	for _, layer := range []int{227, 231} {
 		if _, err := ProjectTLObject(&Policy{}, layer, nil); err == nil || !strings.Contains(err.Error(), "unsupported target layer") {
 			t.Fatalf("layer %d: expected range error, got %v", layer, err)
 		}
@@ -398,6 +416,25 @@ func TestUnknownRequestsErrorsAndDepthBound(t *testing.T) {
 		return nil, false, wantErr
 	}); err == nil || !errors.Is(err, wantErr) {
 		t.Fatalf("expected hook error propagation, got %v", err)
+	}
+}
+
+func TestBareCodecsPreserveWireTagsAcrossLayers(t *testing.T) {
+	type codec interface { SerializeTL(io.Writer) error; DeserializeTL(io.Reader) error }
+	cases := []struct { layer int; source, target codec; wire string }{
+		{228, &BareHolder{Child: BareChild{Value:7}, Optional:&BareChild{Value:8}, Children:[]*BareChild{{Value:9}}, Boxed:&BareChild{Value:10}}, &BareHolder{}, "3200000001000000070000000800000015c4b51c0100000009000000310000000a000000"},
+		{229, &BareHolderLayer229{Child: BareChildLayer229{Value:7}, Optional:&BareChildLayer229{Value:8}, Children:[]*BareChildLayer229{{Value:9}}, Boxed:&BareChildLayer229{Value:10}}, &BareHolderLayer229{}, "32000000010000000700000000000000080000000000000015c4b51c010000000900000000000000310000000a00000000000000"},
+		{228, &WorkBareRequest{Child:BareChild{Value:7}, Optional:&BareChild{Value:8}, Children:[]*BareChild{{Value:9}}}, &WorkBareRequest{}, "3300000001000000070000000800000015c4b51c0100000009000000"},
+		{229, &WorkBareRequestLayer229{Child:BareChildLayer229{Value:7}, Optional:&BareChildLayer229{Value:8}, Children:[]*BareChildLayer229{{Value:9}}}, &WorkBareRequestLayer229{}, "33000000010000000700000000000000080000000000000015c4b51c010000000900000000000000"},
+	}
+	for _, test := range cases {
+		var output bytes.Buffer
+		if err := test.source.SerializeTL(mtproto.WithLayerWriter(&output, test.layer)); err != nil { t.Fatal(err) }
+		want, err := hex.DecodeString(test.wire)
+		if err != nil { t.Fatal(err) }
+		if !bytes.Equal(output.Bytes(), want) { t.Fatalf("%T: bytes %x, want %x", test.source, output.Bytes(), want) }
+		if err := test.target.DeserializeTL(mtproto.WithLayerReader(bytes.NewReader(want), test.layer)); err != nil { t.Fatalf("%T: %v", test.target, err) }
+		if !reflect.DeepEqual(test.source, test.target) { t.Fatalf("%T: roundtrip changed values", test.source) }
 	}
 }
 `

@@ -11,6 +11,11 @@ import (
 )
 
 // Static constructor map for efficient decoding
+func tlLayerSupports(layer, minLayer, maxLayer int) bool {
+
+	return (minLayer == 0 || layer >= minLayer) && (maxLayer == 0 || layer <= maxLayer)
+}
+
 var staticConstructors = map[uint32]func() tlrpc.TLObject{
 	// Base MTProto types
 	0x3fedd339: func() tlrpc.TLObject { return &types.True{} },
@@ -34,15 +39,83 @@ func GetStaticConstructors() map[uint32]func() tlrpc.TLObject {
 	return staticConstructors
 }
 
+type tlConstructorLayerVariant struct {
+	minLayer  int
+	maxLayer  int
+	newObject func() tlrpc.TLObject
+}
+
+var constructorLayerVariants = map[uint32][]tlConstructorLayerVariant{
+	0xa1100001: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AssetDocument{} }},
+	},
+	0xa1100002: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &AssetLink{} }},
+	},
+	0xa1100003: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &CatalogPage{} }},
+	},
+	0xa1100004: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JobQueued{} }},
+	},
+	0xa1100005: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &JobRejected{} }},
+	},
+}
+
+// NewConstructorForLayer constructs the wire shape selected by an incoming
+// constructor ID and the negotiated session layer.
+func NewConstructorForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	variants, hasLayerVariants := constructorLayerVariants[id]
+	for _, variant := range variants {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
+			return variant.newObject(), true
+		}
+	}
+	if hasLayerVariants {
+		return nil, false
+	}
+	constructor, ok := staticConstructors[id]
+	if !ok {
+		return nil, false
+	}
+	return constructor(), true
+}
+
 // Static method constructor map for RPC request deserialization
 var staticMethods = map[string]func() tlrpc.TLObject{
-	"catalog.resolve": func() tlrpc.TLObject { return &CatalogResolveRequest{} },
 	"catalog.search":  func() tlrpc.TLObject { return &CatalogSearchRequest{} },
-	"workflow.reject": func() tlrpc.TLObject { return &WorkflowRejectRequest{} },
+	"catalog.resolve": func() tlrpc.TLObject { return &CatalogResolveRequest{} },
 	"workflow.submit": func() tlrpc.TLObject { return &WorkflowSubmitRequest{} },
+	"workflow.reject": func() tlrpc.TLObject { return &WorkflowRejectRequest{} },
 }
 
 // GetStaticMethods returns the static method constructor map
 func GetStaticMethods() map[string]func() tlrpc.TLObject {
 	return staticMethods
+}
+
+var methodLayerVariants = map[uint32][]tlConstructorLayerVariant{
+	0xb2200001: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &CatalogSearchRequest{} }},
+	},
+	0xb2200002: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &CatalogResolveRequest{} }},
+	},
+	0xb2200003: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WorkflowSubmitRequest{} }},
+	},
+	0xb2200004: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &WorkflowRejectRequest{} }},
+	},
+}
+
+// NewMethodRequestForLayer constructs a typed request wire variant.
+func NewMethodRequestForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	for _, variant := range methodLayerVariants[id] {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
+			return variant.newObject(), true
+		}
+	}
+	return nil, false
 }

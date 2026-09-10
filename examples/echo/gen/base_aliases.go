@@ -9,7 +9,7 @@ import (
 	tltypes "github.com/r6m/tlrpc/types"
 )
 
-// Aliases for built-in TL primitives provided by github.com/r6m/tlrpc/types.
+// Aliases for the runtime's built-in TL primitives.
 type BoolTrue = tltypes.BoolTrue
 type BoolFalse = tltypes.BoolFalse
 type True = tltypes.True

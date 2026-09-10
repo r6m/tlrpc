@@ -6,13 +6,11 @@
 package gen
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/r6m/tlrpc/mtproto"
 	"io"
-)
 
-var _ = bytes.Buffer{}
+	"github.com/r6m/tlrpc/mtproto"
+)
 
 type CatalogResolveRequest struct {
 	ID int64
@@ -24,30 +22,59 @@ func (r *CatalogResolveRequest) Method() string        { return "catalog.resolve
 func (r *CatalogResolveRequest) TLName() string { return "catalog.resolve" }
 
 func (r *CatalogResolveRequest) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+	return r.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (r *CatalogResolveRequest) serializeTL(e *mtproto.Encoder) error {
+	if r == nil {
+		return fmt.Errorf("serialize catalog.resolve: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteInt64(w, r.ID); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(r.ConstructorID()); err != nil {
+		return err
+	}
+	return r.serializeTLBody(e)
+}
+
+func (r *CatalogResolveRequest) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteInt64(r.ID); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *CatalogResolveRequest) DeserializeTL(rd io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(rd)
+	return r.deserializeTL(mtproto.NewDecoder(rd))
+}
+
+func (r *CatalogResolveRequest) deserializeTL(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize catalog.resolve: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(rd)
-	if err != nil {
+	if constructorID != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, r.ConstructorID())
+	}
+	return r.deserializeTLBody(d)
+}
+
+func (r *CatalogResolveRequest) deserializeTLBody(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize catalog.resolve body: nil receiver")
+	}
+	*r = CatalogResolveRequest{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != r.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, r.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadInt64(rd)
+		value, err := d.ReadInt64()
 		if err != nil {
 			return err
 		}
@@ -76,64 +103,95 @@ func (r *CatalogSearchRequest) computeFlags() uint32 {
 }
 
 func (r *CatalogSearchRequest) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+	return r.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (r *CatalogSearchRequest) serializeTL(e *mtproto.Encoder) error {
+	if r == nil {
+		return fmt.Errorf("serialize catalog.search: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
+	defer e.LeaveObject()
+	if err := e.WriteUint32(r.ConstructorID()); err != nil {
+		return err
+	}
+	return r.serializeTLBody(e)
+}
+
+func (r *CatalogSearchRequest) serializeTLBody(e *mtproto.Encoder) error {
 	flags := r.computeFlags()
-	if err := mtproto.WriteUint32(w, flags); err != nil {
+	if err := e.WriteUint32(flags); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, r.Query); err != nil {
+	if err := e.WriteString(r.Query); err != nil {
 		return err
 	}
 	if flags&(1<<0) != 0 {
-		if err := mtproto.WriteString(w, *r.Cursor); err != nil {
+		if err := e.WriteString(*r.Cursor); err != nil {
 			return err
 		}
 	}
-	if err := mtproto.WriteInt32(w, r.Limit); err != nil {
+	if err := e.WriteInt32(r.Limit); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *CatalogSearchRequest) DeserializeTL(rd io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(rd)
+	return r.deserializeTL(mtproto.NewDecoder(rd))
+}
+
+func (r *CatalogSearchRequest) deserializeTL(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize catalog.search: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(rd)
-	if err != nil {
+	if constructorID != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, r.ConstructorID())
+	}
+	return r.deserializeTLBody(d)
+}
+
+func (r *CatalogSearchRequest) deserializeTLBody(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize catalog.search body: nil receiver")
+	}
+	*r = CatalogSearchRequest{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != r.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, r.ConstructorID())
-	}
+	defer d.LeaveObject()
 	var flags uint32
 	{
-		value, err := mtproto.ReadUint32(rd)
+		value, err := d.ReadUint32()
 		if err != nil {
 			return err
 		}
 		flags = value
 	}
 	{
-		value, err := mtproto.ReadString(rd)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}
 		r.Query = value
 	}
 	if flags&(1<<0) != 0 {
-		value, err := mtproto.ReadString(rd)
-		if err != nil {
-			return err
+		{
+			decoded, err := d.ReadString()
+			if err != nil {
+				return err
+			}
+			r.Cursor = &decoded
 		}
-		r.Cursor = &value
 	}
 	{
-		value, err := mtproto.ReadInt32(rd)
+		value, err := d.ReadInt32()
 		if err != nil {
 			return err
 		}
@@ -152,30 +210,59 @@ func (r *WorkflowRejectRequest) Method() string        { return "workflow.reject
 func (r *WorkflowRejectRequest) TLName() string { return "workflow.reject" }
 
 func (r *WorkflowRejectRequest) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+	return r.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (r *WorkflowRejectRequest) serializeTL(e *mtproto.Encoder) error {
+	if r == nil {
+		return fmt.Errorf("serialize workflow.reject: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, r.Reason); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(r.ConstructorID()); err != nil {
+		return err
+	}
+	return r.serializeTLBody(e)
+}
+
+func (r *WorkflowRejectRequest) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteString(r.Reason); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *WorkflowRejectRequest) DeserializeTL(rd io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(rd)
+	return r.deserializeTL(mtproto.NewDecoder(rd))
+}
+
+func (r *WorkflowRejectRequest) deserializeTL(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize workflow.reject: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(rd)
-	if err != nil {
+	if constructorID != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, r.ConstructorID())
+	}
+	return r.deserializeTLBody(d)
+}
+
+func (r *WorkflowRejectRequest) deserializeTLBody(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize workflow.reject body: nil receiver")
+	}
+	*r = WorkflowRejectRequest{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != r.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, r.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadString(rd)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}
@@ -204,26 +291,53 @@ func (r *WorkflowSubmitRequest) computeFlags() uint32 {
 }
 
 func (r *WorkflowSubmitRequest) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+	return r.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (r *WorkflowSubmitRequest) serializeTL(e *mtproto.Encoder) error {
+	if r == nil {
+		return fmt.Errorf("serialize workflow.submit: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
+	defer e.LeaveObject()
+	if err := e.WriteUint32(r.ConstructorID()); err != nil {
+		return err
+	}
+	return r.serializeTLBody(e)
+}
+
+func (r *WorkflowSubmitRequest) serializeTLBody(e *mtproto.Encoder) error {
 	flags := r.computeFlags()
-	if err := mtproto.WriteUint32(w, flags); err != nil {
+	if err := e.WriteUint32(flags); err != nil {
 		return err
 	}
-	if err := r.Asset.SerializeTL(w); err != nil {
+	if r.Asset == nil {
+		return fmt.Errorf("required boxed Asset is nil")
+	}
+	if err := r.Asset.SerializeTL(e); err != nil {
 		return err
 	}
-	if err := mtproto.WriteVectorHeader(w, len(r.Labels)); err != nil {
-		return err
-	}
-	for i := range r.Labels {
-		if err := mtproto.WriteString(w, r.Labels[i]); err != nil {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
 			return err
 		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(r.Labels)); err != nil {
+			return err
+		}
+		for _, element := range r.Labels {
+			if err := e.WriteString(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
 	}
 	if flags&(1<<0) != 0 {
-		if err := mtproto.WriteString(w, *r.Note); err != nil {
+		if err := e.WriteString(*r.Note); err != nil {
 			return err
 		}
 	}
@@ -231,73 +345,85 @@ func (r *WorkflowSubmitRequest) SerializeTL(w io.Writer) error {
 }
 
 func (r *WorkflowSubmitRequest) DeserializeTL(rd io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(rd)
+	return r.deserializeTL(mtproto.NewDecoder(rd))
+}
+
+func (r *WorkflowSubmitRequest) deserializeTL(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize workflow.submit: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(rd)
-	if err != nil {
+	if constructorID != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, r.ConstructorID())
+	}
+	return r.deserializeTLBody(d)
+}
+
+func (r *WorkflowSubmitRequest) deserializeTLBody(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize workflow.submit body: nil receiver")
+	}
+	*r = WorkflowSubmitRequest{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != r.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, r.ConstructorID())
-	}
+	defer d.LeaveObject()
 	var flags uint32
 	{
-		value, err := mtproto.ReadUint32(rd)
+		value, err := d.ReadUint32()
 		if err != nil {
 			return err
 		}
 		flags = value
 	}
 	{
-		ctorID, err := mtproto.ReadUint32(rd)
+		value, err := decodeAssetType(d)
 		if err != nil {
-			return err
-		}
-		ctor, ok := GetStaticConstructors()[ctorID]
-		if !ok {
-			return fmt.Errorf("unknown constructor: %x", ctorID)
-		}
-		obj := ctor()
-		value, ok := obj.(AssetType)
-		if !ok {
-			return fmt.Errorf("constructor %x is not AssetType", ctorID)
-		}
-		var boxedCtor bytes.Buffer
-		if err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {
-			return err
-		}
-		if err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), rd)); err != nil {
 			return err
 		}
 		r.Asset = value
 	}
-	{
-		var items []string
-		if err := mtproto.ReadVector(rd, func() error {
+	if err := func() error {
+		if err := d.EnterObject(); err != nil {
+			return err
+		}
+		defer d.LeaveObject()
+		count, err := d.ReadVectorCount(mtproto.MaxVectorElements, 4)
+		if err != nil {
+			return err
+		}
+		capacity := count
+		if capacity > 1024 {
+			capacity = 1024
+		}
+		items := make([]string, 0, capacity)
+		for index0 := 0; index0 < count; index0++ {
 			var item string
 			{
-				value, err := mtproto.ReadString(rd)
+				value, err := d.ReadString()
 				if err != nil {
 					return err
 				}
 				item = value
 			}
 			items = append(items, item)
-			return nil
-		}); err != nil {
-			return err
 		}
 		r.Labels = items
+		return nil
+	}(); err != nil {
+		return err
 	}
 	if flags&(1<<0) != 0 {
-		value, err := mtproto.ReadString(rd)
-		if err != nil {
-			return err
+		{
+			decoded, err := d.ReadString()
+			if err != nil {
+				return err
+			}
+			r.Note = &decoded
 		}
-		r.Note = &value
 	}
 	return nil
 }

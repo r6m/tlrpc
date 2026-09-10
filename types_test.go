@@ -19,12 +19,13 @@ func TestTypeAliases(t *testing.T) {
 }
 
 func TestServiceDesc(t *testing.T) {
+	handler := MethodHandler(func(any, context.Context, TLObject) (any, error) { return nil, nil })
 	desc := ServiceDesc{
 		ServiceName: "TestService",
 		Methods: []MethodDesc{
 			{
 				MethodName: "TestMethod",
-				Handler:    func() {},
+				Handler:    handler,
 			},
 		},
 	}
@@ -43,7 +44,7 @@ func TestServiceDesc(t *testing.T) {
 }
 
 func TestMethodDesc(t *testing.T) {
-	handler := func() { /* test handler */ }
+	handler := MethodHandler(func(any, context.Context, TLObject) (any, error) { return nil, nil })
 
 	desc := MethodDesc{
 		MethodName: "TestMethod",

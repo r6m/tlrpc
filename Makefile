@@ -1,4 +1,4 @@
-.PHONY: all build test clean generate lint deps check-type-domains check-no-legacy check-no-semantics-creep
+.PHONY: all build test test-layer-contracts clean generate lint deps check-type-domains check-no-legacy check-no-semantics-creep
 
 # Variables
 GO := go
@@ -25,6 +25,10 @@ build-pkg:
 test:
 	$(GO) test $(GOFLAGS) $(PKG)
 
+# Includes generated-package compilation and the unchanged-initializer fixture.
+test-layer-contracts:
+	$(GO) test $(GOFLAGS) ./internal/parser ./internal/generator ./cmd/tlrpc-gen . ./mtproto -run 'Layer|Boxed|Contract|MethodResponse|RuntimeSender|EncodeBudget|Expired|Reintroduced' -count=1
+
 test-short:
 	$(GO) test $(GOFLAGS) -short $(PKG)
 
@@ -39,13 +43,17 @@ coverage:
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
 # Code Generation
-generate: generate-test generate-examples
+generate: generate-test generate-examples generate-compat
 
 generate-test:
 	$(GO) run ./cmd/tlrpc-gen --schema=testdata/schemas/framework_acceptance.tl --out=internal/testdata/gen --package=gen
 
 generate-examples:
 	$(GO) run ./cmd/tlrpc-gen --schema=examples/echo/schema.tl --out=examples/echo/gen
+
+# Minimal Telegram compatibility fixture owned by TLRPC, not tgserver output.
+generate-compat:
+	$(GO) run ./cmd/tlrpc-gen --schema=testdata/schema-217.tl --out=examples/gen --package=gen --layer=217
 
 # Linting
 lint:

@@ -26,6 +26,14 @@ type GenericParam struct {
 	Pos        Position
 }
 
+// LayerInterval is one inclusive availability interval. A zero MaxLayer is
+// unbounded. Layered resolution keeps separate intervals when a contract
+// disappears and later reappears.
+type LayerInterval struct {
+	MinLayer int
+	MaxLayer int
+}
+
 // TypeDecl represents a type declaration with all its constructors.
 type TypeDecl struct {
 	Name         string        // e.g., "User", "Message"
@@ -47,13 +55,7 @@ type Constructor struct {
 	VectorCount   *string // NEW: element variable for vectors, e.g., "t" in "# [ t ]"
 	IsBuiltin     bool    // pseudo-declaration for a primitive built-in type
 	VariantLayer  int     // zero for the stable Go name, otherwise Layer<N>
-	MinLayer      int     // inclusive; zero with MaxLayer zero means any layer
-	MaxLayer      int     // inclusive; zero means no upper bound
-	// OutputMinLayer and OutputMaxLayer retain declaration availability for
-	// projection. Incoming MinLayer/MaxLayer may be widened to 0/0 for unique
-	// historical IDs that remain accepted by newer clients.
-	OutputMinLayer int
-	OutputMaxLayer int
+	Intervals     []LayerInterval
 }
 
 // FuncDecl represents a function declaration.
@@ -65,18 +67,22 @@ type FuncDecl struct {
 	ResultType    TypeRef
 	IsTemplate    bool // NEW: true if return type is generic param (e.g., = X)
 	IsHelper      bool // schema-only serializer prefix paired with a generic function
-	VariantLayer  int  // zero for the stable Go name, otherwise Layer<N>
-	MinLayer      int  // inclusive; zero with MaxLayer zero means any layer
-	MaxLayer      int  // inclusive; zero means no upper bound
+	// RequestVariantLayer names the request wire contract. VariantLayer names
+	// the full handler contract, including its response type.
+	RequestVariantLayer int
+	VariantLayer        int // zero for the stable handler name, otherwise Layer<N>
+	Intervals           []LayerInterval
+	RequestIntervals    []LayerInterval
+	// AcceptIntervals is explicit bounded historical input policy parsed from
+	// @tlrpc accept-layers. It is independent from VariantLayer provenance.
+	AcceptIntervals []LayerInterval
 }
 
 // Parameter represents a parameter in a constructor or function.
 type Parameter struct {
-	Name     string
-	Type     TypeRef
-	FlagBit  *int // nil if not conditional
-	MinLayer int  // inclusive; zero means unbounded
-	MaxLayer int  // inclusive; zero means unbounded
+	Name    string
+	Type    TypeRef
+	FlagBit *int // nil if not conditional
 }
 
 // TypeRef represents a type reference, possibly generic or conditional.

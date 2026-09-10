@@ -6,13 +6,12 @@
 package gen
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/r6m/tlrpc/mtproto"
 	"io"
-)
 
-var _ = bytes.Buffer{}
+	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/mtproto"
+)
 
 type AssetDocument struct {
 	ID      int64
@@ -34,65 +33,103 @@ func (v *AssetDocument) computeFlags() uint32 {
 }
 
 func (v *AssetDocument) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *AssetDocument) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize assetDocument: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
+		return err
+	}
+	return v.serializeTLBody(e)
+}
+
+func (v *AssetDocument) serializeTLBody(e *mtproto.Encoder) error {
 	flags := v.computeFlags()
-	if err := mtproto.WriteUint32(w, flags); err != nil {
+	if err := e.WriteUint32(flags); err != nil {
 		return err
 	}
-	if err := mtproto.WriteInt64(w, v.ID); err != nil {
+	if err := e.WriteInt64(v.ID); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, v.Name); err != nil {
+	if err := e.WriteString(v.Name); err != nil {
 		return err
 	}
 	if flags&(1<<0) != 0 {
-		if err := mtproto.WriteString(w, *v.Summary); err != nil {
+		if err := e.WriteString(*v.Summary); err != nil {
 			return err
 		}
 	}
-	if err := mtproto.WriteVectorHeader(w, len(v.Tags)); err != nil {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(v.Tags)); err != nil {
+			return err
+		}
+		for _, element := range v.Tags {
+			if err := e.WriteString(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
 		return err
-	}
-	for i := range v.Tags {
-		if err := mtproto.WriteString(w, v.Tags[i]); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
 func (v *AssetDocument) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *AssetDocument) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize assetDocument: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *AssetDocument) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize assetDocument body: nil receiver")
+	}
+	*v = AssetDocument{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	var flags uint32
 	{
-		value, err := mtproto.ReadUint32(r)
+		value, err := d.ReadUint32()
 		if err != nil {
 			return err
 		}
 		flags = value
 	}
 	{
-		value, err := mtproto.ReadInt64(r)
+		value, err := d.ReadInt64()
 		if err != nil {
 			return err
 		}
 		v.ID = value
 	}
 	{
-		value, err := mtproto.ReadString(r)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}
@@ -100,31 +137,42 @@ func (v *AssetDocument) DeserializeTL(r io.Reader) error {
 	}
 	if flags&(1<<0) != 0 {
 		{
-			value, err := mtproto.ReadString(r)
+			decoded, err := d.ReadString()
 			if err != nil {
 				return err
 			}
-			val := value
-			v.Summary = &val
+			v.Summary = &decoded
 		}
 	}
-	{
-		var items []string
-		if err := mtproto.ReadVector(r, func() error {
+	if err := func() error {
+		if err := d.EnterObject(); err != nil {
+			return err
+		}
+		defer d.LeaveObject()
+		count, err := d.ReadVectorCount(mtproto.MaxVectorElements, 4)
+		if err != nil {
+			return err
+		}
+		capacity := count
+		if capacity > 1024 {
+			capacity = 1024
+		}
+		items := make([]string, 0, capacity)
+		for index0 := 0; index0 < count; index0++ {
 			var item string
 			{
-				value, err := mtproto.ReadString(r)
+				value, err := d.ReadString()
 				if err != nil {
 					return err
 				}
 				item = value
 			}
 			items = append(items, item)
-			return nil
-		}); err != nil {
-			return err
 		}
 		v.Tags = items
+		return nil
+	}(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -149,65 +197,103 @@ func (v *AssetLink) computeFlags() uint32 {
 }
 
 func (v *AssetLink) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *AssetLink) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize assetLink: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
+		return err
+	}
+	return v.serializeTLBody(e)
+}
+
+func (v *AssetLink) serializeTLBody(e *mtproto.Encoder) error {
 	flags := v.computeFlags()
-	if err := mtproto.WriteUint32(w, flags); err != nil {
+	if err := e.WriteUint32(flags); err != nil {
 		return err
 	}
-	if err := mtproto.WriteInt64(w, v.ID); err != nil {
+	if err := e.WriteInt64(v.ID); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, v.URL); err != nil {
+	if err := e.WriteString(v.URL); err != nil {
 		return err
 	}
 	if flags&(1<<0) != 0 {
-		if err := mtproto.WriteString(w, *v.Title); err != nil {
+		if err := e.WriteString(*v.Title); err != nil {
 			return err
 		}
 	}
-	if err := mtproto.WriteVectorHeader(w, len(v.Tags)); err != nil {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(v.Tags)); err != nil {
+			return err
+		}
+		for _, element := range v.Tags {
+			if err := e.WriteString(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
 		return err
-	}
-	for i := range v.Tags {
-		if err := mtproto.WriteString(w, v.Tags[i]); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
 func (v *AssetLink) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *AssetLink) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize assetLink: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *AssetLink) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize assetLink body: nil receiver")
+	}
+	*v = AssetLink{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	var flags uint32
 	{
-		value, err := mtproto.ReadUint32(r)
+		value, err := d.ReadUint32()
 		if err != nil {
 			return err
 		}
 		flags = value
 	}
 	{
-		value, err := mtproto.ReadInt64(r)
+		value, err := d.ReadInt64()
 		if err != nil {
 			return err
 		}
 		v.ID = value
 	}
 	{
-		value, err := mtproto.ReadString(r)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}
@@ -215,33 +301,82 @@ func (v *AssetLink) DeserializeTL(r io.Reader) error {
 	}
 	if flags&(1<<0) != 0 {
 		{
-			value, err := mtproto.ReadString(r)
+			decoded, err := d.ReadString()
 			if err != nil {
 				return err
 			}
-			val := value
-			v.Title = &val
+			v.Title = &decoded
 		}
 	}
-	{
-		var items []string
-		if err := mtproto.ReadVector(r, func() error {
+	if err := func() error {
+		if err := d.EnterObject(); err != nil {
+			return err
+		}
+		defer d.LeaveObject()
+		count, err := d.ReadVectorCount(mtproto.MaxVectorElements, 4)
+		if err != nil {
+			return err
+		}
+		capacity := count
+		if capacity > 1024 {
+			capacity = 1024
+		}
+		items := make([]string, 0, capacity)
+		for index0 := 0; index0 < count; index0++ {
 			var item string
 			{
-				value, err := mtproto.ReadString(r)
+				value, err := d.ReadString()
 				if err != nil {
 					return err
 				}
 				item = value
 			}
 			items = append(items, item)
-			return nil
-		}); err != nil {
-			return err
 		}
 		v.Tags = items
+		return nil
+	}(); err != nil {
+		return err
 	}
 	return nil
+}
+
+func decodeAssetType(d *mtproto.Decoder) (AssetType, error) {
+	constructorID, err := d.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	newObject, ok := GetStaticConstructors()[constructorID]
+	var object tlrpc.TLObject
+	if ok {
+		object = newObject()
+	}
+	if !ok || object == nil {
+		return nil, fmt.Errorf("unknown constructor: %x", constructorID)
+	}
+	value, ok := object.(AssetType)
+	if !ok || value == nil {
+		return nil, fmt.Errorf("constructor %x is not AssetType", constructorID)
+	}
+	switch concrete := value.(type) {
+	case *AssetDocument:
+		if concrete == nil {
+			return nil, fmt.Errorf("constructor %x produced nil AssetDocument", constructorID)
+		}
+		if err := concrete.deserializeTLBody(d); err != nil {
+			return nil, err
+		}
+	case *AssetLink:
+		if concrete == nil {
+			return nil, fmt.Errorf("constructor %x produced nil AssetLink", constructorID)
+		}
+		if err := concrete.deserializeTLBody(d); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("constructor %x has unsupported AssetType implementation %T", constructorID, value)
+	}
+	return value, nil
 }
 
 type CatalogPage struct {
@@ -262,23 +397,50 @@ func (v *CatalogPage) computeFlags() uint32 {
 }
 
 func (v *CatalogPage) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *CatalogPage) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize catalogPage: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
+		return err
+	}
+	return v.serializeTLBody(e)
+}
+
+func (v *CatalogPage) serializeTLBody(e *mtproto.Encoder) error {
 	flags := v.computeFlags()
-	if err := mtproto.WriteUint32(w, flags); err != nil {
+	if err := e.WriteUint32(flags); err != nil {
 		return err
 	}
-	if err := mtproto.WriteVectorHeader(w, len(v.Items)); err != nil {
-		return err
-	}
-	for i := range v.Items {
-		if err := v.Items[i].SerializeTL(w); err != nil {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
 			return err
 		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(v.Items)); err != nil {
+			return err
+		}
+		for _, element := range v.Items {
+			if element == nil {
+				return fmt.Errorf("required boxed Asset is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
 	}
 	if flags&(1<<0) != 0 {
-		if err := mtproto.WriteString(w, *v.NextCursor); err != nil {
+		if err := e.WriteString(*v.NextCursor); err != nil {
 			return err
 		}
 	}
@@ -286,68 +448,77 @@ func (v *CatalogPage) SerializeTL(w io.Writer) error {
 }
 
 func (v *CatalogPage) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *CatalogPage) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize catalogPage: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *CatalogPage) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize catalogPage body: nil receiver")
+	}
+	*v = CatalogPage{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	var flags uint32
 	{
-		value, err := mtproto.ReadUint32(r)
+		value, err := d.ReadUint32()
 		if err != nil {
 			return err
 		}
 		flags = value
 	}
-	{
-		var items []AssetType
-		if err := mtproto.ReadVector(r, func() error {
+	if err := func() error {
+		if err := d.EnterObject(); err != nil {
+			return err
+		}
+		defer d.LeaveObject()
+		count, err := d.ReadVectorCount(mtproto.MaxVectorElements, 4)
+		if err != nil {
+			return err
+		}
+		capacity := count
+		if capacity > 1024 {
+			capacity = 1024
+		}
+		items := make([]AssetType, 0, capacity)
+		for index0 := 0; index0 < count; index0++ {
 			var item AssetType
 			{
-				ctorID, err := mtproto.ReadUint32(r)
+				value, err := decodeAssetType(d)
 				if err != nil {
-					return err
-				}
-				ctor, ok := GetStaticConstructors()[ctorID]
-				if !ok {
-					return fmt.Errorf("unknown constructor: %x", ctorID)
-				}
-				obj := ctor()
-				value, ok := obj.(AssetType)
-				if !ok {
-					return fmt.Errorf("constructor %x is not AssetType", ctorID)
-				}
-				var boxedCtor bytes.Buffer
-				if err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {
-					return err
-				}
-				if err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), r)); err != nil {
 					return err
 				}
 				item = value
 			}
 			items = append(items, item)
-			return nil
-		}); err != nil {
-			return err
 		}
 		v.Items = items
+		return nil
+	}(); err != nil {
+		return err
 	}
 	if flags&(1<<0) != 0 {
 		{
-			value, err := mtproto.ReadString(r)
+			decoded, err := d.ReadString()
 			if err != nil {
 				return err
 			}
-			val := value
-			v.NextCursor = &val
+			v.NextCursor = &decoded
 		}
 	}
 	return nil
@@ -364,86 +535,123 @@ func (v *JobQueued) Method() string        { return "" }
 func (v *JobQueued) TLName() string        { return "jobQueued" }
 
 func (v *JobQueued) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *JobQueued) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize jobQueued: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteInt64(w, v.JobID); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
 		return err
 	}
-	if err := v.Asset.SerializeTL(w); err != nil {
+	return v.serializeTLBody(e)
+}
+
+func (v *JobQueued) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteInt64(v.JobID); err != nil {
 		return err
 	}
-	if err := mtproto.WriteVectorHeader(w, len(v.Labels)); err != nil {
+	if v.Asset == nil {
+		return fmt.Errorf("required boxed Asset is nil")
+	}
+	if err := v.Asset.SerializeTL(e); err != nil {
 		return err
 	}
-	for i := range v.Labels {
-		if err := mtproto.WriteString(w, v.Labels[i]); err != nil {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
 			return err
 		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(v.Labels)); err != nil {
+			return err
+		}
+		for _, element := range v.Labels {
+			if err := e.WriteString(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (v *JobQueued) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *JobQueued) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize jobQueued: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *JobQueued) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize jobQueued body: nil receiver")
+	}
+	*v = JobQueued{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadInt64(r)
+		value, err := d.ReadInt64()
 		if err != nil {
 			return err
 		}
 		v.JobID = value
 	}
 	{
-		ctorID, err := mtproto.ReadUint32(r)
+		value, err := decodeAssetType(d)
 		if err != nil {
-			return err
-		}
-		ctor, ok := GetStaticConstructors()[ctorID]
-		if !ok {
-			return fmt.Errorf("unknown constructor: %x", ctorID)
-		}
-		obj := ctor()
-		value, ok := obj.(AssetType)
-		if !ok {
-			return fmt.Errorf("constructor %x is not AssetType", ctorID)
-		}
-		var boxedCtor bytes.Buffer
-		if err := mtproto.WriteUint32(&boxedCtor, ctorID); err != nil {
-			return err
-		}
-		if err := value.DeserializeTL(mtproto.PrependReader(boxedCtor.Bytes(), r)); err != nil {
 			return err
 		}
 		v.Asset = value
 	}
-	{
-		var items []string
-		if err := mtproto.ReadVector(r, func() error {
+	if err := func() error {
+		if err := d.EnterObject(); err != nil {
+			return err
+		}
+		defer d.LeaveObject()
+		count, err := d.ReadVectorCount(mtproto.MaxVectorElements, 4)
+		if err != nil {
+			return err
+		}
+		capacity := count
+		if capacity > 1024 {
+			capacity = 1024
+		}
+		items := make([]string, 0, capacity)
+		for index0 := 0; index0 < count; index0++ {
 			var item string
 			{
-				value, err := mtproto.ReadString(r)
+				value, err := d.ReadString()
 				if err != nil {
 					return err
 				}
 				item = value
 			}
 			items = append(items, item)
-			return nil
-		}); err != nil {
-			return err
 		}
 		v.Labels = items
+		return nil
+	}(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -458,44 +666,111 @@ func (v *JobRejected) Method() string        { return "" }
 func (v *JobRejected) TLName() string        { return "jobRejected" }
 
 func (v *JobRejected) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, v.ConstructorID()); err != nil {
+	return v.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (v *JobRejected) serializeTL(e *mtproto.Encoder) error {
+	if v == nil {
+		return fmt.Errorf("serialize jobRejected: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteInt32(w, v.Code); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(v.ConstructorID()); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, v.Reason); err != nil {
+	return v.serializeTLBody(e)
+}
+
+func (v *JobRejected) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteInt32(v.Code); err != nil {
+		return err
+	}
+	if err := e.WriteString(v.Reason); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (v *JobRejected) DeserializeTL(r io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(r)
+	return v.deserializeTL(mtproto.NewDecoder(r))
+}
+
+func (v *JobRejected) deserializeTL(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize jobRejected: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(r)
-	if err != nil {
+	if constructorID != v.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, v.ConstructorID())
+	}
+	return v.deserializeTLBody(d)
+}
+
+func (v *JobRejected) deserializeTLBody(d *mtproto.Decoder) error {
+	if v == nil {
+		return fmt.Errorf("deserialize jobRejected body: nil receiver")
+	}
+	*v = JobRejected{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != v.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, v.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadInt32(r)
+		value, err := d.ReadInt32()
 		if err != nil {
 			return err
 		}
 		v.Code = value
 	}
 	{
-		value, err := mtproto.ReadString(r)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}
 		v.Reason = value
 	}
 	return nil
+}
+
+func decodeJobStatusType(d *mtproto.Decoder) (JobStatusType, error) {
+	constructorID, err := d.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	newObject, ok := GetStaticConstructors()[constructorID]
+	var object tlrpc.TLObject
+	if ok {
+		object = newObject()
+	}
+	if !ok || object == nil {
+		return nil, fmt.Errorf("unknown constructor: %x", constructorID)
+	}
+	value, ok := object.(JobStatusType)
+	if !ok || value == nil {
+		return nil, fmt.Errorf("constructor %x is not JobStatusType", constructorID)
+	}
+	switch concrete := value.(type) {
+	case *JobQueued:
+		if concrete == nil {
+			return nil, fmt.Errorf("constructor %x produced nil JobQueued", constructorID)
+		}
+		if err := concrete.deserializeTLBody(d); err != nil {
+			return nil, err
+		}
+	case *JobRejected:
+		if concrete == nil {
+			return nil, fmt.Errorf("constructor %x produced nil JobRejected", constructorID)
+		}
+		if err := concrete.deserializeTLBody(d); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("constructor %x has unsupported JobStatusType implementation %T", constructorID, value)
+	}
+	return value, nil
 }

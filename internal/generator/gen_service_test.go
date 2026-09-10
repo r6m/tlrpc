@@ -58,10 +58,10 @@ func TestServiceGenerator_SimpleSchema(t *testing.T) {
 	if !strings.Contains(register, "HandlerType: (*AuthServer)(nil)") {
 		t.Fatalf("expected service handler type")
 	}
-	if !strings.Contains(register, "func _Auth_SendCode_Handler(srv interface{}, ctx context.Context, req *AuthSendCodeRequest) (*AuthSentCode, error)") {
+	if !strings.Contains(register, "func _Auth_SendCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error)") {
 		t.Fatalf("expected typed method handler")
 	}
-	if !strings.Contains(register, "return srv.(AuthServer).SendCode(ctx, req)") {
+	if !strings.Contains(register, "typedRequest, ok := req.(*AuthSendCodeRequest)") || !strings.Contains(register, "return srv.(AuthServer).SendCode(ctx, typedRequest)") {
 		t.Fatalf("expected method handler to invoke the generated interface")
 	}
 	if !strings.Contains(register, "ConstructorID: 0xa677244f") {
@@ -116,20 +116,80 @@ users.getUsers#0d91a548 id:Vector<InputUser> = Vector<User>;
 		t.Fatalf("generate requests: %v", err)
 	}
 	content := requestsBuf.String()
-	if !strings.Contains(content, "GetStaticConstructors()[ctorID]") {
+	if !strings.Contains(content, "decodeInputUserType(d)") {
 		t.Fatalf("expected constructor dispatch in request vector decode")
 	}
-	if !strings.Contains(content, "mtproto.EnterObject(rd)") {
+	if !strings.Contains(content, "d.EnterObject()") {
 		t.Fatalf("expected generated request decode budget entry")
 	}
-	if !strings.Contains(content, "mtproto.PrependReader(boxedCtor.Bytes(), rd)") {
-		t.Fatalf("expected request constructor replay to preserve decode budget")
-	}
-	if strings.Contains(content, "io.MultiReader(&boxedCtor, rd)") {
-		t.Fatalf("expected request constructor replay not to hide decode budget")
+	if strings.Contains(content, "PrependReader") || strings.Contains(content, "bytes.Buffer") {
+		t.Fatalf("cursor family decode must not replay constructor bytes")
 	}
 	if strings.Contains(content, "var item InputUserType\n\t\tif err := item.DeserializeTL(rd); err != nil {") {
 		t.Fatalf("expected to avoid direct nil-interface DeserializeTL call in vectors")
+	}
+}
+
+func TestServiceGenerator_LayeredResultChangeReusesRequestAndTypesResponseEncoder(t *testing.T) {
+	base, err := parser.NewParser(`---types---
+resultA#1 = ResultA;
+resultB#2 = ResultB;
+---functions---
+test.call#10 value:int = ResultA;`).ParseWithLayer(228)
+	if err != nil {
+		t.Fatal(err)
+	}
+	difference, err := parser.ParseLayerDifference(`---functions---
+test.call#10 value:int = ResultB;`, 229, "229.tl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	layered, err := parser.ResolveLayers(base, 228, []parser.LayerDifference{difference})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var services, registration, requests bytes.Buffer
+	g := NewServiceGenerator(naming.NewNamer(), layered.Schema, &services)
+	if err := g.GenerateService(layered.Schema.Functions); err != nil {
+		t.Fatal(err)
+	}
+	if err := NewServiceGenerator(naming.NewNamer(), layered.Schema, &registration).GenerateRegistration(layered.Schema.Functions); err != nil {
+		t.Fatal(err)
+	}
+	if err := NewServiceGenerator(naming.NewNamer(), layered.Schema, &requests).GenerateRequests(layered.Schema.Functions); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(requests.String(), "type TestCallRequest struct"); got != 1 {
+		t.Fatalf("request declarations = %d, want 1\n%s", got, requests.String())
+	}
+	if !strings.Contains(services.String(), "CallLayer229(ctx context.Context, req *TestCallRequest) (ResultBType, error)") {
+		t.Fatalf("missing result-versioned handler:\n%s", services.String())
+	}
+	if !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[ResultAType]") || !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[ResultBType]") {
+		t.Fatalf("missing exact response encoders:\n%s", registration.String())
+	}
+	if !strings.Contains(requests.String(), "tlLayerSupports(layer, 228, 0)") {
+		t.Fatalf("shared request did not union handler intervals:\n%s", requests.String())
+	}
+}
+
+func TestServiceGenerator_RejectsBareMethodResults(t *testing.T) {
+	schema, err := parser.NewParser(`---types---
+item#1 value:int = Item;
+---functions---
+test.call#10 = !Item;`).Parse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = NewServiceGenerator(naming.NewNamer(), schema, &bytes.Buffer{}).GenerateService(schema.Functions)
+	if err == nil || !strings.Contains(err.Error(), "bare result layouts are unsupported") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestZeroValueSupportsDoubleAlias(t *testing.T) {
+	if got := zeroValue("Double"); got != "0" {
+		t.Fatalf("zeroValue(Double) = %q, want 0", got)
 	}
 }
 
@@ -185,7 +245,7 @@ messages.testMultiFlags#01020304 flags:# flags2:# silent:flags.0?true close_frie
 	if !strings.Contains(content, "flags2 := uint32(0)") {
 		t.Fatalf("expected flags2 local variable in request serialize")
 	}
-	if !strings.Contains(content, "if r.CloseFriend {\n\t\tflags2 |= 1 << 2") {
+	if !strings.Contains(content, "if r.CloseFriend { flags2 |= 1 << 2 }") {
 		t.Fatalf("expected flags2 bool bit computation in request serialize")
 	}
 	if !strings.Contains(content, "if flags2&(1<<3) != 0") {

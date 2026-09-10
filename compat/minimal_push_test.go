@@ -71,7 +71,7 @@ func TestCompatMinimalRPCAndPush(t *testing.T) {
 			MethodName:    "GetConfig",
 			ConstructorID: (&gen.HelpGetConfigRequest{}).ConstructorID(),
 			NewRequest:    func() tlrpc.TLObject { return &gen.HelpGetConfigRequest{} },
-			Handler:       minimalPushGetConfigHandler,
+			Handler:       tlrpc.BindMethod(minimalPushGetConfigHandler), EncodeResponse: encodeCompatResponse[*gen.Config],
 		}},
 	}, minimalPushHelpService{})
 

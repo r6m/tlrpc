@@ -89,6 +89,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 		schema, source, schemaDigest, err = resolveSchemaLayers(*schemaPath, data, *baseLayer, layer, layerDiffs)
 	} else {
 		schema, err = parser.ParseBaselineSchema(string(data), layer, source)
+		if err == nil && schema.Layer > 0 {
+			schema, err = parser.ResolveSelectedLayer(schema, schema.Layer, schema.Layer, nil)
+		}
 	}
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "%v\n", err)
@@ -327,7 +330,7 @@ func resolveSchemaLayers(basePath string, baseData []byte, baseLayer, targetLaye
 		differences = append(differences, difference)
 	}
 
-	resolved, err := parser.ResolveLayer(base, baseLayer, targetLayer, differences)
+	resolved, err := parser.ResolveSelectedLayer(base, baseLayer, targetLayer, differences)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -410,7 +413,10 @@ func parseLayer(raw string) (int, error) {
 
 func hasUnionTypes(schema *parser.Schema) bool {
 	for i := range schema.Types {
-		if schema.Types[i].IsUnion || len(schema.Types[i].Constructors) > 1 {
+		if naming.IsBuiltinType(schema.Types[i].Name) {
+			continue
+		}
+		if schema.IsLayered || schema.Types[i].IsUnion || len(schema.Types[i].Constructors) > 1 {
 			return true
 		}
 	}

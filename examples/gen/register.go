@@ -7,479 +7,1912 @@ package gen
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/mtproto"
 )
 
-func _Account_AcceptAuthorization_Handler(srv interface{}, ctx context.Context, req *AccountAcceptAuthorizationRequest) (bool, error) {
-	return srv.(AccountServer).AcceptAuthorization(ctx, req)
-}
-
-func _Account_CancelPasswordEmail_Handler(srv interface{}, ctx context.Context, req *AccountCancelPasswordEmailRequest) (bool, error) {
-	return srv.(AccountServer).CancelPasswordEmail(ctx, req)
-}
-
-func _Account_ChangeAuthorizationSettings_Handler(srv interface{}, ctx context.Context, req *AccountChangeAuthorizationSettingsRequest) (bool, error) {
-	return srv.(AccountServer).ChangeAuthorizationSettings(ctx, req)
-}
-
-func _Account_ChangePhone_Handler(srv interface{}, ctx context.Context, req *AccountChangePhoneRequest) (UserType, error) {
-	return srv.(AccountServer).ChangePhone(ctx, req)
-}
-
-func _Account_CheckUsername_Handler(srv interface{}, ctx context.Context, req *AccountCheckUsernameRequest) (bool, error) {
-	return srv.(AccountServer).CheckUsername(ctx, req)
-}
-
-func _Account_ClearRecentEmojiStatuses_Handler(srv interface{}, ctx context.Context, req *AccountClearRecentEmojiStatusesRequest) (bool, error) {
-	return srv.(AccountServer).ClearRecentEmojiStatuses(ctx, req)
-}
-
-func _Account_ConfirmPasswordEmail_Handler(srv interface{}, ctx context.Context, req *AccountConfirmPasswordEmailRequest) (bool, error) {
-	return srv.(AccountServer).ConfirmPasswordEmail(ctx, req)
-}
-
-func _Account_ConfirmPhone_Handler(srv interface{}, ctx context.Context, req *AccountConfirmPhoneRequest) (bool, error) {
-	return srv.(AccountServer).ConfirmPhone(ctx, req)
-}
-
-func _Account_CreateBusinessChatLink_Handler(srv interface{}, ctx context.Context, req *AccountCreateBusinessChatLinkRequest) (*BusinessChatLink, error) {
-	return srv.(AccountServer).CreateBusinessChatLink(ctx, req)
-}
-
-func _Account_CreateTheme_Handler(srv interface{}, ctx context.Context, req *AccountCreateThemeRequest) (*Theme, error) {
-	return srv.(AccountServer).CreateTheme(ctx, req)
-}
-
-func _Account_DeclinePasswordReset_Handler(srv interface{}, ctx context.Context, req *AccountDeclinePasswordResetRequest) (bool, error) {
-	return srv.(AccountServer).DeclinePasswordReset(ctx, req)
-}
-
-func _Account_DeleteAccount_Handler(srv interface{}, ctx context.Context, req *AccountDeleteAccountRequest) (bool, error) {
-	return srv.(AccountServer).DeleteAccount(ctx, req)
-}
-
-func _Account_DeleteAutoSaveExceptions_Handler(srv interface{}, ctx context.Context, req *AccountDeleteAutoSaveExceptionsRequest) (bool, error) {
-	return srv.(AccountServer).DeleteAutoSaveExceptions(ctx, req)
-}
-
-func _Account_DeleteBusinessChatLink_Handler(srv interface{}, ctx context.Context, req *AccountDeleteBusinessChatLinkRequest) (bool, error) {
-	return srv.(AccountServer).DeleteBusinessChatLink(ctx, req)
-}
-
-func _Account_DeleteSecureValue_Handler(srv interface{}, ctx context.Context, req *AccountDeleteSecureValueRequest) (bool, error) {
-	return srv.(AccountServer).DeleteSecureValue(ctx, req)
-}
-
-func _Account_DisablePeerConnectedBot_Handler(srv interface{}, ctx context.Context, req *AccountDisablePeerConnectedBotRequest) (bool, error) {
-	return srv.(AccountServer).DisablePeerConnectedBot(ctx, req)
-}
-
-func _Account_EditBusinessChatLink_Handler(srv interface{}, ctx context.Context, req *AccountEditBusinessChatLinkRequest) (*BusinessChatLink, error) {
-	return srv.(AccountServer).EditBusinessChatLink(ctx, req)
-}
-
-func _Account_FinishTakeoutSession_Handler(srv interface{}, ctx context.Context, req *AccountFinishTakeoutSessionRequest) (bool, error) {
-	return srv.(AccountServer).FinishTakeoutSession(ctx, req)
-}
-
-func _Account_GetAccountTTL_Handler(srv interface{}, ctx context.Context, req *AccountGetAccountTTLRequest) (*AccountDaysTTL, error) {
-	return srv.(AccountServer).GetAccountTTL(ctx, req)
-}
-
-func _Account_GetAllSecureValues_Handler(srv interface{}, ctx context.Context, req *AccountGetAllSecureValuesRequest) ([]*SecureValue, error) {
-	return srv.(AccountServer).GetAllSecureValues(ctx, req)
-}
-
-func _Account_GetAuthorizationForm_Handler(srv interface{}, ctx context.Context, req *AccountGetAuthorizationFormRequest) (*AccountAuthorizationForm, error) {
-	return srv.(AccountServer).GetAuthorizationForm(ctx, req)
-}
-
-func _Account_GetAuthorizations_Handler(srv interface{}, ctx context.Context, req *AccountGetAuthorizationsRequest) (*AccountAuthorizations, error) {
-	return srv.(AccountServer).GetAuthorizations(ctx, req)
-}
-
-func _Account_GetAutoDownloadSettings_Handler(srv interface{}, ctx context.Context, req *AccountGetAutoDownloadSettingsRequest) (*AccountAutoDownloadSettings, error) {
-	return srv.(AccountServer).GetAutoDownloadSettings(ctx, req)
-}
-
-func _Account_GetAutoSaveSettings_Handler(srv interface{}, ctx context.Context, req *AccountGetAutoSaveSettingsRequest) (*AccountAutoSaveSettings, error) {
-	return srv.(AccountServer).GetAutoSaveSettings(ctx, req)
-}
-
-func _Account_GetBotBusinessConnection_Handler(srv interface{}, ctx context.Context, req *AccountGetBotBusinessConnectionRequest) (UpdatesType, error) {
-	return srv.(AccountServer).GetBotBusinessConnection(ctx, req)
-}
-
-func _Account_GetBusinessChatLinks_Handler(srv interface{}, ctx context.Context, req *AccountGetBusinessChatLinksRequest) (*AccountBusinessChatLinks, error) {
-	return srv.(AccountServer).GetBusinessChatLinks(ctx, req)
-}
-
-func _Account_GetChannelDefaultEmojiStatuses_Handler(srv interface{}, ctx context.Context, req *AccountGetChannelDefaultEmojiStatusesRequest) (AccountEmojiStatusesType, error) {
-	return srv.(AccountServer).GetChannelDefaultEmojiStatuses(ctx, req)
-}
-
-func _Account_GetChannelRestrictedStatusEmojis_Handler(srv interface{}, ctx context.Context, req *AccountGetChannelRestrictedStatusEmojisRequest) (EmojiListType, error) {
-	return srv.(AccountServer).GetChannelRestrictedStatusEmojis(ctx, req)
-}
-
-func _Account_GetChatThemes_Handler(srv interface{}, ctx context.Context, req *AccountGetChatThemesRequest) (AccountThemesType, error) {
-	return srv.(AccountServer).GetChatThemes(ctx, req)
-}
-
-func _Account_GetCollectibleEmojiStatuses_Handler(srv interface{}, ctx context.Context, req *AccountGetCollectibleEmojiStatusesRequest) (AccountEmojiStatusesType, error) {
-	return srv.(AccountServer).GetCollectibleEmojiStatuses(ctx, req)
-}
-
-func _Account_GetConnectedBots_Handler(srv interface{}, ctx context.Context, req *AccountGetConnectedBotsRequest) (*AccountConnectedBots, error) {
-	return srv.(AccountServer).GetConnectedBots(ctx, req)
-}
-
-func _Account_GetContactSignUpNotification_Handler(srv interface{}, ctx context.Context, req *AccountGetContactSignUpNotificationRequest) (bool, error) {
-	return srv.(AccountServer).GetContactSignUpNotification(ctx, req)
-}
-
-func _Account_GetContentSettings_Handler(srv interface{}, ctx context.Context, req *AccountGetContentSettingsRequest) (*AccountContentSettings, error) {
-	return srv.(AccountServer).GetContentSettings(ctx, req)
-}
-
-func _Account_GetDefaultBackgroundEmojis_Handler(srv interface{}, ctx context.Context, req *AccountGetDefaultBackgroundEmojisRequest) (EmojiListType, error) {
-	return srv.(AccountServer).GetDefaultBackgroundEmojis(ctx, req)
-}
-
-func _Account_GetDefaultEmojiStatuses_Handler(srv interface{}, ctx context.Context, req *AccountGetDefaultEmojiStatusesRequest) (AccountEmojiStatusesType, error) {
-	return srv.(AccountServer).GetDefaultEmojiStatuses(ctx, req)
-}
-
-func _Account_GetDefaultGroupPhotoEmojis_Handler(srv interface{}, ctx context.Context, req *AccountGetDefaultGroupPhotoEmojisRequest) (EmojiListType, error) {
-	return srv.(AccountServer).GetDefaultGroupPhotoEmojis(ctx, req)
-}
-
-func _Account_GetDefaultProfilePhotoEmojis_Handler(srv interface{}, ctx context.Context, req *AccountGetDefaultProfilePhotoEmojisRequest) (EmojiListType, error) {
-	return srv.(AccountServer).GetDefaultProfilePhotoEmojis(ctx, req)
-}
-
-func _Account_GetGlobalPrivacySettings_Handler(srv interface{}, ctx context.Context, req *AccountGetGlobalPrivacySettingsRequest) (*GlobalPrivacySettings, error) {
-	return srv.(AccountServer).GetGlobalPrivacySettings(ctx, req)
-}
-
-func _Account_GetMultiWallPapers_Handler(srv interface{}, ctx context.Context, req *AccountGetMultiWallPapersRequest) ([]WallPaperType, error) {
-	return srv.(AccountServer).GetMultiWallPapers(ctx, req)
-}
-
-func _Account_GetNotifyExceptions_Handler(srv interface{}, ctx context.Context, req *AccountGetNotifyExceptionsRequest) (UpdatesType, error) {
-	return srv.(AccountServer).GetNotifyExceptions(ctx, req)
-}
-
-func _Account_GetNotifySettings_Handler(srv interface{}, ctx context.Context, req *AccountGetNotifySettingsRequest) (*PeerNotifySettings, error) {
-	return srv.(AccountServer).GetNotifySettings(ctx, req)
-}
-
-func _Account_GetPaidMessagesRevenue_Handler(srv interface{}, ctx context.Context, req *AccountGetPaidMessagesRevenueRequest) (*AccountPaidMessagesRevenue, error) {
-	return srv.(AccountServer).GetPaidMessagesRevenue(ctx, req)
-}
-
-func _Account_GetPassword_Handler(srv interface{}, ctx context.Context, req *AccountGetPasswordRequest) (*AccountPassword, error) {
-	return srv.(AccountServer).GetPassword(ctx, req)
-}
-
-func _Account_GetPasswordSettings_Handler(srv interface{}, ctx context.Context, req *AccountGetPasswordSettingsRequest) (*AccountPasswordSettings, error) {
-	return srv.(AccountServer).GetPasswordSettings(ctx, req)
-}
-
-func _Account_GetPrivacy_Handler(srv interface{}, ctx context.Context, req *AccountGetPrivacyRequest) (*AccountPrivacyRules, error) {
-	return srv.(AccountServer).GetPrivacy(ctx, req)
-}
-
-func _Account_GetReactionsNotifySettings_Handler(srv interface{}, ctx context.Context, req *AccountGetReactionsNotifySettingsRequest) (*ReactionsNotifySettings, error) {
-	return srv.(AccountServer).GetReactionsNotifySettings(ctx, req)
-}
-
-func _Account_GetRecentEmojiStatuses_Handler(srv interface{}, ctx context.Context, req *AccountGetRecentEmojiStatusesRequest) (AccountEmojiStatusesType, error) {
-	return srv.(AccountServer).GetRecentEmojiStatuses(ctx, req)
-}
-
-func _Account_GetSavedMusicIds_Handler(srv interface{}, ctx context.Context, req *AccountGetSavedMusicIdsRequest) (AccountSavedMusicIdsType, error) {
-	return srv.(AccountServer).GetSavedMusicIds(ctx, req)
-}
-
-func _Account_GetSavedRingtones_Handler(srv interface{}, ctx context.Context, req *AccountGetSavedRingtonesRequest) (AccountSavedRingtonesType, error) {
-	return srv.(AccountServer).GetSavedRingtones(ctx, req)
-}
-
-func _Account_GetSecureValue_Handler(srv interface{}, ctx context.Context, req *AccountGetSecureValueRequest) ([]*SecureValue, error) {
-	return srv.(AccountServer).GetSecureValue(ctx, req)
-}
-
-func _Account_GetTheme_Handler(srv interface{}, ctx context.Context, req *AccountGetThemeRequest) (*Theme, error) {
-	return srv.(AccountServer).GetTheme(ctx, req)
-}
-
-func _Account_GetThemes_Handler(srv interface{}, ctx context.Context, req *AccountGetThemesRequest) (AccountThemesType, error) {
-	return srv.(AccountServer).GetThemes(ctx, req)
-}
-
-func _Account_GetTmpPassword_Handler(srv interface{}, ctx context.Context, req *AccountGetTmpPasswordRequest) (*AccountTmpPassword, error) {
-	return srv.(AccountServer).GetTmpPassword(ctx, req)
-}
-
-func _Account_GetWallPaper_Handler(srv interface{}, ctx context.Context, req *AccountGetWallPaperRequest) (WallPaperType, error) {
-	return srv.(AccountServer).GetWallPaper(ctx, req)
-}
-
-func _Account_GetWallPapers_Handler(srv interface{}, ctx context.Context, req *AccountGetWallPapersRequest) (AccountWallPapersType, error) {
-	return srv.(AccountServer).GetWallPapers(ctx, req)
-}
-
-func _Account_GetWebAuthorizations_Handler(srv interface{}, ctx context.Context, req *AccountGetWebAuthorizationsRequest) (*AccountWebAuthorizations, error) {
-	return srv.(AccountServer).GetWebAuthorizations(ctx, req)
-}
+func _Account_AcceptAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountAcceptAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.acceptAuthorization: request %T is not *AccountAcceptAuthorizationRequest", req)
+	}
+	return srv.(AccountServer).AcceptAuthorization(ctx, typedRequest)
+}
 
-func _Account_InitTakeoutSession_Handler(srv interface{}, ctx context.Context, req *AccountInitTakeoutSessionRequest) (*AccountTakeout, error) {
-	return srv.(AccountServer).InitTakeoutSession(ctx, req)
-}
-
-func _Account_InstallTheme_Handler(srv interface{}, ctx context.Context, req *AccountInstallThemeRequest) (bool, error) {
-	return srv.(AccountServer).InstallTheme(ctx, req)
-}
-
-func _Account_InstallWallPaper_Handler(srv interface{}, ctx context.Context, req *AccountInstallWallPaperRequest) (bool, error) {
-	return srv.(AccountServer).InstallWallPaper(ctx, req)
-}
-
-func _Account_InvalidateSignInCodes_Handler(srv interface{}, ctx context.Context, req *AccountInvalidateSignInCodesRequest) (bool, error) {
-	return srv.(AccountServer).InvalidateSignInCodes(ctx, req)
-}
-
-func _Account_RegisterDevice_Handler(srv interface{}, ctx context.Context, req *AccountRegisterDeviceRequest) (bool, error) {
-	return srv.(AccountServer).RegisterDevice(ctx, req)
-}
-
-func _Account_ReorderUsernames_Handler(srv interface{}, ctx context.Context, req *AccountReorderUsernamesRequest) (bool, error) {
-	return srv.(AccountServer).ReorderUsernames(ctx, req)
-}
-
-func _Account_ReportPeer_Handler(srv interface{}, ctx context.Context, req *AccountReportPeerRequest) (bool, error) {
-	return srv.(AccountServer).ReportPeer(ctx, req)
-}
-
-func _Account_ReportProfilePhoto_Handler(srv interface{}, ctx context.Context, req *AccountReportProfilePhotoRequest) (bool, error) {
-	return srv.(AccountServer).ReportProfilePhoto(ctx, req)
-}
-
-func _Account_ResendPasswordEmail_Handler(srv interface{}, ctx context.Context, req *AccountResendPasswordEmailRequest) (bool, error) {
-	return srv.(AccountServer).ResendPasswordEmail(ctx, req)
-}
-
-func _Account_ResetAuthorization_Handler(srv interface{}, ctx context.Context, req *AccountResetAuthorizationRequest) (bool, error) {
-	return srv.(AccountServer).ResetAuthorization(ctx, req)
-}
+func _Account_AcceptAuthorization_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_CancelPasswordEmail_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountCancelPasswordEmailRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.cancelPasswordEmail: request %T is not *AccountCancelPasswordEmailRequest", req)
+	}
+	return srv.(AccountServer).CancelPasswordEmail(ctx, typedRequest)
+}
 
-func _Account_ResetNotifySettings_Handler(srv interface{}, ctx context.Context, req *AccountResetNotifySettingsRequest) (bool, error) {
-	return srv.(AccountServer).ResetNotifySettings(ctx, req)
+func _Account_CancelPasswordEmail_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
-
-func _Account_ResetPassword_Handler(srv interface{}, ctx context.Context, req *AccountResetPasswordRequest) (AccountResetPasswordResultType, error) {
-	return srv.(AccountServer).ResetPassword(ctx, req)
-}
-
-func _Account_ResetWallPapers_Handler(srv interface{}, ctx context.Context, req *AccountResetWallPapersRequest) (bool, error) {
-	return srv.(AccountServer).ResetWallPapers(ctx, req)
-}
-
-func _Account_ResetWebAuthorization_Handler(srv interface{}, ctx context.Context, req *AccountResetWebAuthorizationRequest) (bool, error) {
-	return srv.(AccountServer).ResetWebAuthorization(ctx, req)
-}
-
-func _Account_ResetWebAuthorizations_Handler(srv interface{}, ctx context.Context, req *AccountResetWebAuthorizationsRequest) (bool, error) {
-	return srv.(AccountServer).ResetWebAuthorizations(ctx, req)
-}
-
-func _Account_ResolveBusinessChatLink_Handler(srv interface{}, ctx context.Context, req *AccountResolveBusinessChatLinkRequest) (*AccountResolvedBusinessChatLinks, error) {
-	return srv.(AccountServer).ResolveBusinessChatLink(ctx, req)
+
+func _Account_ChangeAuthorizationSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountChangeAuthorizationSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.changeAuthorizationSettings: request %T is not *AccountChangeAuthorizationSettingsRequest", req)
+	}
+	return srv.(AccountServer).ChangeAuthorizationSettings(ctx, typedRequest)
 }
 
-func _Account_SaveAutoDownloadSettings_Handler(srv interface{}, ctx context.Context, req *AccountSaveAutoDownloadSettingsRequest) (bool, error) {
-	return srv.(AccountServer).SaveAutoDownloadSettings(ctx, req)
+func _Account_ChangeAuthorizationSettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SaveAutoSaveSettings_Handler(srv interface{}, ctx context.Context, req *AccountSaveAutoSaveSettingsRequest) (bool, error) {
-	return srv.(AccountServer).SaveAutoSaveSettings(ctx, req)
+func _Account_ChangePhone_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountChangePhoneRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.changePhone: request %T is not *AccountChangePhoneRequest", req)
+	}
+	return srv.(AccountServer).ChangePhone(ctx, typedRequest)
 }
 
-func _Account_SaveMusic_Handler(srv interface{}, ctx context.Context, req *AccountSaveMusicRequest) (bool, error) {
-	return srv.(AccountServer).SaveMusic(ctx, req)
+func _Account_ChangePhone_EncodeResponse(e *mtproto.Encoder, response UserType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed User is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SaveRingtone_Handler(srv interface{}, ctx context.Context, req *AccountSaveRingtoneRequest) (AccountSavedRingtoneType, error) {
-	return srv.(AccountServer).SaveRingtone(ctx, req)
+func _Account_CheckUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountCheckUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.checkUsername: request %T is not *AccountCheckUsernameRequest", req)
+	}
+	return srv.(AccountServer).CheckUsername(ctx, typedRequest)
 }
 
-func _Account_SaveSecureValue_Handler(srv interface{}, ctx context.Context, req *AccountSaveSecureValueRequest) (*SecureValue, error) {
-	return srv.(AccountServer).SaveSecureValue(ctx, req)
+func _Account_CheckUsername_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SaveTheme_Handler(srv interface{}, ctx context.Context, req *AccountSaveThemeRequest) (bool, error) {
-	return srv.(AccountServer).SaveTheme(ctx, req)
+func _Account_ClearRecentEmojiStatuses_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountClearRecentEmojiStatusesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.clearRecentEmojiStatuses: request %T is not *AccountClearRecentEmojiStatusesRequest", req)
+	}
+	return srv.(AccountServer).ClearRecentEmojiStatuses(ctx, typedRequest)
 }
 
-func _Account_SaveWallPaper_Handler(srv interface{}, ctx context.Context, req *AccountSaveWallPaperRequest) (bool, error) {
-	return srv.(AccountServer).SaveWallPaper(ctx, req)
+func _Account_ClearRecentEmojiStatuses_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SendChangePhoneCode_Handler(srv interface{}, ctx context.Context, req *AccountSendChangePhoneCodeRequest) (AuthSentCodeType, error) {
-	return srv.(AccountServer).SendChangePhoneCode(ctx, req)
+func _Account_ConfirmPasswordEmail_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountConfirmPasswordEmailRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.confirmPasswordEmail: request %T is not *AccountConfirmPasswordEmailRequest", req)
+	}
+	return srv.(AccountServer).ConfirmPasswordEmail(ctx, typedRequest)
 }
 
-func _Account_SendConfirmPhoneCode_Handler(srv interface{}, ctx context.Context, req *AccountSendConfirmPhoneCodeRequest) (AuthSentCodeType, error) {
-	return srv.(AccountServer).SendConfirmPhoneCode(ctx, req)
+func _Account_ConfirmPasswordEmail_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SendVerifyEmailCode_Handler(srv interface{}, ctx context.Context, req *AccountSendVerifyEmailCodeRequest) (*AccountSentEmailCode, error) {
-	return srv.(AccountServer).SendVerifyEmailCode(ctx, req)
+func _Account_ConfirmPhone_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountConfirmPhoneRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.confirmPhone: request %T is not *AccountConfirmPhoneRequest", req)
+	}
+	return srv.(AccountServer).ConfirmPhone(ctx, typedRequest)
 }
 
-func _Account_SendVerifyPhoneCode_Handler(srv interface{}, ctx context.Context, req *AccountSendVerifyPhoneCodeRequest) (AuthSentCodeType, error) {
-	return srv.(AccountServer).SendVerifyPhoneCode(ctx, req)
+func _Account_ConfirmPhone_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SetAccountTTL_Handler(srv interface{}, ctx context.Context, req *AccountSetAccountTTLRequest) (bool, error) {
-	return srv.(AccountServer).SetAccountTTL(ctx, req)
+func _Account_CreateBusinessChatLink_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountCreateBusinessChatLinkRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.createBusinessChatLink: request %T is not *AccountCreateBusinessChatLinkRequest", req)
+	}
+	return srv.(AccountServer).CreateBusinessChatLink(ctx, typedRequest)
 }
 
-func _Account_SetAuthorizationTTL_Handler(srv interface{}, ctx context.Context, req *AccountSetAuthorizationTTLRequest) (bool, error) {
-	return srv.(AccountServer).SetAuthorizationTTL(ctx, req)
+func _Account_CreateBusinessChatLink_EncodeResponse(e *mtproto.Encoder, response *BusinessChatLink) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SetContactSignUpNotification_Handler(srv interface{}, ctx context.Context, req *AccountSetContactSignUpNotificationRequest) (bool, error) {
-	return srv.(AccountServer).SetContactSignUpNotification(ctx, req)
+func _Account_CreateTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountCreateThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.createTheme: request %T is not *AccountCreateThemeRequest", req)
+	}
+	return srv.(AccountServer).CreateTheme(ctx, typedRequest)
 }
 
-func _Account_SetContentSettings_Handler(srv interface{}, ctx context.Context, req *AccountSetContentSettingsRequest) (bool, error) {
-	return srv.(AccountServer).SetContentSettings(ctx, req)
+func _Account_CreateTheme_EncodeResponse(e *mtproto.Encoder, response *Theme) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SetGlobalPrivacySettings_Handler(srv interface{}, ctx context.Context, req *AccountSetGlobalPrivacySettingsRequest) (*GlobalPrivacySettings, error) {
-	return srv.(AccountServer).SetGlobalPrivacySettings(ctx, req)
+func _Account_DeclinePasswordReset_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountDeclinePasswordResetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.declinePasswordReset: request %T is not *AccountDeclinePasswordResetRequest", req)
+	}
+	return srv.(AccountServer).DeclinePasswordReset(ctx, typedRequest)
 }
 
-func _Account_SetMainProfileTab_Handler(srv interface{}, ctx context.Context, req *AccountSetMainProfileTabRequest) (bool, error) {
-	return srv.(AccountServer).SetMainProfileTab(ctx, req)
+func _Account_DeclinePasswordReset_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_SetPrivacy_Handler(srv interface{}, ctx context.Context, req *AccountSetPrivacyRequest) (*AccountPrivacyRules, error) {
-	return srv.(AccountServer).SetPrivacy(ctx, req)
+func _Account_DeleteAccount_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountDeleteAccountRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.deleteAccount: request %T is not *AccountDeleteAccountRequest", req)
+	}
+	return srv.(AccountServer).DeleteAccount(ctx, typedRequest)
 }
 
-func _Account_SetReactionsNotifySettings_Handler(srv interface{}, ctx context.Context, req *AccountSetReactionsNotifySettingsRequest) (*ReactionsNotifySettings, error) {
-	return srv.(AccountServer).SetReactionsNotifySettings(ctx, req)
+func _Account_DeleteAccount_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_ToggleConnectedBotPaused_Handler(srv interface{}, ctx context.Context, req *AccountToggleConnectedBotPausedRequest) (bool, error) {
-	return srv.(AccountServer).ToggleConnectedBotPaused(ctx, req)
+func _Account_DeleteAutoSaveExceptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountDeleteAutoSaveExceptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.deleteAutoSaveExceptions: request %T is not *AccountDeleteAutoSaveExceptionsRequest", req)
+	}
+	return srv.(AccountServer).DeleteAutoSaveExceptions(ctx, typedRequest)
 }
 
-func _Account_ToggleNoPaidMessagesException_Handler(srv interface{}, ctx context.Context, req *AccountToggleNoPaidMessagesExceptionRequest) (bool, error) {
-	return srv.(AccountServer).ToggleNoPaidMessagesException(ctx, req)
+func _Account_DeleteAutoSaveExceptions_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_ToggleSponsoredMessages_Handler(srv interface{}, ctx context.Context, req *AccountToggleSponsoredMessagesRequest) (bool, error) {
-	return srv.(AccountServer).ToggleSponsoredMessages(ctx, req)
+func _Account_DeleteBusinessChatLink_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountDeleteBusinessChatLinkRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.deleteBusinessChatLink: request %T is not *AccountDeleteBusinessChatLinkRequest", req)
+	}
+	return srv.(AccountServer).DeleteBusinessChatLink(ctx, typedRequest)
 }
 
-func _Account_ToggleUsername_Handler(srv interface{}, ctx context.Context, req *AccountToggleUsernameRequest) (bool, error) {
-	return srv.(AccountServer).ToggleUsername(ctx, req)
+func _Account_DeleteBusinessChatLink_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UnregisterDevice_Handler(srv interface{}, ctx context.Context, req *AccountUnregisterDeviceRequest) (bool, error) {
-	return srv.(AccountServer).UnregisterDevice(ctx, req)
+func _Account_DeleteSecureValue_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountDeleteSecureValueRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.deleteSecureValue: request %T is not *AccountDeleteSecureValueRequest", req)
+	}
+	return srv.(AccountServer).DeleteSecureValue(ctx, typedRequest)
 }
 
-func _Account_UpdateBirthday_Handler(srv interface{}, ctx context.Context, req *AccountUpdateBirthdayRequest) (bool, error) {
-	return srv.(AccountServer).UpdateBirthday(ctx, req)
+func _Account_DeleteSecureValue_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdateBusinessAwayMessage_Handler(srv interface{}, ctx context.Context, req *AccountUpdateBusinessAwayMessageRequest) (bool, error) {
-	return srv.(AccountServer).UpdateBusinessAwayMessage(ctx, req)
+func _Account_DisablePeerConnectedBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountDisablePeerConnectedBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.disablePeerConnectedBot: request %T is not *AccountDisablePeerConnectedBotRequest", req)
+	}
+	return srv.(AccountServer).DisablePeerConnectedBot(ctx, typedRequest)
 }
 
-func _Account_UpdateBusinessGreetingMessage_Handler(srv interface{}, ctx context.Context, req *AccountUpdateBusinessGreetingMessageRequest) (bool, error) {
-	return srv.(AccountServer).UpdateBusinessGreetingMessage(ctx, req)
+func _Account_DisablePeerConnectedBot_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdateBusinessIntro_Handler(srv interface{}, ctx context.Context, req *AccountUpdateBusinessIntroRequest) (bool, error) {
-	return srv.(AccountServer).UpdateBusinessIntro(ctx, req)
+func _Account_EditBusinessChatLink_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountEditBusinessChatLinkRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.editBusinessChatLink: request %T is not *AccountEditBusinessChatLinkRequest", req)
+	}
+	return srv.(AccountServer).EditBusinessChatLink(ctx, typedRequest)
 }
 
-func _Account_UpdateBusinessLocation_Handler(srv interface{}, ctx context.Context, req *AccountUpdateBusinessLocationRequest) (bool, error) {
-	return srv.(AccountServer).UpdateBusinessLocation(ctx, req)
+func _Account_EditBusinessChatLink_EncodeResponse(e *mtproto.Encoder, response *BusinessChatLink) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdateBusinessWorkHours_Handler(srv interface{}, ctx context.Context, req *AccountUpdateBusinessWorkHoursRequest) (bool, error) {
-	return srv.(AccountServer).UpdateBusinessWorkHours(ctx, req)
+func _Account_FinishTakeoutSession_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountFinishTakeoutSessionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.finishTakeoutSession: request %T is not *AccountFinishTakeoutSessionRequest", req)
+	}
+	return srv.(AccountServer).FinishTakeoutSession(ctx, typedRequest)
 }
 
-func _Account_UpdateColor_Handler(srv interface{}, ctx context.Context, req *AccountUpdateColorRequest) (bool, error) {
-	return srv.(AccountServer).UpdateColor(ctx, req)
+func _Account_FinishTakeoutSession_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdateConnectedBot_Handler(srv interface{}, ctx context.Context, req *AccountUpdateConnectedBotRequest) (UpdatesType, error) {
-	return srv.(AccountServer).UpdateConnectedBot(ctx, req)
+func _Account_GetAccountTTL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetAccountTTLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getAccountTTL: request %T is not *AccountGetAccountTTLRequest", req)
+	}
+	return srv.(AccountServer).GetAccountTTL(ctx, typedRequest)
 }
 
-func _Account_UpdateDeviceLocked_Handler(srv interface{}, ctx context.Context, req *AccountUpdateDeviceLockedRequest) (bool, error) {
-	return srv.(AccountServer).UpdateDeviceLocked(ctx, req)
+func _Account_GetAccountTTL_EncodeResponse(e *mtproto.Encoder, response *AccountDaysTTL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdateEmojiStatus_Handler(srv interface{}, ctx context.Context, req *AccountUpdateEmojiStatusRequest) (bool, error) {
-	return srv.(AccountServer).UpdateEmojiStatus(ctx, req)
+func _Account_GetAllSecureValues_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetAllSecureValuesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getAllSecureValues: request %T is not *AccountGetAllSecureValuesRequest", req)
+	}
+	return srv.(AccountServer).GetAllSecureValues(ctx, typedRequest)
 }
 
-func _Account_UpdateNotifySettings_Handler(srv interface{}, ctx context.Context, req *AccountUpdateNotifySettingsRequest) (bool, error) {
-	return srv.(AccountServer).UpdateNotifySettings(ctx, req)
+func _Account_GetAllSecureValues_EncodeResponse(e *mtproto.Encoder, response []*SecureValue) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdatePasswordSettings_Handler(srv interface{}, ctx context.Context, req *AccountUpdatePasswordSettingsRequest) (bool, error) {
-	return srv.(AccountServer).UpdatePasswordSettings(ctx, req)
+func _Account_GetAuthorizationForm_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetAuthorizationFormRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getAuthorizationForm: request %T is not *AccountGetAuthorizationFormRequest", req)
+	}
+	return srv.(AccountServer).GetAuthorizationForm(ctx, typedRequest)
 }
 
-func _Account_UpdatePersonalChannel_Handler(srv interface{}, ctx context.Context, req *AccountUpdatePersonalChannelRequest) (bool, error) {
-	return srv.(AccountServer).UpdatePersonalChannel(ctx, req)
+func _Account_GetAuthorizationForm_EncodeResponse(e *mtproto.Encoder, response *AccountAuthorizationForm) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Account_UpdateProfile_Handler(srv interface{}, ctx context.Context, req *AccountUpdateProfileRequest) (UserType, error) {
-	return srv.(AccountServer).UpdateProfile(ctx, req)
+func _Account_GetAuthorizations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetAuthorizationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getAuthorizations: request %T is not *AccountGetAuthorizationsRequest", req)
+	}
+	return srv.(AccountServer).GetAuthorizations(ctx, typedRequest)
 }
 
-func _Account_UpdateStatus_Handler(srv interface{}, ctx context.Context, req *AccountUpdateStatusRequest) (bool, error) {
-	return srv.(AccountServer).UpdateStatus(ctx, req)
-}
-
-func _Account_UpdateTheme_Handler(srv interface{}, ctx context.Context, req *AccountUpdateThemeRequest) (*Theme, error) {
-	return srv.(AccountServer).UpdateTheme(ctx, req)
-}
-
-func _Account_UpdateUsername_Handler(srv interface{}, ctx context.Context, req *AccountUpdateUsernameRequest) (UserType, error) {
-	return srv.(AccountServer).UpdateUsername(ctx, req)
-}
+func _Account_GetAuthorizations_EncodeResponse(e *mtproto.Encoder, response *AccountAuthorizations) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
 
-func _Account_UploadRingtone_Handler(srv interface{}, ctx context.Context, req *AccountUploadRingtoneRequest) (DocumentType, error) {
-	return srv.(AccountServer).UploadRingtone(ctx, req)
-}
-
-func _Account_UploadTheme_Handler(srv interface{}, ctx context.Context, req *AccountUploadThemeRequest) (DocumentType, error) {
-	return srv.(AccountServer).UploadTheme(ctx, req)
-}
+func _Account_GetAutoDownloadSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetAutoDownloadSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getAutoDownloadSettings: request %T is not *AccountGetAutoDownloadSettingsRequest", req)
+	}
+	return srv.(AccountServer).GetAutoDownloadSettings(ctx, typedRequest)
+}
 
-func _Account_UploadWallPaper_Handler(srv interface{}, ctx context.Context, req *AccountUploadWallPaperRequest) (WallPaperType, error) {
-	return srv.(AccountServer).UploadWallPaper(ctx, req)
-}
+func _Account_GetAutoDownloadSettings_EncodeResponse(e *mtproto.Encoder, response *AccountAutoDownloadSettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetAutoSaveSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetAutoSaveSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getAutoSaveSettings: request %T is not *AccountGetAutoSaveSettingsRequest", req)
+	}
+	return srv.(AccountServer).GetAutoSaveSettings(ctx, typedRequest)
+}
+
+func _Account_GetAutoSaveSettings_EncodeResponse(e *mtproto.Encoder, response *AccountAutoSaveSettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetBotBusinessConnection_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetBotBusinessConnectionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getBotBusinessConnection: request %T is not *AccountGetBotBusinessConnectionRequest", req)
+	}
+	return srv.(AccountServer).GetBotBusinessConnection(ctx, typedRequest)
+}
+
+func _Account_GetBotBusinessConnection_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetBusinessChatLinks_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetBusinessChatLinksRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getBusinessChatLinks: request %T is not *AccountGetBusinessChatLinksRequest", req)
+	}
+	return srv.(AccountServer).GetBusinessChatLinks(ctx, typedRequest)
+}
+
+func _Account_GetBusinessChatLinks_EncodeResponse(e *mtproto.Encoder, response *AccountBusinessChatLinks) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetChannelDefaultEmojiStatuses_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetChannelDefaultEmojiStatusesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getChannelDefaultEmojiStatuses: request %T is not *AccountGetChannelDefaultEmojiStatusesRequest", req)
+	}
+	return srv.(AccountServer).GetChannelDefaultEmojiStatuses(ctx, typedRequest)
+}
+
+func _Account_GetChannelDefaultEmojiStatuses_EncodeResponse(e *mtproto.Encoder, response AccountEmojiStatusesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.EmojiStatuses is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
 
-func _Account_VerifyEmail_Handler(srv interface{}, ctx context.Context, req *AccountVerifyEmailRequest) (AccountEmailVerifiedType, error) {
-	return srv.(AccountServer).VerifyEmail(ctx, req)
-}
+func _Account_GetChannelRestrictedStatusEmojis_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetChannelRestrictedStatusEmojisRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getChannelRestrictedStatusEmojis: request %T is not *AccountGetChannelRestrictedStatusEmojisRequest", req)
+	}
+	return srv.(AccountServer).GetChannelRestrictedStatusEmojis(ctx, typedRequest)
+}
 
-func _Account_VerifyPhone_Handler(srv interface{}, ctx context.Context, req *AccountVerifyPhoneRequest) (bool, error) {
-	return srv.(AccountServer).VerifyPhone(ctx, req)
+func _Account_GetChannelRestrictedStatusEmojis_EncodeResponse(e *mtproto.Encoder, response EmojiListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EmojiList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetChatThemes_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetChatThemesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getChatThemes: request %T is not *AccountGetChatThemesRequest", req)
+	}
+	return srv.(AccountServer).GetChatThemes(ctx, typedRequest)
+}
+
+func _Account_GetChatThemes_EncodeResponse(e *mtproto.Encoder, response AccountThemesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.Themes is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetCollectibleEmojiStatuses_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetCollectibleEmojiStatusesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getCollectibleEmojiStatuses: request %T is not *AccountGetCollectibleEmojiStatusesRequest", req)
+	}
+	return srv.(AccountServer).GetCollectibleEmojiStatuses(ctx, typedRequest)
+}
+
+func _Account_GetCollectibleEmojiStatuses_EncodeResponse(e *mtproto.Encoder, response AccountEmojiStatusesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.EmojiStatuses is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetConnectedBots_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetConnectedBotsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getConnectedBots: request %T is not *AccountGetConnectedBotsRequest", req)
+	}
+	return srv.(AccountServer).GetConnectedBots(ctx, typedRequest)
+}
+
+func _Account_GetConnectedBots_EncodeResponse(e *mtproto.Encoder, response *AccountConnectedBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetContactSignUpNotification_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetContactSignUpNotificationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getContactSignUpNotification: request %T is not *AccountGetContactSignUpNotificationRequest", req)
+	}
+	return srv.(AccountServer).GetContactSignUpNotification(ctx, typedRequest)
+}
+
+func _Account_GetContactSignUpNotification_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetContentSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetContentSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getContentSettings: request %T is not *AccountGetContentSettingsRequest", req)
+	}
+	return srv.(AccountServer).GetContentSettings(ctx, typedRequest)
+}
+
+func _Account_GetContentSettings_EncodeResponse(e *mtproto.Encoder, response *AccountContentSettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetDefaultBackgroundEmojis_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetDefaultBackgroundEmojisRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getDefaultBackgroundEmojis: request %T is not *AccountGetDefaultBackgroundEmojisRequest", req)
+	}
+	return srv.(AccountServer).GetDefaultBackgroundEmojis(ctx, typedRequest)
+}
+
+func _Account_GetDefaultBackgroundEmojis_EncodeResponse(e *mtproto.Encoder, response EmojiListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EmojiList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetDefaultEmojiStatuses_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetDefaultEmojiStatusesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getDefaultEmojiStatuses: request %T is not *AccountGetDefaultEmojiStatusesRequest", req)
+	}
+	return srv.(AccountServer).GetDefaultEmojiStatuses(ctx, typedRequest)
+}
+
+func _Account_GetDefaultEmojiStatuses_EncodeResponse(e *mtproto.Encoder, response AccountEmojiStatusesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.EmojiStatuses is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetDefaultGroupPhotoEmojis_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetDefaultGroupPhotoEmojisRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getDefaultGroupPhotoEmojis: request %T is not *AccountGetDefaultGroupPhotoEmojisRequest", req)
+	}
+	return srv.(AccountServer).GetDefaultGroupPhotoEmojis(ctx, typedRequest)
+}
+
+func _Account_GetDefaultGroupPhotoEmojis_EncodeResponse(e *mtproto.Encoder, response EmojiListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EmojiList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetDefaultProfilePhotoEmojis_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetDefaultProfilePhotoEmojisRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getDefaultProfilePhotoEmojis: request %T is not *AccountGetDefaultProfilePhotoEmojisRequest", req)
+	}
+	return srv.(AccountServer).GetDefaultProfilePhotoEmojis(ctx, typedRequest)
+}
+
+func _Account_GetDefaultProfilePhotoEmojis_EncodeResponse(e *mtproto.Encoder, response EmojiListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EmojiList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetGlobalPrivacySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetGlobalPrivacySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getGlobalPrivacySettings: request %T is not *AccountGetGlobalPrivacySettingsRequest", req)
+	}
+	return srv.(AccountServer).GetGlobalPrivacySettings(ctx, typedRequest)
+}
+
+func _Account_GetGlobalPrivacySettings_EncodeResponse(e *mtproto.Encoder, response *GlobalPrivacySettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetMultiWallPapers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetMultiWallPapersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getMultiWallPapers: request %T is not *AccountGetMultiWallPapersRequest", req)
+	}
+	return srv.(AccountServer).GetMultiWallPapers(ctx, typedRequest)
+}
+
+func _Account_GetMultiWallPapers_EncodeResponse(e *mtproto.Encoder, response []WallPaperType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed WallPaper is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetNotifyExceptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetNotifyExceptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getNotifyExceptions: request %T is not *AccountGetNotifyExceptionsRequest", req)
+	}
+	return srv.(AccountServer).GetNotifyExceptions(ctx, typedRequest)
+}
+
+func _Account_GetNotifyExceptions_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetNotifySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetNotifySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getNotifySettings: request %T is not *AccountGetNotifySettingsRequest", req)
+	}
+	return srv.(AccountServer).GetNotifySettings(ctx, typedRequest)
+}
+
+func _Account_GetNotifySettings_EncodeResponse(e *mtproto.Encoder, response *PeerNotifySettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetPaidMessagesRevenue_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetPaidMessagesRevenueRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getPaidMessagesRevenue: request %T is not *AccountGetPaidMessagesRevenueRequest", req)
+	}
+	return srv.(AccountServer).GetPaidMessagesRevenue(ctx, typedRequest)
+}
+
+func _Account_GetPaidMessagesRevenue_EncodeResponse(e *mtproto.Encoder, response *AccountPaidMessagesRevenue) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetPassword_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetPasswordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getPassword: request %T is not *AccountGetPasswordRequest", req)
+	}
+	return srv.(AccountServer).GetPassword(ctx, typedRequest)
+}
+
+func _Account_GetPassword_EncodeResponse(e *mtproto.Encoder, response *AccountPassword) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetPasswordSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetPasswordSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getPasswordSettings: request %T is not *AccountGetPasswordSettingsRequest", req)
+	}
+	return srv.(AccountServer).GetPasswordSettings(ctx, typedRequest)
+}
+
+func _Account_GetPasswordSettings_EncodeResponse(e *mtproto.Encoder, response *AccountPasswordSettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetPrivacy_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetPrivacyRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getPrivacy: request %T is not *AccountGetPrivacyRequest", req)
+	}
+	return srv.(AccountServer).GetPrivacy(ctx, typedRequest)
+}
+
+func _Account_GetPrivacy_EncodeResponse(e *mtproto.Encoder, response *AccountPrivacyRules) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetReactionsNotifySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetReactionsNotifySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getReactionsNotifySettings: request %T is not *AccountGetReactionsNotifySettingsRequest", req)
+	}
+	return srv.(AccountServer).GetReactionsNotifySettings(ctx, typedRequest)
+}
+
+func _Account_GetReactionsNotifySettings_EncodeResponse(e *mtproto.Encoder, response *ReactionsNotifySettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetRecentEmojiStatuses_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetRecentEmojiStatusesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getRecentEmojiStatuses: request %T is not *AccountGetRecentEmojiStatusesRequest", req)
+	}
+	return srv.(AccountServer).GetRecentEmojiStatuses(ctx, typedRequest)
+}
+
+func _Account_GetRecentEmojiStatuses_EncodeResponse(e *mtproto.Encoder, response AccountEmojiStatusesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.EmojiStatuses is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetSavedMusicIds_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetSavedMusicIdsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getSavedMusicIds: request %T is not *AccountGetSavedMusicIdsRequest", req)
+	}
+	return srv.(AccountServer).GetSavedMusicIds(ctx, typedRequest)
+}
+
+func _Account_GetSavedMusicIds_EncodeResponse(e *mtproto.Encoder, response AccountSavedMusicIdsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.SavedMusicIds is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetSavedRingtones_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetSavedRingtonesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getSavedRingtones: request %T is not *AccountGetSavedRingtonesRequest", req)
+	}
+	return srv.(AccountServer).GetSavedRingtones(ctx, typedRequest)
+}
+
+func _Account_GetSavedRingtones_EncodeResponse(e *mtproto.Encoder, response AccountSavedRingtonesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.SavedRingtones is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetSecureValue_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetSecureValueRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getSecureValue: request %T is not *AccountGetSecureValueRequest", req)
+	}
+	return srv.(AccountServer).GetSecureValue(ctx, typedRequest)
+}
+
+func _Account_GetSecureValue_EncodeResponse(e *mtproto.Encoder, response []*SecureValue) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getTheme: request %T is not *AccountGetThemeRequest", req)
+	}
+	return srv.(AccountServer).GetTheme(ctx, typedRequest)
+}
+
+func _Account_GetTheme_EncodeResponse(e *mtproto.Encoder, response *Theme) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetThemes_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetThemesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getThemes: request %T is not *AccountGetThemesRequest", req)
+	}
+	return srv.(AccountServer).GetThemes(ctx, typedRequest)
+}
+
+func _Account_GetThemes_EncodeResponse(e *mtproto.Encoder, response AccountThemesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.Themes is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetTmpPassword_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetTmpPasswordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getTmpPassword: request %T is not *AccountGetTmpPasswordRequest", req)
+	}
+	return srv.(AccountServer).GetTmpPassword(ctx, typedRequest)
+}
+
+func _Account_GetTmpPassword_EncodeResponse(e *mtproto.Encoder, response *AccountTmpPassword) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetWallPaper_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetWallPaperRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getWallPaper: request %T is not *AccountGetWallPaperRequest", req)
+	}
+	return srv.(AccountServer).GetWallPaper(ctx, typedRequest)
+}
+
+func _Account_GetWallPaper_EncodeResponse(e *mtproto.Encoder, response WallPaperType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed WallPaper is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetWallPapers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetWallPapersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getWallPapers: request %T is not *AccountGetWallPapersRequest", req)
+	}
+	return srv.(AccountServer).GetWallPapers(ctx, typedRequest)
+}
+
+func _Account_GetWallPapers_EncodeResponse(e *mtproto.Encoder, response AccountWallPapersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.WallPapers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_GetWebAuthorizations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountGetWebAuthorizationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.getWebAuthorizations: request %T is not *AccountGetWebAuthorizationsRequest", req)
+	}
+	return srv.(AccountServer).GetWebAuthorizations(ctx, typedRequest)
+}
+
+func _Account_GetWebAuthorizations_EncodeResponse(e *mtproto.Encoder, response *AccountWebAuthorizations) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_InitTakeoutSession_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountInitTakeoutSessionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.initTakeoutSession: request %T is not *AccountInitTakeoutSessionRequest", req)
+	}
+	return srv.(AccountServer).InitTakeoutSession(ctx, typedRequest)
+}
+
+func _Account_InitTakeoutSession_EncodeResponse(e *mtproto.Encoder, response *AccountTakeout) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_InstallTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountInstallThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.installTheme: request %T is not *AccountInstallThemeRequest", req)
+	}
+	return srv.(AccountServer).InstallTheme(ctx, typedRequest)
+}
+
+func _Account_InstallTheme_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_InstallWallPaper_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountInstallWallPaperRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.installWallPaper: request %T is not *AccountInstallWallPaperRequest", req)
+	}
+	return srv.(AccountServer).InstallWallPaper(ctx, typedRequest)
+}
+
+func _Account_InstallWallPaper_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_InvalidateSignInCodes_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountInvalidateSignInCodesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.invalidateSignInCodes: request %T is not *AccountInvalidateSignInCodesRequest", req)
+	}
+	return srv.(AccountServer).InvalidateSignInCodes(ctx, typedRequest)
+}
+
+func _Account_InvalidateSignInCodes_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_RegisterDevice_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountRegisterDeviceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.registerDevice: request %T is not *AccountRegisterDeviceRequest", req)
+	}
+	return srv.(AccountServer).RegisterDevice(ctx, typedRequest)
+}
+
+func _Account_RegisterDevice_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ReorderUsernames_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountReorderUsernamesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.reorderUsernames: request %T is not *AccountReorderUsernamesRequest", req)
+	}
+	return srv.(AccountServer).ReorderUsernames(ctx, typedRequest)
+}
+
+func _Account_ReorderUsernames_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ReportPeer_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountReportPeerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.reportPeer: request %T is not *AccountReportPeerRequest", req)
+	}
+	return srv.(AccountServer).ReportPeer(ctx, typedRequest)
+}
+
+func _Account_ReportPeer_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ReportProfilePhoto_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountReportProfilePhotoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.reportProfilePhoto: request %T is not *AccountReportProfilePhotoRequest", req)
+	}
+	return srv.(AccountServer).ReportProfilePhoto(ctx, typedRequest)
+}
+
+func _Account_ReportProfilePhoto_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResendPasswordEmail_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResendPasswordEmailRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resendPasswordEmail: request %T is not *AccountResendPasswordEmailRequest", req)
+	}
+	return srv.(AccountServer).ResendPasswordEmail(ctx, typedRequest)
+}
+
+func _Account_ResendPasswordEmail_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResetAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResetAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resetAuthorization: request %T is not *AccountResetAuthorizationRequest", req)
+	}
+	return srv.(AccountServer).ResetAuthorization(ctx, typedRequest)
+}
+
+func _Account_ResetAuthorization_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResetNotifySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResetNotifySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resetNotifySettings: request %T is not *AccountResetNotifySettingsRequest", req)
+	}
+	return srv.(AccountServer).ResetNotifySettings(ctx, typedRequest)
+}
+
+func _Account_ResetNotifySettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResetPassword_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResetPasswordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resetPassword: request %T is not *AccountResetPasswordRequest", req)
+	}
+	return srv.(AccountServer).ResetPassword(ctx, typedRequest)
+}
+
+func _Account_ResetPassword_EncodeResponse(e *mtproto.Encoder, response AccountResetPasswordResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.ResetPasswordResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResetWallPapers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResetWallPapersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resetWallPapers: request %T is not *AccountResetWallPapersRequest", req)
+	}
+	return srv.(AccountServer).ResetWallPapers(ctx, typedRequest)
+}
+
+func _Account_ResetWallPapers_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResetWebAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResetWebAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resetWebAuthorization: request %T is not *AccountResetWebAuthorizationRequest", req)
+	}
+	return srv.(AccountServer).ResetWebAuthorization(ctx, typedRequest)
+}
+
+func _Account_ResetWebAuthorization_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResetWebAuthorizations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResetWebAuthorizationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resetWebAuthorizations: request %T is not *AccountResetWebAuthorizationsRequest", req)
+	}
+	return srv.(AccountServer).ResetWebAuthorizations(ctx, typedRequest)
+}
+
+func _Account_ResetWebAuthorizations_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ResolveBusinessChatLink_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountResolveBusinessChatLinkRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.resolveBusinessChatLink: request %T is not *AccountResolveBusinessChatLinkRequest", req)
+	}
+	return srv.(AccountServer).ResolveBusinessChatLink(ctx, typedRequest)
+}
+
+func _Account_ResolveBusinessChatLink_EncodeResponse(e *mtproto.Encoder, response *AccountResolvedBusinessChatLinks) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveAutoDownloadSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveAutoDownloadSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveAutoDownloadSettings: request %T is not *AccountSaveAutoDownloadSettingsRequest", req)
+	}
+	return srv.(AccountServer).SaveAutoDownloadSettings(ctx, typedRequest)
+}
+
+func _Account_SaveAutoDownloadSettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveAutoSaveSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveAutoSaveSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveAutoSaveSettings: request %T is not *AccountSaveAutoSaveSettingsRequest", req)
+	}
+	return srv.(AccountServer).SaveAutoSaveSettings(ctx, typedRequest)
+}
+
+func _Account_SaveAutoSaveSettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveMusic_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveMusicRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveMusic: request %T is not *AccountSaveMusicRequest", req)
+	}
+	return srv.(AccountServer).SaveMusic(ctx, typedRequest)
+}
+
+func _Account_SaveMusic_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveRingtone_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveRingtoneRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveRingtone: request %T is not *AccountSaveRingtoneRequest", req)
+	}
+	return srv.(AccountServer).SaveRingtone(ctx, typedRequest)
+}
+
+func _Account_SaveRingtone_EncodeResponse(e *mtproto.Encoder, response AccountSavedRingtoneType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.SavedRingtone is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveSecureValue_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveSecureValueRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveSecureValue: request %T is not *AccountSaveSecureValueRequest", req)
+	}
+	return srv.(AccountServer).SaveSecureValue(ctx, typedRequest)
+}
+
+func _Account_SaveSecureValue_EncodeResponse(e *mtproto.Encoder, response *SecureValue) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveTheme: request %T is not *AccountSaveThemeRequest", req)
+	}
+	return srv.(AccountServer).SaveTheme(ctx, typedRequest)
+}
+
+func _Account_SaveTheme_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SaveWallPaper_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSaveWallPaperRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.saveWallPaper: request %T is not *AccountSaveWallPaperRequest", req)
+	}
+	return srv.(AccountServer).SaveWallPaper(ctx, typedRequest)
+}
+
+func _Account_SaveWallPaper_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SendChangePhoneCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSendChangePhoneCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.sendChangePhoneCode: request %T is not *AccountSendChangePhoneCodeRequest", req)
+	}
+	return srv.(AccountServer).SendChangePhoneCode(ctx, typedRequest)
+}
+
+func _Account_SendChangePhoneCode_EncodeResponse(e *mtproto.Encoder, response AuthSentCodeType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.SentCode is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SendConfirmPhoneCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSendConfirmPhoneCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.sendConfirmPhoneCode: request %T is not *AccountSendConfirmPhoneCodeRequest", req)
+	}
+	return srv.(AccountServer).SendConfirmPhoneCode(ctx, typedRequest)
+}
+
+func _Account_SendConfirmPhoneCode_EncodeResponse(e *mtproto.Encoder, response AuthSentCodeType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.SentCode is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SendVerifyEmailCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSendVerifyEmailCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.sendVerifyEmailCode: request %T is not *AccountSendVerifyEmailCodeRequest", req)
+	}
+	return srv.(AccountServer).SendVerifyEmailCode(ctx, typedRequest)
+}
+
+func _Account_SendVerifyEmailCode_EncodeResponse(e *mtproto.Encoder, response *AccountSentEmailCode) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SendVerifyPhoneCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSendVerifyPhoneCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.sendVerifyPhoneCode: request %T is not *AccountSendVerifyPhoneCodeRequest", req)
+	}
+	return srv.(AccountServer).SendVerifyPhoneCode(ctx, typedRequest)
+}
+
+func _Account_SendVerifyPhoneCode_EncodeResponse(e *mtproto.Encoder, response AuthSentCodeType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.SentCode is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetAccountTTL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetAccountTTLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setAccountTTL: request %T is not *AccountSetAccountTTLRequest", req)
+	}
+	return srv.(AccountServer).SetAccountTTL(ctx, typedRequest)
+}
+
+func _Account_SetAccountTTL_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetAuthorizationTTL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetAuthorizationTTLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setAuthorizationTTL: request %T is not *AccountSetAuthorizationTTLRequest", req)
+	}
+	return srv.(AccountServer).SetAuthorizationTTL(ctx, typedRequest)
+}
+
+func _Account_SetAuthorizationTTL_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetContactSignUpNotification_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetContactSignUpNotificationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setContactSignUpNotification: request %T is not *AccountSetContactSignUpNotificationRequest", req)
+	}
+	return srv.(AccountServer).SetContactSignUpNotification(ctx, typedRequest)
+}
+
+func _Account_SetContactSignUpNotification_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetContentSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetContentSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setContentSettings: request %T is not *AccountSetContentSettingsRequest", req)
+	}
+	return srv.(AccountServer).SetContentSettings(ctx, typedRequest)
+}
+
+func _Account_SetContentSettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetGlobalPrivacySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetGlobalPrivacySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setGlobalPrivacySettings: request %T is not *AccountSetGlobalPrivacySettingsRequest", req)
+	}
+	return srv.(AccountServer).SetGlobalPrivacySettings(ctx, typedRequest)
+}
+
+func _Account_SetGlobalPrivacySettings_EncodeResponse(e *mtproto.Encoder, response *GlobalPrivacySettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetMainProfileTab_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetMainProfileTabRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setMainProfileTab: request %T is not *AccountSetMainProfileTabRequest", req)
+	}
+	return srv.(AccountServer).SetMainProfileTab(ctx, typedRequest)
+}
+
+func _Account_SetMainProfileTab_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetPrivacy_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetPrivacyRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setPrivacy: request %T is not *AccountSetPrivacyRequest", req)
+	}
+	return srv.(AccountServer).SetPrivacy(ctx, typedRequest)
+}
+
+func _Account_SetPrivacy_EncodeResponse(e *mtproto.Encoder, response *AccountPrivacyRules) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_SetReactionsNotifySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountSetReactionsNotifySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.setReactionsNotifySettings: request %T is not *AccountSetReactionsNotifySettingsRequest", req)
+	}
+	return srv.(AccountServer).SetReactionsNotifySettings(ctx, typedRequest)
+}
+
+func _Account_SetReactionsNotifySettings_EncodeResponse(e *mtproto.Encoder, response *ReactionsNotifySettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ToggleConnectedBotPaused_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountToggleConnectedBotPausedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.toggleConnectedBotPaused: request %T is not *AccountToggleConnectedBotPausedRequest", req)
+	}
+	return srv.(AccountServer).ToggleConnectedBotPaused(ctx, typedRequest)
+}
+
+func _Account_ToggleConnectedBotPaused_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ToggleNoPaidMessagesException_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountToggleNoPaidMessagesExceptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.toggleNoPaidMessagesException: request %T is not *AccountToggleNoPaidMessagesExceptionRequest", req)
+	}
+	return srv.(AccountServer).ToggleNoPaidMessagesException(ctx, typedRequest)
+}
+
+func _Account_ToggleNoPaidMessagesException_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ToggleSponsoredMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountToggleSponsoredMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.toggleSponsoredMessages: request %T is not *AccountToggleSponsoredMessagesRequest", req)
+	}
+	return srv.(AccountServer).ToggleSponsoredMessages(ctx, typedRequest)
+}
+
+func _Account_ToggleSponsoredMessages_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_ToggleUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountToggleUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.toggleUsername: request %T is not *AccountToggleUsernameRequest", req)
+	}
+	return srv.(AccountServer).ToggleUsername(ctx, typedRequest)
+}
+
+func _Account_ToggleUsername_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UnregisterDevice_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUnregisterDeviceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.unregisterDevice: request %T is not *AccountUnregisterDeviceRequest", req)
+	}
+	return srv.(AccountServer).UnregisterDevice(ctx, typedRequest)
+}
+
+func _Account_UnregisterDevice_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateBirthday_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateBirthdayRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateBirthday: request %T is not *AccountUpdateBirthdayRequest", req)
+	}
+	return srv.(AccountServer).UpdateBirthday(ctx, typedRequest)
+}
+
+func _Account_UpdateBirthday_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateBusinessAwayMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateBusinessAwayMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateBusinessAwayMessage: request %T is not *AccountUpdateBusinessAwayMessageRequest", req)
+	}
+	return srv.(AccountServer).UpdateBusinessAwayMessage(ctx, typedRequest)
+}
+
+func _Account_UpdateBusinessAwayMessage_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateBusinessGreetingMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateBusinessGreetingMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateBusinessGreetingMessage: request %T is not *AccountUpdateBusinessGreetingMessageRequest", req)
+	}
+	return srv.(AccountServer).UpdateBusinessGreetingMessage(ctx, typedRequest)
+}
+
+func _Account_UpdateBusinessGreetingMessage_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateBusinessIntro_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateBusinessIntroRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateBusinessIntro: request %T is not *AccountUpdateBusinessIntroRequest", req)
+	}
+	return srv.(AccountServer).UpdateBusinessIntro(ctx, typedRequest)
+}
+
+func _Account_UpdateBusinessIntro_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateBusinessLocation_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateBusinessLocationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateBusinessLocation: request %T is not *AccountUpdateBusinessLocationRequest", req)
+	}
+	return srv.(AccountServer).UpdateBusinessLocation(ctx, typedRequest)
+}
+
+func _Account_UpdateBusinessLocation_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateBusinessWorkHours_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateBusinessWorkHoursRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateBusinessWorkHours: request %T is not *AccountUpdateBusinessWorkHoursRequest", req)
+	}
+	return srv.(AccountServer).UpdateBusinessWorkHours(ctx, typedRequest)
+}
+
+func _Account_UpdateBusinessWorkHours_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateColor_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateColorRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateColor: request %T is not *AccountUpdateColorRequest", req)
+	}
+	return srv.(AccountServer).UpdateColor(ctx, typedRequest)
+}
+
+func _Account_UpdateColor_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateConnectedBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateConnectedBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateConnectedBot: request %T is not *AccountUpdateConnectedBotRequest", req)
+	}
+	return srv.(AccountServer).UpdateConnectedBot(ctx, typedRequest)
+}
+
+func _Account_UpdateConnectedBot_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateDeviceLocked_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateDeviceLockedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateDeviceLocked: request %T is not *AccountUpdateDeviceLockedRequest", req)
+	}
+	return srv.(AccountServer).UpdateDeviceLocked(ctx, typedRequest)
+}
+
+func _Account_UpdateDeviceLocked_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateEmojiStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateEmojiStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateEmojiStatus: request %T is not *AccountUpdateEmojiStatusRequest", req)
+	}
+	return srv.(AccountServer).UpdateEmojiStatus(ctx, typedRequest)
+}
+
+func _Account_UpdateEmojiStatus_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateNotifySettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateNotifySettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateNotifySettings: request %T is not *AccountUpdateNotifySettingsRequest", req)
+	}
+	return srv.(AccountServer).UpdateNotifySettings(ctx, typedRequest)
+}
+
+func _Account_UpdateNotifySettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdatePasswordSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdatePasswordSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updatePasswordSettings: request %T is not *AccountUpdatePasswordSettingsRequest", req)
+	}
+	return srv.(AccountServer).UpdatePasswordSettings(ctx, typedRequest)
+}
+
+func _Account_UpdatePasswordSettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdatePersonalChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdatePersonalChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updatePersonalChannel: request %T is not *AccountUpdatePersonalChannelRequest", req)
+	}
+	return srv.(AccountServer).UpdatePersonalChannel(ctx, typedRequest)
+}
+
+func _Account_UpdatePersonalChannel_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateProfile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateProfileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateProfile: request %T is not *AccountUpdateProfileRequest", req)
+	}
+	return srv.(AccountServer).UpdateProfile(ctx, typedRequest)
+}
+
+func _Account_UpdateProfile_EncodeResponse(e *mtproto.Encoder, response UserType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed User is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateStatus: request %T is not *AccountUpdateStatusRequest", req)
+	}
+	return srv.(AccountServer).UpdateStatus(ctx, typedRequest)
+}
+
+func _Account_UpdateStatus_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateTheme: request %T is not *AccountUpdateThemeRequest", req)
+	}
+	return srv.(AccountServer).UpdateTheme(ctx, typedRequest)
+}
+
+func _Account_UpdateTheme_EncodeResponse(e *mtproto.Encoder, response *Theme) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UpdateUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUpdateUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.updateUsername: request %T is not *AccountUpdateUsernameRequest", req)
+	}
+	return srv.(AccountServer).UpdateUsername(ctx, typedRequest)
+}
+
+func _Account_UpdateUsername_EncodeResponse(e *mtproto.Encoder, response UserType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed User is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UploadRingtone_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUploadRingtoneRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.uploadRingtone: request %T is not *AccountUploadRingtoneRequest", req)
+	}
+	return srv.(AccountServer).UploadRingtone(ctx, typedRequest)
+}
+
+func _Account_UploadRingtone_EncodeResponse(e *mtproto.Encoder, response DocumentType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Document is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UploadTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUploadThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.uploadTheme: request %T is not *AccountUploadThemeRequest", req)
+	}
+	return srv.(AccountServer).UploadTheme(ctx, typedRequest)
+}
+
+func _Account_UploadTheme_EncodeResponse(e *mtproto.Encoder, response DocumentType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Document is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_UploadWallPaper_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountUploadWallPaperRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.uploadWallPaper: request %T is not *AccountUploadWallPaperRequest", req)
+	}
+	return srv.(AccountServer).UploadWallPaper(ctx, typedRequest)
+}
+
+func _Account_UploadWallPaper_EncodeResponse(e *mtproto.Encoder, response WallPaperType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed WallPaper is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_VerifyEmail_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountVerifyEmailRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.verifyEmail: request %T is not *AccountVerifyEmailRequest", req)
+	}
+	return srv.(AccountServer).VerifyEmail(ctx, typedRequest)
+}
+
+func _Account_VerifyEmail_EncodeResponse(e *mtproto.Encoder, response AccountEmailVerifiedType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed account.EmailVerified is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Account_VerifyPhone_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AccountVerifyPhoneRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("account.verifyPhone: request %T is not *AccountVerifyPhoneRequest", req)
+	}
+	return srv.(AccountServer).VerifyPhone(ctx, typedRequest)
+}
+
+func _Account_VerifyPhone_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Account_ServiceDesc is the static descriptor for the AccountServer service.
@@ -489,712 +1922,1302 @@ var Account_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*AccountServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptAuthorization",
 			ConstructorID: 0xf3ed4c73,
 			NewRequest:    func() tlrpc.TLObject { return &AccountAcceptAuthorizationRequest{} },
 			Handler:       _Account_AcceptAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_AcceptAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CancelPasswordEmail",
 			ConstructorID: 0xc1cbd5b6,
 			NewRequest:    func() tlrpc.TLObject { return &AccountCancelPasswordEmailRequest{} },
 			Handler:       _Account_CancelPasswordEmail_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_CancelPasswordEmail_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ChangeAuthorizationSettings",
 			ConstructorID: 0x40f48462,
 			NewRequest:    func() tlrpc.TLObject { return &AccountChangeAuthorizationSettingsRequest{} },
 			Handler:       _Account_ChangeAuthorizationSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ChangeAuthorizationSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ChangePhone",
 			ConstructorID: 0x70c32edb,
 			NewRequest:    func() tlrpc.TLObject { return &AccountChangePhoneRequest{} },
 			Handler:       _Account_ChangePhone_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UserType](response, layer, limits, _Account_ChangePhone_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckUsername",
 			ConstructorID: 0x2714d86c,
 			NewRequest:    func() tlrpc.TLObject { return &AccountCheckUsernameRequest{} },
 			Handler:       _Account_CheckUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_CheckUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ClearRecentEmojiStatuses",
 			ConstructorID: 0x18201aae,
 			NewRequest:    func() tlrpc.TLObject { return &AccountClearRecentEmojiStatusesRequest{} },
 			Handler:       _Account_ClearRecentEmojiStatuses_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ClearRecentEmojiStatuses_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ConfirmPasswordEmail",
 			ConstructorID: 0x8fdf1920,
 			NewRequest:    func() tlrpc.TLObject { return &AccountConfirmPasswordEmailRequest{} },
 			Handler:       _Account_ConfirmPasswordEmail_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ConfirmPasswordEmail_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ConfirmPhone",
 			ConstructorID: 0x5f2178c3,
 			NewRequest:    func() tlrpc.TLObject { return &AccountConfirmPhoneRequest{} },
 			Handler:       _Account_ConfirmPhone_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ConfirmPhone_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateBusinessChatLink",
 			ConstructorID: 0x8851e68e,
 			NewRequest:    func() tlrpc.TLObject { return &AccountCreateBusinessChatLinkRequest{} },
 			Handler:       _Account_CreateBusinessChatLink_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BusinessChatLink](response, layer, limits, _Account_CreateBusinessChatLink_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateTheme",
 			ConstructorID: 0x652e4400,
 			NewRequest:    func() tlrpc.TLObject { return &AccountCreateThemeRequest{} },
 			Handler:       _Account_CreateTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*Theme](response, layer, limits, _Account_CreateTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeclinePasswordReset",
 			ConstructorID: 0x4c9409f6,
 			NewRequest:    func() tlrpc.TLObject { return &AccountDeclinePasswordResetRequest{} },
 			Handler:       _Account_DeclinePasswordReset_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_DeclinePasswordReset_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteAccount",
 			ConstructorID: 0xa2c0cf74,
 			NewRequest:    func() tlrpc.TLObject { return &AccountDeleteAccountRequest{} },
 			Handler:       _Account_DeleteAccount_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_DeleteAccount_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteAutoSaveExceptions",
 			ConstructorID: 0x53bc0020,
 			NewRequest:    func() tlrpc.TLObject { return &AccountDeleteAutoSaveExceptionsRequest{} },
 			Handler:       _Account_DeleteAutoSaveExceptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_DeleteAutoSaveExceptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteBusinessChatLink",
 			ConstructorID: 0x60073674,
 			NewRequest:    func() tlrpc.TLObject { return &AccountDeleteBusinessChatLinkRequest{} },
 			Handler:       _Account_DeleteBusinessChatLink_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_DeleteBusinessChatLink_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteSecureValue",
 			ConstructorID: 0xb880bc4b,
 			NewRequest:    func() tlrpc.TLObject { return &AccountDeleteSecureValueRequest{} },
 			Handler:       _Account_DeleteSecureValue_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_DeleteSecureValue_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DisablePeerConnectedBot",
 			ConstructorID: 0x5e437ed9,
 			NewRequest:    func() tlrpc.TLObject { return &AccountDisablePeerConnectedBotRequest{} },
 			Handler:       _Account_DisablePeerConnectedBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_DisablePeerConnectedBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditBusinessChatLink",
 			ConstructorID: 0x8c3410af,
 			NewRequest:    func() tlrpc.TLObject { return &AccountEditBusinessChatLinkRequest{} },
 			Handler:       _Account_EditBusinessChatLink_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BusinessChatLink](response, layer, limits, _Account_EditBusinessChatLink_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "FinishTakeoutSession",
 			ConstructorID: 0x1d2652ee,
 			NewRequest:    func() tlrpc.TLObject { return &AccountFinishTakeoutSessionRequest{} },
 			Handler:       _Account_FinishTakeoutSession_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_FinishTakeoutSession_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAccountTTL",
 			ConstructorID: 0x08fc711d,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetAccountTTLRequest{} },
 			Handler:       _Account_GetAccountTTL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountDaysTTL](response, layer, limits, _Account_GetAccountTTL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAllSecureValues",
 			ConstructorID: 0xb288bc7d,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetAllSecureValuesRequest{} },
 			Handler:       _Account_GetAllSecureValues_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*SecureValue](response, layer, limits, _Account_GetAllSecureValues_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAuthorizationForm",
 			ConstructorID: 0xa929597a,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetAuthorizationFormRequest{} },
 			Handler:       _Account_GetAuthorizationForm_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountAuthorizationForm](response, layer, limits, _Account_GetAuthorizationForm_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAuthorizations",
 			ConstructorID: 0xe320c158,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetAuthorizationsRequest{} },
 			Handler:       _Account_GetAuthorizations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountAuthorizations](response, layer, limits, _Account_GetAuthorizations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAutoDownloadSettings",
 			ConstructorID: 0x56da0b3f,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetAutoDownloadSettingsRequest{} },
 			Handler:       _Account_GetAutoDownloadSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountAutoDownloadSettings](response, layer, limits, _Account_GetAutoDownloadSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAutoSaveSettings",
 			ConstructorID: 0xadcbbcda,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetAutoSaveSettingsRequest{} },
 			Handler:       _Account_GetAutoSaveSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountAutoSaveSettings](response, layer, limits, _Account_GetAutoSaveSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotBusinessConnection",
 			ConstructorID: 0x76a86270,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetBotBusinessConnectionRequest{} },
 			Handler:       _Account_GetBotBusinessConnection_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Account_GetBotBusinessConnection_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBusinessChatLinks",
 			ConstructorID: 0x6f70dde1,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetBusinessChatLinksRequest{} },
 			Handler:       _Account_GetBusinessChatLinks_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountBusinessChatLinks](response, layer, limits, _Account_GetBusinessChatLinks_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChannelDefaultEmojiStatuses",
 			ConstructorID: 0x7727a7d5,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetChannelDefaultEmojiStatusesRequest{} },
 			Handler:       _Account_GetChannelDefaultEmojiStatuses_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountEmojiStatusesType](response, layer, limits, _Account_GetChannelDefaultEmojiStatuses_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChannelRestrictedStatusEmojis",
 			ConstructorID: 0x35a9e0d5,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetChannelRestrictedStatusEmojisRequest{} },
 			Handler:       _Account_GetChannelRestrictedStatusEmojis_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EmojiListType](response, layer, limits, _Account_GetChannelRestrictedStatusEmojis_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChatThemes",
 			ConstructorID: 0xd638de89,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetChatThemesRequest{} },
 			Handler:       _Account_GetChatThemes_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountThemesType](response, layer, limits, _Account_GetChatThemes_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCollectibleEmojiStatuses",
 			ConstructorID: 0x2e7b4543,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetCollectibleEmojiStatusesRequest{} },
 			Handler:       _Account_GetCollectibleEmojiStatuses_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountEmojiStatusesType](response, layer, limits, _Account_GetCollectibleEmojiStatuses_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetConnectedBots",
 			ConstructorID: 0x4ea4c80f,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetConnectedBotsRequest{} },
 			Handler:       _Account_GetConnectedBots_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountConnectedBots](response, layer, limits, _Account_GetConnectedBots_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetContactSignUpNotification",
 			ConstructorID: 0x9f07c728,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetContactSignUpNotificationRequest{} },
 			Handler:       _Account_GetContactSignUpNotification_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_GetContactSignUpNotification_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetContentSettings",
 			ConstructorID: 0x8b9b4dae,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetContentSettingsRequest{} },
 			Handler:       _Account_GetContentSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountContentSettings](response, layer, limits, _Account_GetContentSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDefaultBackgroundEmojis",
 			ConstructorID: 0xa60ab9ce,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetDefaultBackgroundEmojisRequest{} },
 			Handler:       _Account_GetDefaultBackgroundEmojis_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EmojiListType](response, layer, limits, _Account_GetDefaultBackgroundEmojis_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDefaultEmojiStatuses",
 			ConstructorID: 0xd6753386,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetDefaultEmojiStatusesRequest{} },
 			Handler:       _Account_GetDefaultEmojiStatuses_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountEmojiStatusesType](response, layer, limits, _Account_GetDefaultEmojiStatuses_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDefaultGroupPhotoEmojis",
 			ConstructorID: 0x915860ae,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetDefaultGroupPhotoEmojisRequest{} },
 			Handler:       _Account_GetDefaultGroupPhotoEmojis_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EmojiListType](response, layer, limits, _Account_GetDefaultGroupPhotoEmojis_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDefaultProfilePhotoEmojis",
 			ConstructorID: 0xe2750328,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetDefaultProfilePhotoEmojisRequest{} },
 			Handler:       _Account_GetDefaultProfilePhotoEmojis_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EmojiListType](response, layer, limits, _Account_GetDefaultProfilePhotoEmojis_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGlobalPrivacySettings",
 			ConstructorID: 0xeb2b4cf6,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetGlobalPrivacySettingsRequest{} },
 			Handler:       _Account_GetGlobalPrivacySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*GlobalPrivacySettings](response, layer, limits, _Account_GetGlobalPrivacySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMultiWallPapers",
 			ConstructorID: 0x65ad71dc,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetMultiWallPapersRequest{} },
 			Handler:       _Account_GetMultiWallPapers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]WallPaperType](response, layer, limits, _Account_GetMultiWallPapers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetNotifyExceptions",
 			ConstructorID: 0x53577479,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetNotifyExceptionsRequest{} },
 			Handler:       _Account_GetNotifyExceptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Account_GetNotifyExceptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetNotifySettings",
 			ConstructorID: 0x12b3ad31,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetNotifySettingsRequest{} },
 			Handler:       _Account_GetNotifySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PeerNotifySettings](response, layer, limits, _Account_GetNotifySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPaidMessagesRevenue",
 			ConstructorID: 0x19ba4a67,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetPaidMessagesRevenueRequest{} },
 			Handler:       _Account_GetPaidMessagesRevenue_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountPaidMessagesRevenue](response, layer, limits, _Account_GetPaidMessagesRevenue_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPassword",
 			ConstructorID: 0x548a30f5,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetPasswordRequest{} },
 			Handler:       _Account_GetPassword_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountPassword](response, layer, limits, _Account_GetPassword_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPasswordSettings",
 			ConstructorID: 0x9cd4eaf9,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetPasswordSettingsRequest{} },
 			Handler:       _Account_GetPasswordSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountPasswordSettings](response, layer, limits, _Account_GetPasswordSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPrivacy",
 			ConstructorID: 0xdadbc950,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetPrivacyRequest{} },
 			Handler:       _Account_GetPrivacy_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountPrivacyRules](response, layer, limits, _Account_GetPrivacy_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetReactionsNotifySettings",
 			ConstructorID: 0x06dd654c,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetReactionsNotifySettingsRequest{} },
 			Handler:       _Account_GetReactionsNotifySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ReactionsNotifySettings](response, layer, limits, _Account_GetReactionsNotifySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetRecentEmojiStatuses",
 			ConstructorID: 0x0f578105,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetRecentEmojiStatusesRequest{} },
 			Handler:       _Account_GetRecentEmojiStatuses_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountEmojiStatusesType](response, layer, limits, _Account_GetRecentEmojiStatuses_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedMusicIds",
 			ConstructorID: 0xe09d5faf,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetSavedMusicIdsRequest{} },
 			Handler:       _Account_GetSavedMusicIds_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountSavedMusicIdsType](response, layer, limits, _Account_GetSavedMusicIds_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedRingtones",
 			ConstructorID: 0xe1902288,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetSavedRingtonesRequest{} },
 			Handler:       _Account_GetSavedRingtones_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountSavedRingtonesType](response, layer, limits, _Account_GetSavedRingtones_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSecureValue",
 			ConstructorID: 0x73665bc2,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetSecureValueRequest{} },
 			Handler:       _Account_GetSecureValue_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*SecureValue](response, layer, limits, _Account_GetSecureValue_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetTheme",
 			ConstructorID: 0x3a5869ec,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetThemeRequest{} },
 			Handler:       _Account_GetTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*Theme](response, layer, limits, _Account_GetTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetThemes",
 			ConstructorID: 0x7206e458,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetThemesRequest{} },
 			Handler:       _Account_GetThemes_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountThemesType](response, layer, limits, _Account_GetThemes_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetTmpPassword",
 			ConstructorID: 0x449e0b51,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetTmpPasswordRequest{} },
 			Handler:       _Account_GetTmpPassword_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountTmpPassword](response, layer, limits, _Account_GetTmpPassword_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetWallPaper",
 			ConstructorID: 0xfc8ddbea,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetWallPaperRequest{} },
 			Handler:       _Account_GetWallPaper_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[WallPaperType](response, layer, limits, _Account_GetWallPaper_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetWallPapers",
 			ConstructorID: 0x07967d36,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetWallPapersRequest{} },
 			Handler:       _Account_GetWallPapers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountWallPapersType](response, layer, limits, _Account_GetWallPapers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetWebAuthorizations",
 			ConstructorID: 0x182e6d6f,
 			NewRequest:    func() tlrpc.TLObject { return &AccountGetWebAuthorizationsRequest{} },
 			Handler:       _Account_GetWebAuthorizations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountWebAuthorizations](response, layer, limits, _Account_GetWebAuthorizations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InitTakeoutSession",
 			ConstructorID: 0x8ef3eab0,
 			NewRequest:    func() tlrpc.TLObject { return &AccountInitTakeoutSessionRequest{} },
 			Handler:       _Account_InitTakeoutSession_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountTakeout](response, layer, limits, _Account_InitTakeoutSession_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InstallTheme",
 			ConstructorID: 0xc727bb3b,
 			NewRequest:    func() tlrpc.TLObject { return &AccountInstallThemeRequest{} },
 			Handler:       _Account_InstallTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_InstallTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InstallWallPaper",
 			ConstructorID: 0xfeed5769,
 			NewRequest:    func() tlrpc.TLObject { return &AccountInstallWallPaperRequest{} },
 			Handler:       _Account_InstallWallPaper_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_InstallWallPaper_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InvalidateSignInCodes",
 			ConstructorID: 0xca8ae8ba,
 			NewRequest:    func() tlrpc.TLObject { return &AccountInvalidateSignInCodesRequest{} },
 			Handler:       _Account_InvalidateSignInCodes_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_InvalidateSignInCodes_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RegisterDevice",
 			ConstructorID: 0xec86017a,
 			NewRequest:    func() tlrpc.TLObject { return &AccountRegisterDeviceRequest{} },
 			Handler:       _Account_RegisterDevice_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_RegisterDevice_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderUsernames",
 			ConstructorID: 0xef500eab,
 			NewRequest:    func() tlrpc.TLObject { return &AccountReorderUsernamesRequest{} },
 			Handler:       _Account_ReorderUsernames_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ReorderUsernames_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportPeer",
 			ConstructorID: 0xc5ba3d86,
 			NewRequest:    func() tlrpc.TLObject { return &AccountReportPeerRequest{} },
 			Handler:       _Account_ReportPeer_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ReportPeer_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportProfilePhoto",
 			ConstructorID: 0xfa8cc6f5,
 			NewRequest:    func() tlrpc.TLObject { return &AccountReportProfilePhotoRequest{} },
 			Handler:       _Account_ReportProfilePhoto_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ReportProfilePhoto_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResendPasswordEmail",
 			ConstructorID: 0x7a7f2a15,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResendPasswordEmailRequest{} },
 			Handler:       _Account_ResendPasswordEmail_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ResendPasswordEmail_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetAuthorization",
 			ConstructorID: 0xdf77f3bc,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResetAuthorizationRequest{} },
 			Handler:       _Account_ResetAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ResetAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetNotifySettings",
 			ConstructorID: 0xdb7e1747,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResetNotifySettingsRequest{} },
 			Handler:       _Account_ResetNotifySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ResetNotifySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetPassword",
 			ConstructorID: 0x9308ce1b,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResetPasswordRequest{} },
 			Handler:       _Account_ResetPassword_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountResetPasswordResultType](response, layer, limits, _Account_ResetPassword_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetWallPapers",
 			ConstructorID: 0xbb3b9804,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResetWallPapersRequest{} },
 			Handler:       _Account_ResetWallPapers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ResetWallPapers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetWebAuthorization",
 			ConstructorID: 0x2d01b9ef,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResetWebAuthorizationRequest{} },
 			Handler:       _Account_ResetWebAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ResetWebAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetWebAuthorizations",
 			ConstructorID: 0x682d2594,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResetWebAuthorizationsRequest{} },
 			Handler:       _Account_ResetWebAuthorizations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ResetWebAuthorizations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResolveBusinessChatLink",
 			ConstructorID: 0x5492e5ee,
 			NewRequest:    func() tlrpc.TLObject { return &AccountResolveBusinessChatLinkRequest{} },
 			Handler:       _Account_ResolveBusinessChatLink_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountResolvedBusinessChatLinks](response, layer, limits, _Account_ResolveBusinessChatLink_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveAutoDownloadSettings",
 			ConstructorID: 0x76f36233,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveAutoDownloadSettingsRequest{} },
 			Handler:       _Account_SaveAutoDownloadSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SaveAutoDownloadSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveAutoSaveSettings",
 			ConstructorID: 0xd69b8361,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveAutoSaveSettingsRequest{} },
 			Handler:       _Account_SaveAutoSaveSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SaveAutoSaveSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveMusic",
 			ConstructorID: 0xb26732a9,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveMusicRequest{} },
 			Handler:       _Account_SaveMusic_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SaveMusic_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveRingtone",
 			ConstructorID: 0x3dea5b03,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveRingtoneRequest{} },
 			Handler:       _Account_SaveRingtone_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountSavedRingtoneType](response, layer, limits, _Account_SaveRingtone_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveSecureValue",
 			ConstructorID: 0x899fe31d,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveSecureValueRequest{} },
 			Handler:       _Account_SaveSecureValue_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*SecureValue](response, layer, limits, _Account_SaveSecureValue_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveTheme",
 			ConstructorID: 0xf257106c,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveThemeRequest{} },
 			Handler:       _Account_SaveTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SaveTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveWallPaper",
 			ConstructorID: 0x6c5a5b37,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSaveWallPaperRequest{} },
 			Handler:       _Account_SaveWallPaper_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SaveWallPaper_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendChangePhoneCode",
 			ConstructorID: 0x82574ae5,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSendChangePhoneCodeRequest{} },
 			Handler:       _Account_SendChangePhoneCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthSentCodeType](response, layer, limits, _Account_SendChangePhoneCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendConfirmPhoneCode",
 			ConstructorID: 0x1b3faa88,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSendConfirmPhoneCodeRequest{} },
 			Handler:       _Account_SendConfirmPhoneCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthSentCodeType](response, layer, limits, _Account_SendConfirmPhoneCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendVerifyEmailCode",
 			ConstructorID: 0x98e037bb,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSendVerifyEmailCodeRequest{} },
 			Handler:       _Account_SendVerifyEmailCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountSentEmailCode](response, layer, limits, _Account_SendVerifyEmailCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendVerifyPhoneCode",
 			ConstructorID: 0xa5a356f9,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSendVerifyPhoneCodeRequest{} },
 			Handler:       _Account_SendVerifyPhoneCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthSentCodeType](response, layer, limits, _Account_SendVerifyPhoneCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetAccountTTL",
 			ConstructorID: 0x2442485e,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetAccountTTLRequest{} },
 			Handler:       _Account_SetAccountTTL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SetAccountTTL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetAuthorizationTTL",
 			ConstructorID: 0xbf899aa0,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetAuthorizationTTLRequest{} },
 			Handler:       _Account_SetAuthorizationTTL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SetAuthorizationTTL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetContactSignUpNotification",
 			ConstructorID: 0xcff43f61,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetContactSignUpNotificationRequest{} },
 			Handler:       _Account_SetContactSignUpNotification_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SetContactSignUpNotification_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetContentSettings",
 			ConstructorID: 0xb574b16b,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetContentSettingsRequest{} },
 			Handler:       _Account_SetContentSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SetContentSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetGlobalPrivacySettings",
 			ConstructorID: 0x1edaaac2,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetGlobalPrivacySettingsRequest{} },
 			Handler:       _Account_SetGlobalPrivacySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*GlobalPrivacySettings](response, layer, limits, _Account_SetGlobalPrivacySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetMainProfileTab",
 			ConstructorID: 0x5dee78b0,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetMainProfileTabRequest{} },
 			Handler:       _Account_SetMainProfileTab_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_SetMainProfileTab_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetPrivacy",
 			ConstructorID: 0xc9f81ce8,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetPrivacyRequest{} },
 			Handler:       _Account_SetPrivacy_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AccountPrivacyRules](response, layer, limits, _Account_SetPrivacy_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetReactionsNotifySettings",
 			ConstructorID: 0x316ce548,
 			NewRequest:    func() tlrpc.TLObject { return &AccountSetReactionsNotifySettingsRequest{} },
 			Handler:       _Account_SetReactionsNotifySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ReactionsNotifySettings](response, layer, limits, _Account_SetReactionsNotifySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleConnectedBotPaused",
 			ConstructorID: 0x646e1097,
 			NewRequest:    func() tlrpc.TLObject { return &AccountToggleConnectedBotPausedRequest{} },
 			Handler:       _Account_ToggleConnectedBotPaused_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ToggleConnectedBotPaused_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleNoPaidMessagesException",
 			ConstructorID: 0xfe2eda76,
 			NewRequest:    func() tlrpc.TLObject { return &AccountToggleNoPaidMessagesExceptionRequest{} },
 			Handler:       _Account_ToggleNoPaidMessagesException_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ToggleNoPaidMessagesException_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleSponsoredMessages",
 			ConstructorID: 0xb9d9a38d,
 			NewRequest:    func() tlrpc.TLObject { return &AccountToggleSponsoredMessagesRequest{} },
 			Handler:       _Account_ToggleSponsoredMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ToggleSponsoredMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleUsername",
 			ConstructorID: 0x58d6b376,
 			NewRequest:    func() tlrpc.TLObject { return &AccountToggleUsernameRequest{} },
 			Handler:       _Account_ToggleUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_ToggleUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UnregisterDevice",
 			ConstructorID: 0x6a0d3206,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUnregisterDeviceRequest{} },
 			Handler:       _Account_UnregisterDevice_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UnregisterDevice_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateBirthday",
 			ConstructorID: 0xcc6e0c11,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateBirthdayRequest{} },
 			Handler:       _Account_UpdateBirthday_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateBirthday_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateBusinessAwayMessage",
 			ConstructorID: 0xa26a7fa5,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateBusinessAwayMessageRequest{} },
 			Handler:       _Account_UpdateBusinessAwayMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateBusinessAwayMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateBusinessGreetingMessage",
 			ConstructorID: 0x66cdafc4,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateBusinessGreetingMessageRequest{} },
 			Handler:       _Account_UpdateBusinessGreetingMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateBusinessGreetingMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateBusinessIntro",
 			ConstructorID: 0xa614d034,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateBusinessIntroRequest{} },
 			Handler:       _Account_UpdateBusinessIntro_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateBusinessIntro_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateBusinessLocation",
 			ConstructorID: 0x9e6b131a,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateBusinessLocationRequest{} },
 			Handler:       _Account_UpdateBusinessLocation_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateBusinessLocation_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateBusinessWorkHours",
 			ConstructorID: 0x4b00e066,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateBusinessWorkHoursRequest{} },
 			Handler:       _Account_UpdateBusinessWorkHours_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateBusinessWorkHours_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateColor",
 			ConstructorID: 0x7cefa15d,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateColorRequest{} },
 			Handler:       _Account_UpdateColor_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateColor_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateConnectedBot",
 			ConstructorID: 0x66a08c7e,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateConnectedBotRequest{} },
 			Handler:       _Account_UpdateConnectedBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Account_UpdateConnectedBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateDeviceLocked",
 			ConstructorID: 0x38df3532,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateDeviceLockedRequest{} },
 			Handler:       _Account_UpdateDeviceLocked_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateDeviceLocked_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateEmojiStatus",
 			ConstructorID: 0xfbd3de6b,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateEmojiStatusRequest{} },
 			Handler:       _Account_UpdateEmojiStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateEmojiStatus_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateNotifySettings",
 			ConstructorID: 0x84be5b93,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateNotifySettingsRequest{} },
 			Handler:       _Account_UpdateNotifySettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateNotifySettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdatePasswordSettings",
 			ConstructorID: 0xa59b102f,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdatePasswordSettingsRequest{} },
 			Handler:       _Account_UpdatePasswordSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdatePasswordSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdatePersonalChannel",
 			ConstructorID: 0xd94305e0,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdatePersonalChannelRequest{} },
 			Handler:       _Account_UpdatePersonalChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdatePersonalChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateProfile",
 			ConstructorID: 0x78515775,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateProfileRequest{} },
 			Handler:       _Account_UpdateProfile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UserType](response, layer, limits, _Account_UpdateProfile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateStatus",
 			ConstructorID: 0x6628562c,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateStatusRequest{} },
 			Handler:       _Account_UpdateStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_UpdateStatus_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateTheme",
 			ConstructorID: 0x2bf40ccc,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateThemeRequest{} },
 			Handler:       _Account_UpdateTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*Theme](response, layer, limits, _Account_UpdateTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateUsername",
 			ConstructorID: 0x3e0bdd7c,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUpdateUsernameRequest{} },
 			Handler:       _Account_UpdateUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UserType](response, layer, limits, _Account_UpdateUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadRingtone",
 			ConstructorID: 0x831a83a2,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUploadRingtoneRequest{} },
 			Handler:       _Account_UploadRingtone_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[DocumentType](response, layer, limits, _Account_UploadRingtone_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadTheme",
 			ConstructorID: 0x1c3db333,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUploadThemeRequest{} },
 			Handler:       _Account_UploadTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[DocumentType](response, layer, limits, _Account_UploadTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadWallPaper",
 			ConstructorID: 0xe39a8f03,
 			NewRequest:    func() tlrpc.TLObject { return &AccountUploadWallPaperRequest{} },
 			Handler:       _Account_UploadWallPaper_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[WallPaperType](response, layer, limits, _Account_UploadWallPaper_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "VerifyEmail",
 			ConstructorID: 0x032da4cf,
 			NewRequest:    func() tlrpc.TLObject { return &AccountVerifyEmailRequest{} },
 			Handler:       _Account_VerifyEmail_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AccountEmailVerifiedType](response, layer, limits, _Account_VerifyEmail_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "VerifyPhone",
 			ConstructorID: 0x4dd3a7f6,
 			NewRequest:    func() tlrpc.TLObject { return &AccountVerifyPhoneRequest{} },
 			Handler:       _Account_VerifyPhone_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Account_VerifyPhone_EncodeResponse)
+			},
 		},
 	},
 }
@@ -1211,96 +3234,385 @@ func RegisterAccountServer(s *tlrpc.Server, srv AccountServer) {
 	s.RegisterService(Account_ServiceDesc, srv)
 }
 
-func _Auth_AcceptLoginToken_Handler(srv interface{}, ctx context.Context, req *AuthAcceptLoginTokenRequest) (*Authorization, error) {
-	return srv.(AuthServer).AcceptLoginToken(ctx, req)
+func _Auth_AcceptLoginToken_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthAcceptLoginTokenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.acceptLoginToken: request %T is not *AuthAcceptLoginTokenRequest", req)
+	}
+	return srv.(AuthServer).AcceptLoginToken(ctx, typedRequest)
 }
 
-func _Auth_BindTempAuthKey_Handler(srv interface{}, ctx context.Context, req *AuthBindTempAuthKeyRequest) (bool, error) {
-	return srv.(AuthServer).BindTempAuthKey(ctx, req)
+func _Auth_AcceptLoginToken_EncodeResponse(e *mtproto.Encoder, response *Authorization) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_CancelCode_Handler(srv interface{}, ctx context.Context, req *AuthCancelCodeRequest) (bool, error) {
-	return srv.(AuthServer).CancelCode(ctx, req)
+func _Auth_BindTempAuthKey_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthBindTempAuthKeyRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.bindTempAuthKey: request %T is not *AuthBindTempAuthKeyRequest", req)
+	}
+	return srv.(AuthServer).BindTempAuthKey(ctx, typedRequest)
 }
 
-func _Auth_CheckPassword_Handler(srv interface{}, ctx context.Context, req *AuthCheckPasswordRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).CheckPassword(ctx, req)
+func _Auth_BindTempAuthKey_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_CheckRecoveryPassword_Handler(srv interface{}, ctx context.Context, req *AuthCheckRecoveryPasswordRequest) (bool, error) {
-	return srv.(AuthServer).CheckRecoveryPassword(ctx, req)
+func _Auth_CancelCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthCancelCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.cancelCode: request %T is not *AuthCancelCodeRequest", req)
+	}
+	return srv.(AuthServer).CancelCode(ctx, typedRequest)
 }
 
-func _Auth_DropTempAuthKeys_Handler(srv interface{}, ctx context.Context, req *AuthDropTempAuthKeysRequest) (bool, error) {
-	return srv.(AuthServer).DropTempAuthKeys(ctx, req)
+func _Auth_CancelCode_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_ExportAuthorization_Handler(srv interface{}, ctx context.Context, req *AuthExportAuthorizationRequest) (*AuthExportedAuthorization, error) {
-	return srv.(AuthServer).ExportAuthorization(ctx, req)
+func _Auth_CheckPassword_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthCheckPasswordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.checkPassword: request %T is not *AuthCheckPasswordRequest", req)
+	}
+	return srv.(AuthServer).CheckPassword(ctx, typedRequest)
 }
 
-func _Auth_ExportLoginToken_Handler(srv interface{}, ctx context.Context, req *AuthExportLoginTokenRequest) (AuthLoginTokenType, error) {
-	return srv.(AuthServer).ExportLoginToken(ctx, req)
+func _Auth_CheckPassword_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_ImportAuthorization_Handler(srv interface{}, ctx context.Context, req *AuthImportAuthorizationRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).ImportAuthorization(ctx, req)
+func _Auth_CheckRecoveryPassword_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthCheckRecoveryPasswordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.checkRecoveryPassword: request %T is not *AuthCheckRecoveryPasswordRequest", req)
+	}
+	return srv.(AuthServer).CheckRecoveryPassword(ctx, typedRequest)
 }
 
-func _Auth_ImportBotAuthorization_Handler(srv interface{}, ctx context.Context, req *AuthImportBotAuthorizationRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).ImportBotAuthorization(ctx, req)
+func _Auth_CheckRecoveryPassword_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_ImportLoginToken_Handler(srv interface{}, ctx context.Context, req *AuthImportLoginTokenRequest) (AuthLoginTokenType, error) {
-	return srv.(AuthServer).ImportLoginToken(ctx, req)
+func _Auth_DropTempAuthKeys_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthDropTempAuthKeysRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.dropTempAuthKeys: request %T is not *AuthDropTempAuthKeysRequest", req)
+	}
+	return srv.(AuthServer).DropTempAuthKeys(ctx, typedRequest)
 }
 
-func _Auth_ImportWebTokenAuthorization_Handler(srv interface{}, ctx context.Context, req *AuthImportWebTokenAuthorizationRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).ImportWebTokenAuthorization(ctx, req)
+func _Auth_DropTempAuthKeys_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_LogOut_Handler(srv interface{}, ctx context.Context, req *AuthLogOutRequest) (*AuthLoggedOut, error) {
-	return srv.(AuthServer).LogOut(ctx, req)
+func _Auth_ExportAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthExportAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.exportAuthorization: request %T is not *AuthExportAuthorizationRequest", req)
+	}
+	return srv.(AuthServer).ExportAuthorization(ctx, typedRequest)
 }
 
-func _Auth_RecoverPassword_Handler(srv interface{}, ctx context.Context, req *AuthRecoverPasswordRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).RecoverPassword(ctx, req)
+func _Auth_ExportAuthorization_EncodeResponse(e *mtproto.Encoder, response *AuthExportedAuthorization) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_ReportMissingCode_Handler(srv interface{}, ctx context.Context, req *AuthReportMissingCodeRequest) (bool, error) {
-	return srv.(AuthServer).ReportMissingCode(ctx, req)
+func _Auth_ExportLoginToken_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthExportLoginTokenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.exportLoginToken: request %T is not *AuthExportLoginTokenRequest", req)
+	}
+	return srv.(AuthServer).ExportLoginToken(ctx, typedRequest)
 }
 
-func _Auth_RequestFirebaseSms_Handler(srv interface{}, ctx context.Context, req *AuthRequestFirebaseSmsRequest) (bool, error) {
-	return srv.(AuthServer).RequestFirebaseSms(ctx, req)
+func _Auth_ExportLoginToken_EncodeResponse(e *mtproto.Encoder, response AuthLoginTokenType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.LoginToken is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_RequestPasswordRecovery_Handler(srv interface{}, ctx context.Context, req *AuthRequestPasswordRecoveryRequest) (*AuthPasswordRecovery, error) {
-	return srv.(AuthServer).RequestPasswordRecovery(ctx, req)
+func _Auth_ImportAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthImportAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.importAuthorization: request %T is not *AuthImportAuthorizationRequest", req)
+	}
+	return srv.(AuthServer).ImportAuthorization(ctx, typedRequest)
 }
 
-func _Auth_ResendCode_Handler(srv interface{}, ctx context.Context, req *AuthResendCodeRequest) (AuthSentCodeType, error) {
-	return srv.(AuthServer).ResendCode(ctx, req)
+func _Auth_ImportAuthorization_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_ResetAuthorizations_Handler(srv interface{}, ctx context.Context, req *AuthResetAuthorizationsRequest) (bool, error) {
-	return srv.(AuthServer).ResetAuthorizations(ctx, req)
+func _Auth_ImportBotAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthImportBotAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.importBotAuthorization: request %T is not *AuthImportBotAuthorizationRequest", req)
+	}
+	return srv.(AuthServer).ImportBotAuthorization(ctx, typedRequest)
 }
 
-func _Auth_ResetLoginEmail_Handler(srv interface{}, ctx context.Context, req *AuthResetLoginEmailRequest) (AuthSentCodeType, error) {
-	return srv.(AuthServer).ResetLoginEmail(ctx, req)
+func _Auth_ImportBotAuthorization_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_SendCode_Handler(srv interface{}, ctx context.Context, req *AuthSendCodeRequest) (AuthSentCodeType, error) {
-	return srv.(AuthServer).SendCode(ctx, req)
+func _Auth_ImportLoginToken_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthImportLoginTokenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.importLoginToken: request %T is not *AuthImportLoginTokenRequest", req)
+	}
+	return srv.(AuthServer).ImportLoginToken(ctx, typedRequest)
 }
 
-func _Auth_SignIn_Handler(srv interface{}, ctx context.Context, req *AuthSignInRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).SignIn(ctx, req)
+func _Auth_ImportLoginToken_EncodeResponse(e *mtproto.Encoder, response AuthLoginTokenType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.LoginToken is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Auth_SignUp_Handler(srv interface{}, ctx context.Context, req *AuthSignUpRequest) (AuthAuthorizationType, error) {
-	return srv.(AuthServer).SignUp(ctx, req)
+func _Auth_ImportWebTokenAuthorization_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthImportWebTokenAuthorizationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.importWebTokenAuthorization: request %T is not *AuthImportWebTokenAuthorizationRequest", req)
+	}
+	return srv.(AuthServer).ImportWebTokenAuthorization(ctx, typedRequest)
+}
+
+func _Auth_ImportWebTokenAuthorization_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_LogOut_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthLogOutRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.logOut: request %T is not *AuthLogOutRequest", req)
+	}
+	return srv.(AuthServer).LogOut(ctx, typedRequest)
+}
+
+func _Auth_LogOut_EncodeResponse(e *mtproto.Encoder, response *AuthLoggedOut) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_RecoverPassword_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthRecoverPasswordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.recoverPassword: request %T is not *AuthRecoverPasswordRequest", req)
+	}
+	return srv.(AuthServer).RecoverPassword(ctx, typedRequest)
+}
+
+func _Auth_RecoverPassword_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_ReportMissingCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthReportMissingCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.reportMissingCode: request %T is not *AuthReportMissingCodeRequest", req)
+	}
+	return srv.(AuthServer).ReportMissingCode(ctx, typedRequest)
+}
+
+func _Auth_ReportMissingCode_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_RequestFirebaseSms_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthRequestFirebaseSmsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.requestFirebaseSms: request %T is not *AuthRequestFirebaseSmsRequest", req)
+	}
+	return srv.(AuthServer).RequestFirebaseSms(ctx, typedRequest)
+}
+
+func _Auth_RequestFirebaseSms_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_RequestPasswordRecovery_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthRequestPasswordRecoveryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.requestPasswordRecovery: request %T is not *AuthRequestPasswordRecoveryRequest", req)
+	}
+	return srv.(AuthServer).RequestPasswordRecovery(ctx, typedRequest)
+}
+
+func _Auth_RequestPasswordRecovery_EncodeResponse(e *mtproto.Encoder, response *AuthPasswordRecovery) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_ResendCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthResendCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.resendCode: request %T is not *AuthResendCodeRequest", req)
+	}
+	return srv.(AuthServer).ResendCode(ctx, typedRequest)
+}
+
+func _Auth_ResendCode_EncodeResponse(e *mtproto.Encoder, response AuthSentCodeType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.SentCode is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_ResetAuthorizations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthResetAuthorizationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.resetAuthorizations: request %T is not *AuthResetAuthorizationsRequest", req)
+	}
+	return srv.(AuthServer).ResetAuthorizations(ctx, typedRequest)
+}
+
+func _Auth_ResetAuthorizations_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_ResetLoginEmail_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthResetLoginEmailRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.resetLoginEmail: request %T is not *AuthResetLoginEmailRequest", req)
+	}
+	return srv.(AuthServer).ResetLoginEmail(ctx, typedRequest)
+}
+
+func _Auth_ResetLoginEmail_EncodeResponse(e *mtproto.Encoder, response AuthSentCodeType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.SentCode is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_SendCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthSendCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.sendCode: request %T is not *AuthSendCodeRequest", req)
+	}
+	return srv.(AuthServer).SendCode(ctx, typedRequest)
+}
+
+func _Auth_SendCode_EncodeResponse(e *mtproto.Encoder, response AuthSentCodeType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.SentCode is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_SignIn_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthSignInRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.signIn: request %T is not *AuthSignInRequest", req)
+	}
+	return srv.(AuthServer).SignIn(ctx, typedRequest)
+}
+
+func _Auth_SignIn_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Auth_SignUp_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*AuthSignUpRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("auth.signUp: request %T is not *AuthSignUpRequest", req)
+	}
+	return srv.(AuthServer).SignUp(ctx, typedRequest)
+}
+
+func _Auth_SignUp_EncodeResponse(e *mtproto.Encoder, response AuthAuthorizationType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed auth.Authorization is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Auth_ServiceDesc is the static descriptor for the AuthServer service.
@@ -1310,142 +3622,257 @@ var Auth_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*AuthServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptLoginToken",
 			ConstructorID: 0xe894ad4d,
 			NewRequest:    func() tlrpc.TLObject { return &AuthAcceptLoginTokenRequest{} },
 			Handler:       _Auth_AcceptLoginToken_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*Authorization](response, layer, limits, _Auth_AcceptLoginToken_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "BindTempAuthKey",
 			ConstructorID: 0xcdd42a05,
 			NewRequest:    func() tlrpc.TLObject { return &AuthBindTempAuthKeyRequest{} },
 			Handler:       _Auth_BindTempAuthKey_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_BindTempAuthKey_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CancelCode",
 			ConstructorID: 0x1f040578,
 			NewRequest:    func() tlrpc.TLObject { return &AuthCancelCodeRequest{} },
 			Handler:       _Auth_CancelCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_CancelCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckPassword",
 			ConstructorID: 0xd18b4d16,
 			NewRequest:    func() tlrpc.TLObject { return &AuthCheckPasswordRequest{} },
 			Handler:       _Auth_CheckPassword_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_CheckPassword_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckRecoveryPassword",
 			ConstructorID: 0x0d36bf79,
 			NewRequest:    func() tlrpc.TLObject { return &AuthCheckRecoveryPasswordRequest{} },
 			Handler:       _Auth_CheckRecoveryPassword_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_CheckRecoveryPassword_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DropTempAuthKeys",
 			ConstructorID: 0x8e48a188,
 			NewRequest:    func() tlrpc.TLObject { return &AuthDropTempAuthKeysRequest{} },
 			Handler:       _Auth_DropTempAuthKeys_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_DropTempAuthKeys_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportAuthorization",
 			ConstructorID: 0xe5bfffcd,
 			NewRequest:    func() tlrpc.TLObject { return &AuthExportAuthorizationRequest{} },
 			Handler:       _Auth_ExportAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AuthExportedAuthorization](response, layer, limits, _Auth_ExportAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportLoginToken",
 			ConstructorID: 0xb7e085fe,
 			NewRequest:    func() tlrpc.TLObject { return &AuthExportLoginTokenRequest{} },
 			Handler:       _Auth_ExportLoginToken_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthLoginTokenType](response, layer, limits, _Auth_ExportLoginToken_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportAuthorization",
 			ConstructorID: 0xa57a7dad,
 			NewRequest:    func() tlrpc.TLObject { return &AuthImportAuthorizationRequest{} },
 			Handler:       _Auth_ImportAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_ImportAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportBotAuthorization",
 			ConstructorID: 0x67a3ff2c,
 			NewRequest:    func() tlrpc.TLObject { return &AuthImportBotAuthorizationRequest{} },
 			Handler:       _Auth_ImportBotAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_ImportBotAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportLoginToken",
 			ConstructorID: 0x95ac5ce4,
 			NewRequest:    func() tlrpc.TLObject { return &AuthImportLoginTokenRequest{} },
 			Handler:       _Auth_ImportLoginToken_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthLoginTokenType](response, layer, limits, _Auth_ImportLoginToken_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportWebTokenAuthorization",
 			ConstructorID: 0x2db873a9,
 			NewRequest:    func() tlrpc.TLObject { return &AuthImportWebTokenAuthorizationRequest{} },
 			Handler:       _Auth_ImportWebTokenAuthorization_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_ImportWebTokenAuthorization_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LogOut",
 			ConstructorID: 0x3e72ba19,
 			NewRequest:    func() tlrpc.TLObject { return &AuthLogOutRequest{} },
 			Handler:       _Auth_LogOut_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AuthLoggedOut](response, layer, limits, _Auth_LogOut_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RecoverPassword",
 			ConstructorID: 0x37096c70,
 			NewRequest:    func() tlrpc.TLObject { return &AuthRecoverPasswordRequest{} },
 			Handler:       _Auth_RecoverPassword_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_RecoverPassword_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportMissingCode",
 			ConstructorID: 0xcb9deff6,
 			NewRequest:    func() tlrpc.TLObject { return &AuthReportMissingCodeRequest{} },
 			Handler:       _Auth_ReportMissingCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_ReportMissingCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestFirebaseSms",
 			ConstructorID: 0x8e39261e,
 			NewRequest:    func() tlrpc.TLObject { return &AuthRequestFirebaseSmsRequest{} },
 			Handler:       _Auth_RequestFirebaseSms_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_RequestFirebaseSms_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestPasswordRecovery",
 			ConstructorID: 0xd897bc66,
 			NewRequest:    func() tlrpc.TLObject { return &AuthRequestPasswordRecoveryRequest{} },
 			Handler:       _Auth_RequestPasswordRecovery_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AuthPasswordRecovery](response, layer, limits, _Auth_RequestPasswordRecovery_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResendCode",
 			ConstructorID: 0xcae47523,
 			NewRequest:    func() tlrpc.TLObject { return &AuthResendCodeRequest{} },
 			Handler:       _Auth_ResendCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthSentCodeType](response, layer, limits, _Auth_ResendCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetAuthorizations",
 			ConstructorID: 0x9fab0d1a,
 			NewRequest:    func() tlrpc.TLObject { return &AuthResetAuthorizationsRequest{} },
 			Handler:       _Auth_ResetAuthorizations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Auth_ResetAuthorizations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetLoginEmail",
 			ConstructorID: 0x7e960193,
 			NewRequest:    func() tlrpc.TLObject { return &AuthResetLoginEmailRequest{} },
 			Handler:       _Auth_ResetLoginEmail_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthSentCodeType](response, layer, limits, _Auth_ResetLoginEmail_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendCode",
 			ConstructorID: 0xa677244f,
 			NewRequest:    func() tlrpc.TLObject { return &AuthSendCodeRequest{} },
 			Handler:       _Auth_SendCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthSentCodeType](response, layer, limits, _Auth_SendCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SignIn",
 			ConstructorID: 0x8d52a951,
 			NewRequest:    func() tlrpc.TLObject { return &AuthSignInRequest{} },
 			Handler:       _Auth_SignIn_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_SignIn_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SignUp",
 			ConstructorID: 0xaac7b717,
 			NewRequest:    func() tlrpc.TLObject { return &AuthSignUpRequest{} },
 			Handler:       _Auth_SignUp_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AuthAuthorizationType](response, layer, limits, _Auth_SignUp_EncodeResponse)
+			},
 		},
 	},
 }
@@ -1462,124 +3889,508 @@ func RegisterAuthServer(s *tlrpc.Server, srv AuthServer) {
 	s.RegisterService(Auth_ServiceDesc, srv)
 }
 
-func _Bots_AddPreviewMedia_Handler(srv interface{}, ctx context.Context, req *BotsAddPreviewMediaRequest) (*BotPreviewMedia, error) {
-	return srv.(BotsServer).AddPreviewMedia(ctx, req)
+func _Bots_AddPreviewMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsAddPreviewMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.addPreviewMedia: request %T is not *BotsAddPreviewMediaRequest", req)
+	}
+	return srv.(BotsServer).AddPreviewMedia(ctx, typedRequest)
 }
 
-func _Bots_AllowSendMessage_Handler(srv interface{}, ctx context.Context, req *BotsAllowSendMessageRequest) (UpdatesType, error) {
-	return srv.(BotsServer).AllowSendMessage(ctx, req)
+func _Bots_AddPreviewMedia_EncodeResponse(e *mtproto.Encoder, response *BotPreviewMedia) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_AnswerWebhookJSONQuery_Handler(srv interface{}, ctx context.Context, req *BotsAnswerWebhookJSONQueryRequest) (bool, error) {
-	return srv.(BotsServer).AnswerWebhookJSONQuery(ctx, req)
+func _Bots_AllowSendMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsAllowSendMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.allowSendMessage: request %T is not *BotsAllowSendMessageRequest", req)
+	}
+	return srv.(BotsServer).AllowSendMessage(ctx, typedRequest)
 }
 
-func _Bots_CanSendMessage_Handler(srv interface{}, ctx context.Context, req *BotsCanSendMessageRequest) (bool, error) {
-	return srv.(BotsServer).CanSendMessage(ctx, req)
+func _Bots_AllowSendMessage_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_CheckDownloadFileParams_Handler(srv interface{}, ctx context.Context, req *BotsCheckDownloadFileParamsRequest) (bool, error) {
-	return srv.(BotsServer).CheckDownloadFileParams(ctx, req)
+func _Bots_AnswerWebhookJSONQuery_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsAnswerWebhookJSONQueryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.answerWebhookJSONQuery: request %T is not *BotsAnswerWebhookJSONQueryRequest", req)
+	}
+	return srv.(BotsServer).AnswerWebhookJSONQuery(ctx, typedRequest)
 }
 
-func _Bots_DeletePreviewMedia_Handler(srv interface{}, ctx context.Context, req *BotsDeletePreviewMediaRequest) (bool, error) {
-	return srv.(BotsServer).DeletePreviewMedia(ctx, req)
+func _Bots_AnswerWebhookJSONQuery_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_EditPreviewMedia_Handler(srv interface{}, ctx context.Context, req *BotsEditPreviewMediaRequest) (*BotPreviewMedia, error) {
-	return srv.(BotsServer).EditPreviewMedia(ctx, req)
+func _Bots_CanSendMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsCanSendMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.canSendMessage: request %T is not *BotsCanSendMessageRequest", req)
+	}
+	return srv.(BotsServer).CanSendMessage(ctx, typedRequest)
 }
 
-func _Bots_GetAdminedBots_Handler(srv interface{}, ctx context.Context, req *BotsGetAdminedBotsRequest) ([]UserType, error) {
-	return srv.(BotsServer).GetAdminedBots(ctx, req)
+func _Bots_CanSendMessage_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_GetBotCommands_Handler(srv interface{}, ctx context.Context, req *BotsGetBotCommandsRequest) ([]*BotCommand, error) {
-	return srv.(BotsServer).GetBotCommands(ctx, req)
+func _Bots_CheckDownloadFileParams_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsCheckDownloadFileParamsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.checkDownloadFileParams: request %T is not *BotsCheckDownloadFileParamsRequest", req)
+	}
+	return srv.(BotsServer).CheckDownloadFileParams(ctx, typedRequest)
 }
 
-func _Bots_GetBotInfo_Handler(srv interface{}, ctx context.Context, req *BotsGetBotInfoRequest) (*BotsBotInfo, error) {
-	return srv.(BotsServer).GetBotInfo(ctx, req)
+func _Bots_CheckDownloadFileParams_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_GetBotMenuButton_Handler(srv interface{}, ctx context.Context, req *BotsGetBotMenuButtonRequest) (BotMenuButtonType, error) {
-	return srv.(BotsServer).GetBotMenuButton(ctx, req)
+func _Bots_DeletePreviewMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsDeletePreviewMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.deletePreviewMedia: request %T is not *BotsDeletePreviewMediaRequest", req)
+	}
+	return srv.(BotsServer).DeletePreviewMedia(ctx, typedRequest)
 }
 
-func _Bots_GetBotRecommendations_Handler(srv interface{}, ctx context.Context, req *BotsGetBotRecommendationsRequest) (UsersUsersType, error) {
-	return srv.(BotsServer).GetBotRecommendations(ctx, req)
+func _Bots_DeletePreviewMedia_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_GetPopularAppBots_Handler(srv interface{}, ctx context.Context, req *BotsGetPopularAppBotsRequest) (*BotsPopularAppBots, error) {
-	return srv.(BotsServer).GetPopularAppBots(ctx, req)
+func _Bots_EditPreviewMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsEditPreviewMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.editPreviewMedia: request %T is not *BotsEditPreviewMediaRequest", req)
+	}
+	return srv.(BotsServer).EditPreviewMedia(ctx, typedRequest)
 }
 
-func _Bots_GetPreviewInfo_Handler(srv interface{}, ctx context.Context, req *BotsGetPreviewInfoRequest) (*BotsPreviewInfo, error) {
-	return srv.(BotsServer).GetPreviewInfo(ctx, req)
+func _Bots_EditPreviewMedia_EncodeResponse(e *mtproto.Encoder, response *BotPreviewMedia) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_GetPreviewMedias_Handler(srv interface{}, ctx context.Context, req *BotsGetPreviewMediasRequest) ([]*BotPreviewMedia, error) {
-	return srv.(BotsServer).GetPreviewMedias(ctx, req)
+func _Bots_GetAdminedBots_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetAdminedBotsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getAdminedBots: request %T is not *BotsGetAdminedBotsRequest", req)
+	}
+	return srv.(BotsServer).GetAdminedBots(ctx, typedRequest)
 }
 
-func _Bots_InvokeWebViewCustomMethod_Handler(srv interface{}, ctx context.Context, req *BotsInvokeWebViewCustomMethodRequest) (*DataJSON, error) {
-	return srv.(BotsServer).InvokeWebViewCustomMethod(ctx, req)
+func _Bots_GetAdminedBots_EncodeResponse(e *mtproto.Encoder, response []UserType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed User is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_ReorderPreviewMedias_Handler(srv interface{}, ctx context.Context, req *BotsReorderPreviewMediasRequest) (bool, error) {
-	return srv.(BotsServer).ReorderPreviewMedias(ctx, req)
+func _Bots_GetBotCommands_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetBotCommandsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getBotCommands: request %T is not *BotsGetBotCommandsRequest", req)
+	}
+	return srv.(BotsServer).GetBotCommands(ctx, typedRequest)
 }
 
-func _Bots_ReorderUsernames_Handler(srv interface{}, ctx context.Context, req *BotsReorderUsernamesRequest) (bool, error) {
-	return srv.(BotsServer).ReorderUsernames(ctx, req)
+func _Bots_GetBotCommands_EncodeResponse(e *mtproto.Encoder, response []*BotCommand) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_ResetBotCommands_Handler(srv interface{}, ctx context.Context, req *BotsResetBotCommandsRequest) (bool, error) {
-	return srv.(BotsServer).ResetBotCommands(ctx, req)
+func _Bots_GetBotInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetBotInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getBotInfo: request %T is not *BotsGetBotInfoRequest", req)
+	}
+	return srv.(BotsServer).GetBotInfo(ctx, typedRequest)
 }
 
-func _Bots_SendCustomRequest_Handler(srv interface{}, ctx context.Context, req *BotsSendCustomRequestRequest) (*DataJSON, error) {
-	return srv.(BotsServer).SendCustomRequest(ctx, req)
+func _Bots_GetBotInfo_EncodeResponse(e *mtproto.Encoder, response *BotsBotInfo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_SetBotBroadcastDefaultAdminRights_Handler(srv interface{}, ctx context.Context, req *BotsSetBotBroadcastDefaultAdminRightsRequest) (bool, error) {
-	return srv.(BotsServer).SetBotBroadcastDefaultAdminRights(ctx, req)
+func _Bots_GetBotMenuButton_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetBotMenuButtonRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getBotMenuButton: request %T is not *BotsGetBotMenuButtonRequest", req)
+	}
+	return srv.(BotsServer).GetBotMenuButton(ctx, typedRequest)
 }
 
-func _Bots_SetBotCommands_Handler(srv interface{}, ctx context.Context, req *BotsSetBotCommandsRequest) (bool, error) {
-	return srv.(BotsServer).SetBotCommands(ctx, req)
+func _Bots_GetBotMenuButton_EncodeResponse(e *mtproto.Encoder, response BotMenuButtonType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed BotMenuButton is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_SetBotGroupDefaultAdminRights_Handler(srv interface{}, ctx context.Context, req *BotsSetBotGroupDefaultAdminRightsRequest) (bool, error) {
-	return srv.(BotsServer).SetBotGroupDefaultAdminRights(ctx, req)
+func _Bots_GetBotRecommendations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetBotRecommendationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getBotRecommendations: request %T is not *BotsGetBotRecommendationsRequest", req)
+	}
+	return srv.(BotsServer).GetBotRecommendations(ctx, typedRequest)
 }
 
-func _Bots_SetBotInfo_Handler(srv interface{}, ctx context.Context, req *BotsSetBotInfoRequest) (bool, error) {
-	return srv.(BotsServer).SetBotInfo(ctx, req)
+func _Bots_GetBotRecommendations_EncodeResponse(e *mtproto.Encoder, response UsersUsersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed users.Users is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_SetBotMenuButton_Handler(srv interface{}, ctx context.Context, req *BotsSetBotMenuButtonRequest) (bool, error) {
-	return srv.(BotsServer).SetBotMenuButton(ctx, req)
+func _Bots_GetPopularAppBots_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetPopularAppBotsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getPopularAppBots: request %T is not *BotsGetPopularAppBotsRequest", req)
+	}
+	return srv.(BotsServer).GetPopularAppBots(ctx, typedRequest)
 }
 
-func _Bots_SetCustomVerification_Handler(srv interface{}, ctx context.Context, req *BotsSetCustomVerificationRequest) (bool, error) {
-	return srv.(BotsServer).SetCustomVerification(ctx, req)
+func _Bots_GetPopularAppBots_EncodeResponse(e *mtproto.Encoder, response *BotsPopularAppBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_ToggleUserEmojiStatusPermission_Handler(srv interface{}, ctx context.Context, req *BotsToggleUserEmojiStatusPermissionRequest) (bool, error) {
-	return srv.(BotsServer).ToggleUserEmojiStatusPermission(ctx, req)
+func _Bots_GetPreviewInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetPreviewInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getPreviewInfo: request %T is not *BotsGetPreviewInfoRequest", req)
+	}
+	return srv.(BotsServer).GetPreviewInfo(ctx, typedRequest)
 }
 
-func _Bots_ToggleUsername_Handler(srv interface{}, ctx context.Context, req *BotsToggleUsernameRequest) (bool, error) {
-	return srv.(BotsServer).ToggleUsername(ctx, req)
+func _Bots_GetPreviewInfo_EncodeResponse(e *mtproto.Encoder, response *BotsPreviewInfo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Bots_UpdateStarRefProgram_Handler(srv interface{}, ctx context.Context, req *BotsUpdateStarRefProgramRequest) (*StarRefProgram, error) {
-	return srv.(BotsServer).UpdateStarRefProgram(ctx, req)
+func _Bots_GetPreviewMedias_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsGetPreviewMediasRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.getPreviewMedias: request %T is not *BotsGetPreviewMediasRequest", req)
+	}
+	return srv.(BotsServer).GetPreviewMedias(ctx, typedRequest)
 }
 
-func _Bots_UpdateUserEmojiStatus_Handler(srv interface{}, ctx context.Context, req *BotsUpdateUserEmojiStatusRequest) (bool, error) {
-	return srv.(BotsServer).UpdateUserEmojiStatus(ctx, req)
+func _Bots_GetPreviewMedias_EncodeResponse(e *mtproto.Encoder, response []*BotPreviewMedia) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_InvokeWebViewCustomMethod_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsInvokeWebViewCustomMethodRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.invokeWebViewCustomMethod: request %T is not *BotsInvokeWebViewCustomMethodRequest", req)
+	}
+	return srv.(BotsServer).InvokeWebViewCustomMethod(ctx, typedRequest)
+}
+
+func _Bots_InvokeWebViewCustomMethod_EncodeResponse(e *mtproto.Encoder, response *DataJSON) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_ReorderPreviewMedias_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsReorderPreviewMediasRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.reorderPreviewMedias: request %T is not *BotsReorderPreviewMediasRequest", req)
+	}
+	return srv.(BotsServer).ReorderPreviewMedias(ctx, typedRequest)
+}
+
+func _Bots_ReorderPreviewMedias_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_ReorderUsernames_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsReorderUsernamesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.reorderUsernames: request %T is not *BotsReorderUsernamesRequest", req)
+	}
+	return srv.(BotsServer).ReorderUsernames(ctx, typedRequest)
+}
+
+func _Bots_ReorderUsernames_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_ResetBotCommands_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsResetBotCommandsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.resetBotCommands: request %T is not *BotsResetBotCommandsRequest", req)
+	}
+	return srv.(BotsServer).ResetBotCommands(ctx, typedRequest)
+}
+
+func _Bots_ResetBotCommands_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SendCustomRequest_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSendCustomRequestRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.sendCustomRequest: request %T is not *BotsSendCustomRequestRequest", req)
+	}
+	return srv.(BotsServer).SendCustomRequest(ctx, typedRequest)
+}
+
+func _Bots_SendCustomRequest_EncodeResponse(e *mtproto.Encoder, response *DataJSON) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SetBotBroadcastDefaultAdminRights_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSetBotBroadcastDefaultAdminRightsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.setBotBroadcastDefaultAdminRights: request %T is not *BotsSetBotBroadcastDefaultAdminRightsRequest", req)
+	}
+	return srv.(BotsServer).SetBotBroadcastDefaultAdminRights(ctx, typedRequest)
+}
+
+func _Bots_SetBotBroadcastDefaultAdminRights_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SetBotCommands_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSetBotCommandsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.setBotCommands: request %T is not *BotsSetBotCommandsRequest", req)
+	}
+	return srv.(BotsServer).SetBotCommands(ctx, typedRequest)
+}
+
+func _Bots_SetBotCommands_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SetBotGroupDefaultAdminRights_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSetBotGroupDefaultAdminRightsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.setBotGroupDefaultAdminRights: request %T is not *BotsSetBotGroupDefaultAdminRightsRequest", req)
+	}
+	return srv.(BotsServer).SetBotGroupDefaultAdminRights(ctx, typedRequest)
+}
+
+func _Bots_SetBotGroupDefaultAdminRights_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SetBotInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSetBotInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.setBotInfo: request %T is not *BotsSetBotInfoRequest", req)
+	}
+	return srv.(BotsServer).SetBotInfo(ctx, typedRequest)
+}
+
+func _Bots_SetBotInfo_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SetBotMenuButton_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSetBotMenuButtonRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.setBotMenuButton: request %T is not *BotsSetBotMenuButtonRequest", req)
+	}
+	return srv.(BotsServer).SetBotMenuButton(ctx, typedRequest)
+}
+
+func _Bots_SetBotMenuButton_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_SetCustomVerification_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsSetCustomVerificationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.setCustomVerification: request %T is not *BotsSetCustomVerificationRequest", req)
+	}
+	return srv.(BotsServer).SetCustomVerification(ctx, typedRequest)
+}
+
+func _Bots_SetCustomVerification_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_ToggleUserEmojiStatusPermission_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsToggleUserEmojiStatusPermissionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.toggleUserEmojiStatusPermission: request %T is not *BotsToggleUserEmojiStatusPermissionRequest", req)
+	}
+	return srv.(BotsServer).ToggleUserEmojiStatusPermission(ctx, typedRequest)
+}
+
+func _Bots_ToggleUserEmojiStatusPermission_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_ToggleUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsToggleUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.toggleUsername: request %T is not *BotsToggleUsernameRequest", req)
+	}
+	return srv.(BotsServer).ToggleUsername(ctx, typedRequest)
+}
+
+func _Bots_ToggleUsername_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_UpdateStarRefProgram_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsUpdateStarRefProgramRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.updateStarRefProgram: request %T is not *BotsUpdateStarRefProgramRequest", req)
+	}
+	return srv.(BotsServer).UpdateStarRefProgram(ctx, typedRequest)
+}
+
+func _Bots_UpdateStarRefProgram_EncodeResponse(e *mtproto.Encoder, response *StarRefProgram) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Bots_UpdateUserEmojiStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*BotsUpdateUserEmojiStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("bots.updateUserEmojiStatus: request %T is not *BotsUpdateUserEmojiStatusRequest", req)
+	}
+	return srv.(BotsServer).UpdateUserEmojiStatus(ctx, typedRequest)
+}
+
+func _Bots_UpdateUserEmojiStatus_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Bots_ServiceDesc is the static descriptor for the BotsServer service.
@@ -1589,184 +4400,334 @@ var Bots_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*BotsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AddPreviewMedia",
 			ConstructorID: 0x17aeb75a,
 			NewRequest:    func() tlrpc.TLObject { return &BotsAddPreviewMediaRequest{} },
 			Handler:       _Bots_AddPreviewMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BotPreviewMedia](response, layer, limits, _Bots_AddPreviewMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AllowSendMessage",
 			ConstructorID: 0xf132e3ef,
 			NewRequest:    func() tlrpc.TLObject { return &BotsAllowSendMessageRequest{} },
 			Handler:       _Bots_AllowSendMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Bots_AllowSendMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AnswerWebhookJSONQuery",
 			ConstructorID: 0xe6213f4d,
 			NewRequest:    func() tlrpc.TLObject { return &BotsAnswerWebhookJSONQueryRequest{} },
 			Handler:       _Bots_AnswerWebhookJSONQuery_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_AnswerWebhookJSONQuery_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CanSendMessage",
 			ConstructorID: 0x1359f4e6,
 			NewRequest:    func() tlrpc.TLObject { return &BotsCanSendMessageRequest{} },
 			Handler:       _Bots_CanSendMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_CanSendMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckDownloadFileParams",
 			ConstructorID: 0x50077589,
 			NewRequest:    func() tlrpc.TLObject { return &BotsCheckDownloadFileParamsRequest{} },
 			Handler:       _Bots_CheckDownloadFileParams_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_CheckDownloadFileParams_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeletePreviewMedia",
 			ConstructorID: 0x2d0135b3,
 			NewRequest:    func() tlrpc.TLObject { return &BotsDeletePreviewMediaRequest{} },
 			Handler:       _Bots_DeletePreviewMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_DeletePreviewMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditPreviewMedia",
 			ConstructorID: 0x8525606f,
 			NewRequest:    func() tlrpc.TLObject { return &BotsEditPreviewMediaRequest{} },
 			Handler:       _Bots_EditPreviewMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BotPreviewMedia](response, layer, limits, _Bots_EditPreviewMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAdminedBots",
 			ConstructorID: 0xb0711d83,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetAdminedBotsRequest{} },
 			Handler:       _Bots_GetAdminedBots_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]UserType](response, layer, limits, _Bots_GetAdminedBots_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotCommands",
 			ConstructorID: 0xe34c0dd6,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetBotCommandsRequest{} },
 			Handler:       _Bots_GetBotCommands_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*BotCommand](response, layer, limits, _Bots_GetBotCommands_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotInfo",
 			ConstructorID: 0xdcd914fd,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetBotInfoRequest{} },
 			Handler:       _Bots_GetBotInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BotsBotInfo](response, layer, limits, _Bots_GetBotInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotMenuButton",
 			ConstructorID: 0x9c60eb28,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetBotMenuButtonRequest{} },
 			Handler:       _Bots_GetBotMenuButton_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[BotMenuButtonType](response, layer, limits, _Bots_GetBotMenuButton_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotRecommendations",
 			ConstructorID: 0xa1b70815,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetBotRecommendationsRequest{} },
 			Handler:       _Bots_GetBotRecommendations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UsersUsersType](response, layer, limits, _Bots_GetBotRecommendations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPopularAppBots",
 			ConstructorID: 0xc2510192,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetPopularAppBotsRequest{} },
 			Handler:       _Bots_GetPopularAppBots_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BotsPopularAppBots](response, layer, limits, _Bots_GetPopularAppBots_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPreviewInfo",
 			ConstructorID: 0x423ab3ad,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetPreviewInfoRequest{} },
 			Handler:       _Bots_GetPreviewInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*BotsPreviewInfo](response, layer, limits, _Bots_GetPreviewInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPreviewMedias",
 			ConstructorID: 0xa2a5594d,
 			NewRequest:    func() tlrpc.TLObject { return &BotsGetPreviewMediasRequest{} },
 			Handler:       _Bots_GetPreviewMedias_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*BotPreviewMedia](response, layer, limits, _Bots_GetPreviewMedias_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InvokeWebViewCustomMethod",
 			ConstructorID: 0x087fc5e7,
 			NewRequest:    func() tlrpc.TLObject { return &BotsInvokeWebViewCustomMethodRequest{} },
 			Handler:       _Bots_InvokeWebViewCustomMethod_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*DataJSON](response, layer, limits, _Bots_InvokeWebViewCustomMethod_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderPreviewMedias",
 			ConstructorID: 0xb627f3aa,
 			NewRequest:    func() tlrpc.TLObject { return &BotsReorderPreviewMediasRequest{} },
 			Handler:       _Bots_ReorderPreviewMedias_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_ReorderPreviewMedias_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderUsernames",
 			ConstructorID: 0x9709b1c2,
 			NewRequest:    func() tlrpc.TLObject { return &BotsReorderUsernamesRequest{} },
 			Handler:       _Bots_ReorderUsernames_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_ReorderUsernames_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetBotCommands",
 			ConstructorID: 0x3d8de0f9,
 			NewRequest:    func() tlrpc.TLObject { return &BotsResetBotCommandsRequest{} },
 			Handler:       _Bots_ResetBotCommands_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_ResetBotCommands_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendCustomRequest",
 			ConstructorID: 0xaa2769ed,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSendCustomRequestRequest{} },
 			Handler:       _Bots_SendCustomRequest_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*DataJSON](response, layer, limits, _Bots_SendCustomRequest_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotBroadcastDefaultAdminRights",
 			ConstructorID: 0x788464e1,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSetBotBroadcastDefaultAdminRightsRequest{} },
 			Handler:       _Bots_SetBotBroadcastDefaultAdminRights_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_SetBotBroadcastDefaultAdminRights_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotCommands",
 			ConstructorID: 0x0517165a,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSetBotCommandsRequest{} },
 			Handler:       _Bots_SetBotCommands_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_SetBotCommands_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotGroupDefaultAdminRights",
 			ConstructorID: 0x925ec9ea,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSetBotGroupDefaultAdminRightsRequest{} },
 			Handler:       _Bots_SetBotGroupDefaultAdminRights_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_SetBotGroupDefaultAdminRights_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotInfo",
 			ConstructorID: 0x10cf3123,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSetBotInfoRequest{} },
 			Handler:       _Bots_SetBotInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_SetBotInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotMenuButton",
 			ConstructorID: 0x4504d54f,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSetBotMenuButtonRequest{} },
 			Handler:       _Bots_SetBotMenuButton_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_SetBotMenuButton_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetCustomVerification",
 			ConstructorID: 0x8b89dfbd,
 			NewRequest:    func() tlrpc.TLObject { return &BotsSetCustomVerificationRequest{} },
 			Handler:       _Bots_SetCustomVerification_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_SetCustomVerification_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleUserEmojiStatusPermission",
 			ConstructorID: 0x06de6392,
 			NewRequest:    func() tlrpc.TLObject { return &BotsToggleUserEmojiStatusPermissionRequest{} },
 			Handler:       _Bots_ToggleUserEmojiStatusPermission_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_ToggleUserEmojiStatusPermission_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleUsername",
 			ConstructorID: 0x053ca973,
 			NewRequest:    func() tlrpc.TLObject { return &BotsToggleUsernameRequest{} },
 			Handler:       _Bots_ToggleUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_ToggleUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateStarRefProgram",
 			ConstructorID: 0x778b5ab3,
 			NewRequest:    func() tlrpc.TLObject { return &BotsUpdateStarRefProgramRequest{} },
 			Handler:       _Bots_UpdateStarRefProgram_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StarRefProgram](response, layer, limits, _Bots_UpdateStarRefProgram_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateUserEmojiStatus",
 			ConstructorID: 0xed9f30c5,
 			NewRequest:    func() tlrpc.TLObject { return &BotsUpdateUserEmojiStatusRequest{} },
 			Handler:       _Bots_UpdateUserEmojiStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Bots_UpdateUserEmojiStatus_EncodeResponse)
+			},
 		},
 	},
 }
@@ -1783,268 +4744,1111 @@ func RegisterBotsServer(s *tlrpc.Server, srv BotsServer) {
 	s.RegisterService(Bots_ServiceDesc, srv)
 }
 
-func _Channels_CheckSearchPostsFlood_Handler(srv interface{}, ctx context.Context, req *ChannelsCheckSearchPostsFloodRequest) (*SearchPostsFlood, error) {
-	return srv.(ChannelsServer).CheckSearchPostsFlood(ctx, req)
-}
-
-func _Channels_CheckUsername_Handler(srv interface{}, ctx context.Context, req *ChannelsCheckUsernameRequest) (bool, error) {
-	return srv.(ChannelsServer).CheckUsername(ctx, req)
-}
-
-func _Channels_ConvertToGigagroup_Handler(srv interface{}, ctx context.Context, req *ChannelsConvertToGigagroupRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ConvertToGigagroup(ctx, req)
-}
-
-func _Channels_CreateChannel_Handler(srv interface{}, ctx context.Context, req *ChannelsCreateChannelRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).CreateChannel(ctx, req)
-}
-
-func _Channels_CreateForumTopic_Handler(srv interface{}, ctx context.Context, req *ChannelsCreateForumTopicRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).CreateForumTopic(ctx, req)
-}
-
-func _Channels_DeactivateAllUsernames_Handler(srv interface{}, ctx context.Context, req *ChannelsDeactivateAllUsernamesRequest) (bool, error) {
-	return srv.(ChannelsServer).DeactivateAllUsernames(ctx, req)
-}
-
-func _Channels_DeleteChannel_Handler(srv interface{}, ctx context.Context, req *ChannelsDeleteChannelRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).DeleteChannel(ctx, req)
-}
-
-func _Channels_DeleteHistory_Handler(srv interface{}, ctx context.Context, req *ChannelsDeleteHistoryRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).DeleteHistory(ctx, req)
-}
-
-func _Channels_DeleteMessages_Handler(srv interface{}, ctx context.Context, req *ChannelsDeleteMessagesRequest) (*MessagesAffectedMessages, error) {
-	return srv.(ChannelsServer).DeleteMessages(ctx, req)
-}
-
-func _Channels_DeleteParticipantHistory_Handler(srv interface{}, ctx context.Context, req *ChannelsDeleteParticipantHistoryRequest) (*MessagesAffectedHistory, error) {
-	return srv.(ChannelsServer).DeleteParticipantHistory(ctx, req)
-}
-
-func _Channels_DeleteTopicHistory_Handler(srv interface{}, ctx context.Context, req *ChannelsDeleteTopicHistoryRequest) (*MessagesAffectedHistory, error) {
-	return srv.(ChannelsServer).DeleteTopicHistory(ctx, req)
-}
-
-func _Channels_EditAdmin_Handler(srv interface{}, ctx context.Context, req *ChannelsEditAdminRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).EditAdmin(ctx, req)
-}
-
-func _Channels_EditBanned_Handler(srv interface{}, ctx context.Context, req *ChannelsEditBannedRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).EditBanned(ctx, req)
-}
-
-func _Channels_EditCreator_Handler(srv interface{}, ctx context.Context, req *ChannelsEditCreatorRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).EditCreator(ctx, req)
-}
-
-func _Channels_EditForumTopic_Handler(srv interface{}, ctx context.Context, req *ChannelsEditForumTopicRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).EditForumTopic(ctx, req)
-}
-
-func _Channels_EditLocation_Handler(srv interface{}, ctx context.Context, req *ChannelsEditLocationRequest) (bool, error) {
-	return srv.(ChannelsServer).EditLocation(ctx, req)
-}
-
-func _Channels_EditPhoto_Handler(srv interface{}, ctx context.Context, req *ChannelsEditPhotoRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).EditPhoto(ctx, req)
-}
-
-func _Channels_EditTitle_Handler(srv interface{}, ctx context.Context, req *ChannelsEditTitleRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).EditTitle(ctx, req)
-}
-
-func _Channels_ExportMessageLink_Handler(srv interface{}, ctx context.Context, req *ChannelsExportMessageLinkRequest) (*ExportedMessageLink, error) {
-	return srv.(ChannelsServer).ExportMessageLink(ctx, req)
-}
-
-func _Channels_GetAdminLog_Handler(srv interface{}, ctx context.Context, req *ChannelsGetAdminLogRequest) (*ChannelsAdminLogResults, error) {
-	return srv.(ChannelsServer).GetAdminLog(ctx, req)
-}
-
-func _Channels_GetAdminedPublicChannels_Handler(srv interface{}, ctx context.Context, req *ChannelsGetAdminedPublicChannelsRequest) (MessagesChatsType, error) {
-	return srv.(ChannelsServer).GetAdminedPublicChannels(ctx, req)
-}
-
-func _Channels_GetChannelRecommendations_Handler(srv interface{}, ctx context.Context, req *ChannelsGetChannelRecommendationsRequest) (MessagesChatsType, error) {
-	return srv.(ChannelsServer).GetChannelRecommendations(ctx, req)
-}
-
-func _Channels_GetChannels_Handler(srv interface{}, ctx context.Context, req *ChannelsGetChannelsRequest) (MessagesChatsType, error) {
-	return srv.(ChannelsServer).GetChannels(ctx, req)
-}
-
-func _Channels_GetForumTopics_Handler(srv interface{}, ctx context.Context, req *ChannelsGetForumTopicsRequest) (*MessagesForumTopics, error) {
-	return srv.(ChannelsServer).GetForumTopics(ctx, req)
-}
-
-func _Channels_GetForumTopicsByID_Handler(srv interface{}, ctx context.Context, req *ChannelsGetForumTopicsByIDRequest) (*MessagesForumTopics, error) {
-	return srv.(ChannelsServer).GetForumTopicsByID(ctx, req)
-}
-
-func _Channels_GetFullChannel_Handler(srv interface{}, ctx context.Context, req *ChannelsGetFullChannelRequest) (*MessagesChatFull, error) {
-	return srv.(ChannelsServer).GetFullChannel(ctx, req)
-}
-
-func _Channels_GetGroupsForDiscussion_Handler(srv interface{}, ctx context.Context, req *ChannelsGetGroupsForDiscussionRequest) (MessagesChatsType, error) {
-	return srv.(ChannelsServer).GetGroupsForDiscussion(ctx, req)
-}
-
-func _Channels_GetInactiveChannels_Handler(srv interface{}, ctx context.Context, req *ChannelsGetInactiveChannelsRequest) (*MessagesInactiveChats, error) {
-	return srv.(ChannelsServer).GetInactiveChannels(ctx, req)
-}
-
-func _Channels_GetLeftChannels_Handler(srv interface{}, ctx context.Context, req *ChannelsGetLeftChannelsRequest) (MessagesChatsType, error) {
-	return srv.(ChannelsServer).GetLeftChannels(ctx, req)
-}
-
-func _Channels_GetMessageAuthor_Handler(srv interface{}, ctx context.Context, req *ChannelsGetMessageAuthorRequest) (UserType, error) {
-	return srv.(ChannelsServer).GetMessageAuthor(ctx, req)
-}
-
-func _Channels_GetMessages_Handler(srv interface{}, ctx context.Context, req *ChannelsGetMessagesRequest) (MessagesMessagesType, error) {
-	return srv.(ChannelsServer).GetMessages(ctx, req)
-}
-
-func _Channels_GetParticipant_Handler(srv interface{}, ctx context.Context, req *ChannelsGetParticipantRequest) (*ChannelsChannelParticipant, error) {
-	return srv.(ChannelsServer).GetParticipant(ctx, req)
-}
-
-func _Channels_GetParticipants_Handler(srv interface{}, ctx context.Context, req *ChannelsGetParticipantsRequest) (ChannelsChannelParticipantsType, error) {
-	return srv.(ChannelsServer).GetParticipants(ctx, req)
-}
-
-func _Channels_GetSendAs_Handler(srv interface{}, ctx context.Context, req *ChannelsGetSendAsRequest) (*ChannelsSendAsPeers, error) {
-	return srv.(ChannelsServer).GetSendAs(ctx, req)
-}
-
-func _Channels_InviteToChannel_Handler(srv interface{}, ctx context.Context, req *ChannelsInviteToChannelRequest) (*MessagesInvitedUsers, error) {
-	return srv.(ChannelsServer).InviteToChannel(ctx, req)
-}
-
-func _Channels_JoinChannel_Handler(srv interface{}, ctx context.Context, req *ChannelsJoinChannelRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).JoinChannel(ctx, req)
-}
-
-func _Channels_LeaveChannel_Handler(srv interface{}, ctx context.Context, req *ChannelsLeaveChannelRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).LeaveChannel(ctx, req)
-}
-
-func _Channels_ReadHistory_Handler(srv interface{}, ctx context.Context, req *ChannelsReadHistoryRequest) (bool, error) {
-	return srv.(ChannelsServer).ReadHistory(ctx, req)
-}
-
-func _Channels_ReadMessageContents_Handler(srv interface{}, ctx context.Context, req *ChannelsReadMessageContentsRequest) (bool, error) {
-	return srv.(ChannelsServer).ReadMessageContents(ctx, req)
-}
-
-func _Channels_ReorderPinnedForumTopics_Handler(srv interface{}, ctx context.Context, req *ChannelsReorderPinnedForumTopicsRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ReorderPinnedForumTopics(ctx, req)
-}
-
-func _Channels_ReorderUsernames_Handler(srv interface{}, ctx context.Context, req *ChannelsReorderUsernamesRequest) (bool, error) {
-	return srv.(ChannelsServer).ReorderUsernames(ctx, req)
-}
-
-func _Channels_ReportAntiSpamFalsePositive_Handler(srv interface{}, ctx context.Context, req *ChannelsReportAntiSpamFalsePositiveRequest) (bool, error) {
-	return srv.(ChannelsServer).ReportAntiSpamFalsePositive(ctx, req)
-}
-
-func _Channels_ReportSpam_Handler(srv interface{}, ctx context.Context, req *ChannelsReportSpamRequest) (bool, error) {
-	return srv.(ChannelsServer).ReportSpam(ctx, req)
-}
-
-func _Channels_RestrictSponsoredMessages_Handler(srv interface{}, ctx context.Context, req *ChannelsRestrictSponsoredMessagesRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).RestrictSponsoredMessages(ctx, req)
-}
-
-func _Channels_SearchPosts_Handler(srv interface{}, ctx context.Context, req *ChannelsSearchPostsRequest) (MessagesMessagesType, error) {
-	return srv.(ChannelsServer).SearchPosts(ctx, req)
-}
-
-func _Channels_SetBoostsToUnblockRestrictions_Handler(srv interface{}, ctx context.Context, req *ChannelsSetBoostsToUnblockRestrictionsRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).SetBoostsToUnblockRestrictions(ctx, req)
-}
-
-func _Channels_SetDiscussionGroup_Handler(srv interface{}, ctx context.Context, req *ChannelsSetDiscussionGroupRequest) (bool, error) {
-	return srv.(ChannelsServer).SetDiscussionGroup(ctx, req)
-}
-
-func _Channels_SetEmojiStickers_Handler(srv interface{}, ctx context.Context, req *ChannelsSetEmojiStickersRequest) (bool, error) {
-	return srv.(ChannelsServer).SetEmojiStickers(ctx, req)
-}
-
-func _Channels_SetMainProfileTab_Handler(srv interface{}, ctx context.Context, req *ChannelsSetMainProfileTabRequest) (bool, error) {
-	return srv.(ChannelsServer).SetMainProfileTab(ctx, req)
-}
-
-func _Channels_SetStickers_Handler(srv interface{}, ctx context.Context, req *ChannelsSetStickersRequest) (bool, error) {
-	return srv.(ChannelsServer).SetStickers(ctx, req)
-}
-
-func _Channels_ToggleAntiSpam_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleAntiSpamRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleAntiSpam(ctx, req)
-}
-
-func _Channels_ToggleAutotranslation_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleAutotranslationRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleAutotranslation(ctx, req)
-}
-
-func _Channels_ToggleForum_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleForumRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleForum(ctx, req)
-}
-
-func _Channels_ToggleJoinRequest_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleJoinRequestRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleJoinRequest(ctx, req)
-}
-
-func _Channels_ToggleJoinToSend_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleJoinToSendRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleJoinToSend(ctx, req)
-}
-
-func _Channels_ToggleParticipantsHidden_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleParticipantsHiddenRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleParticipantsHidden(ctx, req)
-}
-
-func _Channels_TogglePreHistoryHidden_Handler(srv interface{}, ctx context.Context, req *ChannelsTogglePreHistoryHiddenRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).TogglePreHistoryHidden(ctx, req)
-}
-
-func _Channels_ToggleSignatures_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleSignaturesRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleSignatures(ctx, req)
-}
-
-func _Channels_ToggleSlowMode_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleSlowModeRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleSlowMode(ctx, req)
-}
-
-func _Channels_ToggleUsername_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleUsernameRequest) (bool, error) {
-	return srv.(ChannelsServer).ToggleUsername(ctx, req)
-}
-
-func _Channels_ToggleViewForumAsMessages_Handler(srv interface{}, ctx context.Context, req *ChannelsToggleViewForumAsMessagesRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).ToggleViewForumAsMessages(ctx, req)
-}
-
-func _Channels_UpdateColor_Handler(srv interface{}, ctx context.Context, req *ChannelsUpdateColorRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).UpdateColor(ctx, req)
-}
-
-func _Channels_UpdateEmojiStatus_Handler(srv interface{}, ctx context.Context, req *ChannelsUpdateEmojiStatusRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).UpdateEmojiStatus(ctx, req)
-}
-
-func _Channels_UpdatePaidMessagesPrice_Handler(srv interface{}, ctx context.Context, req *ChannelsUpdatePaidMessagesPriceRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).UpdatePaidMessagesPrice(ctx, req)
-}
-
-func _Channels_UpdatePinnedForumTopic_Handler(srv interface{}, ctx context.Context, req *ChannelsUpdatePinnedForumTopicRequest) (UpdatesType, error) {
-	return srv.(ChannelsServer).UpdatePinnedForumTopic(ctx, req)
-}
-
-func _Channels_UpdateUsername_Handler(srv interface{}, ctx context.Context, req *ChannelsUpdateUsernameRequest) (bool, error) {
-	return srv.(ChannelsServer).UpdateUsername(ctx, req)
+func _Channels_CheckSearchPostsFlood_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsCheckSearchPostsFloodRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.checkSearchPostsFlood: request %T is not *ChannelsCheckSearchPostsFloodRequest", req)
+	}
+	return srv.(ChannelsServer).CheckSearchPostsFlood(ctx, typedRequest)
+}
+
+func _Channels_CheckSearchPostsFlood_EncodeResponse(e *mtproto.Encoder, response *SearchPostsFlood) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_CheckUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsCheckUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.checkUsername: request %T is not *ChannelsCheckUsernameRequest", req)
+	}
+	return srv.(ChannelsServer).CheckUsername(ctx, typedRequest)
+}
+
+func _Channels_CheckUsername_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ConvertToGigagroup_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsConvertToGigagroupRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.convertToGigagroup: request %T is not *ChannelsConvertToGigagroupRequest", req)
+	}
+	return srv.(ChannelsServer).ConvertToGigagroup(ctx, typedRequest)
+}
+
+func _Channels_ConvertToGigagroup_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_CreateChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsCreateChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.createChannel: request %T is not *ChannelsCreateChannelRequest", req)
+	}
+	return srv.(ChannelsServer).CreateChannel(ctx, typedRequest)
+}
+
+func _Channels_CreateChannel_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_CreateForumTopic_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsCreateForumTopicRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.createForumTopic: request %T is not *ChannelsCreateForumTopicRequest", req)
+	}
+	return srv.(ChannelsServer).CreateForumTopic(ctx, typedRequest)
+}
+
+func _Channels_CreateForumTopic_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_DeactivateAllUsernames_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsDeactivateAllUsernamesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.deactivateAllUsernames: request %T is not *ChannelsDeactivateAllUsernamesRequest", req)
+	}
+	return srv.(ChannelsServer).DeactivateAllUsernames(ctx, typedRequest)
+}
+
+func _Channels_DeactivateAllUsernames_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_DeleteChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsDeleteChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.deleteChannel: request %T is not *ChannelsDeleteChannelRequest", req)
+	}
+	return srv.(ChannelsServer).DeleteChannel(ctx, typedRequest)
+}
+
+func _Channels_DeleteChannel_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_DeleteHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsDeleteHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.deleteHistory: request %T is not *ChannelsDeleteHistoryRequest", req)
+	}
+	return srv.(ChannelsServer).DeleteHistory(ctx, typedRequest)
+}
+
+func _Channels_DeleteHistory_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_DeleteMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsDeleteMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.deleteMessages: request %T is not *ChannelsDeleteMessagesRequest", req)
+	}
+	return srv.(ChannelsServer).DeleteMessages(ctx, typedRequest)
+}
+
+func _Channels_DeleteMessages_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedMessages) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_DeleteParticipantHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsDeleteParticipantHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.deleteParticipantHistory: request %T is not *ChannelsDeleteParticipantHistoryRequest", req)
+	}
+	return srv.(ChannelsServer).DeleteParticipantHistory(ctx, typedRequest)
+}
+
+func _Channels_DeleteParticipantHistory_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_DeleteTopicHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsDeleteTopicHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.deleteTopicHistory: request %T is not *ChannelsDeleteTopicHistoryRequest", req)
+	}
+	return srv.(ChannelsServer).DeleteTopicHistory(ctx, typedRequest)
+}
+
+func _Channels_DeleteTopicHistory_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditAdmin_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditAdminRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editAdmin: request %T is not *ChannelsEditAdminRequest", req)
+	}
+	return srv.(ChannelsServer).EditAdmin(ctx, typedRequest)
+}
+
+func _Channels_EditAdmin_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditBanned_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditBannedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editBanned: request %T is not *ChannelsEditBannedRequest", req)
+	}
+	return srv.(ChannelsServer).EditBanned(ctx, typedRequest)
+}
+
+func _Channels_EditBanned_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditCreator_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditCreatorRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editCreator: request %T is not *ChannelsEditCreatorRequest", req)
+	}
+	return srv.(ChannelsServer).EditCreator(ctx, typedRequest)
+}
+
+func _Channels_EditCreator_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditForumTopic_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditForumTopicRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editForumTopic: request %T is not *ChannelsEditForumTopicRequest", req)
+	}
+	return srv.(ChannelsServer).EditForumTopic(ctx, typedRequest)
+}
+
+func _Channels_EditForumTopic_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditLocation_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditLocationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editLocation: request %T is not *ChannelsEditLocationRequest", req)
+	}
+	return srv.(ChannelsServer).EditLocation(ctx, typedRequest)
+}
+
+func _Channels_EditLocation_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditPhoto_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditPhotoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editPhoto: request %T is not *ChannelsEditPhotoRequest", req)
+	}
+	return srv.(ChannelsServer).EditPhoto(ctx, typedRequest)
+}
+
+func _Channels_EditPhoto_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_EditTitle_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsEditTitleRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.editTitle: request %T is not *ChannelsEditTitleRequest", req)
+	}
+	return srv.(ChannelsServer).EditTitle(ctx, typedRequest)
+}
+
+func _Channels_EditTitle_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ExportMessageLink_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsExportMessageLinkRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.exportMessageLink: request %T is not *ChannelsExportMessageLinkRequest", req)
+	}
+	return srv.(ChannelsServer).ExportMessageLink(ctx, typedRequest)
+}
+
+func _Channels_ExportMessageLink_EncodeResponse(e *mtproto.Encoder, response *ExportedMessageLink) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetAdminLog_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetAdminLogRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getAdminLog: request %T is not *ChannelsGetAdminLogRequest", req)
+	}
+	return srv.(ChannelsServer).GetAdminLog(ctx, typedRequest)
+}
+
+func _Channels_GetAdminLog_EncodeResponse(e *mtproto.Encoder, response *ChannelsAdminLogResults) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetAdminedPublicChannels_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetAdminedPublicChannelsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getAdminedPublicChannels: request %T is not *ChannelsGetAdminedPublicChannelsRequest", req)
+	}
+	return srv.(ChannelsServer).GetAdminedPublicChannels(ctx, typedRequest)
+}
+
+func _Channels_GetAdminedPublicChannels_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetChannelRecommendations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetChannelRecommendationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getChannelRecommendations: request %T is not *ChannelsGetChannelRecommendationsRequest", req)
+	}
+	return srv.(ChannelsServer).GetChannelRecommendations(ctx, typedRequest)
+}
+
+func _Channels_GetChannelRecommendations_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetChannels_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetChannelsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getChannels: request %T is not *ChannelsGetChannelsRequest", req)
+	}
+	return srv.(ChannelsServer).GetChannels(ctx, typedRequest)
+}
+
+func _Channels_GetChannels_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetForumTopics_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetForumTopicsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getForumTopics: request %T is not *ChannelsGetForumTopicsRequest", req)
+	}
+	return srv.(ChannelsServer).GetForumTopics(ctx, typedRequest)
+}
+
+func _Channels_GetForumTopics_EncodeResponse(e *mtproto.Encoder, response *MessagesForumTopics) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetForumTopicsByID_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetForumTopicsByIDRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getForumTopicsByID: request %T is not *ChannelsGetForumTopicsByIDRequest", req)
+	}
+	return srv.(ChannelsServer).GetForumTopicsByID(ctx, typedRequest)
+}
+
+func _Channels_GetForumTopicsByID_EncodeResponse(e *mtproto.Encoder, response *MessagesForumTopics) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetFullChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetFullChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getFullChannel: request %T is not *ChannelsGetFullChannelRequest", req)
+	}
+	return srv.(ChannelsServer).GetFullChannel(ctx, typedRequest)
+}
+
+func _Channels_GetFullChannel_EncodeResponse(e *mtproto.Encoder, response *MessagesChatFull) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetGroupsForDiscussion_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetGroupsForDiscussionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getGroupsForDiscussion: request %T is not *ChannelsGetGroupsForDiscussionRequest", req)
+	}
+	return srv.(ChannelsServer).GetGroupsForDiscussion(ctx, typedRequest)
+}
+
+func _Channels_GetGroupsForDiscussion_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetInactiveChannels_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetInactiveChannelsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getInactiveChannels: request %T is not *ChannelsGetInactiveChannelsRequest", req)
+	}
+	return srv.(ChannelsServer).GetInactiveChannels(ctx, typedRequest)
+}
+
+func _Channels_GetInactiveChannels_EncodeResponse(e *mtproto.Encoder, response *MessagesInactiveChats) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetLeftChannels_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetLeftChannelsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getLeftChannels: request %T is not *ChannelsGetLeftChannelsRequest", req)
+	}
+	return srv.(ChannelsServer).GetLeftChannels(ctx, typedRequest)
+}
+
+func _Channels_GetLeftChannels_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetMessageAuthor_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetMessageAuthorRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getMessageAuthor: request %T is not *ChannelsGetMessageAuthorRequest", req)
+	}
+	return srv.(ChannelsServer).GetMessageAuthor(ctx, typedRequest)
+}
+
+func _Channels_GetMessageAuthor_EncodeResponse(e *mtproto.Encoder, response UserType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed User is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getMessages: request %T is not *ChannelsGetMessagesRequest", req)
+	}
+	return srv.(ChannelsServer).GetMessages(ctx, typedRequest)
+}
+
+func _Channels_GetMessages_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetParticipant_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetParticipantRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getParticipant: request %T is not *ChannelsGetParticipantRequest", req)
+	}
+	return srv.(ChannelsServer).GetParticipant(ctx, typedRequest)
+}
+
+func _Channels_GetParticipant_EncodeResponse(e *mtproto.Encoder, response *ChannelsChannelParticipant) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetParticipants_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetParticipantsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getParticipants: request %T is not *ChannelsGetParticipantsRequest", req)
+	}
+	return srv.(ChannelsServer).GetParticipants(ctx, typedRequest)
+}
+
+func _Channels_GetParticipants_EncodeResponse(e *mtproto.Encoder, response ChannelsChannelParticipantsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed channels.ChannelParticipants is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_GetSendAs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsGetSendAsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.getSendAs: request %T is not *ChannelsGetSendAsRequest", req)
+	}
+	return srv.(ChannelsServer).GetSendAs(ctx, typedRequest)
+}
+
+func _Channels_GetSendAs_EncodeResponse(e *mtproto.Encoder, response *ChannelsSendAsPeers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_InviteToChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsInviteToChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.inviteToChannel: request %T is not *ChannelsInviteToChannelRequest", req)
+	}
+	return srv.(ChannelsServer).InviteToChannel(ctx, typedRequest)
+}
+
+func _Channels_InviteToChannel_EncodeResponse(e *mtproto.Encoder, response *MessagesInvitedUsers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_JoinChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsJoinChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.joinChannel: request %T is not *ChannelsJoinChannelRequest", req)
+	}
+	return srv.(ChannelsServer).JoinChannel(ctx, typedRequest)
+}
+
+func _Channels_JoinChannel_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_LeaveChannel_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsLeaveChannelRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.leaveChannel: request %T is not *ChannelsLeaveChannelRequest", req)
+	}
+	return srv.(ChannelsServer).LeaveChannel(ctx, typedRequest)
+}
+
+func _Channels_LeaveChannel_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ReadHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsReadHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.readHistory: request %T is not *ChannelsReadHistoryRequest", req)
+	}
+	return srv.(ChannelsServer).ReadHistory(ctx, typedRequest)
+}
+
+func _Channels_ReadHistory_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ReadMessageContents_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsReadMessageContentsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.readMessageContents: request %T is not *ChannelsReadMessageContentsRequest", req)
+	}
+	return srv.(ChannelsServer).ReadMessageContents(ctx, typedRequest)
+}
+
+func _Channels_ReadMessageContents_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ReorderPinnedForumTopics_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsReorderPinnedForumTopicsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.reorderPinnedForumTopics: request %T is not *ChannelsReorderPinnedForumTopicsRequest", req)
+	}
+	return srv.(ChannelsServer).ReorderPinnedForumTopics(ctx, typedRequest)
+}
+
+func _Channels_ReorderPinnedForumTopics_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ReorderUsernames_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsReorderUsernamesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.reorderUsernames: request %T is not *ChannelsReorderUsernamesRequest", req)
+	}
+	return srv.(ChannelsServer).ReorderUsernames(ctx, typedRequest)
+}
+
+func _Channels_ReorderUsernames_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ReportAntiSpamFalsePositive_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsReportAntiSpamFalsePositiveRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.reportAntiSpamFalsePositive: request %T is not *ChannelsReportAntiSpamFalsePositiveRequest", req)
+	}
+	return srv.(ChannelsServer).ReportAntiSpamFalsePositive(ctx, typedRequest)
+}
+
+func _Channels_ReportAntiSpamFalsePositive_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ReportSpam_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsReportSpamRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.reportSpam: request %T is not *ChannelsReportSpamRequest", req)
+	}
+	return srv.(ChannelsServer).ReportSpam(ctx, typedRequest)
+}
+
+func _Channels_ReportSpam_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_RestrictSponsoredMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsRestrictSponsoredMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.restrictSponsoredMessages: request %T is not *ChannelsRestrictSponsoredMessagesRequest", req)
+	}
+	return srv.(ChannelsServer).RestrictSponsoredMessages(ctx, typedRequest)
+}
+
+func _Channels_RestrictSponsoredMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_SearchPosts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsSearchPostsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.searchPosts: request %T is not *ChannelsSearchPostsRequest", req)
+	}
+	return srv.(ChannelsServer).SearchPosts(ctx, typedRequest)
+}
+
+func _Channels_SearchPosts_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_SetBoostsToUnblockRestrictions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsSetBoostsToUnblockRestrictionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.setBoostsToUnblockRestrictions: request %T is not *ChannelsSetBoostsToUnblockRestrictionsRequest", req)
+	}
+	return srv.(ChannelsServer).SetBoostsToUnblockRestrictions(ctx, typedRequest)
+}
+
+func _Channels_SetBoostsToUnblockRestrictions_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_SetDiscussionGroup_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsSetDiscussionGroupRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.setDiscussionGroup: request %T is not *ChannelsSetDiscussionGroupRequest", req)
+	}
+	return srv.(ChannelsServer).SetDiscussionGroup(ctx, typedRequest)
+}
+
+func _Channels_SetDiscussionGroup_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_SetEmojiStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsSetEmojiStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.setEmojiStickers: request %T is not *ChannelsSetEmojiStickersRequest", req)
+	}
+	return srv.(ChannelsServer).SetEmojiStickers(ctx, typedRequest)
+}
+
+func _Channels_SetEmojiStickers_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_SetMainProfileTab_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsSetMainProfileTabRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.setMainProfileTab: request %T is not *ChannelsSetMainProfileTabRequest", req)
+	}
+	return srv.(ChannelsServer).SetMainProfileTab(ctx, typedRequest)
+}
+
+func _Channels_SetMainProfileTab_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_SetStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsSetStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.setStickers: request %T is not *ChannelsSetStickersRequest", req)
+	}
+	return srv.(ChannelsServer).SetStickers(ctx, typedRequest)
+}
+
+func _Channels_SetStickers_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleAntiSpam_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleAntiSpamRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleAntiSpam: request %T is not *ChannelsToggleAntiSpamRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleAntiSpam(ctx, typedRequest)
+}
+
+func _Channels_ToggleAntiSpam_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleAutotranslation_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleAutotranslationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleAutotranslation: request %T is not *ChannelsToggleAutotranslationRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleAutotranslation(ctx, typedRequest)
+}
+
+func _Channels_ToggleAutotranslation_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleForum_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleForumRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleForum: request %T is not *ChannelsToggleForumRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleForum(ctx, typedRequest)
+}
+
+func _Channels_ToggleForum_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleJoinRequest_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleJoinRequestRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleJoinRequest: request %T is not *ChannelsToggleJoinRequestRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleJoinRequest(ctx, typedRequest)
+}
+
+func _Channels_ToggleJoinRequest_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleJoinToSend_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleJoinToSendRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleJoinToSend: request %T is not *ChannelsToggleJoinToSendRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleJoinToSend(ctx, typedRequest)
+}
+
+func _Channels_ToggleJoinToSend_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleParticipantsHidden_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleParticipantsHiddenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleParticipantsHidden: request %T is not *ChannelsToggleParticipantsHiddenRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleParticipantsHidden(ctx, typedRequest)
+}
+
+func _Channels_ToggleParticipantsHidden_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_TogglePreHistoryHidden_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsTogglePreHistoryHiddenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.togglePreHistoryHidden: request %T is not *ChannelsTogglePreHistoryHiddenRequest", req)
+	}
+	return srv.(ChannelsServer).TogglePreHistoryHidden(ctx, typedRequest)
+}
+
+func _Channels_TogglePreHistoryHidden_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleSignatures_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleSignaturesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleSignatures: request %T is not *ChannelsToggleSignaturesRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleSignatures(ctx, typedRequest)
+}
+
+func _Channels_ToggleSignatures_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleSlowMode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleSlowModeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleSlowMode: request %T is not *ChannelsToggleSlowModeRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleSlowMode(ctx, typedRequest)
+}
+
+func _Channels_ToggleSlowMode_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleUsername: request %T is not *ChannelsToggleUsernameRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleUsername(ctx, typedRequest)
+}
+
+func _Channels_ToggleUsername_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_ToggleViewForumAsMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsToggleViewForumAsMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.toggleViewForumAsMessages: request %T is not *ChannelsToggleViewForumAsMessagesRequest", req)
+	}
+	return srv.(ChannelsServer).ToggleViewForumAsMessages(ctx, typedRequest)
+}
+
+func _Channels_ToggleViewForumAsMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_UpdateColor_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsUpdateColorRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.updateColor: request %T is not *ChannelsUpdateColorRequest", req)
+	}
+	return srv.(ChannelsServer).UpdateColor(ctx, typedRequest)
+}
+
+func _Channels_UpdateColor_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_UpdateEmojiStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsUpdateEmojiStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.updateEmojiStatus: request %T is not *ChannelsUpdateEmojiStatusRequest", req)
+	}
+	return srv.(ChannelsServer).UpdateEmojiStatus(ctx, typedRequest)
+}
+
+func _Channels_UpdateEmojiStatus_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_UpdatePaidMessagesPrice_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsUpdatePaidMessagesPriceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.updatePaidMessagesPrice: request %T is not *ChannelsUpdatePaidMessagesPriceRequest", req)
+	}
+	return srv.(ChannelsServer).UpdatePaidMessagesPrice(ctx, typedRequest)
+}
+
+func _Channels_UpdatePaidMessagesPrice_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_UpdatePinnedForumTopic_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsUpdatePinnedForumTopicRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.updatePinnedForumTopic: request %T is not *ChannelsUpdatePinnedForumTopicRequest", req)
+	}
+	return srv.(ChannelsServer).UpdatePinnedForumTopic(ctx, typedRequest)
+}
+
+func _Channels_UpdatePinnedForumTopic_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Channels_UpdateUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChannelsUpdateUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("channels.updateUsername: request %T is not *ChannelsUpdateUsernameRequest", req)
+	}
+	return srv.(ChannelsServer).UpdateUsername(ctx, typedRequest)
+}
+
+func _Channels_UpdateUsername_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Channels_ServiceDesc is the static descriptor for the ChannelsServer service.
@@ -2054,400 +5858,730 @@ var Channels_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*ChannelsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckSearchPostsFlood",
 			ConstructorID: 0x22567115,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsCheckSearchPostsFloodRequest{} },
 			Handler:       _Channels_CheckSearchPostsFlood_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*SearchPostsFlood](response, layer, limits, _Channels_CheckSearchPostsFlood_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckUsername",
 			ConstructorID: 0x10e6bd2c,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsCheckUsernameRequest{} },
 			Handler:       _Channels_CheckUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_CheckUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ConvertToGigagroup",
 			ConstructorID: 0x0b290c69,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsConvertToGigagroupRequest{} },
 			Handler:       _Channels_ConvertToGigagroup_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ConvertToGigagroup_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateChannel",
 			ConstructorID: 0x91006707,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsCreateChannelRequest{} },
 			Handler:       _Channels_CreateChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_CreateChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateForumTopic",
 			ConstructorID: 0xf40c0224,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsCreateForumTopicRequest{} },
 			Handler:       _Channels_CreateForumTopic_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_CreateForumTopic_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeactivateAllUsernames",
 			ConstructorID: 0x0a245dd3,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsDeactivateAllUsernamesRequest{} },
 			Handler:       _Channels_DeactivateAllUsernames_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_DeactivateAllUsernames_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteChannel",
 			ConstructorID: 0xc0111fe3,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsDeleteChannelRequest{} },
 			Handler:       _Channels_DeleteChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_DeleteChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteHistory",
 			ConstructorID: 0x9baa9647,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsDeleteHistoryRequest{} },
 			Handler:       _Channels_DeleteHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_DeleteHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteMessages",
 			ConstructorID: 0x84c1fd4e,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsDeleteMessagesRequest{} },
 			Handler:       _Channels_DeleteMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedMessages](response, layer, limits, _Channels_DeleteMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteParticipantHistory",
 			ConstructorID: 0x367544db,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsDeleteParticipantHistoryRequest{} },
 			Handler:       _Channels_DeleteParticipantHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Channels_DeleteParticipantHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteTopicHistory",
 			ConstructorID: 0x34435f2d,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsDeleteTopicHistoryRequest{} },
 			Handler:       _Channels_DeleteTopicHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Channels_DeleteTopicHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditAdmin",
 			ConstructorID: 0xd33c8902,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditAdminRequest{} },
 			Handler:       _Channels_EditAdmin_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_EditAdmin_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditBanned",
 			ConstructorID: 0x96e6cd81,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditBannedRequest{} },
 			Handler:       _Channels_EditBanned_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_EditBanned_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditCreator",
 			ConstructorID: 0x8f38cd1f,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditCreatorRequest{} },
 			Handler:       _Channels_EditCreator_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_EditCreator_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditForumTopic",
 			ConstructorID: 0xf4dfa185,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditForumTopicRequest{} },
 			Handler:       _Channels_EditForumTopic_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_EditForumTopic_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditLocation",
 			ConstructorID: 0x58e63f6d,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditLocationRequest{} },
 			Handler:       _Channels_EditLocation_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_EditLocation_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditPhoto",
 			ConstructorID: 0xf12e57c9,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditPhotoRequest{} },
 			Handler:       _Channels_EditPhoto_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_EditPhoto_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditTitle",
 			ConstructorID: 0x566decd0,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsEditTitleRequest{} },
 			Handler:       _Channels_EditTitle_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_EditTitle_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportMessageLink",
 			ConstructorID: 0xe63fadeb,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsExportMessageLinkRequest{} },
 			Handler:       _Channels_ExportMessageLink_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ExportedMessageLink](response, layer, limits, _Channels_ExportMessageLink_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAdminLog",
 			ConstructorID: 0x33ddf480,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetAdminLogRequest{} },
 			Handler:       _Channels_GetAdminLog_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChannelsAdminLogResults](response, layer, limits, _Channels_GetAdminLog_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAdminedPublicChannels",
 			ConstructorID: 0xf8b036af,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetAdminedPublicChannelsRequest{} },
 			Handler:       _Channels_GetAdminedPublicChannels_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Channels_GetAdminedPublicChannels_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChannelRecommendations",
 			ConstructorID: 0x25a71742,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetChannelRecommendationsRequest{} },
 			Handler:       _Channels_GetChannelRecommendations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Channels_GetChannelRecommendations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChannels",
 			ConstructorID: 0x0a7f6bbb,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetChannelsRequest{} },
 			Handler:       _Channels_GetChannels_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Channels_GetChannels_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetForumTopics",
 			ConstructorID: 0x0de560d1,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetForumTopicsRequest{} },
 			Handler:       _Channels_GetForumTopics_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesForumTopics](response, layer, limits, _Channels_GetForumTopics_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetForumTopicsByID",
 			ConstructorID: 0xb0831eb9,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetForumTopicsByIDRequest{} },
 			Handler:       _Channels_GetForumTopicsByID_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesForumTopics](response, layer, limits, _Channels_GetForumTopicsByID_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFullChannel",
 			ConstructorID: 0x08736a09,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetFullChannelRequest{} },
 			Handler:       _Channels_GetFullChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesChatFull](response, layer, limits, _Channels_GetFullChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupsForDiscussion",
 			ConstructorID: 0xf5dad378,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetGroupsForDiscussionRequest{} },
 			Handler:       _Channels_GetGroupsForDiscussion_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Channels_GetGroupsForDiscussion_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetInactiveChannels",
 			ConstructorID: 0x11e831ee,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetInactiveChannelsRequest{} },
 			Handler:       _Channels_GetInactiveChannels_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesInactiveChats](response, layer, limits, _Channels_GetInactiveChannels_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetLeftChannels",
 			ConstructorID: 0x8341ecc0,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetLeftChannelsRequest{} },
 			Handler:       _Channels_GetLeftChannels_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Channels_GetLeftChannels_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessageAuthor",
 			ConstructorID: 0xece2a0e6,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetMessageAuthorRequest{} },
 			Handler:       _Channels_GetMessageAuthor_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UserType](response, layer, limits, _Channels_GetMessageAuthor_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessages",
 			ConstructorID: 0xad8c9a23,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetMessagesRequest{} },
 			Handler:       _Channels_GetMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Channels_GetMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetParticipant",
 			ConstructorID: 0xa0ab6cc6,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetParticipantRequest{} },
 			Handler:       _Channels_GetParticipant_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChannelsChannelParticipant](response, layer, limits, _Channels_GetParticipant_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetParticipants",
 			ConstructorID: 0x77ced9d0,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetParticipantsRequest{} },
 			Handler:       _Channels_GetParticipants_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ChannelsChannelParticipantsType](response, layer, limits, _Channels_GetParticipants_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSendAs",
 			ConstructorID: 0xe785a43f,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsGetSendAsRequest{} },
 			Handler:       _Channels_GetSendAs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChannelsSendAsPeers](response, layer, limits, _Channels_GetSendAs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InviteToChannel",
 			ConstructorID: 0xc9e33d54,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsInviteToChannelRequest{} },
 			Handler:       _Channels_InviteToChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesInvitedUsers](response, layer, limits, _Channels_InviteToChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "JoinChannel",
 			ConstructorID: 0x24b524c5,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsJoinChannelRequest{} },
 			Handler:       _Channels_JoinChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_JoinChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LeaveChannel",
 			ConstructorID: 0xf836aa95,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsLeaveChannelRequest{} },
 			Handler:       _Channels_LeaveChannel_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_LeaveChannel_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadHistory",
 			ConstructorID: 0xcc104937,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsReadHistoryRequest{} },
 			Handler:       _Channels_ReadHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_ReadHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadMessageContents",
 			ConstructorID: 0xeab5dc38,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsReadMessageContentsRequest{} },
 			Handler:       _Channels_ReadMessageContents_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_ReadMessageContents_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderPinnedForumTopics",
 			ConstructorID: 0x2950a18f,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsReorderPinnedForumTopicsRequest{} },
 			Handler:       _Channels_ReorderPinnedForumTopics_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ReorderPinnedForumTopics_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderUsernames",
 			ConstructorID: 0xb45ced1d,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsReorderUsernamesRequest{} },
 			Handler:       _Channels_ReorderUsernames_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_ReorderUsernames_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportAntiSpamFalsePositive",
 			ConstructorID: 0xa850a693,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsReportAntiSpamFalsePositiveRequest{} },
 			Handler:       _Channels_ReportAntiSpamFalsePositive_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_ReportAntiSpamFalsePositive_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportSpam",
 			ConstructorID: 0xf44a8315,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsReportSpamRequest{} },
 			Handler:       _Channels_ReportSpam_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_ReportSpam_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RestrictSponsoredMessages",
 			ConstructorID: 0x9ae91519,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsRestrictSponsoredMessagesRequest{} },
 			Handler:       _Channels_RestrictSponsoredMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_RestrictSponsoredMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchPosts",
 			ConstructorID: 0xf2c4f24d,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsSearchPostsRequest{} },
 			Handler:       _Channels_SearchPosts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Channels_SearchPosts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBoostsToUnblockRestrictions",
 			ConstructorID: 0xad399cee,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsSetBoostsToUnblockRestrictionsRequest{} },
 			Handler:       _Channels_SetBoostsToUnblockRestrictions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_SetBoostsToUnblockRestrictions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetDiscussionGroup",
 			ConstructorID: 0x40582bb2,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsSetDiscussionGroupRequest{} },
 			Handler:       _Channels_SetDiscussionGroup_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_SetDiscussionGroup_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetEmojiStickers",
 			ConstructorID: 0x3cd930b7,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsSetEmojiStickersRequest{} },
 			Handler:       _Channels_SetEmojiStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_SetEmojiStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetMainProfileTab",
 			ConstructorID: 0x3583fcb1,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsSetMainProfileTabRequest{} },
 			Handler:       _Channels_SetMainProfileTab_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_SetMainProfileTab_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetStickers",
 			ConstructorID: 0xea8ca4f9,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsSetStickersRequest{} },
 			Handler:       _Channels_SetStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_SetStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleAntiSpam",
 			ConstructorID: 0x68f3e4eb,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleAntiSpamRequest{} },
 			Handler:       _Channels_ToggleAntiSpam_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleAntiSpam_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleAutotranslation",
 			ConstructorID: 0x167fc0a1,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleAutotranslationRequest{} },
 			Handler:       _Channels_ToggleAutotranslation_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleAutotranslation_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleForum",
 			ConstructorID: 0x3ff75734,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleForumRequest{} },
 			Handler:       _Channels_ToggleForum_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleForum_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleJoinRequest",
 			ConstructorID: 0x4c2985b6,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleJoinRequestRequest{} },
 			Handler:       _Channels_ToggleJoinRequest_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleJoinRequest_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleJoinToSend",
 			ConstructorID: 0xe4cb9580,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleJoinToSendRequest{} },
 			Handler:       _Channels_ToggleJoinToSend_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleJoinToSend_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleParticipantsHidden",
 			ConstructorID: 0x6a6e7854,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleParticipantsHiddenRequest{} },
 			Handler:       _Channels_ToggleParticipantsHidden_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleParticipantsHidden_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TogglePreHistoryHidden",
 			ConstructorID: 0xeabbb94c,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsTogglePreHistoryHiddenRequest{} },
 			Handler:       _Channels_TogglePreHistoryHidden_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_TogglePreHistoryHidden_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleSignatures",
 			ConstructorID: 0x418d549c,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleSignaturesRequest{} },
 			Handler:       _Channels_ToggleSignatures_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleSignatures_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleSlowMode",
 			ConstructorID: 0xedd49ef0,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleSlowModeRequest{} },
 			Handler:       _Channels_ToggleSlowMode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleSlowMode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleUsername",
 			ConstructorID: 0x50f24105,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleUsernameRequest{} },
 			Handler:       _Channels_ToggleUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_ToggleUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleViewForumAsMessages",
 			ConstructorID: 0x9738bb15,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsToggleViewForumAsMessagesRequest{} },
 			Handler:       _Channels_ToggleViewForumAsMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_ToggleViewForumAsMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateColor",
 			ConstructorID: 0xd8aa3671,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsUpdateColorRequest{} },
 			Handler:       _Channels_UpdateColor_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_UpdateColor_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateEmojiStatus",
 			ConstructorID: 0xf0d3e6a8,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsUpdateEmojiStatusRequest{} },
 			Handler:       _Channels_UpdateEmojiStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_UpdateEmojiStatus_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdatePaidMessagesPrice",
 			ConstructorID: 0x4b12327b,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsUpdatePaidMessagesPriceRequest{} },
 			Handler:       _Channels_UpdatePaidMessagesPrice_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_UpdatePaidMessagesPrice_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdatePinnedForumTopic",
 			ConstructorID: 0x6c2d9026,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsUpdatePinnedForumTopicRequest{} },
 			Handler:       _Channels_UpdatePinnedForumTopic_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Channels_UpdatePinnedForumTopic_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateUsername",
 			ConstructorID: 0x3514b3de,
 			NewRequest:    func() tlrpc.TLObject { return &ChannelsUpdateUsernameRequest{} },
 			Handler:       _Channels_UpdateUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Channels_UpdateUsername_EncodeResponse)
+			},
 		},
 	},
 }
@@ -2464,48 +6598,198 @@ func RegisterChannelsServer(s *tlrpc.Server, srv ChannelsServer) {
 	s.RegisterService(Channels_ServiceDesc, srv)
 }
 
-func _Chatlists_CheckChatlistInvite_Handler(srv interface{}, ctx context.Context, req *ChatlistsCheckChatlistInviteRequest) (ChatlistsChatlistInviteType, error) {
-	return srv.(ChatlistsServer).CheckChatlistInvite(ctx, req)
+func _Chatlists_CheckChatlistInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsCheckChatlistInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.checkChatlistInvite: request %T is not *ChatlistsCheckChatlistInviteRequest", req)
+	}
+	return srv.(ChatlistsServer).CheckChatlistInvite(ctx, typedRequest)
 }
 
-func _Chatlists_DeleteExportedInvite_Handler(srv interface{}, ctx context.Context, req *ChatlistsDeleteExportedInviteRequest) (bool, error) {
-	return srv.(ChatlistsServer).DeleteExportedInvite(ctx, req)
+func _Chatlists_CheckChatlistInvite_EncodeResponse(e *mtproto.Encoder, response ChatlistsChatlistInviteType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed chatlists.ChatlistInvite is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Chatlists_EditExportedInvite_Handler(srv interface{}, ctx context.Context, req *ChatlistsEditExportedInviteRequest) (*ExportedChatlistInvite, error) {
-	return srv.(ChatlistsServer).EditExportedInvite(ctx, req)
+func _Chatlists_DeleteExportedInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsDeleteExportedInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.deleteExportedInvite: request %T is not *ChatlistsDeleteExportedInviteRequest", req)
+	}
+	return srv.(ChatlistsServer).DeleteExportedInvite(ctx, typedRequest)
 }
 
-func _Chatlists_ExportChatlistInvite_Handler(srv interface{}, ctx context.Context, req *ChatlistsExportChatlistInviteRequest) (*ChatlistsExportedChatlistInvite, error) {
-	return srv.(ChatlistsServer).ExportChatlistInvite(ctx, req)
+func _Chatlists_DeleteExportedInvite_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Chatlists_GetChatlistUpdates_Handler(srv interface{}, ctx context.Context, req *ChatlistsGetChatlistUpdatesRequest) (*ChatlistsChatlistUpdates, error) {
-	return srv.(ChatlistsServer).GetChatlistUpdates(ctx, req)
+func _Chatlists_EditExportedInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsEditExportedInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.editExportedInvite: request %T is not *ChatlistsEditExportedInviteRequest", req)
+	}
+	return srv.(ChatlistsServer).EditExportedInvite(ctx, typedRequest)
 }
 
-func _Chatlists_GetExportedInvites_Handler(srv interface{}, ctx context.Context, req *ChatlistsGetExportedInvitesRequest) (*ChatlistsExportedInvites, error) {
-	return srv.(ChatlistsServer).GetExportedInvites(ctx, req)
+func _Chatlists_EditExportedInvite_EncodeResponse(e *mtproto.Encoder, response *ExportedChatlistInvite) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Chatlists_GetLeaveChatlistSuggestions_Handler(srv interface{}, ctx context.Context, req *ChatlistsGetLeaveChatlistSuggestionsRequest) ([]PeerType, error) {
-	return srv.(ChatlistsServer).GetLeaveChatlistSuggestions(ctx, req)
+func _Chatlists_ExportChatlistInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsExportChatlistInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.exportChatlistInvite: request %T is not *ChatlistsExportChatlistInviteRequest", req)
+	}
+	return srv.(ChatlistsServer).ExportChatlistInvite(ctx, typedRequest)
 }
 
-func _Chatlists_HideChatlistUpdates_Handler(srv interface{}, ctx context.Context, req *ChatlistsHideChatlistUpdatesRequest) (bool, error) {
-	return srv.(ChatlistsServer).HideChatlistUpdates(ctx, req)
+func _Chatlists_ExportChatlistInvite_EncodeResponse(e *mtproto.Encoder, response *ChatlistsExportedChatlistInvite) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Chatlists_JoinChatlistInvite_Handler(srv interface{}, ctx context.Context, req *ChatlistsJoinChatlistInviteRequest) (UpdatesType, error) {
-	return srv.(ChatlistsServer).JoinChatlistInvite(ctx, req)
+func _Chatlists_GetChatlistUpdates_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsGetChatlistUpdatesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.getChatlistUpdates: request %T is not *ChatlistsGetChatlistUpdatesRequest", req)
+	}
+	return srv.(ChatlistsServer).GetChatlistUpdates(ctx, typedRequest)
 }
 
-func _Chatlists_JoinChatlistUpdates_Handler(srv interface{}, ctx context.Context, req *ChatlistsJoinChatlistUpdatesRequest) (UpdatesType, error) {
-	return srv.(ChatlistsServer).JoinChatlistUpdates(ctx, req)
+func _Chatlists_GetChatlistUpdates_EncodeResponse(e *mtproto.Encoder, response *ChatlistsChatlistUpdates) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Chatlists_LeaveChatlist_Handler(srv interface{}, ctx context.Context, req *ChatlistsLeaveChatlistRequest) (UpdatesType, error) {
-	return srv.(ChatlistsServer).LeaveChatlist(ctx, req)
+func _Chatlists_GetExportedInvites_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsGetExportedInvitesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.getExportedInvites: request %T is not *ChatlistsGetExportedInvitesRequest", req)
+	}
+	return srv.(ChatlistsServer).GetExportedInvites(ctx, typedRequest)
+}
+
+func _Chatlists_GetExportedInvites_EncodeResponse(e *mtproto.Encoder, response *ChatlistsExportedInvites) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Chatlists_GetLeaveChatlistSuggestions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsGetLeaveChatlistSuggestionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.getLeaveChatlistSuggestions: request %T is not *ChatlistsGetLeaveChatlistSuggestionsRequest", req)
+	}
+	return srv.(ChatlistsServer).GetLeaveChatlistSuggestions(ctx, typedRequest)
+}
+
+func _Chatlists_GetLeaveChatlistSuggestions_EncodeResponse(e *mtproto.Encoder, response []PeerType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed Peer is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Chatlists_HideChatlistUpdates_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsHideChatlistUpdatesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.hideChatlistUpdates: request %T is not *ChatlistsHideChatlistUpdatesRequest", req)
+	}
+	return srv.(ChatlistsServer).HideChatlistUpdates(ctx, typedRequest)
+}
+
+func _Chatlists_HideChatlistUpdates_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Chatlists_JoinChatlistInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsJoinChatlistInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.joinChatlistInvite: request %T is not *ChatlistsJoinChatlistInviteRequest", req)
+	}
+	return srv.(ChatlistsServer).JoinChatlistInvite(ctx, typedRequest)
+}
+
+func _Chatlists_JoinChatlistInvite_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Chatlists_JoinChatlistUpdates_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsJoinChatlistUpdatesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.joinChatlistUpdates: request %T is not *ChatlistsJoinChatlistUpdatesRequest", req)
+	}
+	return srv.(ChatlistsServer).JoinChatlistUpdates(ctx, typedRequest)
+}
+
+func _Chatlists_JoinChatlistUpdates_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Chatlists_LeaveChatlist_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ChatlistsLeaveChatlistRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("chatlists.leaveChatlist: request %T is not *ChatlistsLeaveChatlistRequest", req)
+	}
+	return srv.(ChatlistsServer).LeaveChatlist(ctx, typedRequest)
+}
+
+func _Chatlists_LeaveChatlist_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Chatlists_ServiceDesc is the static descriptor for the ChatlistsServer service.
@@ -2515,70 +6799,125 @@ var Chatlists_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*ChatlistsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckChatlistInvite",
 			ConstructorID: 0x41c10fff,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsCheckChatlistInviteRequest{} },
 			Handler:       _Chatlists_CheckChatlistInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ChatlistsChatlistInviteType](response, layer, limits, _Chatlists_CheckChatlistInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteExportedInvite",
 			ConstructorID: 0x719c5c5e,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsDeleteExportedInviteRequest{} },
 			Handler:       _Chatlists_DeleteExportedInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Chatlists_DeleteExportedInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditExportedInvite",
 			ConstructorID: 0x653db63d,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsEditExportedInviteRequest{} },
 			Handler:       _Chatlists_EditExportedInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ExportedChatlistInvite](response, layer, limits, _Chatlists_EditExportedInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportChatlistInvite",
 			ConstructorID: 0x8472478e,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsExportChatlistInviteRequest{} },
 			Handler:       _Chatlists_ExportChatlistInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChatlistsExportedChatlistInvite](response, layer, limits, _Chatlists_ExportChatlistInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChatlistUpdates",
 			ConstructorID: 0x89419521,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsGetChatlistUpdatesRequest{} },
 			Handler:       _Chatlists_GetChatlistUpdates_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChatlistsChatlistUpdates](response, layer, limits, _Chatlists_GetChatlistUpdates_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetExportedInvites",
 			ConstructorID: 0xce03da83,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsGetExportedInvitesRequest{} },
 			Handler:       _Chatlists_GetExportedInvites_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChatlistsExportedInvites](response, layer, limits, _Chatlists_GetExportedInvites_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetLeaveChatlistSuggestions",
 			ConstructorID: 0xfdbcd714,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsGetLeaveChatlistSuggestionsRequest{} },
 			Handler:       _Chatlists_GetLeaveChatlistSuggestions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]PeerType](response, layer, limits, _Chatlists_GetLeaveChatlistSuggestions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "HideChatlistUpdates",
 			ConstructorID: 0x66e486fb,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsHideChatlistUpdatesRequest{} },
 			Handler:       _Chatlists_HideChatlistUpdates_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Chatlists_HideChatlistUpdates_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "JoinChatlistInvite",
 			ConstructorID: 0xa6b1e39a,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsJoinChatlistInviteRequest{} },
 			Handler:       _Chatlists_JoinChatlistInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Chatlists_JoinChatlistInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "JoinChatlistUpdates",
 			ConstructorID: 0xe089f8f5,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsJoinChatlistUpdatesRequest{} },
 			Handler:       _Chatlists_JoinChatlistUpdates_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Chatlists_JoinChatlistUpdates_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LeaveChatlist",
 			ConstructorID: 0x74fae13a,
 			NewRequest:    func() tlrpc.TLObject { return &ChatlistsLeaveChatlistRequest{} },
 			Handler:       _Chatlists_LeaveChatlist_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Chatlists_LeaveChatlist_EncodeResponse)
+			},
 		},
 	},
 }
@@ -2595,112 +6934,481 @@ func RegisterChatlistsServer(s *tlrpc.Server, srv ChatlistsServer) {
 	s.RegisterService(Chatlists_ServiceDesc, srv)
 }
 
-func _Contacts_AcceptContact_Handler(srv interface{}, ctx context.Context, req *ContactsAcceptContactRequest) (UpdatesType, error) {
-	return srv.(ContactsServer).AcceptContact(ctx, req)
+func _Contacts_AcceptContact_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsAcceptContactRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.acceptContact: request %T is not *ContactsAcceptContactRequest", req)
+	}
+	return srv.(ContactsServer).AcceptContact(ctx, typedRequest)
 }
 
-func _Contacts_AddContact_Handler(srv interface{}, ctx context.Context, req *ContactsAddContactRequest) (UpdatesType, error) {
-	return srv.(ContactsServer).AddContact(ctx, req)
+func _Contacts_AcceptContact_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_Block_Handler(srv interface{}, ctx context.Context, req *ContactsBlockRequest) (bool, error) {
-	return srv.(ContactsServer).Block(ctx, req)
+func _Contacts_AddContact_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsAddContactRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.addContact: request %T is not *ContactsAddContactRequest", req)
+	}
+	return srv.(ContactsServer).AddContact(ctx, typedRequest)
 }
 
-func _Contacts_BlockFromReplies_Handler(srv interface{}, ctx context.Context, req *ContactsBlockFromRepliesRequest) (UpdatesType, error) {
-	return srv.(ContactsServer).BlockFromReplies(ctx, req)
+func _Contacts_AddContact_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_DeleteByPhones_Handler(srv interface{}, ctx context.Context, req *ContactsDeleteByPhonesRequest) (bool, error) {
-	return srv.(ContactsServer).DeleteByPhones(ctx, req)
+func _Contacts_Block_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsBlockRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.block: request %T is not *ContactsBlockRequest", req)
+	}
+	return srv.(ContactsServer).Block(ctx, typedRequest)
 }
 
-func _Contacts_DeleteContacts_Handler(srv interface{}, ctx context.Context, req *ContactsDeleteContactsRequest) (UpdatesType, error) {
-	return srv.(ContactsServer).DeleteContacts(ctx, req)
+func _Contacts_Block_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_EditCloseFriends_Handler(srv interface{}, ctx context.Context, req *ContactsEditCloseFriendsRequest) (bool, error) {
-	return srv.(ContactsServer).EditCloseFriends(ctx, req)
+func _Contacts_BlockFromReplies_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsBlockFromRepliesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.blockFromReplies: request %T is not *ContactsBlockFromRepliesRequest", req)
+	}
+	return srv.(ContactsServer).BlockFromReplies(ctx, typedRequest)
 }
 
-func _Contacts_ExportContactToken_Handler(srv interface{}, ctx context.Context, req *ContactsExportContactTokenRequest) (*ExportedContactToken, error) {
-	return srv.(ContactsServer).ExportContactToken(ctx, req)
+func _Contacts_BlockFromReplies_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_GetBirthdays_Handler(srv interface{}, ctx context.Context, req *ContactsGetBirthdaysRequest) (*ContactsContactBirthdays, error) {
-	return srv.(ContactsServer).GetBirthdays(ctx, req)
+func _Contacts_DeleteByPhones_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsDeleteByPhonesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.deleteByPhones: request %T is not *ContactsDeleteByPhonesRequest", req)
+	}
+	return srv.(ContactsServer).DeleteByPhones(ctx, typedRequest)
 }
 
-func _Contacts_GetBlocked_Handler(srv interface{}, ctx context.Context, req *ContactsGetBlockedRequest) (ContactsBlockedType, error) {
-	return srv.(ContactsServer).GetBlocked(ctx, req)
+func _Contacts_DeleteByPhones_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_GetContactIDs_Handler(srv interface{}, ctx context.Context, req *ContactsGetContactIDsRequest) ([]int32, error) {
-	return srv.(ContactsServer).GetContactIDs(ctx, req)
+func _Contacts_DeleteContacts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsDeleteContactsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.deleteContacts: request %T is not *ContactsDeleteContactsRequest", req)
+	}
+	return srv.(ContactsServer).DeleteContacts(ctx, typedRequest)
 }
 
-func _Contacts_GetContacts_Handler(srv interface{}, ctx context.Context, req *ContactsGetContactsRequest) (ContactsContactsType, error) {
-	return srv.(ContactsServer).GetContacts(ctx, req)
+func _Contacts_DeleteContacts_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_GetLocated_Handler(srv interface{}, ctx context.Context, req *ContactsGetLocatedRequest) (UpdatesType, error) {
-	return srv.(ContactsServer).GetLocated(ctx, req)
+func _Contacts_EditCloseFriends_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsEditCloseFriendsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.editCloseFriends: request %T is not *ContactsEditCloseFriendsRequest", req)
+	}
+	return srv.(ContactsServer).EditCloseFriends(ctx, typedRequest)
 }
 
-func _Contacts_GetSaved_Handler(srv interface{}, ctx context.Context, req *ContactsGetSavedRequest) ([]*SavedContact, error) {
-	return srv.(ContactsServer).GetSaved(ctx, req)
+func _Contacts_EditCloseFriends_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_GetSponsoredPeers_Handler(srv interface{}, ctx context.Context, req *ContactsGetSponsoredPeersRequest) (ContactsSponsoredPeersType, error) {
-	return srv.(ContactsServer).GetSponsoredPeers(ctx, req)
+func _Contacts_ExportContactToken_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsExportContactTokenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.exportContactToken: request %T is not *ContactsExportContactTokenRequest", req)
+	}
+	return srv.(ContactsServer).ExportContactToken(ctx, typedRequest)
 }
 
-func _Contacts_GetStatuses_Handler(srv interface{}, ctx context.Context, req *ContactsGetStatusesRequest) ([]*ContactStatus, error) {
-	return srv.(ContactsServer).GetStatuses(ctx, req)
+func _Contacts_ExportContactToken_EncodeResponse(e *mtproto.Encoder, response *ExportedContactToken) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_GetTopPeers_Handler(srv interface{}, ctx context.Context, req *ContactsGetTopPeersRequest) (ContactsTopPeersType, error) {
-	return srv.(ContactsServer).GetTopPeers(ctx, req)
+func _Contacts_GetBirthdays_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetBirthdaysRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getBirthdays: request %T is not *ContactsGetBirthdaysRequest", req)
+	}
+	return srv.(ContactsServer).GetBirthdays(ctx, typedRequest)
 }
 
-func _Contacts_ImportContactToken_Handler(srv interface{}, ctx context.Context, req *ContactsImportContactTokenRequest) (UserType, error) {
-	return srv.(ContactsServer).ImportContactToken(ctx, req)
+func _Contacts_GetBirthdays_EncodeResponse(e *mtproto.Encoder, response *ContactsContactBirthdays) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_ImportContacts_Handler(srv interface{}, ctx context.Context, req *ContactsImportContactsRequest) (*ContactsImportedContacts, error) {
-	return srv.(ContactsServer).ImportContacts(ctx, req)
+func _Contacts_GetBlocked_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetBlockedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getBlocked: request %T is not *ContactsGetBlockedRequest", req)
+	}
+	return srv.(ContactsServer).GetBlocked(ctx, typedRequest)
 }
 
-func _Contacts_ResetSaved_Handler(srv interface{}, ctx context.Context, req *ContactsResetSavedRequest) (bool, error) {
-	return srv.(ContactsServer).ResetSaved(ctx, req)
+func _Contacts_GetBlocked_EncodeResponse(e *mtproto.Encoder, response ContactsBlockedType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed contacts.Blocked is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_ResetTopPeerRating_Handler(srv interface{}, ctx context.Context, req *ContactsResetTopPeerRatingRequest) (bool, error) {
-	return srv.(ContactsServer).ResetTopPeerRating(ctx, req)
+func _Contacts_GetContactIDs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetContactIDsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getContactIDs: request %T is not *ContactsGetContactIDsRequest", req)
+	}
+	return srv.(ContactsServer).GetContactIDs(ctx, typedRequest)
 }
 
-func _Contacts_ResolvePhone_Handler(srv interface{}, ctx context.Context, req *ContactsResolvePhoneRequest) (*ContactsResolvedPeer, error) {
-	return srv.(ContactsServer).ResolvePhone(ctx, req)
+func _Contacts_GetContactIDs_EncodeResponse(e *mtproto.Encoder, response []int32) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt32(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_ResolveUsername_Handler(srv interface{}, ctx context.Context, req *ContactsResolveUsernameRequest) (*ContactsResolvedPeer, error) {
-	return srv.(ContactsServer).ResolveUsername(ctx, req)
+func _Contacts_GetContacts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetContactsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getContacts: request %T is not *ContactsGetContactsRequest", req)
+	}
+	return srv.(ContactsServer).GetContacts(ctx, typedRequest)
 }
 
-func _Contacts_Search_Handler(srv interface{}, ctx context.Context, req *ContactsSearchRequest) (*ContactsFound, error) {
-	return srv.(ContactsServer).Search(ctx, req)
+func _Contacts_GetContacts_EncodeResponse(e *mtproto.Encoder, response ContactsContactsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed contacts.Contacts is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_SetBlocked_Handler(srv interface{}, ctx context.Context, req *ContactsSetBlockedRequest) (bool, error) {
-	return srv.(ContactsServer).SetBlocked(ctx, req)
+func _Contacts_GetLocated_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetLocatedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getLocated: request %T is not *ContactsGetLocatedRequest", req)
+	}
+	return srv.(ContactsServer).GetLocated(ctx, typedRequest)
 }
 
-func _Contacts_ToggleTopPeers_Handler(srv interface{}, ctx context.Context, req *ContactsToggleTopPeersRequest) (bool, error) {
-	return srv.(ContactsServer).ToggleTopPeers(ctx, req)
+func _Contacts_GetLocated_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Contacts_Unblock_Handler(srv interface{}, ctx context.Context, req *ContactsUnblockRequest) (bool, error) {
-	return srv.(ContactsServer).Unblock(ctx, req)
+func _Contacts_GetSaved_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetSavedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getSaved: request %T is not *ContactsGetSavedRequest", req)
+	}
+	return srv.(ContactsServer).GetSaved(ctx, typedRequest)
+}
+
+func _Contacts_GetSaved_EncodeResponse(e *mtproto.Encoder, response []*SavedContact) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_GetSponsoredPeers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetSponsoredPeersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getSponsoredPeers: request %T is not *ContactsGetSponsoredPeersRequest", req)
+	}
+	return srv.(ContactsServer).GetSponsoredPeers(ctx, typedRequest)
+}
+
+func _Contacts_GetSponsoredPeers_EncodeResponse(e *mtproto.Encoder, response ContactsSponsoredPeersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed contacts.SponsoredPeers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_GetStatuses_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetStatusesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getStatuses: request %T is not *ContactsGetStatusesRequest", req)
+	}
+	return srv.(ContactsServer).GetStatuses(ctx, typedRequest)
+}
+
+func _Contacts_GetStatuses_EncodeResponse(e *mtproto.Encoder, response []*ContactStatus) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_GetTopPeers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsGetTopPeersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.getTopPeers: request %T is not *ContactsGetTopPeersRequest", req)
+	}
+	return srv.(ContactsServer).GetTopPeers(ctx, typedRequest)
+}
+
+func _Contacts_GetTopPeers_EncodeResponse(e *mtproto.Encoder, response ContactsTopPeersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed contacts.TopPeers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ImportContactToken_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsImportContactTokenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.importContactToken: request %T is not *ContactsImportContactTokenRequest", req)
+	}
+	return srv.(ContactsServer).ImportContactToken(ctx, typedRequest)
+}
+
+func _Contacts_ImportContactToken_EncodeResponse(e *mtproto.Encoder, response UserType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed User is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ImportContacts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsImportContactsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.importContacts: request %T is not *ContactsImportContactsRequest", req)
+	}
+	return srv.(ContactsServer).ImportContacts(ctx, typedRequest)
+}
+
+func _Contacts_ImportContacts_EncodeResponse(e *mtproto.Encoder, response *ContactsImportedContacts) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ResetSaved_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsResetSavedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.resetSaved: request %T is not *ContactsResetSavedRequest", req)
+	}
+	return srv.(ContactsServer).ResetSaved(ctx, typedRequest)
+}
+
+func _Contacts_ResetSaved_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ResetTopPeerRating_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsResetTopPeerRatingRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.resetTopPeerRating: request %T is not *ContactsResetTopPeerRatingRequest", req)
+	}
+	return srv.(ContactsServer).ResetTopPeerRating(ctx, typedRequest)
+}
+
+func _Contacts_ResetTopPeerRating_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ResolvePhone_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsResolvePhoneRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.resolvePhone: request %T is not *ContactsResolvePhoneRequest", req)
+	}
+	return srv.(ContactsServer).ResolvePhone(ctx, typedRequest)
+}
+
+func _Contacts_ResolvePhone_EncodeResponse(e *mtproto.Encoder, response *ContactsResolvedPeer) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ResolveUsername_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsResolveUsernameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.resolveUsername: request %T is not *ContactsResolveUsernameRequest", req)
+	}
+	return srv.(ContactsServer).ResolveUsername(ctx, typedRequest)
+}
+
+func _Contacts_ResolveUsername_EncodeResponse(e *mtproto.Encoder, response *ContactsResolvedPeer) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_Search_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsSearchRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.search: request %T is not *ContactsSearchRequest", req)
+	}
+	return srv.(ContactsServer).Search(ctx, typedRequest)
+}
+
+func _Contacts_Search_EncodeResponse(e *mtproto.Encoder, response *ContactsFound) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_SetBlocked_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsSetBlockedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.setBlocked: request %T is not *ContactsSetBlockedRequest", req)
+	}
+	return srv.(ContactsServer).SetBlocked(ctx, typedRequest)
+}
+
+func _Contacts_SetBlocked_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_ToggleTopPeers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsToggleTopPeersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.toggleTopPeers: request %T is not *ContactsToggleTopPeersRequest", req)
+	}
+	return srv.(ContactsServer).ToggleTopPeers(ctx, typedRequest)
+}
+
+func _Contacts_ToggleTopPeers_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Contacts_Unblock_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*ContactsUnblockRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("contacts.unblock: request %T is not *ContactsUnblockRequest", req)
+	}
+	return srv.(ContactsServer).Unblock(ctx, typedRequest)
+}
+
+func _Contacts_Unblock_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Contacts_ServiceDesc is the static descriptor for the ContactsServer service.
@@ -2710,166 +7418,301 @@ var Contacts_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*ContactsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptContact",
 			ConstructorID: 0xf831a20f,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsAcceptContactRequest{} },
 			Handler:       _Contacts_AcceptContact_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Contacts_AcceptContact_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AddContact",
 			ConstructorID: 0xe8f463d0,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsAddContactRequest{} },
 			Handler:       _Contacts_AddContact_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Contacts_AddContact_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Block",
 			ConstructorID: 0x2e2e8734,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsBlockRequest{} },
 			Handler:       _Contacts_Block_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_Block_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "BlockFromReplies",
 			ConstructorID: 0x29a8962c,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsBlockFromRepliesRequest{} },
 			Handler:       _Contacts_BlockFromReplies_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Contacts_BlockFromReplies_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteByPhones",
 			ConstructorID: 0x1013fd9e,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsDeleteByPhonesRequest{} },
 			Handler:       _Contacts_DeleteByPhones_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_DeleteByPhones_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteContacts",
 			ConstructorID: 0x096a0e00,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsDeleteContactsRequest{} },
 			Handler:       _Contacts_DeleteContacts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Contacts_DeleteContacts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditCloseFriends",
 			ConstructorID: 0xba6705f0,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsEditCloseFriendsRequest{} },
 			Handler:       _Contacts_EditCloseFriends_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_EditCloseFriends_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportContactToken",
 			ConstructorID: 0xf8654027,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsExportContactTokenRequest{} },
 			Handler:       _Contacts_ExportContactToken_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ExportedContactToken](response, layer, limits, _Contacts_ExportContactToken_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBirthdays",
 			ConstructorID: 0xdaeda864,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetBirthdaysRequest{} },
 			Handler:       _Contacts_GetBirthdays_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ContactsContactBirthdays](response, layer, limits, _Contacts_GetBirthdays_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBlocked",
 			ConstructorID: 0x9a868f80,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetBlockedRequest{} },
 			Handler:       _Contacts_GetBlocked_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ContactsBlockedType](response, layer, limits, _Contacts_GetBlocked_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetContactIDs",
 			ConstructorID: 0x7adc669d,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetContactIDsRequest{} },
 			Handler:       _Contacts_GetContactIDs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int32](response, layer, limits, _Contacts_GetContactIDs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetContacts",
 			ConstructorID: 0x5dd69e12,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetContactsRequest{} },
 			Handler:       _Contacts_GetContacts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ContactsContactsType](response, layer, limits, _Contacts_GetContacts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetLocated",
 			ConstructorID: 0xd348bc44,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetLocatedRequest{} },
 			Handler:       _Contacts_GetLocated_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Contacts_GetLocated_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSaved",
 			ConstructorID: 0x82f1e39f,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetSavedRequest{} },
 			Handler:       _Contacts_GetSaved_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*SavedContact](response, layer, limits, _Contacts_GetSaved_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSponsoredPeers",
 			ConstructorID: 0xb6c8c393,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetSponsoredPeersRequest{} },
 			Handler:       _Contacts_GetSponsoredPeers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ContactsSponsoredPeersType](response, layer, limits, _Contacts_GetSponsoredPeers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStatuses",
 			ConstructorID: 0xc4a353ee,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetStatusesRequest{} },
 			Handler:       _Contacts_GetStatuses_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*ContactStatus](response, layer, limits, _Contacts_GetStatuses_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetTopPeers",
 			ConstructorID: 0x973478b6,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsGetTopPeersRequest{} },
 			Handler:       _Contacts_GetTopPeers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ContactsTopPeersType](response, layer, limits, _Contacts_GetTopPeers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportContactToken",
 			ConstructorID: 0x13005788,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsImportContactTokenRequest{} },
 			Handler:       _Contacts_ImportContactToken_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UserType](response, layer, limits, _Contacts_ImportContactToken_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportContacts",
 			ConstructorID: 0x2c800be5,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsImportContactsRequest{} },
 			Handler:       _Contacts_ImportContacts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ContactsImportedContacts](response, layer, limits, _Contacts_ImportContacts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetSaved",
 			ConstructorID: 0x879537f1,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsResetSavedRequest{} },
 			Handler:       _Contacts_ResetSaved_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_ResetSaved_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResetTopPeerRating",
 			ConstructorID: 0x1ae373ac,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsResetTopPeerRatingRequest{} },
 			Handler:       _Contacts_ResetTopPeerRating_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_ResetTopPeerRating_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResolvePhone",
 			ConstructorID: 0x8af94344,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsResolvePhoneRequest{} },
 			Handler:       _Contacts_ResolvePhone_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ContactsResolvedPeer](response, layer, limits, _Contacts_ResolvePhone_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ResolveUsername",
 			ConstructorID: 0x725afbbc,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsResolveUsernameRequest{} },
 			Handler:       _Contacts_ResolveUsername_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ContactsResolvedPeer](response, layer, limits, _Contacts_ResolveUsername_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Search",
 			ConstructorID: 0x11f812d8,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsSearchRequest{} },
 			Handler:       _Contacts_Search_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ContactsFound](response, layer, limits, _Contacts_Search_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBlocked",
 			ConstructorID: 0x94c65c76,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsSetBlockedRequest{} },
 			Handler:       _Contacts_SetBlocked_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_SetBlocked_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleTopPeers",
 			ConstructorID: 0x8514bdda,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsToggleTopPeersRequest{} },
 			Handler:       _Contacts_ToggleTopPeers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_ToggleTopPeers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Unblock",
 			ConstructorID: 0xb550d328,
 			NewRequest:    func() tlrpc.TLObject { return &ContactsUnblockRequest{} },
 			Handler:       _Contacts_Unblock_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Contacts_Unblock_EncodeResponse)
+			},
 		},
 	},
 }
@@ -2886,8 +7729,22 @@ func RegisterContactsServer(s *tlrpc.Server, srv ContactsServer) {
 	s.RegisterService(Contacts_ServiceDesc, srv)
 }
 
-func _Folders_EditPeerFolders_Handler(srv interface{}, ctx context.Context, req *FoldersEditPeerFoldersRequest) (UpdatesType, error) {
-	return srv.(FoldersServer).EditPeerFolders(ctx, req)
+func _Folders_EditPeerFolders_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*FoldersEditPeerFoldersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("folders.editPeerFolders: request %T is not *FoldersEditPeerFoldersRequest", req)
+	}
+	return srv.(FoldersServer).EditPeerFolders(ctx, typedRequest)
+}
+
+func _Folders_EditPeerFolders_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Folders_ServiceDesc is the static descriptor for the FoldersServer service.
@@ -2897,10 +7754,15 @@ var Folders_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*FoldersServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditPeerFolders",
 			ConstructorID: 0x6847d0ab,
 			NewRequest:    func() tlrpc.TLObject { return &FoldersEditPeerFoldersRequest{} },
 			Handler:       _Folders_EditPeerFolders_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Folders_EditPeerFolders_EncodeResponse)
+			},
 		},
 	},
 }
@@ -2917,8 +7779,19 @@ func RegisterFoldersServer(s *tlrpc.Server, srv FoldersServer) {
 	s.RegisterService(Folders_ServiceDesc, srv)
 }
 
-func _Fragment_GetCollectibleInfo_Handler(srv interface{}, ctx context.Context, req *FragmentGetCollectibleInfoRequest) (*FragmentCollectibleInfo, error) {
-	return srv.(FragmentServer).GetCollectibleInfo(ctx, req)
+func _Fragment_GetCollectibleInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*FragmentGetCollectibleInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("fragment.getCollectibleInfo: request %T is not *FragmentGetCollectibleInfoRequest", req)
+	}
+	return srv.(FragmentServer).GetCollectibleInfo(ctx, typedRequest)
+}
+
+func _Fragment_GetCollectibleInfo_EncodeResponse(e *mtproto.Encoder, response *FragmentCollectibleInfo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Fragment_ServiceDesc is the static descriptor for the FragmentServer service.
@@ -2928,10 +7801,15 @@ var Fragment_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*FragmentServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCollectibleInfo",
 			ConstructorID: 0xbe1e85ba,
 			NewRequest:    func() tlrpc.TLObject { return &FragmentGetCollectibleInfoRequest{} },
 			Handler:       _Fragment_GetCollectibleInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*FragmentCollectibleInfo](response, layer, limits, _Fragment_GetCollectibleInfo_EncodeResponse)
+			},
 		},
 	},
 }
@@ -2948,104 +7826,415 @@ func RegisterFragmentServer(s *tlrpc.Server, srv FragmentServer) {
 	s.RegisterService(Fragment_ServiceDesc, srv)
 }
 
-func _Help_AcceptTermsOfService_Handler(srv interface{}, ctx context.Context, req *HelpAcceptTermsOfServiceRequest) (bool, error) {
-	return srv.(HelpServer).AcceptTermsOfService(ctx, req)
+func _Help_AcceptTermsOfService_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpAcceptTermsOfServiceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.acceptTermsOfService: request %T is not *HelpAcceptTermsOfServiceRequest", req)
+	}
+	return srv.(HelpServer).AcceptTermsOfService(ctx, typedRequest)
 }
 
-func _Help_DismissSuggestion_Handler(srv interface{}, ctx context.Context, req *HelpDismissSuggestionRequest) (bool, error) {
-	return srv.(HelpServer).DismissSuggestion(ctx, req)
+func _Help_AcceptTermsOfService_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_EditUserInfo_Handler(srv interface{}, ctx context.Context, req *HelpEditUserInfoRequest) (HelpUserInfoType, error) {
-	return srv.(HelpServer).EditUserInfo(ctx, req)
+func _Help_DismissSuggestion_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpDismissSuggestionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.dismissSuggestion: request %T is not *HelpDismissSuggestionRequest", req)
+	}
+	return srv.(HelpServer).DismissSuggestion(ctx, typedRequest)
 }
 
-func _Help_GetAppConfig_Handler(srv interface{}, ctx context.Context, req *HelpGetAppConfigRequest) (HelpAppConfigType, error) {
-	return srv.(HelpServer).GetAppConfig(ctx, req)
+func _Help_DismissSuggestion_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetAppUpdate_Handler(srv interface{}, ctx context.Context, req *HelpGetAppUpdateRequest) (HelpAppUpdateType, error) {
-	return srv.(HelpServer).GetAppUpdate(ctx, req)
+func _Help_EditUserInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpEditUserInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.editUserInfo: request %T is not *HelpEditUserInfoRequest", req)
+	}
+	return srv.(HelpServer).EditUserInfo(ctx, typedRequest)
 }
 
-func _Help_GetCdnConfig_Handler(srv interface{}, ctx context.Context, req *HelpGetCdnConfigRequest) (*CdnConfig, error) {
-	return srv.(HelpServer).GetCdnConfig(ctx, req)
+func _Help_EditUserInfo_EncodeResponse(e *mtproto.Encoder, response HelpUserInfoType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.UserInfo is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetConfig_Handler(srv interface{}, ctx context.Context, req *HelpGetConfigRequest) (*Config, error) {
-	return srv.(HelpServer).GetConfig(ctx, req)
+func _Help_GetAppConfig_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetAppConfigRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getAppConfig: request %T is not *HelpGetAppConfigRequest", req)
+	}
+	return srv.(HelpServer).GetAppConfig(ctx, typedRequest)
 }
 
-func _Help_GetCountriesList_Handler(srv interface{}, ctx context.Context, req *HelpGetCountriesListRequest) (HelpCountriesListType, error) {
-	return srv.(HelpServer).GetCountriesList(ctx, req)
+func _Help_GetAppConfig_EncodeResponse(e *mtproto.Encoder, response HelpAppConfigType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.AppConfig is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetDeepLinkInfo_Handler(srv interface{}, ctx context.Context, req *HelpGetDeepLinkInfoRequest) (HelpDeepLinkInfoType, error) {
-	return srv.(HelpServer).GetDeepLinkInfo(ctx, req)
+func _Help_GetAppUpdate_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetAppUpdateRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getAppUpdate: request %T is not *HelpGetAppUpdateRequest", req)
+	}
+	return srv.(HelpServer).GetAppUpdate(ctx, typedRequest)
 }
 
-func _Help_GetInviteText_Handler(srv interface{}, ctx context.Context, req *HelpGetInviteTextRequest) (*HelpInviteText, error) {
-	return srv.(HelpServer).GetInviteText(ctx, req)
+func _Help_GetAppUpdate_EncodeResponse(e *mtproto.Encoder, response HelpAppUpdateType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.AppUpdate is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetNearestDc_Handler(srv interface{}, ctx context.Context, req *HelpGetNearestDcRequest) (*NearestDc, error) {
-	return srv.(HelpServer).GetNearestDc(ctx, req)
+func _Help_GetCdnConfig_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetCdnConfigRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getCdnConfig: request %T is not *HelpGetCdnConfigRequest", req)
+	}
+	return srv.(HelpServer).GetCdnConfig(ctx, typedRequest)
 }
 
-func _Help_GetPassportConfig_Handler(srv interface{}, ctx context.Context, req *HelpGetPassportConfigRequest) (HelpPassportConfigType, error) {
-	return srv.(HelpServer).GetPassportConfig(ctx, req)
+func _Help_GetCdnConfig_EncodeResponse(e *mtproto.Encoder, response *CdnConfig) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetPeerColors_Handler(srv interface{}, ctx context.Context, req *HelpGetPeerColorsRequest) (HelpPeerColorsType, error) {
-	return srv.(HelpServer).GetPeerColors(ctx, req)
+func _Help_GetConfig_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetConfigRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getConfig: request %T is not *HelpGetConfigRequest", req)
+	}
+	return srv.(HelpServer).GetConfig(ctx, typedRequest)
 }
 
-func _Help_GetPeerProfileColors_Handler(srv interface{}, ctx context.Context, req *HelpGetPeerProfileColorsRequest) (HelpPeerColorsType, error) {
-	return srv.(HelpServer).GetPeerProfileColors(ctx, req)
+func _Help_GetConfig_EncodeResponse(e *mtproto.Encoder, response *Config) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetPremiumPromo_Handler(srv interface{}, ctx context.Context, req *HelpGetPremiumPromoRequest) (*HelpPremiumPromo, error) {
-	return srv.(HelpServer).GetPremiumPromo(ctx, req)
+func _Help_GetCountriesList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetCountriesListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getCountriesList: request %T is not *HelpGetCountriesListRequest", req)
+	}
+	return srv.(HelpServer).GetCountriesList(ctx, typedRequest)
 }
 
-func _Help_GetPromoData_Handler(srv interface{}, ctx context.Context, req *HelpGetPromoDataRequest) (HelpPromoDataType, error) {
-	return srv.(HelpServer).GetPromoData(ctx, req)
+func _Help_GetCountriesList_EncodeResponse(e *mtproto.Encoder, response HelpCountriesListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.CountriesList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetRecentMeUrls_Handler(srv interface{}, ctx context.Context, req *HelpGetRecentMeUrlsRequest) (*HelpRecentMeUrls, error) {
-	return srv.(HelpServer).GetRecentMeUrls(ctx, req)
+func _Help_GetDeepLinkInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetDeepLinkInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getDeepLinkInfo: request %T is not *HelpGetDeepLinkInfoRequest", req)
+	}
+	return srv.(HelpServer).GetDeepLinkInfo(ctx, typedRequest)
 }
 
-func _Help_GetSupport_Handler(srv interface{}, ctx context.Context, req *HelpGetSupportRequest) (*HelpSupport, error) {
-	return srv.(HelpServer).GetSupport(ctx, req)
+func _Help_GetDeepLinkInfo_EncodeResponse(e *mtproto.Encoder, response HelpDeepLinkInfoType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.DeepLinkInfo is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetSupportName_Handler(srv interface{}, ctx context.Context, req *HelpGetSupportNameRequest) (*HelpSupportName, error) {
-	return srv.(HelpServer).GetSupportName(ctx, req)
+func _Help_GetInviteText_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetInviteTextRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getInviteText: request %T is not *HelpGetInviteTextRequest", req)
+	}
+	return srv.(HelpServer).GetInviteText(ctx, typedRequest)
 }
 
-func _Help_GetTermsOfServiceUpdate_Handler(srv interface{}, ctx context.Context, req *HelpGetTermsOfServiceUpdateRequest) (HelpTermsOfServiceUpdateType, error) {
-	return srv.(HelpServer).GetTermsOfServiceUpdate(ctx, req)
+func _Help_GetInviteText_EncodeResponse(e *mtproto.Encoder, response *HelpInviteText) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_GetTimezonesList_Handler(srv interface{}, ctx context.Context, req *HelpGetTimezonesListRequest) (HelpTimezonesListType, error) {
-	return srv.(HelpServer).GetTimezonesList(ctx, req)
+func _Help_GetNearestDc_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetNearestDcRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getNearestDc: request %T is not *HelpGetNearestDcRequest", req)
+	}
+	return srv.(HelpServer).GetNearestDc(ctx, typedRequest)
 }
 
-func _Help_GetUserInfo_Handler(srv interface{}, ctx context.Context, req *HelpGetUserInfoRequest) (HelpUserInfoType, error) {
-	return srv.(HelpServer).GetUserInfo(ctx, req)
+func _Help_GetNearestDc_EncodeResponse(e *mtproto.Encoder, response *NearestDc) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_HidePromoData_Handler(srv interface{}, ctx context.Context, req *HelpHidePromoDataRequest) (bool, error) {
-	return srv.(HelpServer).HidePromoData(ctx, req)
+func _Help_GetPassportConfig_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetPassportConfigRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getPassportConfig: request %T is not *HelpGetPassportConfigRequest", req)
+	}
+	return srv.(HelpServer).GetPassportConfig(ctx, typedRequest)
 }
 
-func _Help_SaveAppLog_Handler(srv interface{}, ctx context.Context, req *HelpSaveAppLogRequest) (bool, error) {
-	return srv.(HelpServer).SaveAppLog(ctx, req)
+func _Help_GetPassportConfig_EncodeResponse(e *mtproto.Encoder, response HelpPassportConfigType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.PassportConfig is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Help_SetBotUpdatesStatus_Handler(srv interface{}, ctx context.Context, req *HelpSetBotUpdatesStatusRequest) (bool, error) {
-	return srv.(HelpServer).SetBotUpdatesStatus(ctx, req)
+func _Help_GetPeerColors_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetPeerColorsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getPeerColors: request %T is not *HelpGetPeerColorsRequest", req)
+	}
+	return srv.(HelpServer).GetPeerColors(ctx, typedRequest)
+}
+
+func _Help_GetPeerColors_EncodeResponse(e *mtproto.Encoder, response HelpPeerColorsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.PeerColors is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetPeerProfileColors_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetPeerProfileColorsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getPeerProfileColors: request %T is not *HelpGetPeerProfileColorsRequest", req)
+	}
+	return srv.(HelpServer).GetPeerProfileColors(ctx, typedRequest)
+}
+
+func _Help_GetPeerProfileColors_EncodeResponse(e *mtproto.Encoder, response HelpPeerColorsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.PeerColors is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetPremiumPromo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetPremiumPromoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getPremiumPromo: request %T is not *HelpGetPremiumPromoRequest", req)
+	}
+	return srv.(HelpServer).GetPremiumPromo(ctx, typedRequest)
+}
+
+func _Help_GetPremiumPromo_EncodeResponse(e *mtproto.Encoder, response *HelpPremiumPromo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetPromoData_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetPromoDataRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getPromoData: request %T is not *HelpGetPromoDataRequest", req)
+	}
+	return srv.(HelpServer).GetPromoData(ctx, typedRequest)
+}
+
+func _Help_GetPromoData_EncodeResponse(e *mtproto.Encoder, response HelpPromoDataType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.PromoData is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetRecentMeUrls_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetRecentMeUrlsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getRecentMeUrls: request %T is not *HelpGetRecentMeUrlsRequest", req)
+	}
+	return srv.(HelpServer).GetRecentMeUrls(ctx, typedRequest)
+}
+
+func _Help_GetRecentMeUrls_EncodeResponse(e *mtproto.Encoder, response *HelpRecentMeUrls) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetSupport_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetSupportRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getSupport: request %T is not *HelpGetSupportRequest", req)
+	}
+	return srv.(HelpServer).GetSupport(ctx, typedRequest)
+}
+
+func _Help_GetSupport_EncodeResponse(e *mtproto.Encoder, response *HelpSupport) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetSupportName_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetSupportNameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getSupportName: request %T is not *HelpGetSupportNameRequest", req)
+	}
+	return srv.(HelpServer).GetSupportName(ctx, typedRequest)
+}
+
+func _Help_GetSupportName_EncodeResponse(e *mtproto.Encoder, response *HelpSupportName) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetTermsOfServiceUpdate_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetTermsOfServiceUpdateRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getTermsOfServiceUpdate: request %T is not *HelpGetTermsOfServiceUpdateRequest", req)
+	}
+	return srv.(HelpServer).GetTermsOfServiceUpdate(ctx, typedRequest)
+}
+
+func _Help_GetTermsOfServiceUpdate_EncodeResponse(e *mtproto.Encoder, response HelpTermsOfServiceUpdateType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.TermsOfServiceUpdate is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetTimezonesList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetTimezonesListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getTimezonesList: request %T is not *HelpGetTimezonesListRequest", req)
+	}
+	return srv.(HelpServer).GetTimezonesList(ctx, typedRequest)
+}
+
+func _Help_GetTimezonesList_EncodeResponse(e *mtproto.Encoder, response HelpTimezonesListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.TimezonesList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_GetUserInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpGetUserInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.getUserInfo: request %T is not *HelpGetUserInfoRequest", req)
+	}
+	return srv.(HelpServer).GetUserInfo(ctx, typedRequest)
+}
+
+func _Help_GetUserInfo_EncodeResponse(e *mtproto.Encoder, response HelpUserInfoType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed help.UserInfo is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_HidePromoData_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpHidePromoDataRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.hidePromoData: request %T is not *HelpHidePromoDataRequest", req)
+	}
+	return srv.(HelpServer).HidePromoData(ctx, typedRequest)
+}
+
+func _Help_HidePromoData_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_SaveAppLog_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpSaveAppLogRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.saveAppLog: request %T is not *HelpSaveAppLogRequest", req)
+	}
+	return srv.(HelpServer).SaveAppLog(ctx, typedRequest)
+}
+
+func _Help_SaveAppLog_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Help_SetBotUpdatesStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*HelpSetBotUpdatesStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("help.setBotUpdatesStatus: request %T is not *HelpSetBotUpdatesStatusRequest", req)
+	}
+	return srv.(HelpServer).SetBotUpdatesStatus(ctx, typedRequest)
+}
+
+func _Help_SetBotUpdatesStatus_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Help_ServiceDesc is the static descriptor for the HelpServer service.
@@ -3055,154 +8244,279 @@ var Help_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*HelpServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptTermsOfService",
 			ConstructorID: 0xee72f79a,
 			NewRequest:    func() tlrpc.TLObject { return &HelpAcceptTermsOfServiceRequest{} },
 			Handler:       _Help_AcceptTermsOfService_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Help_AcceptTermsOfService_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DismissSuggestion",
 			ConstructorID: 0xf50dbaa1,
 			NewRequest:    func() tlrpc.TLObject { return &HelpDismissSuggestionRequest{} },
 			Handler:       _Help_DismissSuggestion_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Help_DismissSuggestion_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditUserInfo",
 			ConstructorID: 0x66b91b70,
 			NewRequest:    func() tlrpc.TLObject { return &HelpEditUserInfoRequest{} },
 			Handler:       _Help_EditUserInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpUserInfoType](response, layer, limits, _Help_EditUserInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAppConfig",
 			ConstructorID: 0x61e3f854,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetAppConfigRequest{} },
 			Handler:       _Help_GetAppConfig_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpAppConfigType](response, layer, limits, _Help_GetAppConfig_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAppUpdate",
 			ConstructorID: 0x522d5a7d,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetAppUpdateRequest{} },
 			Handler:       _Help_GetAppUpdate_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpAppUpdateType](response, layer, limits, _Help_GetAppUpdate_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCdnConfig",
 			ConstructorID: 0x52029342,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetCdnConfigRequest{} },
 			Handler:       _Help_GetCdnConfig_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*CdnConfig](response, layer, limits, _Help_GetCdnConfig_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetConfig",
 			ConstructorID: 0xc4f9186b,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetConfigRequest{} },
 			Handler:       _Help_GetConfig_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*Config](response, layer, limits, _Help_GetConfig_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCountriesList",
 			ConstructorID: 0x735787a8,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetCountriesListRequest{} },
 			Handler:       _Help_GetCountriesList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpCountriesListType](response, layer, limits, _Help_GetCountriesList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDeepLinkInfo",
 			ConstructorID: 0x3fedc75f,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetDeepLinkInfoRequest{} },
 			Handler:       _Help_GetDeepLinkInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpDeepLinkInfoType](response, layer, limits, _Help_GetDeepLinkInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetInviteText",
 			ConstructorID: 0x4d392343,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetInviteTextRequest{} },
 			Handler:       _Help_GetInviteText_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*HelpInviteText](response, layer, limits, _Help_GetInviteText_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetNearestDc",
 			ConstructorID: 0x1fb33026,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetNearestDcRequest{} },
 			Handler:       _Help_GetNearestDc_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*NearestDc](response, layer, limits, _Help_GetNearestDc_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPassportConfig",
 			ConstructorID: 0xc661ad08,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetPassportConfigRequest{} },
 			Handler:       _Help_GetPassportConfig_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpPassportConfigType](response, layer, limits, _Help_GetPassportConfig_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPeerColors",
 			ConstructorID: 0xda80f42f,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetPeerColorsRequest{} },
 			Handler:       _Help_GetPeerColors_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpPeerColorsType](response, layer, limits, _Help_GetPeerColors_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPeerProfileColors",
 			ConstructorID: 0xabcfa9fd,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetPeerProfileColorsRequest{} },
 			Handler:       _Help_GetPeerProfileColors_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpPeerColorsType](response, layer, limits, _Help_GetPeerProfileColors_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPremiumPromo",
 			ConstructorID: 0xb81b93d4,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetPremiumPromoRequest{} },
 			Handler:       _Help_GetPremiumPromo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*HelpPremiumPromo](response, layer, limits, _Help_GetPremiumPromo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPromoData",
 			ConstructorID: 0xc0977421,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetPromoDataRequest{} },
 			Handler:       _Help_GetPromoData_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpPromoDataType](response, layer, limits, _Help_GetPromoData_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetRecentMeUrls",
 			ConstructorID: 0x3dc0f114,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetRecentMeUrlsRequest{} },
 			Handler:       _Help_GetRecentMeUrls_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*HelpRecentMeUrls](response, layer, limits, _Help_GetRecentMeUrls_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSupport",
 			ConstructorID: 0x9cdf08cd,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetSupportRequest{} },
 			Handler:       _Help_GetSupport_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*HelpSupport](response, layer, limits, _Help_GetSupport_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSupportName",
 			ConstructorID: 0xd360e72c,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetSupportNameRequest{} },
 			Handler:       _Help_GetSupportName_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*HelpSupportName](response, layer, limits, _Help_GetSupportName_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetTermsOfServiceUpdate",
 			ConstructorID: 0x2ca51fd1,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetTermsOfServiceUpdateRequest{} },
 			Handler:       _Help_GetTermsOfServiceUpdate_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpTermsOfServiceUpdateType](response, layer, limits, _Help_GetTermsOfServiceUpdate_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetTimezonesList",
 			ConstructorID: 0x49b30240,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetTimezonesListRequest{} },
 			Handler:       _Help_GetTimezonesList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpTimezonesListType](response, layer, limits, _Help_GetTimezonesList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUserInfo",
 			ConstructorID: 0x038a08d3,
 			NewRequest:    func() tlrpc.TLObject { return &HelpGetUserInfoRequest{} },
 			Handler:       _Help_GetUserInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[HelpUserInfoType](response, layer, limits, _Help_GetUserInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "HidePromoData",
 			ConstructorID: 0x1e251c95,
 			NewRequest:    func() tlrpc.TLObject { return &HelpHidePromoDataRequest{} },
 			Handler:       _Help_HidePromoData_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Help_HidePromoData_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveAppLog",
 			ConstructorID: 0x6f02f748,
 			NewRequest:    func() tlrpc.TLObject { return &HelpSaveAppLogRequest{} },
 			Handler:       _Help_SaveAppLog_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Help_SaveAppLog_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotUpdatesStatus",
 			ConstructorID: 0xec22cfcd,
 			NewRequest:    func() tlrpc.TLObject { return &HelpSetBotUpdatesStatusRequest{} },
 			Handler:       _Help_SetBotUpdatesStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Help_SetBotUpdatesStatus_EncodeResponse)
+			},
 		},
 	},
 }
@@ -3219,24 +8533,110 @@ func RegisterHelpServer(s *tlrpc.Server, srv HelpServer) {
 	s.RegisterService(Help_ServiceDesc, srv)
 }
 
-func _Langpack_GetDifference_Handler(srv interface{}, ctx context.Context, req *LangpackGetDifferenceRequest) (*LangPackDifference, error) {
-	return srv.(LangpackServer).GetDifference(ctx, req)
+func _Langpack_GetDifference_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*LangpackGetDifferenceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("langpack.getDifference: request %T is not *LangpackGetDifferenceRequest", req)
+	}
+	return srv.(LangpackServer).GetDifference(ctx, typedRequest)
 }
 
-func _Langpack_GetLangPack_Handler(srv interface{}, ctx context.Context, req *LangpackGetLangPackRequest) (*LangPackDifference, error) {
-	return srv.(LangpackServer).GetLangPack(ctx, req)
+func _Langpack_GetDifference_EncodeResponse(e *mtproto.Encoder, response *LangPackDifference) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Langpack_GetLanguage_Handler(srv interface{}, ctx context.Context, req *LangpackGetLanguageRequest) (*LangPackLanguage, error) {
-	return srv.(LangpackServer).GetLanguage(ctx, req)
+func _Langpack_GetLangPack_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*LangpackGetLangPackRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("langpack.getLangPack: request %T is not *LangpackGetLangPackRequest", req)
+	}
+	return srv.(LangpackServer).GetLangPack(ctx, typedRequest)
 }
 
-func _Langpack_GetLanguages_Handler(srv interface{}, ctx context.Context, req *LangpackGetLanguagesRequest) ([]*LangPackLanguage, error) {
-	return srv.(LangpackServer).GetLanguages(ctx, req)
+func _Langpack_GetLangPack_EncodeResponse(e *mtproto.Encoder, response *LangPackDifference) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Langpack_GetStrings_Handler(srv interface{}, ctx context.Context, req *LangpackGetStringsRequest) ([]LangPackStringType, error) {
-	return srv.(LangpackServer).GetStrings(ctx, req)
+func _Langpack_GetLanguage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*LangpackGetLanguageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("langpack.getLanguage: request %T is not *LangpackGetLanguageRequest", req)
+	}
+	return srv.(LangpackServer).GetLanguage(ctx, typedRequest)
+}
+
+func _Langpack_GetLanguage_EncodeResponse(e *mtproto.Encoder, response *LangPackLanguage) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Langpack_GetLanguages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*LangpackGetLanguagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("langpack.getLanguages: request %T is not *LangpackGetLanguagesRequest", req)
+	}
+	return srv.(LangpackServer).GetLanguages(ctx, typedRequest)
+}
+
+func _Langpack_GetLanguages_EncodeResponse(e *mtproto.Encoder, response []*LangPackLanguage) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Langpack_GetStrings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*LangpackGetStringsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("langpack.getStrings: request %T is not *LangpackGetStringsRequest", req)
+	}
+	return srv.(LangpackServer).GetStrings(ctx, typedRequest)
+}
+
+func _Langpack_GetStrings_EncodeResponse(e *mtproto.Encoder, response []LangPackStringType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed LangPackString is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Langpack_ServiceDesc is the static descriptor for the LangpackServer service.
@@ -3246,34 +8646,59 @@ var Langpack_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*LangpackServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDifference",
 			ConstructorID: 0xcd984aa5,
 			NewRequest:    func() tlrpc.TLObject { return &LangpackGetDifferenceRequest{} },
 			Handler:       _Langpack_GetDifference_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*LangPackDifference](response, layer, limits, _Langpack_GetDifference_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetLangPack",
 			ConstructorID: 0xf2f2330a,
 			NewRequest:    func() tlrpc.TLObject { return &LangpackGetLangPackRequest{} },
 			Handler:       _Langpack_GetLangPack_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*LangPackDifference](response, layer, limits, _Langpack_GetLangPack_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetLanguage",
 			ConstructorID: 0x6a596502,
 			NewRequest:    func() tlrpc.TLObject { return &LangpackGetLanguageRequest{} },
 			Handler:       _Langpack_GetLanguage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*LangPackLanguage](response, layer, limits, _Langpack_GetLanguage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetLanguages",
 			ConstructorID: 0x42c6978f,
 			NewRequest:    func() tlrpc.TLObject { return &LangpackGetLanguagesRequest{} },
 			Handler:       _Langpack_GetLanguages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*LangPackLanguage](response, layer, limits, _Langpack_GetLanguages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStrings",
 			ConstructorID: 0xefea3803,
 			NewRequest:    func() tlrpc.TLObject { return &LangpackGetStringsRequest{} },
 			Handler:       _Langpack_GetStrings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]LangPackStringType](response, layer, limits, _Langpack_GetStrings_EncodeResponse)
+			},
 		},
 	},
 }
@@ -3290,924 +8715,3941 @@ func RegisterLangpackServer(s *tlrpc.Server, srv LangpackServer) {
 	s.RegisterService(Langpack_ServiceDesc, srv)
 }
 
-func _Messages_AcceptEncryption_Handler(srv interface{}, ctx context.Context, req *MessagesAcceptEncryptionRequest) (EncryptedChatType, error) {
-	return srv.(MessagesServer).AcceptEncryption(ctx, req)
+func _Messages_AcceptEncryption_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesAcceptEncryptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.acceptEncryption: request %T is not *MessagesAcceptEncryptionRequest", req)
+	}
+	return srv.(MessagesServer).AcceptEncryption(ctx, typedRequest)
+}
+
+func _Messages_AcceptEncryption_EncodeResponse(e *mtproto.Encoder, response EncryptedChatType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EncryptedChat is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_AcceptURLAuth_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesAcceptURLAuthRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.acceptUrlAuth: request %T is not *MessagesAcceptURLAuthRequest", req)
+	}
+	return srv.(MessagesServer).AcceptURLAuth(ctx, typedRequest)
+}
+
+func _Messages_AcceptURLAuth_EncodeResponse(e *mtproto.Encoder, response URLAuthResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed UrlAuthResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_AddChatUser_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesAddChatUserRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.addChatUser: request %T is not *MessagesAddChatUserRequest", req)
+	}
+	return srv.(MessagesServer).AddChatUser(ctx, typedRequest)
+}
+
+func _Messages_AddChatUser_EncodeResponse(e *mtproto.Encoder, response *MessagesInvitedUsers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_AppendTodoList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesAppendTodoListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.appendTodoList: request %T is not *MessagesAppendTodoListRequest", req)
+	}
+	return srv.(MessagesServer).AppendTodoList(ctx, typedRequest)
+}
+
+func _Messages_AppendTodoList_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_CheckChatInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesCheckChatInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.checkChatInvite: request %T is not *MessagesCheckChatInviteRequest", req)
+	}
+	return srv.(MessagesServer).CheckChatInvite(ctx, typedRequest)
+}
+
+func _Messages_CheckChatInvite_EncodeResponse(e *mtproto.Encoder, response ChatInviteType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed ChatInvite is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_CheckHistoryImport_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesCheckHistoryImportRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.checkHistoryImport: request %T is not *MessagesCheckHistoryImportRequest", req)
+	}
+	return srv.(MessagesServer).CheckHistoryImport(ctx, typedRequest)
+}
+
+func _Messages_CheckHistoryImport_EncodeResponse(e *mtproto.Encoder, response *MessagesHistoryImportParsed) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_AcceptURLAuth_Handler(srv interface{}, ctx context.Context, req *MessagesAcceptURLAuthRequest) (URLAuthResultType, error) {
-	return srv.(MessagesServer).AcceptURLAuth(ctx, req)
+func _Messages_CheckHistoryImportPeer_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesCheckHistoryImportPeerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.checkHistoryImportPeer: request %T is not *MessagesCheckHistoryImportPeerRequest", req)
+	}
+	return srv.(MessagesServer).CheckHistoryImportPeer(ctx, typedRequest)
 }
 
-func _Messages_AddChatUser_Handler(srv interface{}, ctx context.Context, req *MessagesAddChatUserRequest) (*MessagesInvitedUsers, error) {
-	return srv.(MessagesServer).AddChatUser(ctx, req)
+func _Messages_CheckHistoryImportPeer_EncodeResponse(e *mtproto.Encoder, response *MessagesCheckedHistoryImportPeer) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_AppendTodoList_Handler(srv interface{}, ctx context.Context, req *MessagesAppendTodoListRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).AppendTodoList(ctx, req)
+func _Messages_CheckQuickReplyShortcut_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesCheckQuickReplyShortcutRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.checkQuickReplyShortcut: request %T is not *MessagesCheckQuickReplyShortcutRequest", req)
+	}
+	return srv.(MessagesServer).CheckQuickReplyShortcut(ctx, typedRequest)
 }
 
-func _Messages_CheckChatInvite_Handler(srv interface{}, ctx context.Context, req *MessagesCheckChatInviteRequest) (ChatInviteType, error) {
-	return srv.(MessagesServer).CheckChatInvite(ctx, req)
+func _Messages_CheckQuickReplyShortcut_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_CheckHistoryImport_Handler(srv interface{}, ctx context.Context, req *MessagesCheckHistoryImportRequest) (*MessagesHistoryImportParsed, error) {
-	return srv.(MessagesServer).CheckHistoryImport(ctx, req)
+func _Messages_ClearAllDrafts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesClearAllDraftsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.clearAllDrafts: request %T is not *MessagesClearAllDraftsRequest", req)
+	}
+	return srv.(MessagesServer).ClearAllDrafts(ctx, typedRequest)
 }
 
-func _Messages_CheckHistoryImportPeer_Handler(srv interface{}, ctx context.Context, req *MessagesCheckHistoryImportPeerRequest) (*MessagesCheckedHistoryImportPeer, error) {
-	return srv.(MessagesServer).CheckHistoryImportPeer(ctx, req)
+func _Messages_ClearAllDrafts_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_CheckQuickReplyShortcut_Handler(srv interface{}, ctx context.Context, req *MessagesCheckQuickReplyShortcutRequest) (bool, error) {
-	return srv.(MessagesServer).CheckQuickReplyShortcut(ctx, req)
+func _Messages_ClearRecentReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesClearRecentReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.clearRecentReactions: request %T is not *MessagesClearRecentReactionsRequest", req)
+	}
+	return srv.(MessagesServer).ClearRecentReactions(ctx, typedRequest)
 }
 
-func _Messages_ClearAllDrafts_Handler(srv interface{}, ctx context.Context, req *MessagesClearAllDraftsRequest) (bool, error) {
-	return srv.(MessagesServer).ClearAllDrafts(ctx, req)
+func _Messages_ClearRecentReactions_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_ClearRecentReactions_Handler(srv interface{}, ctx context.Context, req *MessagesClearRecentReactionsRequest) (bool, error) {
-	return srv.(MessagesServer).ClearRecentReactions(ctx, req)
+func _Messages_ClearRecentStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesClearRecentStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.clearRecentStickers: request %T is not *MessagesClearRecentStickersRequest", req)
+	}
+	return srv.(MessagesServer).ClearRecentStickers(ctx, typedRequest)
 }
 
-func _Messages_ClearRecentStickers_Handler(srv interface{}, ctx context.Context, req *MessagesClearRecentStickersRequest) (bool, error) {
-	return srv.(MessagesServer).ClearRecentStickers(ctx, req)
+func _Messages_ClearRecentStickers_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_ClickSponsoredMessage_Handler(srv interface{}, ctx context.Context, req *MessagesClickSponsoredMessageRequest) (bool, error) {
-	return srv.(MessagesServer).ClickSponsoredMessage(ctx, req)
+func _Messages_ClickSponsoredMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesClickSponsoredMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.clickSponsoredMessage: request %T is not *MessagesClickSponsoredMessageRequest", req)
+	}
+	return srv.(MessagesServer).ClickSponsoredMessage(ctx, typedRequest)
 }
 
-func _Messages_CreateChat_Handler(srv interface{}, ctx context.Context, req *MessagesCreateChatRequest) (*MessagesInvitedUsers, error) {
-	return srv.(MessagesServer).CreateChat(ctx, req)
+func _Messages_ClickSponsoredMessage_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DeleteChat_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteChatRequest) (bool, error) {
-	return srv.(MessagesServer).DeleteChat(ctx, req)
+func _Messages_CreateChat_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesCreateChatRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.createChat: request %T is not *MessagesCreateChatRequest", req)
+	}
+	return srv.(MessagesServer).CreateChat(ctx, typedRequest)
 }
 
-func _Messages_DeleteChatUser_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteChatUserRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).DeleteChatUser(ctx, req)
+func _Messages_CreateChat_EncodeResponse(e *mtproto.Encoder, response *MessagesInvitedUsers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DeleteExportedChatInvite_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteExportedChatInviteRequest) (bool, error) {
-	return srv.(MessagesServer).DeleteExportedChatInvite(ctx, req)
+func _Messages_DeleteChat_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteChatRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteChat: request %T is not *MessagesDeleteChatRequest", req)
+	}
+	return srv.(MessagesServer).DeleteChat(ctx, typedRequest)
 }
 
-func _Messages_DeleteFactCheck_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteFactCheckRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).DeleteFactCheck(ctx, req)
+func _Messages_DeleteChat_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DeleteHistory_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteHistoryRequest) (*MessagesAffectedHistory, error) {
-	return srv.(MessagesServer).DeleteHistory(ctx, req)
+func _Messages_DeleteChatUser_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteChatUserRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteChatUser: request %T is not *MessagesDeleteChatUserRequest", req)
+	}
+	return srv.(MessagesServer).DeleteChatUser(ctx, typedRequest)
 }
 
-func _Messages_DeleteMessages_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteMessagesRequest) (*MessagesAffectedMessages, error) {
-	return srv.(MessagesServer).DeleteMessages(ctx, req)
+func _Messages_DeleteChatUser_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DeletePhoneCallHistory_Handler(srv interface{}, ctx context.Context, req *MessagesDeletePhoneCallHistoryRequest) (*MessagesAffectedFoundMessages, error) {
-	return srv.(MessagesServer).DeletePhoneCallHistory(ctx, req)
+func _Messages_DeleteExportedChatInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteExportedChatInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteExportedChatInvite: request %T is not *MessagesDeleteExportedChatInviteRequest", req)
+	}
+	return srv.(MessagesServer).DeleteExportedChatInvite(ctx, typedRequest)
 }
 
-func _Messages_DeleteQuickReplyMessages_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteQuickReplyMessagesRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).DeleteQuickReplyMessages(ctx, req)
+func _Messages_DeleteExportedChatInvite_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DeleteQuickReplyShortcut_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteQuickReplyShortcutRequest) (bool, error) {
-	return srv.(MessagesServer).DeleteQuickReplyShortcut(ctx, req)
+func _Messages_DeleteFactCheck_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteFactCheckRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteFactCheck: request %T is not *MessagesDeleteFactCheckRequest", req)
+	}
+	return srv.(MessagesServer).DeleteFactCheck(ctx, typedRequest)
 }
 
-func _Messages_DeleteRevokedExportedChatInvites_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteRevokedExportedChatInvitesRequest) (bool, error) {
-	return srv.(MessagesServer).DeleteRevokedExportedChatInvites(ctx, req)
+func _Messages_DeleteFactCheck_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DeleteSavedHistory_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteSavedHistoryRequest) (*MessagesAffectedHistory, error) {
-	return srv.(MessagesServer).DeleteSavedHistory(ctx, req)
+func _Messages_DeleteHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteHistory: request %T is not *MessagesDeleteHistoryRequest", req)
+	}
+	return srv.(MessagesServer).DeleteHistory(ctx, typedRequest)
 }
 
-func _Messages_DeleteScheduledMessages_Handler(srv interface{}, ctx context.Context, req *MessagesDeleteScheduledMessagesRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).DeleteScheduledMessages(ctx, req)
+func _Messages_DeleteHistory_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_DiscardEncryption_Handler(srv interface{}, ctx context.Context, req *MessagesDiscardEncryptionRequest) (bool, error) {
-	return srv.(MessagesServer).DiscardEncryption(ctx, req)
+func _Messages_DeleteMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteMessages: request %T is not *MessagesDeleteMessagesRequest", req)
+	}
+	return srv.(MessagesServer).DeleteMessages(ctx, typedRequest)
 }
 
-func _Messages_EditChatAbout_Handler(srv interface{}, ctx context.Context, req *MessagesEditChatAboutRequest) (bool, error) {
-	return srv.(MessagesServer).EditChatAbout(ctx, req)
+func _Messages_DeleteMessages_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedMessages) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_EditChatAdmin_Handler(srv interface{}, ctx context.Context, req *MessagesEditChatAdminRequest) (bool, error) {
-	return srv.(MessagesServer).EditChatAdmin(ctx, req)
+func _Messages_DeletePhoneCallHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeletePhoneCallHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deletePhoneCallHistory: request %T is not *MessagesDeletePhoneCallHistoryRequest", req)
+	}
+	return srv.(MessagesServer).DeletePhoneCallHistory(ctx, typedRequest)
 }
 
-func _Messages_EditChatDefaultBannedRights_Handler(srv interface{}, ctx context.Context, req *MessagesEditChatDefaultBannedRightsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).EditChatDefaultBannedRights(ctx, req)
+func _Messages_DeletePhoneCallHistory_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedFoundMessages) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_EditChatPhoto_Handler(srv interface{}, ctx context.Context, req *MessagesEditChatPhotoRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).EditChatPhoto(ctx, req)
+func _Messages_DeleteQuickReplyMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteQuickReplyMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteQuickReplyMessages: request %T is not *MessagesDeleteQuickReplyMessagesRequest", req)
+	}
+	return srv.(MessagesServer).DeleteQuickReplyMessages(ctx, typedRequest)
 }
 
-func _Messages_EditChatTitle_Handler(srv interface{}, ctx context.Context, req *MessagesEditChatTitleRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).EditChatTitle(ctx, req)
+func _Messages_DeleteQuickReplyMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_EditExportedChatInvite_Handler(srv interface{}, ctx context.Context, req *MessagesEditExportedChatInviteRequest) (MessagesExportedChatInviteType, error) {
-	return srv.(MessagesServer).EditExportedChatInvite(ctx, req)
+func _Messages_DeleteQuickReplyShortcut_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteQuickReplyShortcutRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteQuickReplyShortcut: request %T is not *MessagesDeleteQuickReplyShortcutRequest", req)
+	}
+	return srv.(MessagesServer).DeleteQuickReplyShortcut(ctx, typedRequest)
 }
 
-func _Messages_EditFactCheck_Handler(srv interface{}, ctx context.Context, req *MessagesEditFactCheckRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).EditFactCheck(ctx, req)
+func _Messages_DeleteQuickReplyShortcut_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_EditInlineBotMessage_Handler(srv interface{}, ctx context.Context, req *MessagesEditInlineBotMessageRequest) (bool, error) {
-	return srv.(MessagesServer).EditInlineBotMessage(ctx, req)
+func _Messages_DeleteRevokedExportedChatInvites_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteRevokedExportedChatInvitesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteRevokedExportedChatInvites: request %T is not *MessagesDeleteRevokedExportedChatInvitesRequest", req)
+	}
+	return srv.(MessagesServer).DeleteRevokedExportedChatInvites(ctx, typedRequest)
 }
 
-func _Messages_EditMessage_Handler(srv interface{}, ctx context.Context, req *MessagesEditMessageRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).EditMessage(ctx, req)
+func _Messages_DeleteRevokedExportedChatInvites_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_EditQuickReplyShortcut_Handler(srv interface{}, ctx context.Context, req *MessagesEditQuickReplyShortcutRequest) (bool, error) {
-	return srv.(MessagesServer).EditQuickReplyShortcut(ctx, req)
+func _Messages_DeleteSavedHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteSavedHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteSavedHistory: request %T is not *MessagesDeleteSavedHistoryRequest", req)
+	}
+	return srv.(MessagesServer).DeleteSavedHistory(ctx, typedRequest)
 }
 
-func _Messages_ExportChatInvite_Handler(srv interface{}, ctx context.Context, req *MessagesExportChatInviteRequest) (ExportedChatInviteType, error) {
-	return srv.(MessagesServer).ExportChatInvite(ctx, req)
+func _Messages_DeleteSavedHistory_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_FaveSticker_Handler(srv interface{}, ctx context.Context, req *MessagesFaveStickerRequest) (bool, error) {
-	return srv.(MessagesServer).FaveSticker(ctx, req)
+func _Messages_DeleteScheduledMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDeleteScheduledMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.deleteScheduledMessages: request %T is not *MessagesDeleteScheduledMessagesRequest", req)
+	}
+	return srv.(MessagesServer).DeleteScheduledMessages(ctx, typedRequest)
 }
 
-func _Messages_ForwardMessages_Handler(srv interface{}, ctx context.Context, req *MessagesForwardMessagesRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).ForwardMessages(ctx, req)
+func _Messages_DeleteScheduledMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_GetAdminsWithInvites_Handler(srv interface{}, ctx context.Context, req *MessagesGetAdminsWithInvitesRequest) (*MessagesChatAdminsWithInvites, error) {
-	return srv.(MessagesServer).GetAdminsWithInvites(ctx, req)
+func _Messages_DiscardEncryption_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesDiscardEncryptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.discardEncryption: request %T is not *MessagesDiscardEncryptionRequest", req)
+	}
+	return srv.(MessagesServer).DiscardEncryption(ctx, typedRequest)
 }
 
-func _Messages_GetAllDrafts_Handler(srv interface{}, ctx context.Context, req *MessagesGetAllDraftsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).GetAllDrafts(ctx, req)
+func _Messages_DiscardEncryption_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_GetAllStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetAllStickersRequest) (MessagesAllStickersType, error) {
-	return srv.(MessagesServer).GetAllStickers(ctx, req)
+func _Messages_EditChatAbout_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditChatAboutRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editChatAbout: request %T is not *MessagesEditChatAboutRequest", req)
+	}
+	return srv.(MessagesServer).EditChatAbout(ctx, typedRequest)
 }
 
-func _Messages_GetArchivedStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetArchivedStickersRequest) (*MessagesArchivedStickers, error) {
-	return srv.(MessagesServer).GetArchivedStickers(ctx, req)
+func _Messages_EditChatAbout_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_GetAttachMenuBot_Handler(srv interface{}, ctx context.Context, req *MessagesGetAttachMenuBotRequest) (*AttachMenuBotsBot, error) {
-	return srv.(MessagesServer).GetAttachMenuBot(ctx, req)
+func _Messages_EditChatAdmin_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditChatAdminRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editChatAdmin: request %T is not *MessagesEditChatAdminRequest", req)
+	}
+	return srv.(MessagesServer).EditChatAdmin(ctx, typedRequest)
 }
 
-func _Messages_GetAttachMenuBots_Handler(srv interface{}, ctx context.Context, req *MessagesGetAttachMenuBotsRequest) (AttachMenuBotsType, error) {
-	return srv.(MessagesServer).GetAttachMenuBots(ctx, req)
+func _Messages_EditChatAdmin_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_GetAttachedStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetAttachedStickersRequest) ([]StickerSetCoveredType, error) {
-	return srv.(MessagesServer).GetAttachedStickers(ctx, req)
+func _Messages_EditChatDefaultBannedRights_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditChatDefaultBannedRightsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editChatDefaultBannedRights: request %T is not *MessagesEditChatDefaultBannedRightsRequest", req)
+	}
+	return srv.(MessagesServer).EditChatDefaultBannedRights(ctx, typedRequest)
 }
 
-func _Messages_GetAvailableEffects_Handler(srv interface{}, ctx context.Context, req *MessagesGetAvailableEffectsRequest) (MessagesAvailableEffectsType, error) {
-	return srv.(MessagesServer).GetAvailableEffects(ctx, req)
+func _Messages_EditChatDefaultBannedRights_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_GetAvailableReactions_Handler(srv interface{}, ctx context.Context, req *MessagesGetAvailableReactionsRequest) (MessagesAvailableReactionsType, error) {
-	return srv.(MessagesServer).GetAvailableReactions(ctx, req)
+func _Messages_EditChatPhoto_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditChatPhotoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editChatPhoto: request %T is not *MessagesEditChatPhotoRequest", req)
+	}
+	return srv.(MessagesServer).EditChatPhoto(ctx, typedRequest)
 }
 
-func _Messages_GetBotApp_Handler(srv interface{}, ctx context.Context, req *MessagesGetBotAppRequest) (*MessagesBotApp, error) {
-	return srv.(MessagesServer).GetBotApp(ctx, req)
+func _Messages_EditChatPhoto_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_GetBotCallbackAnswer_Handler(srv interface{}, ctx context.Context, req *MessagesGetBotCallbackAnswerRequest) (*MessagesBotCallbackAnswer, error) {
-	return srv.(MessagesServer).GetBotCallbackAnswer(ctx, req)
+func _Messages_EditChatTitle_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditChatTitleRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editChatTitle: request %T is not *MessagesEditChatTitleRequest", req)
+	}
+	return srv.(MessagesServer).EditChatTitle(ctx, typedRequest)
 }
 
-func _Messages_GetChatInviteImporters_Handler(srv interface{}, ctx context.Context, req *MessagesGetChatInviteImportersRequest) (*MessagesChatInviteImporters, error) {
-	return srv.(MessagesServer).GetChatInviteImporters(ctx, req)
+func _Messages_EditChatTitle_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
-
-func _Messages_GetChats_Handler(srv interface{}, ctx context.Context, req *MessagesGetChatsRequest) (MessagesChatsType, error) {
-	return srv.(MessagesServer).GetChats(ctx, req)
-}
-
-func _Messages_GetCommonChats_Handler(srv interface{}, ctx context.Context, req *MessagesGetCommonChatsRequest) (MessagesChatsType, error) {
-	return srv.(MessagesServer).GetCommonChats(ctx, req)
-}
-
-func _Messages_GetCustomEmojiDocuments_Handler(srv interface{}, ctx context.Context, req *MessagesGetCustomEmojiDocumentsRequest) ([]DocumentType, error) {
-	return srv.(MessagesServer).GetCustomEmojiDocuments(ctx, req)
-}
-
-func _Messages_GetDefaultHistoryTTL_Handler(srv interface{}, ctx context.Context, req *MessagesGetDefaultHistoryTTLRequest) (*DefaultHistoryTTL, error) {
-	return srv.(MessagesServer).GetDefaultHistoryTTL(ctx, req)
-}
-
-func _Messages_GetDefaultTagReactions_Handler(srv interface{}, ctx context.Context, req *MessagesGetDefaultTagReactionsRequest) (MessagesReactionsType, error) {
-	return srv.(MessagesServer).GetDefaultTagReactions(ctx, req)
-}
-
-func _Messages_GetDhConfig_Handler(srv interface{}, ctx context.Context, req *MessagesGetDhConfigRequest) (MessagesDhConfigType, error) {
-	return srv.(MessagesServer).GetDhConfig(ctx, req)
-}
-
-func _Messages_GetDialogFilters_Handler(srv interface{}, ctx context.Context, req *MessagesGetDialogFiltersRequest) (*MessagesDialogFilters, error) {
-	return srv.(MessagesServer).GetDialogFilters(ctx, req)
-}
-
-func _Messages_GetDialogUnreadMarks_Handler(srv interface{}, ctx context.Context, req *MessagesGetDialogUnreadMarksRequest) ([]DialogPeerType, error) {
-	return srv.(MessagesServer).GetDialogUnreadMarks(ctx, req)
-}
-
-func _Messages_GetDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesGetDialogsRequest) (MessagesDialogsType, error) {
-	return srv.(MessagesServer).GetDialogs(ctx, req)
-}
-
-func _Messages_GetDiscussionMessage_Handler(srv interface{}, ctx context.Context, req *MessagesGetDiscussionMessageRequest) (*MessagesDiscussionMessage, error) {
-	return srv.(MessagesServer).GetDiscussionMessage(ctx, req)
-}
-
-func _Messages_GetDocumentByHash_Handler(srv interface{}, ctx context.Context, req *MessagesGetDocumentByHashRequest) (DocumentType, error) {
-	return srv.(MessagesServer).GetDocumentByHash(ctx, req)
-}
-
-func _Messages_GetEmojiGroups_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiGroupsRequest) (MessagesEmojiGroupsType, error) {
-	return srv.(MessagesServer).GetEmojiGroups(ctx, req)
-}
-
-func _Messages_GetEmojiKeywords_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiKeywordsRequest) (*EmojiKeywordsDifference, error) {
-	return srv.(MessagesServer).GetEmojiKeywords(ctx, req)
-}
-
-func _Messages_GetEmojiKeywordsDifference_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiKeywordsDifferenceRequest) (*EmojiKeywordsDifference, error) {
-	return srv.(MessagesServer).GetEmojiKeywordsDifference(ctx, req)
-}
-
-func _Messages_GetEmojiKeywordsLanguages_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiKeywordsLanguagesRequest) ([]*EmojiLanguage, error) {
-	return srv.(MessagesServer).GetEmojiKeywordsLanguages(ctx, req)
-}
-
-func _Messages_GetEmojiProfilePhotoGroups_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiProfilePhotoGroupsRequest) (MessagesEmojiGroupsType, error) {
-	return srv.(MessagesServer).GetEmojiProfilePhotoGroups(ctx, req)
-}
-
-func _Messages_GetEmojiStatusGroups_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiStatusGroupsRequest) (MessagesEmojiGroupsType, error) {
-	return srv.(MessagesServer).GetEmojiStatusGroups(ctx, req)
-}
-
-func _Messages_GetEmojiStickerGroups_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiStickerGroupsRequest) (MessagesEmojiGroupsType, error) {
-	return srv.(MessagesServer).GetEmojiStickerGroups(ctx, req)
-}
-
-func _Messages_GetEmojiStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiStickersRequest) (MessagesAllStickersType, error) {
-	return srv.(MessagesServer).GetEmojiStickers(ctx, req)
-}
-
-func _Messages_GetEmojiURL_Handler(srv interface{}, ctx context.Context, req *MessagesGetEmojiURLRequest) (*EmojiURL, error) {
-	return srv.(MessagesServer).GetEmojiURL(ctx, req)
-}
-
-func _Messages_GetExportedChatInvite_Handler(srv interface{}, ctx context.Context, req *MessagesGetExportedChatInviteRequest) (MessagesExportedChatInviteType, error) {
-	return srv.(MessagesServer).GetExportedChatInvite(ctx, req)
-}
-
-func _Messages_GetExportedChatInvites_Handler(srv interface{}, ctx context.Context, req *MessagesGetExportedChatInvitesRequest) (*MessagesExportedChatInvites, error) {
-	return srv.(MessagesServer).GetExportedChatInvites(ctx, req)
-}
-
-func _Messages_GetExtendedMedia_Handler(srv interface{}, ctx context.Context, req *MessagesGetExtendedMediaRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).GetExtendedMedia(ctx, req)
-}
-
-func _Messages_GetFactCheck_Handler(srv interface{}, ctx context.Context, req *MessagesGetFactCheckRequest) ([]*FactCheck, error) {
-	return srv.(MessagesServer).GetFactCheck(ctx, req)
-}
-
-func _Messages_GetFavedStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetFavedStickersRequest) (MessagesFavedStickersType, error) {
-	return srv.(MessagesServer).GetFavedStickers(ctx, req)
-}
-
-func _Messages_GetFeaturedEmojiStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetFeaturedEmojiStickersRequest) (MessagesFeaturedStickersType, error) {
-	return srv.(MessagesServer).GetFeaturedEmojiStickers(ctx, req)
-}
-
-func _Messages_GetFeaturedStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetFeaturedStickersRequest) (MessagesFeaturedStickersType, error) {
-	return srv.(MessagesServer).GetFeaturedStickers(ctx, req)
-}
-
-func _Messages_GetFullChat_Handler(srv interface{}, ctx context.Context, req *MessagesGetFullChatRequest) (*MessagesChatFull, error) {
-	return srv.(MessagesServer).GetFullChat(ctx, req)
-}
-
-func _Messages_GetGameHighScores_Handler(srv interface{}, ctx context.Context, req *MessagesGetGameHighScoresRequest) (*MessagesHighScores, error) {
-	return srv.(MessagesServer).GetGameHighScores(ctx, req)
-}
-
-func _Messages_GetHistory_Handler(srv interface{}, ctx context.Context, req *MessagesGetHistoryRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetHistory(ctx, req)
-}
-
-func _Messages_GetInlineBotResults_Handler(srv interface{}, ctx context.Context, req *MessagesGetInlineBotResultsRequest) (*MessagesBotResults, error) {
-	return srv.(MessagesServer).GetInlineBotResults(ctx, req)
-}
-
-func _Messages_GetInlineGameHighScores_Handler(srv interface{}, ctx context.Context, req *MessagesGetInlineGameHighScoresRequest) (*MessagesHighScores, error) {
-	return srv.(MessagesServer).GetInlineGameHighScores(ctx, req)
-}
-
-func _Messages_GetMaskStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetMaskStickersRequest) (MessagesAllStickersType, error) {
-	return srv.(MessagesServer).GetMaskStickers(ctx, req)
-}
-
-func _Messages_GetMessageEditData_Handler(srv interface{}, ctx context.Context, req *MessagesGetMessageEditDataRequest) (*MessagesMessageEditData, error) {
-	return srv.(MessagesServer).GetMessageEditData(ctx, req)
-}
-
-func _Messages_GetMessageReactionsList_Handler(srv interface{}, ctx context.Context, req *MessagesGetMessageReactionsListRequest) (*MessagesMessageReactionsList, error) {
-	return srv.(MessagesServer).GetMessageReactionsList(ctx, req)
-}
-
-func _Messages_GetMessageReadParticipants_Handler(srv interface{}, ctx context.Context, req *MessagesGetMessageReadParticipantsRequest) ([]*ReadParticipantDate, error) {
-	return srv.(MessagesServer).GetMessageReadParticipants(ctx, req)
-}
-
-func _Messages_GetMessages_Handler(srv interface{}, ctx context.Context, req *MessagesGetMessagesRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetMessages(ctx, req)
-}
-
-func _Messages_GetMessagesReactions_Handler(srv interface{}, ctx context.Context, req *MessagesGetMessagesReactionsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).GetMessagesReactions(ctx, req)
-}
-
-func _Messages_GetMessagesViews_Handler(srv interface{}, ctx context.Context, req *MessagesGetMessagesViewsRequest) (*MessagesMessageViews, error) {
-	return srv.(MessagesServer).GetMessagesViews(ctx, req)
-}
-
-func _Messages_GetMyStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetMyStickersRequest) (*MessagesMyStickers, error) {
-	return srv.(MessagesServer).GetMyStickers(ctx, req)
-}
-
-func _Messages_GetOldFeaturedStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetOldFeaturedStickersRequest) (MessagesFeaturedStickersType, error) {
-	return srv.(MessagesServer).GetOldFeaturedStickers(ctx, req)
-}
-
-func _Messages_GetOnlines_Handler(srv interface{}, ctx context.Context, req *MessagesGetOnlinesRequest) (*ChatOnlines, error) {
-	return srv.(MessagesServer).GetOnlines(ctx, req)
-}
-
-func _Messages_GetOutboxReadDate_Handler(srv interface{}, ctx context.Context, req *MessagesGetOutboxReadDateRequest) (*OutboxReadDate, error) {
-	return srv.(MessagesServer).GetOutboxReadDate(ctx, req)
-}
-
-func _Messages_GetPaidReactionPrivacy_Handler(srv interface{}, ctx context.Context, req *MessagesGetPaidReactionPrivacyRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).GetPaidReactionPrivacy(ctx, req)
-}
-
-func _Messages_GetPeerDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesGetPeerDialogsRequest) (*MessagesPeerDialogs, error) {
-	return srv.(MessagesServer).GetPeerDialogs(ctx, req)
-}
-
-func _Messages_GetPeerSettings_Handler(srv interface{}, ctx context.Context, req *MessagesGetPeerSettingsRequest) (*MessagesPeerSettings, error) {
-	return srv.(MessagesServer).GetPeerSettings(ctx, req)
-}
-
-func _Messages_GetPinnedDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesGetPinnedDialogsRequest) (*MessagesPeerDialogs, error) {
-	return srv.(MessagesServer).GetPinnedDialogs(ctx, req)
-}
-
-func _Messages_GetPinnedSavedDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesGetPinnedSavedDialogsRequest) (MessagesSavedDialogsType, error) {
-	return srv.(MessagesServer).GetPinnedSavedDialogs(ctx, req)
-}
-
-func _Messages_GetPollResults_Handler(srv interface{}, ctx context.Context, req *MessagesGetPollResultsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).GetPollResults(ctx, req)
-}
-
-func _Messages_GetPollVotes_Handler(srv interface{}, ctx context.Context, req *MessagesGetPollVotesRequest) (*MessagesVotesList, error) {
-	return srv.(MessagesServer).GetPollVotes(ctx, req)
-}
-
-func _Messages_GetPreparedInlineMessage_Handler(srv interface{}, ctx context.Context, req *MessagesGetPreparedInlineMessageRequest) (*MessagesPreparedInlineMessage, error) {
-	return srv.(MessagesServer).GetPreparedInlineMessage(ctx, req)
-}
-
-func _Messages_GetQuickReplies_Handler(srv interface{}, ctx context.Context, req *MessagesGetQuickRepliesRequest) (MessagesQuickRepliesType, error) {
-	return srv.(MessagesServer).GetQuickReplies(ctx, req)
-}
-
-func _Messages_GetQuickReplyMessages_Handler(srv interface{}, ctx context.Context, req *MessagesGetQuickReplyMessagesRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetQuickReplyMessages(ctx, req)
-}
-
-func _Messages_GetRecentLocations_Handler(srv interface{}, ctx context.Context, req *MessagesGetRecentLocationsRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetRecentLocations(ctx, req)
-}
-
-func _Messages_GetRecentReactions_Handler(srv interface{}, ctx context.Context, req *MessagesGetRecentReactionsRequest) (MessagesReactionsType, error) {
-	return srv.(MessagesServer).GetRecentReactions(ctx, req)
-}
-
-func _Messages_GetRecentStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetRecentStickersRequest) (MessagesRecentStickersType, error) {
-	return srv.(MessagesServer).GetRecentStickers(ctx, req)
-}
-
-func _Messages_GetReplies_Handler(srv interface{}, ctx context.Context, req *MessagesGetRepliesRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetReplies(ctx, req)
-}
-
-func _Messages_GetSavedDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesGetSavedDialogsRequest) (MessagesSavedDialogsType, error) {
-	return srv.(MessagesServer).GetSavedDialogs(ctx, req)
-}
-
-func _Messages_GetSavedDialogsByID_Handler(srv interface{}, ctx context.Context, req *MessagesGetSavedDialogsByIDRequest) (MessagesSavedDialogsType, error) {
-	return srv.(MessagesServer).GetSavedDialogsByID(ctx, req)
-}
-
-func _Messages_GetSavedGifs_Handler(srv interface{}, ctx context.Context, req *MessagesGetSavedGifsRequest) (MessagesSavedGifsType, error) {
-	return srv.(MessagesServer).GetSavedGifs(ctx, req)
-}
-
-func _Messages_GetSavedHistory_Handler(srv interface{}, ctx context.Context, req *MessagesGetSavedHistoryRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetSavedHistory(ctx, req)
-}
-
-func _Messages_GetSavedReactionTags_Handler(srv interface{}, ctx context.Context, req *MessagesGetSavedReactionTagsRequest) (MessagesSavedReactionTagsType, error) {
-	return srv.(MessagesServer).GetSavedReactionTags(ctx, req)
-}
-
-func _Messages_GetScheduledHistory_Handler(srv interface{}, ctx context.Context, req *MessagesGetScheduledHistoryRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetScheduledHistory(ctx, req)
-}
-
-func _Messages_GetScheduledMessages_Handler(srv interface{}, ctx context.Context, req *MessagesGetScheduledMessagesRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetScheduledMessages(ctx, req)
-}
-
-func _Messages_GetSearchCounters_Handler(srv interface{}, ctx context.Context, req *MessagesGetSearchCountersRequest) ([]*MessagesSearchCounter, error) {
-	return srv.(MessagesServer).GetSearchCounters(ctx, req)
-}
-
-func _Messages_GetSearchResultsCalendar_Handler(srv interface{}, ctx context.Context, req *MessagesGetSearchResultsCalendarRequest) (*MessagesSearchResultsCalendar, error) {
-	return srv.(MessagesServer).GetSearchResultsCalendar(ctx, req)
-}
-
-func _Messages_GetSearchResultsPositions_Handler(srv interface{}, ctx context.Context, req *MessagesGetSearchResultsPositionsRequest) (*MessagesSearchResultsPositions, error) {
-	return srv.(MessagesServer).GetSearchResultsPositions(ctx, req)
-}
-
-func _Messages_GetSplitRanges_Handler(srv interface{}, ctx context.Context, req *MessagesGetSplitRangesRequest) ([]*MessageRange, error) {
-	return srv.(MessagesServer).GetSplitRanges(ctx, req)
-}
-
-func _Messages_GetSponsoredMessages_Handler(srv interface{}, ctx context.Context, req *MessagesGetSponsoredMessagesRequest) (MessagesSponsoredMessagesType, error) {
-	return srv.(MessagesServer).GetSponsoredMessages(ctx, req)
-}
-
-func _Messages_GetStickerSet_Handler(srv interface{}, ctx context.Context, req *MessagesGetStickerSetRequest) (MessagesStickerSetType, error) {
-	return srv.(MessagesServer).GetStickerSet(ctx, req)
-}
-
-func _Messages_GetStickers_Handler(srv interface{}, ctx context.Context, req *MessagesGetStickersRequest) (MessagesStickersType, error) {
-	return srv.(MessagesServer).GetStickers(ctx, req)
-}
-
-func _Messages_GetSuggestedDialogFilters_Handler(srv interface{}, ctx context.Context, req *MessagesGetSuggestedDialogFiltersRequest) ([]*DialogFilterSuggested, error) {
-	return srv.(MessagesServer).GetSuggestedDialogFilters(ctx, req)
-}
-
-func _Messages_GetTopReactions_Handler(srv interface{}, ctx context.Context, req *MessagesGetTopReactionsRequest) (MessagesReactionsType, error) {
-	return srv.(MessagesServer).GetTopReactions(ctx, req)
-}
-
-func _Messages_GetUnreadMentions_Handler(srv interface{}, ctx context.Context, req *MessagesGetUnreadMentionsRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetUnreadMentions(ctx, req)
-}
-
-func _Messages_GetUnreadReactions_Handler(srv interface{}, ctx context.Context, req *MessagesGetUnreadReactionsRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).GetUnreadReactions(ctx, req)
-}
-
-func _Messages_GetWebPage_Handler(srv interface{}, ctx context.Context, req *MessagesGetWebPageRequest) (*MessagesWebPage, error) {
-	return srv.(MessagesServer).GetWebPage(ctx, req)
-}
-
-func _Messages_GetWebPagePreview_Handler(srv interface{}, ctx context.Context, req *MessagesGetWebPagePreviewRequest) (*MessagesWebPagePreview, error) {
-	return srv.(MessagesServer).GetWebPagePreview(ctx, req)
-}
-
-func _Messages_HideAllChatJoinRequests_Handler(srv interface{}, ctx context.Context, req *MessagesHideAllChatJoinRequestsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).HideAllChatJoinRequests(ctx, req)
-}
-
-func _Messages_HideChatJoinRequest_Handler(srv interface{}, ctx context.Context, req *MessagesHideChatJoinRequestRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).HideChatJoinRequest(ctx, req)
-}
-
-func _Messages_HidePeerSettingsBar_Handler(srv interface{}, ctx context.Context, req *MessagesHidePeerSettingsBarRequest) (bool, error) {
-	return srv.(MessagesServer).HidePeerSettingsBar(ctx, req)
-}
-
-func _Messages_ImportChatInvite_Handler(srv interface{}, ctx context.Context, req *MessagesImportChatInviteRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).ImportChatInvite(ctx, req)
-}
-
-func _Messages_InitHistoryImport_Handler(srv interface{}, ctx context.Context, req *MessagesInitHistoryImportRequest) (*MessagesHistoryImport, error) {
-	return srv.(MessagesServer).InitHistoryImport(ctx, req)
-}
-
-func _Messages_InstallStickerSet_Handler(srv interface{}, ctx context.Context, req *MessagesInstallStickerSetRequest) (MessagesStickerSetInstallResultType, error) {
-	return srv.(MessagesServer).InstallStickerSet(ctx, req)
-}
-
-func _Messages_MarkDialogUnread_Handler(srv interface{}, ctx context.Context, req *MessagesMarkDialogUnreadRequest) (bool, error) {
-	return srv.(MessagesServer).MarkDialogUnread(ctx, req)
-}
-
-func _Messages_MigrateChat_Handler(srv interface{}, ctx context.Context, req *MessagesMigrateChatRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).MigrateChat(ctx, req)
-}
-
-func _Messages_ProlongWebView_Handler(srv interface{}, ctx context.Context, req *MessagesProlongWebViewRequest) (bool, error) {
-	return srv.(MessagesServer).ProlongWebView(ctx, req)
-}
-
-func _Messages_RateTranscribedAudio_Handler(srv interface{}, ctx context.Context, req *MessagesRateTranscribedAudioRequest) (bool, error) {
-	return srv.(MessagesServer).RateTranscribedAudio(ctx, req)
-}
-
-func _Messages_ReadDiscussion_Handler(srv interface{}, ctx context.Context, req *MessagesReadDiscussionRequest) (bool, error) {
-	return srv.(MessagesServer).ReadDiscussion(ctx, req)
-}
-
-func _Messages_ReadEncryptedHistory_Handler(srv interface{}, ctx context.Context, req *MessagesReadEncryptedHistoryRequest) (bool, error) {
-	return srv.(MessagesServer).ReadEncryptedHistory(ctx, req)
-}
-
-func _Messages_ReadFeaturedStickers_Handler(srv interface{}, ctx context.Context, req *MessagesReadFeaturedStickersRequest) (bool, error) {
-	return srv.(MessagesServer).ReadFeaturedStickers(ctx, req)
-}
-
-func _Messages_ReadHistory_Handler(srv interface{}, ctx context.Context, req *MessagesReadHistoryRequest) (*MessagesAffectedMessages, error) {
-	return srv.(MessagesServer).ReadHistory(ctx, req)
-}
-
-func _Messages_ReadMentions_Handler(srv interface{}, ctx context.Context, req *MessagesReadMentionsRequest) (*MessagesAffectedHistory, error) {
-	return srv.(MessagesServer).ReadMentions(ctx, req)
-}
-
-func _Messages_ReadMessageContents_Handler(srv interface{}, ctx context.Context, req *MessagesReadMessageContentsRequest) (*MessagesAffectedMessages, error) {
-	return srv.(MessagesServer).ReadMessageContents(ctx, req)
-}
-
-func _Messages_ReadReactions_Handler(srv interface{}, ctx context.Context, req *MessagesReadReactionsRequest) (*MessagesAffectedHistory, error) {
-	return srv.(MessagesServer).ReadReactions(ctx, req)
-}
-
-func _Messages_ReadSavedHistory_Handler(srv interface{}, ctx context.Context, req *MessagesReadSavedHistoryRequest) (bool, error) {
-	return srv.(MessagesServer).ReadSavedHistory(ctx, req)
-}
-
-func _Messages_ReceivedMessages_Handler(srv interface{}, ctx context.Context, req *MessagesReceivedMessagesRequest) ([]*ReceivedNotifyMessage, error) {
-	return srv.(MessagesServer).ReceivedMessages(ctx, req)
-}
-
-func _Messages_ReceivedQueue_Handler(srv interface{}, ctx context.Context, req *MessagesReceivedQueueRequest) ([]int64, error) {
-	return srv.(MessagesServer).ReceivedQueue(ctx, req)
-}
-
-func _Messages_ReorderPinnedDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesReorderPinnedDialogsRequest) (bool, error) {
-	return srv.(MessagesServer).ReorderPinnedDialogs(ctx, req)
-}
-
-func _Messages_ReorderPinnedSavedDialogs_Handler(srv interface{}, ctx context.Context, req *MessagesReorderPinnedSavedDialogsRequest) (bool, error) {
-	return srv.(MessagesServer).ReorderPinnedSavedDialogs(ctx, req)
-}
-
-func _Messages_ReorderQuickReplies_Handler(srv interface{}, ctx context.Context, req *MessagesReorderQuickRepliesRequest) (bool, error) {
-	return srv.(MessagesServer).ReorderQuickReplies(ctx, req)
-}
-
-func _Messages_ReorderStickerSets_Handler(srv interface{}, ctx context.Context, req *MessagesReorderStickerSetsRequest) (bool, error) {
-	return srv.(MessagesServer).ReorderStickerSets(ctx, req)
-}
-
-func _Messages_Report_Handler(srv interface{}, ctx context.Context, req *MessagesReportRequest) (ReportResultType, error) {
-	return srv.(MessagesServer).Report(ctx, req)
-}
-
-func _Messages_ReportEncryptedSpam_Handler(srv interface{}, ctx context.Context, req *MessagesReportEncryptedSpamRequest) (bool, error) {
-	return srv.(MessagesServer).ReportEncryptedSpam(ctx, req)
-}
-
-func _Messages_ReportMessagesDelivery_Handler(srv interface{}, ctx context.Context, req *MessagesReportMessagesDeliveryRequest) (bool, error) {
-	return srv.(MessagesServer).ReportMessagesDelivery(ctx, req)
-}
-
-func _Messages_ReportReaction_Handler(srv interface{}, ctx context.Context, req *MessagesReportReactionRequest) (bool, error) {
-	return srv.(MessagesServer).ReportReaction(ctx, req)
-}
-
-func _Messages_ReportSpam_Handler(srv interface{}, ctx context.Context, req *MessagesReportSpamRequest) (bool, error) {
-	return srv.(MessagesServer).ReportSpam(ctx, req)
-}
-
-func _Messages_ReportSponsoredMessage_Handler(srv interface{}, ctx context.Context, req *MessagesReportSponsoredMessageRequest) (ChannelsSponsoredMessageReportResultType, error) {
-	return srv.(MessagesServer).ReportSponsoredMessage(ctx, req)
-}
-
-func _Messages_RequestAppWebView_Handler(srv interface{}, ctx context.Context, req *MessagesRequestAppWebViewRequest) (*WebViewResult, error) {
-	return srv.(MessagesServer).RequestAppWebView(ctx, req)
-}
-
-func _Messages_RequestEncryption_Handler(srv interface{}, ctx context.Context, req *MessagesRequestEncryptionRequest) (EncryptedChatType, error) {
-	return srv.(MessagesServer).RequestEncryption(ctx, req)
-}
-
-func _Messages_RequestMainWebView_Handler(srv interface{}, ctx context.Context, req *MessagesRequestMainWebViewRequest) (*WebViewResult, error) {
-	return srv.(MessagesServer).RequestMainWebView(ctx, req)
-}
-
-func _Messages_RequestSimpleWebView_Handler(srv interface{}, ctx context.Context, req *MessagesRequestSimpleWebViewRequest) (*WebViewResult, error) {
-	return srv.(MessagesServer).RequestSimpleWebView(ctx, req)
-}
-
-func _Messages_RequestURLAuth_Handler(srv interface{}, ctx context.Context, req *MessagesRequestURLAuthRequest) (URLAuthResultType, error) {
-	return srv.(MessagesServer).RequestURLAuth(ctx, req)
-}
-
-func _Messages_RequestWebView_Handler(srv interface{}, ctx context.Context, req *MessagesRequestWebViewRequest) (*WebViewResult, error) {
-	return srv.(MessagesServer).RequestWebView(ctx, req)
-}
-
-func _Messages_SaveDefaultSendAs_Handler(srv interface{}, ctx context.Context, req *MessagesSaveDefaultSendAsRequest) (bool, error) {
-	return srv.(MessagesServer).SaveDefaultSendAs(ctx, req)
-}
-
-func _Messages_SaveDraft_Handler(srv interface{}, ctx context.Context, req *MessagesSaveDraftRequest) (bool, error) {
-	return srv.(MessagesServer).SaveDraft(ctx, req)
-}
-
-func _Messages_SaveGif_Handler(srv interface{}, ctx context.Context, req *MessagesSaveGifRequest) (bool, error) {
-	return srv.(MessagesServer).SaveGif(ctx, req)
-}
-
-func _Messages_SavePreparedInlineMessage_Handler(srv interface{}, ctx context.Context, req *MessagesSavePreparedInlineMessageRequest) (*MessagesBotPreparedInlineMessage, error) {
-	return srv.(MessagesServer).SavePreparedInlineMessage(ctx, req)
-}
-
-func _Messages_SaveRecentSticker_Handler(srv interface{}, ctx context.Context, req *MessagesSaveRecentStickerRequest) (bool, error) {
-	return srv.(MessagesServer).SaveRecentSticker(ctx, req)
-}
-
-func _Messages_Search_Handler(srv interface{}, ctx context.Context, req *MessagesSearchRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).Search(ctx, req)
-}
-
-func _Messages_SearchCustomEmoji_Handler(srv interface{}, ctx context.Context, req *MessagesSearchCustomEmojiRequest) (EmojiListType, error) {
-	return srv.(MessagesServer).SearchCustomEmoji(ctx, req)
-}
-
-func _Messages_SearchEmojiStickerSets_Handler(srv interface{}, ctx context.Context, req *MessagesSearchEmojiStickerSetsRequest) (MessagesFoundStickerSetsType, error) {
-	return srv.(MessagesServer).SearchEmojiStickerSets(ctx, req)
-}
-
-func _Messages_SearchGlobal_Handler(srv interface{}, ctx context.Context, req *MessagesSearchGlobalRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).SearchGlobal(ctx, req)
-}
-
-func _Messages_SearchSentMedia_Handler(srv interface{}, ctx context.Context, req *MessagesSearchSentMediaRequest) (MessagesMessagesType, error) {
-	return srv.(MessagesServer).SearchSentMedia(ctx, req)
-}
-
-func _Messages_SearchStickerSets_Handler(srv interface{}, ctx context.Context, req *MessagesSearchStickerSetsRequest) (MessagesFoundStickerSetsType, error) {
-	return srv.(MessagesServer).SearchStickerSets(ctx, req)
-}
-
-func _Messages_SearchStickers_Handler(srv interface{}, ctx context.Context, req *MessagesSearchStickersRequest) (MessagesFoundStickersType, error) {
-	return srv.(MessagesServer).SearchStickers(ctx, req)
-}
-
-func _Messages_SendBotRequestedPeer_Handler(srv interface{}, ctx context.Context, req *MessagesSendBotRequestedPeerRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendBotRequestedPeer(ctx, req)
-}
-
-func _Messages_SendEncrypted_Handler(srv interface{}, ctx context.Context, req *MessagesSendEncryptedRequest) (MessagesSentEncryptedMessageType, error) {
-	return srv.(MessagesServer).SendEncrypted(ctx, req)
-}
-
-func _Messages_SendEncryptedFile_Handler(srv interface{}, ctx context.Context, req *MessagesSendEncryptedFileRequest) (MessagesSentEncryptedMessageType, error) {
-	return srv.(MessagesServer).SendEncryptedFile(ctx, req)
-}
-
-func _Messages_SendEncryptedService_Handler(srv interface{}, ctx context.Context, req *MessagesSendEncryptedServiceRequest) (MessagesSentEncryptedMessageType, error) {
-	return srv.(MessagesServer).SendEncryptedService(ctx, req)
-}
-
-func _Messages_SendInlineBotResult_Handler(srv interface{}, ctx context.Context, req *MessagesSendInlineBotResultRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendInlineBotResult(ctx, req)
-}
-
-func _Messages_SendMedia_Handler(srv interface{}, ctx context.Context, req *MessagesSendMediaRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendMedia(ctx, req)
-}
-
-func _Messages_SendMessage_Handler(srv interface{}, ctx context.Context, req *MessagesSendMessageRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendMessage(ctx, req)
-}
-
-func _Messages_SendMultiMedia_Handler(srv interface{}, ctx context.Context, req *MessagesSendMultiMediaRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendMultiMedia(ctx, req)
-}
-
-func _Messages_SendPaidReaction_Handler(srv interface{}, ctx context.Context, req *MessagesSendPaidReactionRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendPaidReaction(ctx, req)
-}
-
-func _Messages_SendQuickReplyMessages_Handler(srv interface{}, ctx context.Context, req *MessagesSendQuickReplyMessagesRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendQuickReplyMessages(ctx, req)
-}
-
-func _Messages_SendReaction_Handler(srv interface{}, ctx context.Context, req *MessagesSendReactionRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendReaction(ctx, req)
-}
-
-func _Messages_SendScheduledMessages_Handler(srv interface{}, ctx context.Context, req *MessagesSendScheduledMessagesRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendScheduledMessages(ctx, req)
-}
-
-func _Messages_SendScreenshotNotification_Handler(srv interface{}, ctx context.Context, req *MessagesSendScreenshotNotificationRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendScreenshotNotification(ctx, req)
-}
-
-func _Messages_SendVote_Handler(srv interface{}, ctx context.Context, req *MessagesSendVoteRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendVote(ctx, req)
-}
-
-func _Messages_SendWebViewData_Handler(srv interface{}, ctx context.Context, req *MessagesSendWebViewDataRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SendWebViewData(ctx, req)
-}
-
-func _Messages_SendWebViewResultMessage_Handler(srv interface{}, ctx context.Context, req *MessagesSendWebViewResultMessageRequest) (*WebViewMessageSent, error) {
-	return srv.(MessagesServer).SendWebViewResultMessage(ctx, req)
-}
-
-func _Messages_SetBotCallbackAnswer_Handler(srv interface{}, ctx context.Context, req *MessagesSetBotCallbackAnswerRequest) (bool, error) {
-	return srv.(MessagesServer).SetBotCallbackAnswer(ctx, req)
-}
-
-func _Messages_SetBotPrecheckoutResults_Handler(srv interface{}, ctx context.Context, req *MessagesSetBotPrecheckoutResultsRequest) (bool, error) {
-	return srv.(MessagesServer).SetBotPrecheckoutResults(ctx, req)
-}
-
-func _Messages_SetBotShippingResults_Handler(srv interface{}, ctx context.Context, req *MessagesSetBotShippingResultsRequest) (bool, error) {
-	return srv.(MessagesServer).SetBotShippingResults(ctx, req)
-}
-
-func _Messages_SetChatAvailableReactions_Handler(srv interface{}, ctx context.Context, req *MessagesSetChatAvailableReactionsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SetChatAvailableReactions(ctx, req)
-}
-
-func _Messages_SetChatTheme_Handler(srv interface{}, ctx context.Context, req *MessagesSetChatThemeRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SetChatTheme(ctx, req)
-}
-
-func _Messages_SetChatWallPaper_Handler(srv interface{}, ctx context.Context, req *MessagesSetChatWallPaperRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SetChatWallPaper(ctx, req)
-}
-
-func _Messages_SetDefaultHistoryTTL_Handler(srv interface{}, ctx context.Context, req *MessagesSetDefaultHistoryTTLRequest) (bool, error) {
-	return srv.(MessagesServer).SetDefaultHistoryTTL(ctx, req)
-}
-
-func _Messages_SetDefaultReaction_Handler(srv interface{}, ctx context.Context, req *MessagesSetDefaultReactionRequest) (bool, error) {
-	return srv.(MessagesServer).SetDefaultReaction(ctx, req)
-}
-
-func _Messages_SetEncryptedTyping_Handler(srv interface{}, ctx context.Context, req *MessagesSetEncryptedTypingRequest) (bool, error) {
-	return srv.(MessagesServer).SetEncryptedTyping(ctx, req)
-}
-
-func _Messages_SetGameScore_Handler(srv interface{}, ctx context.Context, req *MessagesSetGameScoreRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SetGameScore(ctx, req)
-}
-
-func _Messages_SetHistoryTTL_Handler(srv interface{}, ctx context.Context, req *MessagesSetHistoryTTLRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).SetHistoryTTL(ctx, req)
-}
-
-func _Messages_SetInlineBotResults_Handler(srv interface{}, ctx context.Context, req *MessagesSetInlineBotResultsRequest) (bool, error) {
-	return srv.(MessagesServer).SetInlineBotResults(ctx, req)
-}
-
-func _Messages_SetInlineGameScore_Handler(srv interface{}, ctx context.Context, req *MessagesSetInlineGameScoreRequest) (bool, error) {
-	return srv.(MessagesServer).SetInlineGameScore(ctx, req)
-}
-
-func _Messages_SetTyping_Handler(srv interface{}, ctx context.Context, req *MessagesSetTypingRequest) (bool, error) {
-	return srv.(MessagesServer).SetTyping(ctx, req)
-}
-
-func _Messages_StartBot_Handler(srv interface{}, ctx context.Context, req *MessagesStartBotRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).StartBot(ctx, req)
-}
-
-func _Messages_StartHistoryImport_Handler(srv interface{}, ctx context.Context, req *MessagesStartHistoryImportRequest) (bool, error) {
-	return srv.(MessagesServer).StartHistoryImport(ctx, req)
-}
-
-func _Messages_ToggleBotInAttachMenu_Handler(srv interface{}, ctx context.Context, req *MessagesToggleBotInAttachMenuRequest) (bool, error) {
-	return srv.(MessagesServer).ToggleBotInAttachMenu(ctx, req)
+
+func _Messages_EditExportedChatInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditExportedChatInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editExportedChatInvite: request %T is not *MessagesEditExportedChatInviteRequest", req)
+	}
+	return srv.(MessagesServer).EditExportedChatInvite(ctx, typedRequest)
 }
-
-func _Messages_ToggleDialogFilterTags_Handler(srv interface{}, ctx context.Context, req *MessagesToggleDialogFilterTagsRequest) (bool, error) {
-	return srv.(MessagesServer).ToggleDialogFilterTags(ctx, req)
-}
-
-func _Messages_ToggleDialogPin_Handler(srv interface{}, ctx context.Context, req *MessagesToggleDialogPinRequest) (bool, error) {
-	return srv.(MessagesServer).ToggleDialogPin(ctx, req)
-}
-
-func _Messages_ToggleNoForwards_Handler(srv interface{}, ctx context.Context, req *MessagesToggleNoForwardsRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).ToggleNoForwards(ctx, req)
-}
-
-func _Messages_TogglePaidReactionPrivacy_Handler(srv interface{}, ctx context.Context, req *MessagesTogglePaidReactionPrivacyRequest) (bool, error) {
-	return srv.(MessagesServer).TogglePaidReactionPrivacy(ctx, req)
-}
-
-func _Messages_TogglePeerTranslations_Handler(srv interface{}, ctx context.Context, req *MessagesTogglePeerTranslationsRequest) (bool, error) {
-	return srv.(MessagesServer).TogglePeerTranslations(ctx, req)
-}
-
-func _Messages_ToggleSavedDialogPin_Handler(srv interface{}, ctx context.Context, req *MessagesToggleSavedDialogPinRequest) (bool, error) {
-	return srv.(MessagesServer).ToggleSavedDialogPin(ctx, req)
-}
-
-func _Messages_ToggleStickerSets_Handler(srv interface{}, ctx context.Context, req *MessagesToggleStickerSetsRequest) (bool, error) {
-	return srv.(MessagesServer).ToggleStickerSets(ctx, req)
+
+func _Messages_EditExportedChatInvite_EncodeResponse(e *mtproto.Encoder, response MessagesExportedChatInviteType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.ExportedChatInvite is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_ToggleSuggestedPostApproval_Handler(srv interface{}, ctx context.Context, req *MessagesToggleSuggestedPostApprovalRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).ToggleSuggestedPostApproval(ctx, req)
+func _Messages_EditFactCheck_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditFactCheckRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editFactCheck: request %T is not *MessagesEditFactCheckRequest", req)
+	}
+	return srv.(MessagesServer).EditFactCheck(ctx, typedRequest)
 }
 
-func _Messages_ToggleTodoCompleted_Handler(srv interface{}, ctx context.Context, req *MessagesToggleTodoCompletedRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).ToggleTodoCompleted(ctx, req)
+func _Messages_EditFactCheck_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_TranscribeAudio_Handler(srv interface{}, ctx context.Context, req *MessagesTranscribeAudioRequest) (*MessagesTranscribedAudio, error) {
-	return srv.(MessagesServer).TranscribeAudio(ctx, req)
+func _Messages_EditInlineBotMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditInlineBotMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editInlineBotMessage: request %T is not *MessagesEditInlineBotMessageRequest", req)
+	}
+	return srv.(MessagesServer).EditInlineBotMessage(ctx, typedRequest)
 }
 
-func _Messages_TranslateText_Handler(srv interface{}, ctx context.Context, req *MessagesTranslateTextRequest) (*MessagesTranslatedText, error) {
-	return srv.(MessagesServer).TranslateText(ctx, req)
+func _Messages_EditInlineBotMessage_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Messages_UninstallStickerSet_Handler(srv interface{}, ctx context.Context, req *MessagesUninstallStickerSetRequest) (bool, error) {
-	return srv.(MessagesServer).UninstallStickerSet(ctx, req)
+func _Messages_EditMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editMessage: request %T is not *MessagesEditMessageRequest", req)
+	}
+	return srv.(MessagesServer).EditMessage(ctx, typedRequest)
 }
 
-func _Messages_UnpinAllMessages_Handler(srv interface{}, ctx context.Context, req *MessagesUnpinAllMessagesRequest) (*MessagesAffectedHistory, error) {
-	return srv.(MessagesServer).UnpinAllMessages(ctx, req)
-}
+func _Messages_EditMessage_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
 
-func _Messages_UpdateDialogFilter_Handler(srv interface{}, ctx context.Context, req *MessagesUpdateDialogFilterRequest) (bool, error) {
-	return srv.(MessagesServer).UpdateDialogFilter(ctx, req)
-}
+func _Messages_EditQuickReplyShortcut_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesEditQuickReplyShortcutRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.editQuickReplyShortcut: request %T is not *MessagesEditQuickReplyShortcutRequest", req)
+	}
+	return srv.(MessagesServer).EditQuickReplyShortcut(ctx, typedRequest)
+}
 
-func _Messages_UpdateDialogFiltersOrder_Handler(srv interface{}, ctx context.Context, req *MessagesUpdateDialogFiltersOrderRequest) (bool, error) {
-	return srv.(MessagesServer).UpdateDialogFiltersOrder(ctx, req)
-}
+func _Messages_EditQuickReplyShortcut_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ExportChatInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesExportChatInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.exportChatInvite: request %T is not *MessagesExportChatInviteRequest", req)
+	}
+	return srv.(MessagesServer).ExportChatInvite(ctx, typedRequest)
+}
+
+func _Messages_ExportChatInvite_EncodeResponse(e *mtproto.Encoder, response ExportedChatInviteType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed ExportedChatInvite is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
 
-func _Messages_UpdatePinnedMessage_Handler(srv interface{}, ctx context.Context, req *MessagesUpdatePinnedMessageRequest) (UpdatesType, error) {
-	return srv.(MessagesServer).UpdatePinnedMessage(ctx, req)
-}
+func _Messages_FaveSticker_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesFaveStickerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.faveSticker: request %T is not *MessagesFaveStickerRequest", req)
+	}
+	return srv.(MessagesServer).FaveSticker(ctx, typedRequest)
+}
 
-func _Messages_UpdateSavedReactionTag_Handler(srv interface{}, ctx context.Context, req *MessagesUpdateSavedReactionTagRequest) (bool, error) {
-	return srv.(MessagesServer).UpdateSavedReactionTag(ctx, req)
-}
+func _Messages_FaveSticker_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
 
-func _Messages_UploadEncryptedFile_Handler(srv interface{}, ctx context.Context, req *MessagesUploadEncryptedFileRequest) (EncryptedFileType, error) {
-	return srv.(MessagesServer).UploadEncryptedFile(ctx, req)
-}
+func _Messages_ForwardMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesForwardMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.forwardMessages: request %T is not *MessagesForwardMessagesRequest", req)
+	}
+	return srv.(MessagesServer).ForwardMessages(ctx, typedRequest)
+}
 
-func _Messages_UploadImportedMedia_Handler(srv interface{}, ctx context.Context, req *MessagesUploadImportedMediaRequest) (MessageMediaType, error) {
-	return srv.(MessagesServer).UploadImportedMedia(ctx, req)
-}
+func _Messages_ForwardMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
 
-func _Messages_UploadMedia_Handler(srv interface{}, ctx context.Context, req *MessagesUploadMediaRequest) (MessageMediaType, error) {
-	return srv.(MessagesServer).UploadMedia(ctx, req)
-}
+func _Messages_GetAdminsWithInvites_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAdminsWithInvitesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAdminsWithInvites: request %T is not *MessagesGetAdminsWithInvitesRequest", req)
+	}
+	return srv.(MessagesServer).GetAdminsWithInvites(ctx, typedRequest)
+}
 
-func _Messages_ViewSponsoredMessage_Handler(srv interface{}, ctx context.Context, req *MessagesViewSponsoredMessageRequest) (bool, error) {
-	return srv.(MessagesServer).ViewSponsoredMessage(ctx, req)
+func _Messages_GetAdminsWithInvites_EncodeResponse(e *mtproto.Encoder, response *MessagesChatAdminsWithInvites) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAllDrafts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAllDraftsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAllDrafts: request %T is not *MessagesGetAllDraftsRequest", req)
+	}
+	return srv.(MessagesServer).GetAllDrafts(ctx, typedRequest)
+}
+
+func _Messages_GetAllDrafts_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAllStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAllStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAllStickers: request %T is not *MessagesGetAllStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetAllStickers(ctx, typedRequest)
+}
+
+func _Messages_GetAllStickers_EncodeResponse(e *mtproto.Encoder, response MessagesAllStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.AllStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetArchivedStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetArchivedStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getArchivedStickers: request %T is not *MessagesGetArchivedStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetArchivedStickers(ctx, typedRequest)
+}
+
+func _Messages_GetArchivedStickers_EncodeResponse(e *mtproto.Encoder, response *MessagesArchivedStickers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAttachMenuBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAttachMenuBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAttachMenuBot: request %T is not *MessagesGetAttachMenuBotRequest", req)
+	}
+	return srv.(MessagesServer).GetAttachMenuBot(ctx, typedRequest)
+}
+
+func _Messages_GetAttachMenuBot_EncodeResponse(e *mtproto.Encoder, response *AttachMenuBotsBot) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAttachMenuBots_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAttachMenuBotsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAttachMenuBots: request %T is not *MessagesGetAttachMenuBotsRequest", req)
+	}
+	return srv.(MessagesServer).GetAttachMenuBots(ctx, typedRequest)
+}
+
+func _Messages_GetAttachMenuBots_EncodeResponse(e *mtproto.Encoder, response AttachMenuBotsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed AttachMenuBots is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAttachedStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAttachedStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAttachedStickers: request %T is not *MessagesGetAttachedStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetAttachedStickers(ctx, typedRequest)
+}
+
+func _Messages_GetAttachedStickers_EncodeResponse(e *mtproto.Encoder, response []StickerSetCoveredType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed StickerSetCovered is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAvailableEffects_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAvailableEffectsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAvailableEffects: request %T is not *MessagesGetAvailableEffectsRequest", req)
+	}
+	return srv.(MessagesServer).GetAvailableEffects(ctx, typedRequest)
+}
+
+func _Messages_GetAvailableEffects_EncodeResponse(e *mtproto.Encoder, response MessagesAvailableEffectsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.AvailableEffects is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetAvailableReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetAvailableReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getAvailableReactions: request %T is not *MessagesGetAvailableReactionsRequest", req)
+	}
+	return srv.(MessagesServer).GetAvailableReactions(ctx, typedRequest)
+}
+
+func _Messages_GetAvailableReactions_EncodeResponse(e *mtproto.Encoder, response MessagesAvailableReactionsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.AvailableReactions is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetBotApp_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetBotAppRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getBotApp: request %T is not *MessagesGetBotAppRequest", req)
+	}
+	return srv.(MessagesServer).GetBotApp(ctx, typedRequest)
+}
+
+func _Messages_GetBotApp_EncodeResponse(e *mtproto.Encoder, response *MessagesBotApp) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetBotCallbackAnswer_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetBotCallbackAnswerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getBotCallbackAnswer: request %T is not *MessagesGetBotCallbackAnswerRequest", req)
+	}
+	return srv.(MessagesServer).GetBotCallbackAnswer(ctx, typedRequest)
+}
+
+func _Messages_GetBotCallbackAnswer_EncodeResponse(e *mtproto.Encoder, response *MessagesBotCallbackAnswer) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetChatInviteImporters_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetChatInviteImportersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getChatInviteImporters: request %T is not *MessagesGetChatInviteImportersRequest", req)
+	}
+	return srv.(MessagesServer).GetChatInviteImporters(ctx, typedRequest)
+}
+
+func _Messages_GetChatInviteImporters_EncodeResponse(e *mtproto.Encoder, response *MessagesChatInviteImporters) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetChats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetChatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getChats: request %T is not *MessagesGetChatsRequest", req)
+	}
+	return srv.(MessagesServer).GetChats(ctx, typedRequest)
+}
+
+func _Messages_GetChats_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetCommonChats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetCommonChatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getCommonChats: request %T is not *MessagesGetCommonChatsRequest", req)
+	}
+	return srv.(MessagesServer).GetCommonChats(ctx, typedRequest)
+}
+
+func _Messages_GetCommonChats_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetCustomEmojiDocuments_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetCustomEmojiDocumentsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getCustomEmojiDocuments: request %T is not *MessagesGetCustomEmojiDocumentsRequest", req)
+	}
+	return srv.(MessagesServer).GetCustomEmojiDocuments(ctx, typedRequest)
+}
+
+func _Messages_GetCustomEmojiDocuments_EncodeResponse(e *mtproto.Encoder, response []DocumentType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed Document is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDefaultHistoryTTL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDefaultHistoryTTLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDefaultHistoryTTL: request %T is not *MessagesGetDefaultHistoryTTLRequest", req)
+	}
+	return srv.(MessagesServer).GetDefaultHistoryTTL(ctx, typedRequest)
+}
+
+func _Messages_GetDefaultHistoryTTL_EncodeResponse(e *mtproto.Encoder, response *DefaultHistoryTTL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDefaultTagReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDefaultTagReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDefaultTagReactions: request %T is not *MessagesGetDefaultTagReactionsRequest", req)
+	}
+	return srv.(MessagesServer).GetDefaultTagReactions(ctx, typedRequest)
+}
+
+func _Messages_GetDefaultTagReactions_EncodeResponse(e *mtproto.Encoder, response MessagesReactionsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Reactions is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDhConfig_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDhConfigRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDhConfig: request %T is not *MessagesGetDhConfigRequest", req)
+	}
+	return srv.(MessagesServer).GetDhConfig(ctx, typedRequest)
+}
+
+func _Messages_GetDhConfig_EncodeResponse(e *mtproto.Encoder, response MessagesDhConfigType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.DhConfig is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDialogFilters_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDialogFiltersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDialogFilters: request %T is not *MessagesGetDialogFiltersRequest", req)
+	}
+	return srv.(MessagesServer).GetDialogFilters(ctx, typedRequest)
+}
+
+func _Messages_GetDialogFilters_EncodeResponse(e *mtproto.Encoder, response *MessagesDialogFilters) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDialogUnreadMarks_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDialogUnreadMarksRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDialogUnreadMarks: request %T is not *MessagesGetDialogUnreadMarksRequest", req)
+	}
+	return srv.(MessagesServer).GetDialogUnreadMarks(ctx, typedRequest)
+}
+
+func _Messages_GetDialogUnreadMarks_EncodeResponse(e *mtproto.Encoder, response []DialogPeerType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed DialogPeer is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDialogs: request %T is not *MessagesGetDialogsRequest", req)
+	}
+	return srv.(MessagesServer).GetDialogs(ctx, typedRequest)
+}
+
+func _Messages_GetDialogs_EncodeResponse(e *mtproto.Encoder, response MessagesDialogsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Dialogs is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDiscussionMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDiscussionMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDiscussionMessage: request %T is not *MessagesGetDiscussionMessageRequest", req)
+	}
+	return srv.(MessagesServer).GetDiscussionMessage(ctx, typedRequest)
+}
+
+func _Messages_GetDiscussionMessage_EncodeResponse(e *mtproto.Encoder, response *MessagesDiscussionMessage) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetDocumentByHash_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetDocumentByHashRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getDocumentByHash: request %T is not *MessagesGetDocumentByHashRequest", req)
+	}
+	return srv.(MessagesServer).GetDocumentByHash(ctx, typedRequest)
+}
+
+func _Messages_GetDocumentByHash_EncodeResponse(e *mtproto.Encoder, response DocumentType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Document is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiGroups_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiGroupsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiGroups: request %T is not *MessagesGetEmojiGroupsRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiGroups(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiGroups_EncodeResponse(e *mtproto.Encoder, response MessagesEmojiGroupsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.EmojiGroups is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiKeywords_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiKeywordsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiKeywords: request %T is not *MessagesGetEmojiKeywordsRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiKeywords(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiKeywords_EncodeResponse(e *mtproto.Encoder, response *EmojiKeywordsDifference) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiKeywordsDifference_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiKeywordsDifferenceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiKeywordsDifference: request %T is not *MessagesGetEmojiKeywordsDifferenceRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiKeywordsDifference(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiKeywordsDifference_EncodeResponse(e *mtproto.Encoder, response *EmojiKeywordsDifference) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiKeywordsLanguages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiKeywordsLanguagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiKeywordsLanguages: request %T is not *MessagesGetEmojiKeywordsLanguagesRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiKeywordsLanguages(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiKeywordsLanguages_EncodeResponse(e *mtproto.Encoder, response []*EmojiLanguage) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiProfilePhotoGroups_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiProfilePhotoGroupsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiProfilePhotoGroups: request %T is not *MessagesGetEmojiProfilePhotoGroupsRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiProfilePhotoGroups(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiProfilePhotoGroups_EncodeResponse(e *mtproto.Encoder, response MessagesEmojiGroupsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.EmojiGroups is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiStatusGroups_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiStatusGroupsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiStatusGroups: request %T is not *MessagesGetEmojiStatusGroupsRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiStatusGroups(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiStatusGroups_EncodeResponse(e *mtproto.Encoder, response MessagesEmojiGroupsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.EmojiGroups is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiStickerGroups_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiStickerGroupsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiStickerGroups: request %T is not *MessagesGetEmojiStickerGroupsRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiStickerGroups(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiStickerGroups_EncodeResponse(e *mtproto.Encoder, response MessagesEmojiGroupsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.EmojiGroups is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiStickers: request %T is not *MessagesGetEmojiStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiStickers(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiStickers_EncodeResponse(e *mtproto.Encoder, response MessagesAllStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.AllStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetEmojiURL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetEmojiURLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getEmojiURL: request %T is not *MessagesGetEmojiURLRequest", req)
+	}
+	return srv.(MessagesServer).GetEmojiURL(ctx, typedRequest)
+}
+
+func _Messages_GetEmojiURL_EncodeResponse(e *mtproto.Encoder, response *EmojiURL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetExportedChatInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetExportedChatInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getExportedChatInvite: request %T is not *MessagesGetExportedChatInviteRequest", req)
+	}
+	return srv.(MessagesServer).GetExportedChatInvite(ctx, typedRequest)
+}
+
+func _Messages_GetExportedChatInvite_EncodeResponse(e *mtproto.Encoder, response MessagesExportedChatInviteType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.ExportedChatInvite is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetExportedChatInvites_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetExportedChatInvitesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getExportedChatInvites: request %T is not *MessagesGetExportedChatInvitesRequest", req)
+	}
+	return srv.(MessagesServer).GetExportedChatInvites(ctx, typedRequest)
+}
+
+func _Messages_GetExportedChatInvites_EncodeResponse(e *mtproto.Encoder, response *MessagesExportedChatInvites) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetExtendedMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetExtendedMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getExtendedMedia: request %T is not *MessagesGetExtendedMediaRequest", req)
+	}
+	return srv.(MessagesServer).GetExtendedMedia(ctx, typedRequest)
+}
+
+func _Messages_GetExtendedMedia_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetFactCheck_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetFactCheckRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getFactCheck: request %T is not *MessagesGetFactCheckRequest", req)
+	}
+	return srv.(MessagesServer).GetFactCheck(ctx, typedRequest)
+}
+
+func _Messages_GetFactCheck_EncodeResponse(e *mtproto.Encoder, response []*FactCheck) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetFavedStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetFavedStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getFavedStickers: request %T is not *MessagesGetFavedStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetFavedStickers(ctx, typedRequest)
+}
+
+func _Messages_GetFavedStickers_EncodeResponse(e *mtproto.Encoder, response MessagesFavedStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FavedStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetFeaturedEmojiStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetFeaturedEmojiStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getFeaturedEmojiStickers: request %T is not *MessagesGetFeaturedEmojiStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetFeaturedEmojiStickers(ctx, typedRequest)
+}
+
+func _Messages_GetFeaturedEmojiStickers_EncodeResponse(e *mtproto.Encoder, response MessagesFeaturedStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FeaturedStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetFeaturedStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetFeaturedStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getFeaturedStickers: request %T is not *MessagesGetFeaturedStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetFeaturedStickers(ctx, typedRequest)
+}
+
+func _Messages_GetFeaturedStickers_EncodeResponse(e *mtproto.Encoder, response MessagesFeaturedStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FeaturedStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetFullChat_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetFullChatRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getFullChat: request %T is not *MessagesGetFullChatRequest", req)
+	}
+	return srv.(MessagesServer).GetFullChat(ctx, typedRequest)
+}
+
+func _Messages_GetFullChat_EncodeResponse(e *mtproto.Encoder, response *MessagesChatFull) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetGameHighScores_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetGameHighScoresRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getGameHighScores: request %T is not *MessagesGetGameHighScoresRequest", req)
+	}
+	return srv.(MessagesServer).GetGameHighScores(ctx, typedRequest)
+}
+
+func _Messages_GetGameHighScores_EncodeResponse(e *mtproto.Encoder, response *MessagesHighScores) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getHistory: request %T is not *MessagesGetHistoryRequest", req)
+	}
+	return srv.(MessagesServer).GetHistory(ctx, typedRequest)
+}
+
+func _Messages_GetHistory_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetInlineBotResults_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetInlineBotResultsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getInlineBotResults: request %T is not *MessagesGetInlineBotResultsRequest", req)
+	}
+	return srv.(MessagesServer).GetInlineBotResults(ctx, typedRequest)
+}
+
+func _Messages_GetInlineBotResults_EncodeResponse(e *mtproto.Encoder, response *MessagesBotResults) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetInlineGameHighScores_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetInlineGameHighScoresRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getInlineGameHighScores: request %T is not *MessagesGetInlineGameHighScoresRequest", req)
+	}
+	return srv.(MessagesServer).GetInlineGameHighScores(ctx, typedRequest)
+}
+
+func _Messages_GetInlineGameHighScores_EncodeResponse(e *mtproto.Encoder, response *MessagesHighScores) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMaskStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMaskStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMaskStickers: request %T is not *MessagesGetMaskStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetMaskStickers(ctx, typedRequest)
+}
+
+func _Messages_GetMaskStickers_EncodeResponse(e *mtproto.Encoder, response MessagesAllStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.AllStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMessageEditData_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMessageEditDataRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMessageEditData: request %T is not *MessagesGetMessageEditDataRequest", req)
+	}
+	return srv.(MessagesServer).GetMessageEditData(ctx, typedRequest)
+}
+
+func _Messages_GetMessageEditData_EncodeResponse(e *mtproto.Encoder, response *MessagesMessageEditData) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMessageReactionsList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMessageReactionsListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMessageReactionsList: request %T is not *MessagesGetMessageReactionsListRequest", req)
+	}
+	return srv.(MessagesServer).GetMessageReactionsList(ctx, typedRequest)
+}
+
+func _Messages_GetMessageReactionsList_EncodeResponse(e *mtproto.Encoder, response *MessagesMessageReactionsList) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMessageReadParticipants_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMessageReadParticipantsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMessageReadParticipants: request %T is not *MessagesGetMessageReadParticipantsRequest", req)
+	}
+	return srv.(MessagesServer).GetMessageReadParticipants(ctx, typedRequest)
+}
+
+func _Messages_GetMessageReadParticipants_EncodeResponse(e *mtproto.Encoder, response []*ReadParticipantDate) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMessages: request %T is not *MessagesGetMessagesRequest", req)
+	}
+	return srv.(MessagesServer).GetMessages(ctx, typedRequest)
+}
+
+func _Messages_GetMessages_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMessagesReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMessagesReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMessagesReactions: request %T is not *MessagesGetMessagesReactionsRequest", req)
+	}
+	return srv.(MessagesServer).GetMessagesReactions(ctx, typedRequest)
+}
+
+func _Messages_GetMessagesReactions_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMessagesViews_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMessagesViewsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMessagesViews: request %T is not *MessagesGetMessagesViewsRequest", req)
+	}
+	return srv.(MessagesServer).GetMessagesViews(ctx, typedRequest)
+}
+
+func _Messages_GetMessagesViews_EncodeResponse(e *mtproto.Encoder, response *MessagesMessageViews) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetMyStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetMyStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getMyStickers: request %T is not *MessagesGetMyStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetMyStickers(ctx, typedRequest)
+}
+
+func _Messages_GetMyStickers_EncodeResponse(e *mtproto.Encoder, response *MessagesMyStickers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetOldFeaturedStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetOldFeaturedStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getOldFeaturedStickers: request %T is not *MessagesGetOldFeaturedStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetOldFeaturedStickers(ctx, typedRequest)
+}
+
+func _Messages_GetOldFeaturedStickers_EncodeResponse(e *mtproto.Encoder, response MessagesFeaturedStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FeaturedStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetOnlines_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetOnlinesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getOnlines: request %T is not *MessagesGetOnlinesRequest", req)
+	}
+	return srv.(MessagesServer).GetOnlines(ctx, typedRequest)
+}
+
+func _Messages_GetOnlines_EncodeResponse(e *mtproto.Encoder, response *ChatOnlines) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetOutboxReadDate_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetOutboxReadDateRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getOutboxReadDate: request %T is not *MessagesGetOutboxReadDateRequest", req)
+	}
+	return srv.(MessagesServer).GetOutboxReadDate(ctx, typedRequest)
+}
+
+func _Messages_GetOutboxReadDate_EncodeResponse(e *mtproto.Encoder, response *OutboxReadDate) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPaidReactionPrivacy_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPaidReactionPrivacyRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPaidReactionPrivacy: request %T is not *MessagesGetPaidReactionPrivacyRequest", req)
+	}
+	return srv.(MessagesServer).GetPaidReactionPrivacy(ctx, typedRequest)
+}
+
+func _Messages_GetPaidReactionPrivacy_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPeerDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPeerDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPeerDialogs: request %T is not *MessagesGetPeerDialogsRequest", req)
+	}
+	return srv.(MessagesServer).GetPeerDialogs(ctx, typedRequest)
+}
+
+func _Messages_GetPeerDialogs_EncodeResponse(e *mtproto.Encoder, response *MessagesPeerDialogs) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPeerSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPeerSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPeerSettings: request %T is not *MessagesGetPeerSettingsRequest", req)
+	}
+	return srv.(MessagesServer).GetPeerSettings(ctx, typedRequest)
+}
+
+func _Messages_GetPeerSettings_EncodeResponse(e *mtproto.Encoder, response *MessagesPeerSettings) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPinnedDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPinnedDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPinnedDialogs: request %T is not *MessagesGetPinnedDialogsRequest", req)
+	}
+	return srv.(MessagesServer).GetPinnedDialogs(ctx, typedRequest)
+}
+
+func _Messages_GetPinnedDialogs_EncodeResponse(e *mtproto.Encoder, response *MessagesPeerDialogs) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPinnedSavedDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPinnedSavedDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPinnedSavedDialogs: request %T is not *MessagesGetPinnedSavedDialogsRequest", req)
+	}
+	return srv.(MessagesServer).GetPinnedSavedDialogs(ctx, typedRequest)
+}
+
+func _Messages_GetPinnedSavedDialogs_EncodeResponse(e *mtproto.Encoder, response MessagesSavedDialogsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SavedDialogs is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPollResults_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPollResultsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPollResults: request %T is not *MessagesGetPollResultsRequest", req)
+	}
+	return srv.(MessagesServer).GetPollResults(ctx, typedRequest)
+}
+
+func _Messages_GetPollResults_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPollVotes_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPollVotesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPollVotes: request %T is not *MessagesGetPollVotesRequest", req)
+	}
+	return srv.(MessagesServer).GetPollVotes(ctx, typedRequest)
+}
+
+func _Messages_GetPollVotes_EncodeResponse(e *mtproto.Encoder, response *MessagesVotesList) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetPreparedInlineMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetPreparedInlineMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getPreparedInlineMessage: request %T is not *MessagesGetPreparedInlineMessageRequest", req)
+	}
+	return srv.(MessagesServer).GetPreparedInlineMessage(ctx, typedRequest)
+}
+
+func _Messages_GetPreparedInlineMessage_EncodeResponse(e *mtproto.Encoder, response *MessagesPreparedInlineMessage) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetQuickReplies_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetQuickRepliesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getQuickReplies: request %T is not *MessagesGetQuickRepliesRequest", req)
+	}
+	return srv.(MessagesServer).GetQuickReplies(ctx, typedRequest)
+}
+
+func _Messages_GetQuickReplies_EncodeResponse(e *mtproto.Encoder, response MessagesQuickRepliesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.QuickReplies is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetQuickReplyMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetQuickReplyMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getQuickReplyMessages: request %T is not *MessagesGetQuickReplyMessagesRequest", req)
+	}
+	return srv.(MessagesServer).GetQuickReplyMessages(ctx, typedRequest)
+}
+
+func _Messages_GetQuickReplyMessages_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetRecentLocations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetRecentLocationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getRecentLocations: request %T is not *MessagesGetRecentLocationsRequest", req)
+	}
+	return srv.(MessagesServer).GetRecentLocations(ctx, typedRequest)
+}
+
+func _Messages_GetRecentLocations_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetRecentReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetRecentReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getRecentReactions: request %T is not *MessagesGetRecentReactionsRequest", req)
+	}
+	return srv.(MessagesServer).GetRecentReactions(ctx, typedRequest)
+}
+
+func _Messages_GetRecentReactions_EncodeResponse(e *mtproto.Encoder, response MessagesReactionsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Reactions is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetRecentStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetRecentStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getRecentStickers: request %T is not *MessagesGetRecentStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetRecentStickers(ctx, typedRequest)
+}
+
+func _Messages_GetRecentStickers_EncodeResponse(e *mtproto.Encoder, response MessagesRecentStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.RecentStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetReplies_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetRepliesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getReplies: request %T is not *MessagesGetRepliesRequest", req)
+	}
+	return srv.(MessagesServer).GetReplies(ctx, typedRequest)
+}
+
+func _Messages_GetReplies_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSavedDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSavedDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSavedDialogs: request %T is not *MessagesGetSavedDialogsRequest", req)
+	}
+	return srv.(MessagesServer).GetSavedDialogs(ctx, typedRequest)
+}
+
+func _Messages_GetSavedDialogs_EncodeResponse(e *mtproto.Encoder, response MessagesSavedDialogsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SavedDialogs is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSavedDialogsByID_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSavedDialogsByIDRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSavedDialogsByID: request %T is not *MessagesGetSavedDialogsByIDRequest", req)
+	}
+	return srv.(MessagesServer).GetSavedDialogsByID(ctx, typedRequest)
+}
+
+func _Messages_GetSavedDialogsByID_EncodeResponse(e *mtproto.Encoder, response MessagesSavedDialogsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SavedDialogs is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSavedGifs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSavedGifsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSavedGifs: request %T is not *MessagesGetSavedGifsRequest", req)
+	}
+	return srv.(MessagesServer).GetSavedGifs(ctx, typedRequest)
+}
+
+func _Messages_GetSavedGifs_EncodeResponse(e *mtproto.Encoder, response MessagesSavedGifsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SavedGifs is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSavedHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSavedHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSavedHistory: request %T is not *MessagesGetSavedHistoryRequest", req)
+	}
+	return srv.(MessagesServer).GetSavedHistory(ctx, typedRequest)
+}
+
+func _Messages_GetSavedHistory_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSavedReactionTags_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSavedReactionTagsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSavedReactionTags: request %T is not *MessagesGetSavedReactionTagsRequest", req)
+	}
+	return srv.(MessagesServer).GetSavedReactionTags(ctx, typedRequest)
+}
+
+func _Messages_GetSavedReactionTags_EncodeResponse(e *mtproto.Encoder, response MessagesSavedReactionTagsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SavedReactionTags is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetScheduledHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetScheduledHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getScheduledHistory: request %T is not *MessagesGetScheduledHistoryRequest", req)
+	}
+	return srv.(MessagesServer).GetScheduledHistory(ctx, typedRequest)
+}
+
+func _Messages_GetScheduledHistory_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetScheduledMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetScheduledMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getScheduledMessages: request %T is not *MessagesGetScheduledMessagesRequest", req)
+	}
+	return srv.(MessagesServer).GetScheduledMessages(ctx, typedRequest)
+}
+
+func _Messages_GetScheduledMessages_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSearchCounters_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSearchCountersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSearchCounters: request %T is not *MessagesGetSearchCountersRequest", req)
+	}
+	return srv.(MessagesServer).GetSearchCounters(ctx, typedRequest)
+}
+
+func _Messages_GetSearchCounters_EncodeResponse(e *mtproto.Encoder, response []*MessagesSearchCounter) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSearchResultsCalendar_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSearchResultsCalendarRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSearchResultsCalendar: request %T is not *MessagesGetSearchResultsCalendarRequest", req)
+	}
+	return srv.(MessagesServer).GetSearchResultsCalendar(ctx, typedRequest)
+}
+
+func _Messages_GetSearchResultsCalendar_EncodeResponse(e *mtproto.Encoder, response *MessagesSearchResultsCalendar) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSearchResultsPositions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSearchResultsPositionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSearchResultsPositions: request %T is not *MessagesGetSearchResultsPositionsRequest", req)
+	}
+	return srv.(MessagesServer).GetSearchResultsPositions(ctx, typedRequest)
+}
+
+func _Messages_GetSearchResultsPositions_EncodeResponse(e *mtproto.Encoder, response *MessagesSearchResultsPositions) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSplitRanges_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSplitRangesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSplitRanges: request %T is not *MessagesGetSplitRangesRequest", req)
+	}
+	return srv.(MessagesServer).GetSplitRanges(ctx, typedRequest)
+}
+
+func _Messages_GetSplitRanges_EncodeResponse(e *mtproto.Encoder, response []*MessageRange) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSponsoredMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSponsoredMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSponsoredMessages: request %T is not *MessagesGetSponsoredMessagesRequest", req)
+	}
+	return srv.(MessagesServer).GetSponsoredMessages(ctx, typedRequest)
+}
+
+func _Messages_GetSponsoredMessages_EncodeResponse(e *mtproto.Encoder, response MessagesSponsoredMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SponsoredMessages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetStickerSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetStickerSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getStickerSet: request %T is not *MessagesGetStickerSetRequest", req)
+	}
+	return srv.(MessagesServer).GetStickerSet(ctx, typedRequest)
+}
+
+func _Messages_GetStickerSet_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getStickers: request %T is not *MessagesGetStickersRequest", req)
+	}
+	return srv.(MessagesServer).GetStickers(ctx, typedRequest)
+}
+
+func _Messages_GetStickers_EncodeResponse(e *mtproto.Encoder, response MessagesStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Stickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetSuggestedDialogFilters_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetSuggestedDialogFiltersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getSuggestedDialogFilters: request %T is not *MessagesGetSuggestedDialogFiltersRequest", req)
+	}
+	return srv.(MessagesServer).GetSuggestedDialogFilters(ctx, typedRequest)
+}
+
+func _Messages_GetSuggestedDialogFilters_EncodeResponse(e *mtproto.Encoder, response []*DialogFilterSuggested) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetTopReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetTopReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getTopReactions: request %T is not *MessagesGetTopReactionsRequest", req)
+	}
+	return srv.(MessagesServer).GetTopReactions(ctx, typedRequest)
+}
+
+func _Messages_GetTopReactions_EncodeResponse(e *mtproto.Encoder, response MessagesReactionsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Reactions is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetUnreadMentions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetUnreadMentionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getUnreadMentions: request %T is not *MessagesGetUnreadMentionsRequest", req)
+	}
+	return srv.(MessagesServer).GetUnreadMentions(ctx, typedRequest)
+}
+
+func _Messages_GetUnreadMentions_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetUnreadReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetUnreadReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getUnreadReactions: request %T is not *MessagesGetUnreadReactionsRequest", req)
+	}
+	return srv.(MessagesServer).GetUnreadReactions(ctx, typedRequest)
+}
+
+func _Messages_GetUnreadReactions_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetWebPage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetWebPageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getWebPage: request %T is not *MessagesGetWebPageRequest", req)
+	}
+	return srv.(MessagesServer).GetWebPage(ctx, typedRequest)
+}
+
+func _Messages_GetWebPage_EncodeResponse(e *mtproto.Encoder, response *MessagesWebPage) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_GetWebPagePreview_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesGetWebPagePreviewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.getWebPagePreview: request %T is not *MessagesGetWebPagePreviewRequest", req)
+	}
+	return srv.(MessagesServer).GetWebPagePreview(ctx, typedRequest)
+}
+
+func _Messages_GetWebPagePreview_EncodeResponse(e *mtproto.Encoder, response *MessagesWebPagePreview) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_HideAllChatJoinRequests_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesHideAllChatJoinRequestsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.hideAllChatJoinRequests: request %T is not *MessagesHideAllChatJoinRequestsRequest", req)
+	}
+	return srv.(MessagesServer).HideAllChatJoinRequests(ctx, typedRequest)
+}
+
+func _Messages_HideAllChatJoinRequests_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_HideChatJoinRequest_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesHideChatJoinRequestRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.hideChatJoinRequest: request %T is not *MessagesHideChatJoinRequestRequest", req)
+	}
+	return srv.(MessagesServer).HideChatJoinRequest(ctx, typedRequest)
+}
+
+func _Messages_HideChatJoinRequest_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_HidePeerSettingsBar_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesHidePeerSettingsBarRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.hidePeerSettingsBar: request %T is not *MessagesHidePeerSettingsBarRequest", req)
+	}
+	return srv.(MessagesServer).HidePeerSettingsBar(ctx, typedRequest)
+}
+
+func _Messages_HidePeerSettingsBar_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ImportChatInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesImportChatInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.importChatInvite: request %T is not *MessagesImportChatInviteRequest", req)
+	}
+	return srv.(MessagesServer).ImportChatInvite(ctx, typedRequest)
+}
+
+func _Messages_ImportChatInvite_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_InitHistoryImport_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesInitHistoryImportRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.initHistoryImport: request %T is not *MessagesInitHistoryImportRequest", req)
+	}
+	return srv.(MessagesServer).InitHistoryImport(ctx, typedRequest)
+}
+
+func _Messages_InitHistoryImport_EncodeResponse(e *mtproto.Encoder, response *MessagesHistoryImport) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_InstallStickerSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesInstallStickerSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.installStickerSet: request %T is not *MessagesInstallStickerSetRequest", req)
+	}
+	return srv.(MessagesServer).InstallStickerSet(ctx, typedRequest)
+}
+
+func _Messages_InstallStickerSet_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetInstallResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSetInstallResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_MarkDialogUnread_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesMarkDialogUnreadRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.markDialogUnread: request %T is not *MessagesMarkDialogUnreadRequest", req)
+	}
+	return srv.(MessagesServer).MarkDialogUnread(ctx, typedRequest)
+}
+
+func _Messages_MarkDialogUnread_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_MigrateChat_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesMigrateChatRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.migrateChat: request %T is not *MessagesMigrateChatRequest", req)
+	}
+	return srv.(MessagesServer).MigrateChat(ctx, typedRequest)
+}
+
+func _Messages_MigrateChat_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ProlongWebView_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesProlongWebViewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.prolongWebView: request %T is not *MessagesProlongWebViewRequest", req)
+	}
+	return srv.(MessagesServer).ProlongWebView(ctx, typedRequest)
+}
+
+func _Messages_ProlongWebView_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RateTranscribedAudio_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRateTranscribedAudioRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.rateTranscribedAudio: request %T is not *MessagesRateTranscribedAudioRequest", req)
+	}
+	return srv.(MessagesServer).RateTranscribedAudio(ctx, typedRequest)
+}
+
+func _Messages_RateTranscribedAudio_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadDiscussion_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadDiscussionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readDiscussion: request %T is not *MessagesReadDiscussionRequest", req)
+	}
+	return srv.(MessagesServer).ReadDiscussion(ctx, typedRequest)
+}
+
+func _Messages_ReadDiscussion_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadEncryptedHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadEncryptedHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readEncryptedHistory: request %T is not *MessagesReadEncryptedHistoryRequest", req)
+	}
+	return srv.(MessagesServer).ReadEncryptedHistory(ctx, typedRequest)
+}
+
+func _Messages_ReadEncryptedHistory_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadFeaturedStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadFeaturedStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readFeaturedStickers: request %T is not *MessagesReadFeaturedStickersRequest", req)
+	}
+	return srv.(MessagesServer).ReadFeaturedStickers(ctx, typedRequest)
+}
+
+func _Messages_ReadFeaturedStickers_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readHistory: request %T is not *MessagesReadHistoryRequest", req)
+	}
+	return srv.(MessagesServer).ReadHistory(ctx, typedRequest)
+}
+
+func _Messages_ReadHistory_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedMessages) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadMentions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadMentionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readMentions: request %T is not *MessagesReadMentionsRequest", req)
+	}
+	return srv.(MessagesServer).ReadMentions(ctx, typedRequest)
+}
+
+func _Messages_ReadMentions_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadMessageContents_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadMessageContentsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readMessageContents: request %T is not *MessagesReadMessageContentsRequest", req)
+	}
+	return srv.(MessagesServer).ReadMessageContents(ctx, typedRequest)
+}
+
+func _Messages_ReadMessageContents_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedMessages) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readReactions: request %T is not *MessagesReadReactionsRequest", req)
+	}
+	return srv.(MessagesServer).ReadReactions(ctx, typedRequest)
+}
+
+func _Messages_ReadReactions_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReadSavedHistory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReadSavedHistoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.readSavedHistory: request %T is not *MessagesReadSavedHistoryRequest", req)
+	}
+	return srv.(MessagesServer).ReadSavedHistory(ctx, typedRequest)
+}
+
+func _Messages_ReadSavedHistory_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReceivedMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReceivedMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.receivedMessages: request %T is not *MessagesReceivedMessagesRequest", req)
+	}
+	return srv.(MessagesServer).ReceivedMessages(ctx, typedRequest)
+}
+
+func _Messages_ReceivedMessages_EncodeResponse(e *mtproto.Encoder, response []*ReceivedNotifyMessage) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReceivedQueue_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReceivedQueueRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.receivedQueue: request %T is not *MessagesReceivedQueueRequest", req)
+	}
+	return srv.(MessagesServer).ReceivedQueue(ctx, typedRequest)
+}
+
+func _Messages_ReceivedQueue_EncodeResponse(e *mtproto.Encoder, response []int64) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt64(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReorderPinnedDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReorderPinnedDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reorderPinnedDialogs: request %T is not *MessagesReorderPinnedDialogsRequest", req)
+	}
+	return srv.(MessagesServer).ReorderPinnedDialogs(ctx, typedRequest)
+}
+
+func _Messages_ReorderPinnedDialogs_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReorderPinnedSavedDialogs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReorderPinnedSavedDialogsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reorderPinnedSavedDialogs: request %T is not *MessagesReorderPinnedSavedDialogsRequest", req)
+	}
+	return srv.(MessagesServer).ReorderPinnedSavedDialogs(ctx, typedRequest)
+}
+
+func _Messages_ReorderPinnedSavedDialogs_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReorderQuickReplies_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReorderQuickRepliesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reorderQuickReplies: request %T is not *MessagesReorderQuickRepliesRequest", req)
+	}
+	return srv.(MessagesServer).ReorderQuickReplies(ctx, typedRequest)
+}
+
+func _Messages_ReorderQuickReplies_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReorderStickerSets_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReorderStickerSetsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reorderStickerSets: request %T is not *MessagesReorderStickerSetsRequest", req)
+	}
+	return srv.(MessagesServer).ReorderStickerSets(ctx, typedRequest)
+}
+
+func _Messages_ReorderStickerSets_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_Report_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReportRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.report: request %T is not *MessagesReportRequest", req)
+	}
+	return srv.(MessagesServer).Report(ctx, typedRequest)
+}
+
+func _Messages_Report_EncodeResponse(e *mtproto.Encoder, response ReportResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed ReportResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReportEncryptedSpam_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReportEncryptedSpamRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reportEncryptedSpam: request %T is not *MessagesReportEncryptedSpamRequest", req)
+	}
+	return srv.(MessagesServer).ReportEncryptedSpam(ctx, typedRequest)
+}
+
+func _Messages_ReportEncryptedSpam_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReportMessagesDelivery_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReportMessagesDeliveryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reportMessagesDelivery: request %T is not *MessagesReportMessagesDeliveryRequest", req)
+	}
+	return srv.(MessagesServer).ReportMessagesDelivery(ctx, typedRequest)
+}
+
+func _Messages_ReportMessagesDelivery_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReportReaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReportReactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reportReaction: request %T is not *MessagesReportReactionRequest", req)
+	}
+	return srv.(MessagesServer).ReportReaction(ctx, typedRequest)
+}
+
+func _Messages_ReportReaction_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReportSpam_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReportSpamRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reportSpam: request %T is not *MessagesReportSpamRequest", req)
+	}
+	return srv.(MessagesServer).ReportSpam(ctx, typedRequest)
+}
+
+func _Messages_ReportSpam_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ReportSponsoredMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesReportSponsoredMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.reportSponsoredMessage: request %T is not *MessagesReportSponsoredMessageRequest", req)
+	}
+	return srv.(MessagesServer).ReportSponsoredMessage(ctx, typedRequest)
+}
+
+func _Messages_ReportSponsoredMessage_EncodeResponse(e *mtproto.Encoder, response ChannelsSponsoredMessageReportResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed channels.SponsoredMessageReportResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RequestAppWebView_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRequestAppWebViewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.requestAppWebView: request %T is not *MessagesRequestAppWebViewRequest", req)
+	}
+	return srv.(MessagesServer).RequestAppWebView(ctx, typedRequest)
+}
+
+func _Messages_RequestAppWebView_EncodeResponse(e *mtproto.Encoder, response *WebViewResult) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RequestEncryption_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRequestEncryptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.requestEncryption: request %T is not *MessagesRequestEncryptionRequest", req)
+	}
+	return srv.(MessagesServer).RequestEncryption(ctx, typedRequest)
+}
+
+func _Messages_RequestEncryption_EncodeResponse(e *mtproto.Encoder, response EncryptedChatType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EncryptedChat is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RequestMainWebView_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRequestMainWebViewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.requestMainWebView: request %T is not *MessagesRequestMainWebViewRequest", req)
+	}
+	return srv.(MessagesServer).RequestMainWebView(ctx, typedRequest)
+}
+
+func _Messages_RequestMainWebView_EncodeResponse(e *mtproto.Encoder, response *WebViewResult) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RequestSimpleWebView_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRequestSimpleWebViewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.requestSimpleWebView: request %T is not *MessagesRequestSimpleWebViewRequest", req)
+	}
+	return srv.(MessagesServer).RequestSimpleWebView(ctx, typedRequest)
+}
+
+func _Messages_RequestSimpleWebView_EncodeResponse(e *mtproto.Encoder, response *WebViewResult) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RequestURLAuth_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRequestURLAuthRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.requestUrlAuth: request %T is not *MessagesRequestURLAuthRequest", req)
+	}
+	return srv.(MessagesServer).RequestURLAuth(ctx, typedRequest)
+}
+
+func _Messages_RequestURLAuth_EncodeResponse(e *mtproto.Encoder, response URLAuthResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed UrlAuthResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_RequestWebView_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesRequestWebViewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.requestWebView: request %T is not *MessagesRequestWebViewRequest", req)
+	}
+	return srv.(MessagesServer).RequestWebView(ctx, typedRequest)
+}
+
+func _Messages_RequestWebView_EncodeResponse(e *mtproto.Encoder, response *WebViewResult) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SaveDefaultSendAs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSaveDefaultSendAsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.saveDefaultSendAs: request %T is not *MessagesSaveDefaultSendAsRequest", req)
+	}
+	return srv.(MessagesServer).SaveDefaultSendAs(ctx, typedRequest)
+}
+
+func _Messages_SaveDefaultSendAs_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SaveDraft_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSaveDraftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.saveDraft: request %T is not *MessagesSaveDraftRequest", req)
+	}
+	return srv.(MessagesServer).SaveDraft(ctx, typedRequest)
+}
+
+func _Messages_SaveDraft_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SaveGif_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSaveGifRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.saveGif: request %T is not *MessagesSaveGifRequest", req)
+	}
+	return srv.(MessagesServer).SaveGif(ctx, typedRequest)
+}
+
+func _Messages_SaveGif_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SavePreparedInlineMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSavePreparedInlineMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.savePreparedInlineMessage: request %T is not *MessagesSavePreparedInlineMessageRequest", req)
+	}
+	return srv.(MessagesServer).SavePreparedInlineMessage(ctx, typedRequest)
+}
+
+func _Messages_SavePreparedInlineMessage_EncodeResponse(e *mtproto.Encoder, response *MessagesBotPreparedInlineMessage) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SaveRecentSticker_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSaveRecentStickerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.saveRecentSticker: request %T is not *MessagesSaveRecentStickerRequest", req)
+	}
+	return srv.(MessagesServer).SaveRecentSticker(ctx, typedRequest)
+}
+
+func _Messages_SaveRecentSticker_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_Search_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.search: request %T is not *MessagesSearchRequest", req)
+	}
+	return srv.(MessagesServer).Search(ctx, typedRequest)
+}
+
+func _Messages_Search_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SearchCustomEmoji_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchCustomEmojiRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.searchCustomEmoji: request %T is not *MessagesSearchCustomEmojiRequest", req)
+	}
+	return srv.(MessagesServer).SearchCustomEmoji(ctx, typedRequest)
+}
+
+func _Messages_SearchCustomEmoji_EncodeResponse(e *mtproto.Encoder, response EmojiListType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EmojiList is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SearchEmojiStickerSets_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchEmojiStickerSetsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.searchEmojiStickerSets: request %T is not *MessagesSearchEmojiStickerSetsRequest", req)
+	}
+	return srv.(MessagesServer).SearchEmojiStickerSets(ctx, typedRequest)
+}
+
+func _Messages_SearchEmojiStickerSets_EncodeResponse(e *mtproto.Encoder, response MessagesFoundStickerSetsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FoundStickerSets is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SearchGlobal_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchGlobalRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.searchGlobal: request %T is not *MessagesSearchGlobalRequest", req)
+	}
+	return srv.(MessagesServer).SearchGlobal(ctx, typedRequest)
+}
+
+func _Messages_SearchGlobal_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SearchSentMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchSentMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.searchSentMedia: request %T is not *MessagesSearchSentMediaRequest", req)
+	}
+	return srv.(MessagesServer).SearchSentMedia(ctx, typedRequest)
+}
+
+func _Messages_SearchSentMedia_EncodeResponse(e *mtproto.Encoder, response MessagesMessagesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Messages is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SearchStickerSets_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchStickerSetsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.searchStickerSets: request %T is not *MessagesSearchStickerSetsRequest", req)
+	}
+	return srv.(MessagesServer).SearchStickerSets(ctx, typedRequest)
+}
+
+func _Messages_SearchStickerSets_EncodeResponse(e *mtproto.Encoder, response MessagesFoundStickerSetsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FoundStickerSets is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SearchStickers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSearchStickersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.searchStickers: request %T is not *MessagesSearchStickersRequest", req)
+	}
+	return srv.(MessagesServer).SearchStickers(ctx, typedRequest)
+}
+
+func _Messages_SearchStickers_EncodeResponse(e *mtproto.Encoder, response MessagesFoundStickersType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.FoundStickers is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendBotRequestedPeer_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendBotRequestedPeerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendBotRequestedPeer: request %T is not *MessagesSendBotRequestedPeerRequest", req)
+	}
+	return srv.(MessagesServer).SendBotRequestedPeer(ctx, typedRequest)
+}
+
+func _Messages_SendBotRequestedPeer_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendEncrypted_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendEncryptedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendEncrypted: request %T is not *MessagesSendEncryptedRequest", req)
+	}
+	return srv.(MessagesServer).SendEncrypted(ctx, typedRequest)
+}
+
+func _Messages_SendEncrypted_EncodeResponse(e *mtproto.Encoder, response MessagesSentEncryptedMessageType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SentEncryptedMessage is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendEncryptedFile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendEncryptedFileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendEncryptedFile: request %T is not *MessagesSendEncryptedFileRequest", req)
+	}
+	return srv.(MessagesServer).SendEncryptedFile(ctx, typedRequest)
+}
+
+func _Messages_SendEncryptedFile_EncodeResponse(e *mtproto.Encoder, response MessagesSentEncryptedMessageType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SentEncryptedMessage is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendEncryptedService_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendEncryptedServiceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendEncryptedService: request %T is not *MessagesSendEncryptedServiceRequest", req)
+	}
+	return srv.(MessagesServer).SendEncryptedService(ctx, typedRequest)
+}
+
+func _Messages_SendEncryptedService_EncodeResponse(e *mtproto.Encoder, response MessagesSentEncryptedMessageType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.SentEncryptedMessage is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendInlineBotResult_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendInlineBotResultRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendInlineBotResult: request %T is not *MessagesSendInlineBotResultRequest", req)
+	}
+	return srv.(MessagesServer).SendInlineBotResult(ctx, typedRequest)
+}
+
+func _Messages_SendInlineBotResult_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendMedia: request %T is not *MessagesSendMediaRequest", req)
+	}
+	return srv.(MessagesServer).SendMedia(ctx, typedRequest)
+}
+
+func _Messages_SendMedia_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendMessage: request %T is not *MessagesSendMessageRequest", req)
+	}
+	return srv.(MessagesServer).SendMessage(ctx, typedRequest)
+}
+
+func _Messages_SendMessage_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendMultiMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendMultiMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendMultiMedia: request %T is not *MessagesSendMultiMediaRequest", req)
+	}
+	return srv.(MessagesServer).SendMultiMedia(ctx, typedRequest)
+}
+
+func _Messages_SendMultiMedia_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendPaidReaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendPaidReactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendPaidReaction: request %T is not *MessagesSendPaidReactionRequest", req)
+	}
+	return srv.(MessagesServer).SendPaidReaction(ctx, typedRequest)
+}
+
+func _Messages_SendPaidReaction_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendQuickReplyMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendQuickReplyMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendQuickReplyMessages: request %T is not *MessagesSendQuickReplyMessagesRequest", req)
+	}
+	return srv.(MessagesServer).SendQuickReplyMessages(ctx, typedRequest)
+}
+
+func _Messages_SendQuickReplyMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendReaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendReactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendReaction: request %T is not *MessagesSendReactionRequest", req)
+	}
+	return srv.(MessagesServer).SendReaction(ctx, typedRequest)
+}
+
+func _Messages_SendReaction_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendScheduledMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendScheduledMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendScheduledMessages: request %T is not *MessagesSendScheduledMessagesRequest", req)
+	}
+	return srv.(MessagesServer).SendScheduledMessages(ctx, typedRequest)
+}
+
+func _Messages_SendScheduledMessages_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendScreenshotNotification_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendScreenshotNotificationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendScreenshotNotification: request %T is not *MessagesSendScreenshotNotificationRequest", req)
+	}
+	return srv.(MessagesServer).SendScreenshotNotification(ctx, typedRequest)
+}
+
+func _Messages_SendScreenshotNotification_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendVote_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendVoteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendVote: request %T is not *MessagesSendVoteRequest", req)
+	}
+	return srv.(MessagesServer).SendVote(ctx, typedRequest)
+}
+
+func _Messages_SendVote_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendWebViewData_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendWebViewDataRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendWebViewData: request %T is not *MessagesSendWebViewDataRequest", req)
+	}
+	return srv.(MessagesServer).SendWebViewData(ctx, typedRequest)
+}
+
+func _Messages_SendWebViewData_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SendWebViewResultMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSendWebViewResultMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.sendWebViewResultMessage: request %T is not *MessagesSendWebViewResultMessageRequest", req)
+	}
+	return srv.(MessagesServer).SendWebViewResultMessage(ctx, typedRequest)
+}
+
+func _Messages_SendWebViewResultMessage_EncodeResponse(e *mtproto.Encoder, response *WebViewMessageSent) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetBotCallbackAnswer_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetBotCallbackAnswerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setBotCallbackAnswer: request %T is not *MessagesSetBotCallbackAnswerRequest", req)
+	}
+	return srv.(MessagesServer).SetBotCallbackAnswer(ctx, typedRequest)
+}
+
+func _Messages_SetBotCallbackAnswer_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetBotPrecheckoutResults_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetBotPrecheckoutResultsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setBotPrecheckoutResults: request %T is not *MessagesSetBotPrecheckoutResultsRequest", req)
+	}
+	return srv.(MessagesServer).SetBotPrecheckoutResults(ctx, typedRequest)
+}
+
+func _Messages_SetBotPrecheckoutResults_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetBotShippingResults_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetBotShippingResultsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setBotShippingResults: request %T is not *MessagesSetBotShippingResultsRequest", req)
+	}
+	return srv.(MessagesServer).SetBotShippingResults(ctx, typedRequest)
+}
+
+func _Messages_SetBotShippingResults_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetChatAvailableReactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetChatAvailableReactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setChatAvailableReactions: request %T is not *MessagesSetChatAvailableReactionsRequest", req)
+	}
+	return srv.(MessagesServer).SetChatAvailableReactions(ctx, typedRequest)
+}
+
+func _Messages_SetChatAvailableReactions_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetChatTheme_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetChatThemeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setChatTheme: request %T is not *MessagesSetChatThemeRequest", req)
+	}
+	return srv.(MessagesServer).SetChatTheme(ctx, typedRequest)
+}
+
+func _Messages_SetChatTheme_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetChatWallPaper_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetChatWallPaperRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setChatWallPaper: request %T is not *MessagesSetChatWallPaperRequest", req)
+	}
+	return srv.(MessagesServer).SetChatWallPaper(ctx, typedRequest)
+}
+
+func _Messages_SetChatWallPaper_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetDefaultHistoryTTL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetDefaultHistoryTTLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setDefaultHistoryTTL: request %T is not *MessagesSetDefaultHistoryTTLRequest", req)
+	}
+	return srv.(MessagesServer).SetDefaultHistoryTTL(ctx, typedRequest)
+}
+
+func _Messages_SetDefaultHistoryTTL_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetDefaultReaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetDefaultReactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setDefaultReaction: request %T is not *MessagesSetDefaultReactionRequest", req)
+	}
+	return srv.(MessagesServer).SetDefaultReaction(ctx, typedRequest)
+}
+
+func _Messages_SetDefaultReaction_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetEncryptedTyping_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetEncryptedTypingRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setEncryptedTyping: request %T is not *MessagesSetEncryptedTypingRequest", req)
+	}
+	return srv.(MessagesServer).SetEncryptedTyping(ctx, typedRequest)
+}
+
+func _Messages_SetEncryptedTyping_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetGameScore_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetGameScoreRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setGameScore: request %T is not *MessagesSetGameScoreRequest", req)
+	}
+	return srv.(MessagesServer).SetGameScore(ctx, typedRequest)
+}
+
+func _Messages_SetGameScore_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetHistoryTTL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetHistoryTTLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setHistoryTTL: request %T is not *MessagesSetHistoryTTLRequest", req)
+	}
+	return srv.(MessagesServer).SetHistoryTTL(ctx, typedRequest)
+}
+
+func _Messages_SetHistoryTTL_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetInlineBotResults_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetInlineBotResultsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setInlineBotResults: request %T is not *MessagesSetInlineBotResultsRequest", req)
+	}
+	return srv.(MessagesServer).SetInlineBotResults(ctx, typedRequest)
+}
+
+func _Messages_SetInlineBotResults_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetInlineGameScore_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetInlineGameScoreRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setInlineGameScore: request %T is not *MessagesSetInlineGameScoreRequest", req)
+	}
+	return srv.(MessagesServer).SetInlineGameScore(ctx, typedRequest)
+}
+
+func _Messages_SetInlineGameScore_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_SetTyping_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesSetTypingRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.setTyping: request %T is not *MessagesSetTypingRequest", req)
+	}
+	return srv.(MessagesServer).SetTyping(ctx, typedRequest)
+}
+
+func _Messages_SetTyping_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_StartBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesStartBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.startBot: request %T is not *MessagesStartBotRequest", req)
+	}
+	return srv.(MessagesServer).StartBot(ctx, typedRequest)
+}
+
+func _Messages_StartBot_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_StartHistoryImport_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesStartHistoryImportRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.startHistoryImport: request %T is not *MessagesStartHistoryImportRequest", req)
+	}
+	return srv.(MessagesServer).StartHistoryImport(ctx, typedRequest)
+}
+
+func _Messages_StartHistoryImport_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleBotInAttachMenu_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleBotInAttachMenuRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleBotInAttachMenu: request %T is not *MessagesToggleBotInAttachMenuRequest", req)
+	}
+	return srv.(MessagesServer).ToggleBotInAttachMenu(ctx, typedRequest)
+}
+
+func _Messages_ToggleBotInAttachMenu_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleDialogFilterTags_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleDialogFilterTagsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleDialogFilterTags: request %T is not *MessagesToggleDialogFilterTagsRequest", req)
+	}
+	return srv.(MessagesServer).ToggleDialogFilterTags(ctx, typedRequest)
+}
+
+func _Messages_ToggleDialogFilterTags_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleDialogPin_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleDialogPinRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleDialogPin: request %T is not *MessagesToggleDialogPinRequest", req)
+	}
+	return srv.(MessagesServer).ToggleDialogPin(ctx, typedRequest)
+}
+
+func _Messages_ToggleDialogPin_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleNoForwards_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleNoForwardsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleNoForwards: request %T is not *MessagesToggleNoForwardsRequest", req)
+	}
+	return srv.(MessagesServer).ToggleNoForwards(ctx, typedRequest)
+}
+
+func _Messages_ToggleNoForwards_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_TogglePaidReactionPrivacy_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesTogglePaidReactionPrivacyRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.togglePaidReactionPrivacy: request %T is not *MessagesTogglePaidReactionPrivacyRequest", req)
+	}
+	return srv.(MessagesServer).TogglePaidReactionPrivacy(ctx, typedRequest)
+}
+
+func _Messages_TogglePaidReactionPrivacy_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_TogglePeerTranslations_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesTogglePeerTranslationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.togglePeerTranslations: request %T is not *MessagesTogglePeerTranslationsRequest", req)
+	}
+	return srv.(MessagesServer).TogglePeerTranslations(ctx, typedRequest)
+}
+
+func _Messages_TogglePeerTranslations_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleSavedDialogPin_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleSavedDialogPinRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleSavedDialogPin: request %T is not *MessagesToggleSavedDialogPinRequest", req)
+	}
+	return srv.(MessagesServer).ToggleSavedDialogPin(ctx, typedRequest)
+}
+
+func _Messages_ToggleSavedDialogPin_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleStickerSets_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleStickerSetsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleStickerSets: request %T is not *MessagesToggleStickerSetsRequest", req)
+	}
+	return srv.(MessagesServer).ToggleStickerSets(ctx, typedRequest)
+}
+
+func _Messages_ToggleStickerSets_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleSuggestedPostApproval_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleSuggestedPostApprovalRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleSuggestedPostApproval: request %T is not *MessagesToggleSuggestedPostApprovalRequest", req)
+	}
+	return srv.(MessagesServer).ToggleSuggestedPostApproval(ctx, typedRequest)
+}
+
+func _Messages_ToggleSuggestedPostApproval_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ToggleTodoCompleted_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesToggleTodoCompletedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.toggleTodoCompleted: request %T is not *MessagesToggleTodoCompletedRequest", req)
+	}
+	return srv.(MessagesServer).ToggleTodoCompleted(ctx, typedRequest)
+}
+
+func _Messages_ToggleTodoCompleted_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_TranscribeAudio_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesTranscribeAudioRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.transcribeAudio: request %T is not *MessagesTranscribeAudioRequest", req)
+	}
+	return srv.(MessagesServer).TranscribeAudio(ctx, typedRequest)
+}
+
+func _Messages_TranscribeAudio_EncodeResponse(e *mtproto.Encoder, response *MessagesTranscribedAudio) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_TranslateText_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesTranslateTextRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.translateText: request %T is not *MessagesTranslateTextRequest", req)
+	}
+	return srv.(MessagesServer).TranslateText(ctx, typedRequest)
+}
+
+func _Messages_TranslateText_EncodeResponse(e *mtproto.Encoder, response *MessagesTranslatedText) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UninstallStickerSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUninstallStickerSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.uninstallStickerSet: request %T is not *MessagesUninstallStickerSetRequest", req)
+	}
+	return srv.(MessagesServer).UninstallStickerSet(ctx, typedRequest)
+}
+
+func _Messages_UninstallStickerSet_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UnpinAllMessages_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUnpinAllMessagesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.unpinAllMessages: request %T is not *MessagesUnpinAllMessagesRequest", req)
+	}
+	return srv.(MessagesServer).UnpinAllMessages(ctx, typedRequest)
+}
+
+func _Messages_UnpinAllMessages_EncodeResponse(e *mtproto.Encoder, response *MessagesAffectedHistory) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UpdateDialogFilter_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUpdateDialogFilterRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.updateDialogFilter: request %T is not *MessagesUpdateDialogFilterRequest", req)
+	}
+	return srv.(MessagesServer).UpdateDialogFilter(ctx, typedRequest)
+}
+
+func _Messages_UpdateDialogFilter_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UpdateDialogFiltersOrder_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUpdateDialogFiltersOrderRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.updateDialogFiltersOrder: request %T is not *MessagesUpdateDialogFiltersOrderRequest", req)
+	}
+	return srv.(MessagesServer).UpdateDialogFiltersOrder(ctx, typedRequest)
+}
+
+func _Messages_UpdateDialogFiltersOrder_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UpdatePinnedMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUpdatePinnedMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.updatePinnedMessage: request %T is not *MessagesUpdatePinnedMessageRequest", req)
+	}
+	return srv.(MessagesServer).UpdatePinnedMessage(ctx, typedRequest)
+}
+
+func _Messages_UpdatePinnedMessage_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UpdateSavedReactionTag_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUpdateSavedReactionTagRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.updateSavedReactionTag: request %T is not *MessagesUpdateSavedReactionTagRequest", req)
+	}
+	return srv.(MessagesServer).UpdateSavedReactionTag(ctx, typedRequest)
+}
+
+func _Messages_UpdateSavedReactionTag_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UploadEncryptedFile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUploadEncryptedFileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.uploadEncryptedFile: request %T is not *MessagesUploadEncryptedFileRequest", req)
+	}
+	return srv.(MessagesServer).UploadEncryptedFile(ctx, typedRequest)
+}
+
+func _Messages_UploadEncryptedFile_EncodeResponse(e *mtproto.Encoder, response EncryptedFileType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed EncryptedFile is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UploadImportedMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUploadImportedMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.uploadImportedMedia: request %T is not *MessagesUploadImportedMediaRequest", req)
+	}
+	return srv.(MessagesServer).UploadImportedMedia(ctx, typedRequest)
+}
+
+func _Messages_UploadImportedMedia_EncodeResponse(e *mtproto.Encoder, response MessageMediaType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed MessageMedia is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_UploadMedia_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesUploadMediaRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.uploadMedia: request %T is not *MessagesUploadMediaRequest", req)
+	}
+	return srv.(MessagesServer).UploadMedia(ctx, typedRequest)
+}
+
+func _Messages_UploadMedia_EncodeResponse(e *mtproto.Encoder, response MessageMediaType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed MessageMedia is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Messages_ViewSponsoredMessage_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*MessagesViewSponsoredMessageRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("messages.viewSponsoredMessage: request %T is not *MessagesViewSponsoredMessageRequest", req)
+	}
+	return srv.(MessagesServer).ViewSponsoredMessage(ctx, typedRequest)
+}
+
+func _Messages_ViewSponsoredMessage_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Messages_ServiceDesc is the static descriptor for the MessagesServer service.
@@ -4217,1384 +12659,2534 @@ var Messages_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*MessagesServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptEncryption",
 			ConstructorID: 0x3dbc0415,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesAcceptEncryptionRequest{} },
 			Handler:       _Messages_AcceptEncryption_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EncryptedChatType](response, layer, limits, _Messages_AcceptEncryption_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptURLAuth",
 			ConstructorID: 0xb12c7125,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesAcceptURLAuthRequest{} },
 			Handler:       _Messages_AcceptURLAuth_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[URLAuthResultType](response, layer, limits, _Messages_AcceptURLAuth_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AddChatUser",
 			ConstructorID: 0xcbc6d107,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesAddChatUserRequest{} },
 			Handler:       _Messages_AddChatUser_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesInvitedUsers](response, layer, limits, _Messages_AddChatUser_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AppendTodoList",
 			ConstructorID: 0x21a61057,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesAppendTodoListRequest{} },
 			Handler:       _Messages_AppendTodoList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_AppendTodoList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckChatInvite",
 			ConstructorID: 0x3eadb1bb,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesCheckChatInviteRequest{} },
 			Handler:       _Messages_CheckChatInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ChatInviteType](response, layer, limits, _Messages_CheckChatInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckHistoryImport",
 			ConstructorID: 0x43fe19f3,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesCheckHistoryImportRequest{} },
 			Handler:       _Messages_CheckHistoryImport_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesHistoryImportParsed](response, layer, limits, _Messages_CheckHistoryImport_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckHistoryImportPeer",
 			ConstructorID: 0x5dc60f03,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesCheckHistoryImportPeerRequest{} },
 			Handler:       _Messages_CheckHistoryImportPeer_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesCheckedHistoryImportPeer](response, layer, limits, _Messages_CheckHistoryImportPeer_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckQuickReplyShortcut",
 			ConstructorID: 0xf1d0fbd3,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesCheckQuickReplyShortcutRequest{} },
 			Handler:       _Messages_CheckQuickReplyShortcut_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_CheckQuickReplyShortcut_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ClearAllDrafts",
 			ConstructorID: 0x7e58ee9c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesClearAllDraftsRequest{} },
 			Handler:       _Messages_ClearAllDrafts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ClearAllDrafts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ClearRecentReactions",
 			ConstructorID: 0x9dfeefb4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesClearRecentReactionsRequest{} },
 			Handler:       _Messages_ClearRecentReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ClearRecentReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ClearRecentStickers",
 			ConstructorID: 0x8999602d,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesClearRecentStickersRequest{} },
 			Handler:       _Messages_ClearRecentStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ClearRecentStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ClickSponsoredMessage",
 			ConstructorID: 0x8235057e,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesClickSponsoredMessageRequest{} },
 			Handler:       _Messages_ClickSponsoredMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ClickSponsoredMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateChat",
 			ConstructorID: 0x92ceddd4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesCreateChatRequest{} },
 			Handler:       _Messages_CreateChat_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesInvitedUsers](response, layer, limits, _Messages_CreateChat_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteChat",
 			ConstructorID: 0x5bd0ee50,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteChatRequest{} },
 			Handler:       _Messages_DeleteChat_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_DeleteChat_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteChatUser",
 			ConstructorID: 0xa2185cab,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteChatUserRequest{} },
 			Handler:       _Messages_DeleteChatUser_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_DeleteChatUser_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteExportedChatInvite",
 			ConstructorID: 0xd464a42b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteExportedChatInviteRequest{} },
 			Handler:       _Messages_DeleteExportedChatInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_DeleteExportedChatInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteFactCheck",
 			ConstructorID: 0xd1da940c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteFactCheckRequest{} },
 			Handler:       _Messages_DeleteFactCheck_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_DeleteFactCheck_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteHistory",
 			ConstructorID: 0xb08f922a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteHistoryRequest{} },
 			Handler:       _Messages_DeleteHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Messages_DeleteHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteMessages",
 			ConstructorID: 0xe58e95d2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteMessagesRequest{} },
 			Handler:       _Messages_DeleteMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedMessages](response, layer, limits, _Messages_DeleteMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeletePhoneCallHistory",
 			ConstructorID: 0xf9cbe409,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeletePhoneCallHistoryRequest{} },
 			Handler:       _Messages_DeletePhoneCallHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedFoundMessages](response, layer, limits, _Messages_DeletePhoneCallHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteQuickReplyMessages",
 			ConstructorID: 0xe105e910,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteQuickReplyMessagesRequest{} },
 			Handler:       _Messages_DeleteQuickReplyMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_DeleteQuickReplyMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteQuickReplyShortcut",
 			ConstructorID: 0x3cc04740,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteQuickReplyShortcutRequest{} },
 			Handler:       _Messages_DeleteQuickReplyShortcut_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_DeleteQuickReplyShortcut_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteRevokedExportedChatInvites",
 			ConstructorID: 0x56987bd5,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteRevokedExportedChatInvitesRequest{} },
 			Handler:       _Messages_DeleteRevokedExportedChatInvites_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_DeleteRevokedExportedChatInvites_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteSavedHistory",
 			ConstructorID: 0x4dc5085f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteSavedHistoryRequest{} },
 			Handler:       _Messages_DeleteSavedHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Messages_DeleteSavedHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteScheduledMessages",
 			ConstructorID: 0x59ae2b16,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDeleteScheduledMessagesRequest{} },
 			Handler:       _Messages_DeleteScheduledMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_DeleteScheduledMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DiscardEncryption",
 			ConstructorID: 0xf393aea0,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesDiscardEncryptionRequest{} },
 			Handler:       _Messages_DiscardEncryption_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_DiscardEncryption_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditChatAbout",
 			ConstructorID: 0xdef60797,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditChatAboutRequest{} },
 			Handler:       _Messages_EditChatAbout_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_EditChatAbout_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditChatAdmin",
 			ConstructorID: 0xa85bd1c2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditChatAdminRequest{} },
 			Handler:       _Messages_EditChatAdmin_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_EditChatAdmin_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditChatDefaultBannedRights",
 			ConstructorID: 0xa5866b41,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditChatDefaultBannedRightsRequest{} },
 			Handler:       _Messages_EditChatDefaultBannedRights_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_EditChatDefaultBannedRights_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditChatPhoto",
 			ConstructorID: 0x35ddd674,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditChatPhotoRequest{} },
 			Handler:       _Messages_EditChatPhoto_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_EditChatPhoto_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditChatTitle",
 			ConstructorID: 0x73783ffd,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditChatTitleRequest{} },
 			Handler:       _Messages_EditChatTitle_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_EditChatTitle_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditExportedChatInvite",
 			ConstructorID: 0xbdca2f75,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditExportedChatInviteRequest{} },
 			Handler:       _Messages_EditExportedChatInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesExportedChatInviteType](response, layer, limits, _Messages_EditExportedChatInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditFactCheck",
 			ConstructorID: 0x0589ee75,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditFactCheckRequest{} },
 			Handler:       _Messages_EditFactCheck_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_EditFactCheck_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditInlineBotMessage",
 			ConstructorID: 0x83557dba,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditInlineBotMessageRequest{} },
 			Handler:       _Messages_EditInlineBotMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_EditInlineBotMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditMessage",
 			ConstructorID: 0xdfd14005,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditMessageRequest{} },
 			Handler:       _Messages_EditMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_EditMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditQuickReplyShortcut",
 			ConstructorID: 0x5c003cef,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesEditQuickReplyShortcutRequest{} },
 			Handler:       _Messages_EditQuickReplyShortcut_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_EditQuickReplyShortcut_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportChatInvite",
 			ConstructorID: 0xa455de90,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesExportChatInviteRequest{} },
 			Handler:       _Messages_ExportChatInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ExportedChatInviteType](response, layer, limits, _Messages_ExportChatInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "FaveSticker",
 			ConstructorID: 0xb9ffc55b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesFaveStickerRequest{} },
 			Handler:       _Messages_FaveSticker_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_FaveSticker_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ForwardMessages",
 			ConstructorID: 0x978928ca,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesForwardMessagesRequest{} },
 			Handler:       _Messages_ForwardMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_ForwardMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAdminsWithInvites",
 			ConstructorID: 0x3920e6ef,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAdminsWithInvitesRequest{} },
 			Handler:       _Messages_GetAdminsWithInvites_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesChatAdminsWithInvites](response, layer, limits, _Messages_GetAdminsWithInvites_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAllDrafts",
 			ConstructorID: 0x6a3f8d65,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAllDraftsRequest{} },
 			Handler:       _Messages_GetAllDrafts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_GetAllDrafts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAllStickers",
 			ConstructorID: 0xb8a0a1a8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAllStickersRequest{} },
 			Handler:       _Messages_GetAllStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesAllStickersType](response, layer, limits, _Messages_GetAllStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetArchivedStickers",
 			ConstructorID: 0x57f17692,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetArchivedStickersRequest{} },
 			Handler:       _Messages_GetArchivedStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesArchivedStickers](response, layer, limits, _Messages_GetArchivedStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAttachMenuBot",
 			ConstructorID: 0x77216192,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAttachMenuBotRequest{} },
 			Handler:       _Messages_GetAttachMenuBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*AttachMenuBotsBot](response, layer, limits, _Messages_GetAttachMenuBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAttachMenuBots",
 			ConstructorID: 0x16fcc2cb,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAttachMenuBotsRequest{} },
 			Handler:       _Messages_GetAttachMenuBots_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AttachMenuBotsType](response, layer, limits, _Messages_GetAttachMenuBots_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAttachedStickers",
 			ConstructorID: 0xcc5b67cc,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAttachedStickersRequest{} },
 			Handler:       _Messages_GetAttachedStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]StickerSetCoveredType](response, layer, limits, _Messages_GetAttachedStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAvailableEffects",
 			ConstructorID: 0xdea20a39,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAvailableEffectsRequest{} },
 			Handler:       _Messages_GetAvailableEffects_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesAvailableEffectsType](response, layer, limits, _Messages_GetAvailableEffects_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAvailableReactions",
 			ConstructorID: 0x18dea0ac,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetAvailableReactionsRequest{} },
 			Handler:       _Messages_GetAvailableReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesAvailableReactionsType](response, layer, limits, _Messages_GetAvailableReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotApp",
 			ConstructorID: 0x34fdc5c3,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetBotAppRequest{} },
 			Handler:       _Messages_GetBotApp_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesBotApp](response, layer, limits, _Messages_GetBotApp_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBotCallbackAnswer",
 			ConstructorID: 0x9342ca07,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetBotCallbackAnswerRequest{} },
 			Handler:       _Messages_GetBotCallbackAnswer_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesBotCallbackAnswer](response, layer, limits, _Messages_GetBotCallbackAnswer_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChatInviteImporters",
 			ConstructorID: 0xdf04dd4e,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetChatInviteImportersRequest{} },
 			Handler:       _Messages_GetChatInviteImporters_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesChatInviteImporters](response, layer, limits, _Messages_GetChatInviteImporters_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChats",
 			ConstructorID: 0x49e9528f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetChatsRequest{} },
 			Handler:       _Messages_GetChats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Messages_GetChats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCommonChats",
 			ConstructorID: 0xe40ca104,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetCommonChatsRequest{} },
 			Handler:       _Messages_GetCommonChats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Messages_GetCommonChats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCustomEmojiDocuments",
 			ConstructorID: 0xd9ab0f54,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetCustomEmojiDocumentsRequest{} },
 			Handler:       _Messages_GetCustomEmojiDocuments_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]DocumentType](response, layer, limits, _Messages_GetCustomEmojiDocuments_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDefaultHistoryTTL",
 			ConstructorID: 0x658b7188,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDefaultHistoryTTLRequest{} },
 			Handler:       _Messages_GetDefaultHistoryTTL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*DefaultHistoryTTL](response, layer, limits, _Messages_GetDefaultHistoryTTL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDefaultTagReactions",
 			ConstructorID: 0xbdf93428,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDefaultTagReactionsRequest{} },
 			Handler:       _Messages_GetDefaultTagReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesReactionsType](response, layer, limits, _Messages_GetDefaultTagReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDhConfig",
 			ConstructorID: 0x26cf8950,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDhConfigRequest{} },
 			Handler:       _Messages_GetDhConfig_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesDhConfigType](response, layer, limits, _Messages_GetDhConfig_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDialogFilters",
 			ConstructorID: 0xefd48c89,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDialogFiltersRequest{} },
 			Handler:       _Messages_GetDialogFilters_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesDialogFilters](response, layer, limits, _Messages_GetDialogFilters_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDialogUnreadMarks",
 			ConstructorID: 0x21202222,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDialogUnreadMarksRequest{} },
 			Handler:       _Messages_GetDialogUnreadMarks_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]DialogPeerType](response, layer, limits, _Messages_GetDialogUnreadMarks_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDialogs",
 			ConstructorID: 0xa0f4cb4f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDialogsRequest{} },
 			Handler:       _Messages_GetDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesDialogsType](response, layer, limits, _Messages_GetDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDiscussionMessage",
 			ConstructorID: 0x446972fd,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDiscussionMessageRequest{} },
 			Handler:       _Messages_GetDiscussionMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesDiscussionMessage](response, layer, limits, _Messages_GetDiscussionMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDocumentByHash",
 			ConstructorID: 0xb1f2061f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetDocumentByHashRequest{} },
 			Handler:       _Messages_GetDocumentByHash_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[DocumentType](response, layer, limits, _Messages_GetDocumentByHash_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiGroups",
 			ConstructorID: 0x7488ce5b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiGroupsRequest{} },
 			Handler:       _Messages_GetEmojiGroups_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesEmojiGroupsType](response, layer, limits, _Messages_GetEmojiGroups_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiKeywords",
 			ConstructorID: 0x35a0e062,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsRequest{} },
 			Handler:       _Messages_GetEmojiKeywords_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*EmojiKeywordsDifference](response, layer, limits, _Messages_GetEmojiKeywords_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiKeywordsDifference",
 			ConstructorID: 0x1508b6af,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsDifferenceRequest{} },
 			Handler:       _Messages_GetEmojiKeywordsDifference_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*EmojiKeywordsDifference](response, layer, limits, _Messages_GetEmojiKeywordsDifference_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiKeywordsLanguages",
 			ConstructorID: 0x4e9963b2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiKeywordsLanguagesRequest{} },
 			Handler:       _Messages_GetEmojiKeywordsLanguages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*EmojiLanguage](response, layer, limits, _Messages_GetEmojiKeywordsLanguages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiProfilePhotoGroups",
 			ConstructorID: 0x21a548f3,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiProfilePhotoGroupsRequest{} },
 			Handler:       _Messages_GetEmojiProfilePhotoGroups_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesEmojiGroupsType](response, layer, limits, _Messages_GetEmojiProfilePhotoGroups_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiStatusGroups",
 			ConstructorID: 0x2ecd56cd,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiStatusGroupsRequest{} },
 			Handler:       _Messages_GetEmojiStatusGroups_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesEmojiGroupsType](response, layer, limits, _Messages_GetEmojiStatusGroups_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiStickerGroups",
 			ConstructorID: 0x1dd840f5,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiStickerGroupsRequest{} },
 			Handler:       _Messages_GetEmojiStickerGroups_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesEmojiGroupsType](response, layer, limits, _Messages_GetEmojiStickerGroups_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiStickers",
 			ConstructorID: 0xfbfca18f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiStickersRequest{} },
 			Handler:       _Messages_GetEmojiStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesAllStickersType](response, layer, limits, _Messages_GetEmojiStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetEmojiURL",
 			ConstructorID: 0xd5b10c26,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetEmojiURLRequest{} },
 			Handler:       _Messages_GetEmojiURL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*EmojiURL](response, layer, limits, _Messages_GetEmojiURL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetExportedChatInvite",
 			ConstructorID: 0x73746f5c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetExportedChatInviteRequest{} },
 			Handler:       _Messages_GetExportedChatInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesExportedChatInviteType](response, layer, limits, _Messages_GetExportedChatInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetExportedChatInvites",
 			ConstructorID: 0xa2b5a3f6,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetExportedChatInvitesRequest{} },
 			Handler:       _Messages_GetExportedChatInvites_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesExportedChatInvites](response, layer, limits, _Messages_GetExportedChatInvites_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetExtendedMedia",
 			ConstructorID: 0x84f80814,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetExtendedMediaRequest{} },
 			Handler:       _Messages_GetExtendedMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_GetExtendedMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFactCheck",
 			ConstructorID: 0xb9cdc5ee,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetFactCheckRequest{} },
 			Handler:       _Messages_GetFactCheck_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*FactCheck](response, layer, limits, _Messages_GetFactCheck_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFavedStickers",
 			ConstructorID: 0x04f1aaa9,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetFavedStickersRequest{} },
 			Handler:       _Messages_GetFavedStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFavedStickersType](response, layer, limits, _Messages_GetFavedStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFeaturedEmojiStickers",
 			ConstructorID: 0x0ecf6736,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetFeaturedEmojiStickersRequest{} },
 			Handler:       _Messages_GetFeaturedEmojiStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFeaturedStickersType](response, layer, limits, _Messages_GetFeaturedEmojiStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFeaturedStickers",
 			ConstructorID: 0x64780b14,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetFeaturedStickersRequest{} },
 			Handler:       _Messages_GetFeaturedStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFeaturedStickersType](response, layer, limits, _Messages_GetFeaturedStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFullChat",
 			ConstructorID: 0xaeb00b34,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetFullChatRequest{} },
 			Handler:       _Messages_GetFullChat_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesChatFull](response, layer, limits, _Messages_GetFullChat_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGameHighScores",
 			ConstructorID: 0xe822649d,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetGameHighScoresRequest{} },
 			Handler:       _Messages_GetGameHighScores_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesHighScores](response, layer, limits, _Messages_GetGameHighScores_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetHistory",
 			ConstructorID: 0x4423e6c5,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetHistoryRequest{} },
 			Handler:       _Messages_GetHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetInlineBotResults",
 			ConstructorID: 0x514e999d,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetInlineBotResultsRequest{} },
 			Handler:       _Messages_GetInlineBotResults_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesBotResults](response, layer, limits, _Messages_GetInlineBotResults_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetInlineGameHighScores",
 			ConstructorID: 0x0f635e1b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetInlineGameHighScoresRequest{} },
 			Handler:       _Messages_GetInlineGameHighScores_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesHighScores](response, layer, limits, _Messages_GetInlineGameHighScores_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMaskStickers",
 			ConstructorID: 0x640f82b8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMaskStickersRequest{} },
 			Handler:       _Messages_GetMaskStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesAllStickersType](response, layer, limits, _Messages_GetMaskStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessageEditData",
 			ConstructorID: 0xfda68d36,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMessageEditDataRequest{} },
 			Handler:       _Messages_GetMessageEditData_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesMessageEditData](response, layer, limits, _Messages_GetMessageEditData_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessageReactionsList",
 			ConstructorID: 0x461b3f48,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMessageReactionsListRequest{} },
 			Handler:       _Messages_GetMessageReactionsList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesMessageReactionsList](response, layer, limits, _Messages_GetMessageReactionsList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessageReadParticipants",
 			ConstructorID: 0x31c1c44f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMessageReadParticipantsRequest{} },
 			Handler:       _Messages_GetMessageReadParticipants_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*ReadParticipantDate](response, layer, limits, _Messages_GetMessageReadParticipants_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessages",
 			ConstructorID: 0x63c66506,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMessagesRequest{} },
 			Handler:       _Messages_GetMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessagesReactions",
 			ConstructorID: 0x8bba90e6,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMessagesReactionsRequest{} },
 			Handler:       _Messages_GetMessagesReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_GetMessagesReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessagesViews",
 			ConstructorID: 0x5784d3e1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMessagesViewsRequest{} },
 			Handler:       _Messages_GetMessagesViews_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesMessageViews](response, layer, limits, _Messages_GetMessagesViews_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMyStickers",
 			ConstructorID: 0xd0b5e1fc,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetMyStickersRequest{} },
 			Handler:       _Messages_GetMyStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesMyStickers](response, layer, limits, _Messages_GetMyStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetOldFeaturedStickers",
 			ConstructorID: 0x7ed094a1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetOldFeaturedStickersRequest{} },
 			Handler:       _Messages_GetOldFeaturedStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFeaturedStickersType](response, layer, limits, _Messages_GetOldFeaturedStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetOnlines",
 			ConstructorID: 0x6e2be050,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetOnlinesRequest{} },
 			Handler:       _Messages_GetOnlines_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ChatOnlines](response, layer, limits, _Messages_GetOnlines_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetOutboxReadDate",
 			ConstructorID: 0x8c4bfe5d,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetOutboxReadDateRequest{} },
 			Handler:       _Messages_GetOutboxReadDate_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*OutboxReadDate](response, layer, limits, _Messages_GetOutboxReadDate_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPaidReactionPrivacy",
 			ConstructorID: 0x472455aa,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPaidReactionPrivacyRequest{} },
 			Handler:       _Messages_GetPaidReactionPrivacy_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_GetPaidReactionPrivacy_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPeerDialogs",
 			ConstructorID: 0xe470bcfd,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPeerDialogsRequest{} },
 			Handler:       _Messages_GetPeerDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesPeerDialogs](response, layer, limits, _Messages_GetPeerDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPeerSettings",
 			ConstructorID: 0xefd9a6a2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPeerSettingsRequest{} },
 			Handler:       _Messages_GetPeerSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesPeerSettings](response, layer, limits, _Messages_GetPeerSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPinnedDialogs",
 			ConstructorID: 0xd6b94df2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPinnedDialogsRequest{} },
 			Handler:       _Messages_GetPinnedDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesPeerDialogs](response, layer, limits, _Messages_GetPinnedDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPinnedSavedDialogs",
 			ConstructorID: 0xd63d94e0,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPinnedSavedDialogsRequest{} },
 			Handler:       _Messages_GetPinnedSavedDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSavedDialogsType](response, layer, limits, _Messages_GetPinnedSavedDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPollResults",
 			ConstructorID: 0x73bb643b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPollResultsRequest{} },
 			Handler:       _Messages_GetPollResults_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_GetPollResults_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPollVotes",
 			ConstructorID: 0xb86e380e,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPollVotesRequest{} },
 			Handler:       _Messages_GetPollVotes_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesVotesList](response, layer, limits, _Messages_GetPollVotes_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPreparedInlineMessage",
 			ConstructorID: 0x857ebdb8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetPreparedInlineMessageRequest{} },
 			Handler:       _Messages_GetPreparedInlineMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesPreparedInlineMessage](response, layer, limits, _Messages_GetPreparedInlineMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetQuickReplies",
 			ConstructorID: 0xd483f2a8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetQuickRepliesRequest{} },
 			Handler:       _Messages_GetQuickReplies_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesQuickRepliesType](response, layer, limits, _Messages_GetQuickReplies_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetQuickReplyMessages",
 			ConstructorID: 0x94a495c3,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetQuickReplyMessagesRequest{} },
 			Handler:       _Messages_GetQuickReplyMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetQuickReplyMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetRecentLocations",
 			ConstructorID: 0x702a40e0,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetRecentLocationsRequest{} },
 			Handler:       _Messages_GetRecentLocations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetRecentLocations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetRecentReactions",
 			ConstructorID: 0x39461db2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetRecentReactionsRequest{} },
 			Handler:       _Messages_GetRecentReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesReactionsType](response, layer, limits, _Messages_GetRecentReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetRecentStickers",
 			ConstructorID: 0x9da9403b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetRecentStickersRequest{} },
 			Handler:       _Messages_GetRecentStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesRecentStickersType](response, layer, limits, _Messages_GetRecentStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetReplies",
 			ConstructorID: 0x22ddd30c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetRepliesRequest{} },
 			Handler:       _Messages_GetReplies_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetReplies_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedDialogs",
 			ConstructorID: 0x1e91fc99,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSavedDialogsRequest{} },
 			Handler:       _Messages_GetSavedDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSavedDialogsType](response, layer, limits, _Messages_GetSavedDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedDialogsByID",
 			ConstructorID: 0x6f6f9c96,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSavedDialogsByIDRequest{} },
 			Handler:       _Messages_GetSavedDialogsByID_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSavedDialogsType](response, layer, limits, _Messages_GetSavedDialogsByID_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedGifs",
 			ConstructorID: 0x5cf09635,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSavedGifsRequest{} },
 			Handler:       _Messages_GetSavedGifs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSavedGifsType](response, layer, limits, _Messages_GetSavedGifs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedHistory",
 			ConstructorID: 0x998ab009,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSavedHistoryRequest{} },
 			Handler:       _Messages_GetSavedHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetSavedHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedReactionTags",
 			ConstructorID: 0x3637e05b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSavedReactionTagsRequest{} },
 			Handler:       _Messages_GetSavedReactionTags_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSavedReactionTagsType](response, layer, limits, _Messages_GetSavedReactionTags_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetScheduledHistory",
 			ConstructorID: 0xf516760b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetScheduledHistoryRequest{} },
 			Handler:       _Messages_GetScheduledHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetScheduledHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetScheduledMessages",
 			ConstructorID: 0xbdbb0464,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetScheduledMessagesRequest{} },
 			Handler:       _Messages_GetScheduledMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetScheduledMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSearchCounters",
 			ConstructorID: 0x1bbcf300,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSearchCountersRequest{} },
 			Handler:       _Messages_GetSearchCounters_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*MessagesSearchCounter](response, layer, limits, _Messages_GetSearchCounters_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSearchResultsCalendar",
 			ConstructorID: 0x6aa3f6bd,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSearchResultsCalendarRequest{} },
 			Handler:       _Messages_GetSearchResultsCalendar_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesSearchResultsCalendar](response, layer, limits, _Messages_GetSearchResultsCalendar_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSearchResultsPositions",
 			ConstructorID: 0x9c7f2f10,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSearchResultsPositionsRequest{} },
 			Handler:       _Messages_GetSearchResultsPositions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesSearchResultsPositions](response, layer, limits, _Messages_GetSearchResultsPositions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSplitRanges",
 			ConstructorID: 0x1cff7e08,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSplitRangesRequest{} },
 			Handler:       _Messages_GetSplitRanges_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*MessageRange](response, layer, limits, _Messages_GetSplitRanges_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSponsoredMessages",
 			ConstructorID: 0x3d6ce850,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSponsoredMessagesRequest{} },
 			Handler:       _Messages_GetSponsoredMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSponsoredMessagesType](response, layer, limits, _Messages_GetSponsoredMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStickerSet",
 			ConstructorID: 0xc8a0ec74,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetStickerSetRequest{} },
 			Handler:       _Messages_GetStickerSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Messages_GetStickerSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStickers",
 			ConstructorID: 0xd5a5d3a1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetStickersRequest{} },
 			Handler:       _Messages_GetStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickersType](response, layer, limits, _Messages_GetStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSuggestedDialogFilters",
 			ConstructorID: 0xa29cd42c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetSuggestedDialogFiltersRequest{} },
 			Handler:       _Messages_GetSuggestedDialogFilters_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*DialogFilterSuggested](response, layer, limits, _Messages_GetSuggestedDialogFilters_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetTopReactions",
 			ConstructorID: 0xbb8125ba,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetTopReactionsRequest{} },
 			Handler:       _Messages_GetTopReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesReactionsType](response, layer, limits, _Messages_GetTopReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUnreadMentions",
 			ConstructorID: 0xf107e790,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetUnreadMentionsRequest{} },
 			Handler:       _Messages_GetUnreadMentions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetUnreadMentions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUnreadReactions",
 			ConstructorID: 0xbd7f90ac,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetUnreadReactionsRequest{} },
 			Handler:       _Messages_GetUnreadReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_GetUnreadReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetWebPage",
 			ConstructorID: 0x8d9692a3,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetWebPageRequest{} },
 			Handler:       _Messages_GetWebPage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesWebPage](response, layer, limits, _Messages_GetWebPage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetWebPagePreview",
 			ConstructorID: 0x570d6f6f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesGetWebPagePreviewRequest{} },
 			Handler:       _Messages_GetWebPagePreview_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesWebPagePreview](response, layer, limits, _Messages_GetWebPagePreview_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "HideAllChatJoinRequests",
 			ConstructorID: 0xe085f4ea,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesHideAllChatJoinRequestsRequest{} },
 			Handler:       _Messages_HideAllChatJoinRequests_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_HideAllChatJoinRequests_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "HideChatJoinRequest",
 			ConstructorID: 0x7fe7e815,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesHideChatJoinRequestRequest{} },
 			Handler:       _Messages_HideChatJoinRequest_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_HideChatJoinRequest_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "HidePeerSettingsBar",
 			ConstructorID: 0x4facb138,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesHidePeerSettingsBarRequest{} },
 			Handler:       _Messages_HidePeerSettingsBar_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_HidePeerSettingsBar_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ImportChatInvite",
 			ConstructorID: 0x6c50051c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesImportChatInviteRequest{} },
 			Handler:       _Messages_ImportChatInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_ImportChatInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InitHistoryImport",
 			ConstructorID: 0x34090c3b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesInitHistoryImportRequest{} },
 			Handler:       _Messages_InitHistoryImport_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesHistoryImport](response, layer, limits, _Messages_InitHistoryImport_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InstallStickerSet",
 			ConstructorID: 0xc78fe460,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesInstallStickerSetRequest{} },
 			Handler:       _Messages_InstallStickerSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetInstallResultType](response, layer, limits, _Messages_InstallStickerSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "MarkDialogUnread",
 			ConstructorID: 0x8c5006f8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesMarkDialogUnreadRequest{} },
 			Handler:       _Messages_MarkDialogUnread_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_MarkDialogUnread_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "MigrateChat",
 			ConstructorID: 0xa2875319,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesMigrateChatRequest{} },
 			Handler:       _Messages_MigrateChat_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_MigrateChat_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ProlongWebView",
 			ConstructorID: 0xb0d81a83,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesProlongWebViewRequest{} },
 			Handler:       _Messages_ProlongWebView_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ProlongWebView_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RateTranscribedAudio",
 			ConstructorID: 0x7f1d072f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRateTranscribedAudioRequest{} },
 			Handler:       _Messages_RateTranscribedAudio_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_RateTranscribedAudio_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadDiscussion",
 			ConstructorID: 0xf731a9f4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadDiscussionRequest{} },
 			Handler:       _Messages_ReadDiscussion_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReadDiscussion_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadEncryptedHistory",
 			ConstructorID: 0x7f4b690a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadEncryptedHistoryRequest{} },
 			Handler:       _Messages_ReadEncryptedHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReadEncryptedHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadFeaturedStickers",
 			ConstructorID: 0x5b118126,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadFeaturedStickersRequest{} },
 			Handler:       _Messages_ReadFeaturedStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReadFeaturedStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadHistory",
 			ConstructorID: 0x0e306d3a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadHistoryRequest{} },
 			Handler:       _Messages_ReadHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedMessages](response, layer, limits, _Messages_ReadHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadMentions",
 			ConstructorID: 0x36e5bf4d,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadMentionsRequest{} },
 			Handler:       _Messages_ReadMentions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Messages_ReadMentions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadMessageContents",
 			ConstructorID: 0x36a73f77,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadMessageContentsRequest{} },
 			Handler:       _Messages_ReadMessageContents_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedMessages](response, layer, limits, _Messages_ReadMessageContents_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadReactions",
 			ConstructorID: 0x9ec44f93,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadReactionsRequest{} },
 			Handler:       _Messages_ReadReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Messages_ReadReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadSavedHistory",
 			ConstructorID: 0xba4a3b5b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReadSavedHistoryRequest{} },
 			Handler:       _Messages_ReadSavedHistory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReadSavedHistory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReceivedMessages",
 			ConstructorID: 0x05a954c0,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReceivedMessagesRequest{} },
 			Handler:       _Messages_ReceivedMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*ReceivedNotifyMessage](response, layer, limits, _Messages_ReceivedMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReceivedQueue",
 			ConstructorID: 0x55a5bb66,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReceivedQueueRequest{} },
 			Handler:       _Messages_ReceivedQueue_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int64](response, layer, limits, _Messages_ReceivedQueue_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderPinnedDialogs",
 			ConstructorID: 0x3b1adf37,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReorderPinnedDialogsRequest{} },
 			Handler:       _Messages_ReorderPinnedDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReorderPinnedDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderPinnedSavedDialogs",
 			ConstructorID: 0x8b716587,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReorderPinnedSavedDialogsRequest{} },
 			Handler:       _Messages_ReorderPinnedSavedDialogs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReorderPinnedSavedDialogs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderQuickReplies",
 			ConstructorID: 0x60331907,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReorderQuickRepliesRequest{} },
 			Handler:       _Messages_ReorderQuickReplies_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReorderQuickReplies_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderStickerSets",
 			ConstructorID: 0x78337739,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReorderStickerSetsRequest{} },
 			Handler:       _Messages_ReorderStickerSets_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReorderStickerSets_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Report",
 			ConstructorID: 0xfc78af9b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReportRequest{} },
 			Handler:       _Messages_Report_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ReportResultType](response, layer, limits, _Messages_Report_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportEncryptedSpam",
 			ConstructorID: 0x4b0c8c0f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReportEncryptedSpamRequest{} },
 			Handler:       _Messages_ReportEncryptedSpam_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReportEncryptedSpam_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportMessagesDelivery",
 			ConstructorID: 0x5a6d7395,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReportMessagesDeliveryRequest{} },
 			Handler:       _Messages_ReportMessagesDelivery_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReportMessagesDelivery_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportReaction",
 			ConstructorID: 0x3f64c076,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReportReactionRequest{} },
 			Handler:       _Messages_ReportReaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReportReaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportSpam",
 			ConstructorID: 0xcf1592db,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReportSpamRequest{} },
 			Handler:       _Messages_ReportSpam_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ReportSpam_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReportSponsoredMessage",
 			ConstructorID: 0x12cbf0c4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesReportSponsoredMessageRequest{} },
 			Handler:       _Messages_ReportSponsoredMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ChannelsSponsoredMessageReportResultType](response, layer, limits, _Messages_ReportSponsoredMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestAppWebView",
 			ConstructorID: 0x53618bce,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRequestAppWebViewRequest{} },
 			Handler:       _Messages_RequestAppWebView_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*WebViewResult](response, layer, limits, _Messages_RequestAppWebView_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestEncryption",
 			ConstructorID: 0xf64daf43,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRequestEncryptionRequest{} },
 			Handler:       _Messages_RequestEncryption_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EncryptedChatType](response, layer, limits, _Messages_RequestEncryption_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestMainWebView",
 			ConstructorID: 0xc9e01e7b,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRequestMainWebViewRequest{} },
 			Handler:       _Messages_RequestMainWebView_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*WebViewResult](response, layer, limits, _Messages_RequestMainWebView_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestSimpleWebView",
 			ConstructorID: 0x413a3e73,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRequestSimpleWebViewRequest{} },
 			Handler:       _Messages_RequestSimpleWebView_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*WebViewResult](response, layer, limits, _Messages_RequestSimpleWebView_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestURLAuth",
 			ConstructorID: 0x198fb446,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRequestURLAuthRequest{} },
 			Handler:       _Messages_RequestURLAuth_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[URLAuthResultType](response, layer, limits, _Messages_RequestURLAuth_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestWebView",
 			ConstructorID: 0x269dc2c1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesRequestWebViewRequest{} },
 			Handler:       _Messages_RequestWebView_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*WebViewResult](response, layer, limits, _Messages_RequestWebView_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveDefaultSendAs",
 			ConstructorID: 0xccfddf96,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSaveDefaultSendAsRequest{} },
 			Handler:       _Messages_SaveDefaultSendAs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SaveDefaultSendAs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveDraft",
 			ConstructorID: 0x54ae308e,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSaveDraftRequest{} },
 			Handler:       _Messages_SaveDraft_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SaveDraft_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveGif",
 			ConstructorID: 0x327a30cb,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSaveGifRequest{} },
 			Handler:       _Messages_SaveGif_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SaveGif_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SavePreparedInlineMessage",
 			ConstructorID: 0xf21f7f2f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSavePreparedInlineMessageRequest{} },
 			Handler:       _Messages_SavePreparedInlineMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesBotPreparedInlineMessage](response, layer, limits, _Messages_SavePreparedInlineMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveRecentSticker",
 			ConstructorID: 0x392718f8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSaveRecentStickerRequest{} },
 			Handler:       _Messages_SaveRecentSticker_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SaveRecentSticker_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Search",
 			ConstructorID: 0x29ee847a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchRequest{} },
 			Handler:       _Messages_Search_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_Search_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchCustomEmoji",
 			ConstructorID: 0x2c11c0d7,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchCustomEmojiRequest{} },
 			Handler:       _Messages_SearchCustomEmoji_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EmojiListType](response, layer, limits, _Messages_SearchCustomEmoji_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchEmojiStickerSets",
 			ConstructorID: 0x92b4494c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchEmojiStickerSetsRequest{} },
 			Handler:       _Messages_SearchEmojiStickerSets_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFoundStickerSetsType](response, layer, limits, _Messages_SearchEmojiStickerSets_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchGlobal",
 			ConstructorID: 0x4bc6589a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchGlobalRequest{} },
 			Handler:       _Messages_SearchGlobal_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_SearchGlobal_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchSentMedia",
 			ConstructorID: 0x107e31a0,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchSentMediaRequest{} },
 			Handler:       _Messages_SearchSentMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesMessagesType](response, layer, limits, _Messages_SearchSentMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchStickerSets",
 			ConstructorID: 0x35705b8a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchStickerSetsRequest{} },
 			Handler:       _Messages_SearchStickerSets_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFoundStickerSetsType](response, layer, limits, _Messages_SearchStickerSets_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchStickers",
 			ConstructorID: 0x29b1c66a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSearchStickersRequest{} },
 			Handler:       _Messages_SearchStickers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesFoundStickersType](response, layer, limits, _Messages_SearchStickers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendBotRequestedPeer",
 			ConstructorID: 0x91b2d060,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendBotRequestedPeerRequest{} },
 			Handler:       _Messages_SendBotRequestedPeer_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendBotRequestedPeer_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendEncrypted",
 			ConstructorID: 0x44fa7a15,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendEncryptedRequest{} },
 			Handler:       _Messages_SendEncrypted_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSentEncryptedMessageType](response, layer, limits, _Messages_SendEncrypted_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendEncryptedFile",
 			ConstructorID: 0x5559481d,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendEncryptedFileRequest{} },
 			Handler:       _Messages_SendEncryptedFile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSentEncryptedMessageType](response, layer, limits, _Messages_SendEncryptedFile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendEncryptedService",
 			ConstructorID: 0x32d439a4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendEncryptedServiceRequest{} },
 			Handler:       _Messages_SendEncryptedService_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesSentEncryptedMessageType](response, layer, limits, _Messages_SendEncryptedService_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendInlineBotResult",
 			ConstructorID: 0xc0cf7646,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendInlineBotResultRequest{} },
 			Handler:       _Messages_SendInlineBotResult_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendInlineBotResult_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendMedia",
 			ConstructorID: 0xac55d9c1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendMediaRequest{} },
 			Handler:       _Messages_SendMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendMessage",
 			ConstructorID: 0xfe05dc9a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendMessageRequest{} },
 			Handler:       _Messages_SendMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendMultiMedia",
 			ConstructorID: 0x1bf89d74,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendMultiMediaRequest{} },
 			Handler:       _Messages_SendMultiMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendMultiMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendPaidReaction",
 			ConstructorID: 0x58bbcb50,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendPaidReactionRequest{} },
 			Handler:       _Messages_SendPaidReaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendPaidReaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendQuickReplyMessages",
 			ConstructorID: 0x6c750de1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendQuickReplyMessagesRequest{} },
 			Handler:       _Messages_SendQuickReplyMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendQuickReplyMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendReaction",
 			ConstructorID: 0xd30d78d4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendReactionRequest{} },
 			Handler:       _Messages_SendReaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendReaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendScheduledMessages",
 			ConstructorID: 0xbd38850a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendScheduledMessagesRequest{} },
 			Handler:       _Messages_SendScheduledMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendScheduledMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendScreenshotNotification",
 			ConstructorID: 0xa1405817,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendScreenshotNotificationRequest{} },
 			Handler:       _Messages_SendScreenshotNotification_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendScreenshotNotification_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendVote",
 			ConstructorID: 0x10ea6184,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendVoteRequest{} },
 			Handler:       _Messages_SendVote_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendVote_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendWebViewData",
 			ConstructorID: 0xdc0242c8,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendWebViewDataRequest{} },
 			Handler:       _Messages_SendWebViewData_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SendWebViewData_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendWebViewResultMessage",
 			ConstructorID: 0x0a4314f5,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSendWebViewResultMessageRequest{} },
 			Handler:       _Messages_SendWebViewResultMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*WebViewMessageSent](response, layer, limits, _Messages_SendWebViewResultMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotCallbackAnswer",
 			ConstructorID: 0xd58f130a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetBotCallbackAnswerRequest{} },
 			Handler:       _Messages_SetBotCallbackAnswer_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetBotCallbackAnswer_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotPrecheckoutResults",
 			ConstructorID: 0x09c2dd95,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetBotPrecheckoutResultsRequest{} },
 			Handler:       _Messages_SetBotPrecheckoutResults_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetBotPrecheckoutResults_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetBotShippingResults",
 			ConstructorID: 0xe5f672fa,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetBotShippingResultsRequest{} },
 			Handler:       _Messages_SetBotShippingResults_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetBotShippingResults_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetChatAvailableReactions",
 			ConstructorID: 0x864b2581,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetChatAvailableReactionsRequest{} },
 			Handler:       _Messages_SetChatAvailableReactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SetChatAvailableReactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetChatTheme",
 			ConstructorID: 0xe63be13f,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetChatThemeRequest{} },
 			Handler:       _Messages_SetChatTheme_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SetChatTheme_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetChatWallPaper",
 			ConstructorID: 0x8ffacae1,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetChatWallPaperRequest{} },
 			Handler:       _Messages_SetChatWallPaper_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SetChatWallPaper_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetDefaultHistoryTTL",
 			ConstructorID: 0x9eb51445,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetDefaultHistoryTTLRequest{} },
 			Handler:       _Messages_SetDefaultHistoryTTL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetDefaultHistoryTTL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetDefaultReaction",
 			ConstructorID: 0x4f47a016,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetDefaultReactionRequest{} },
 			Handler:       _Messages_SetDefaultReaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetDefaultReaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetEncryptedTyping",
 			ConstructorID: 0x791451ed,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetEncryptedTypingRequest{} },
 			Handler:       _Messages_SetEncryptedTyping_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetEncryptedTyping_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetGameScore",
 			ConstructorID: 0x8ef8ecc0,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetGameScoreRequest{} },
 			Handler:       _Messages_SetGameScore_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SetGameScore_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetHistoryTTL",
 			ConstructorID: 0xb80e5fe4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetHistoryTTLRequest{} },
 			Handler:       _Messages_SetHistoryTTL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_SetHistoryTTL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetInlineBotResults",
 			ConstructorID: 0xbb12a419,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetInlineBotResultsRequest{} },
 			Handler:       _Messages_SetInlineBotResults_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetInlineBotResults_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetInlineGameScore",
 			ConstructorID: 0x15ad9f64,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetInlineGameScoreRequest{} },
 			Handler:       _Messages_SetInlineGameScore_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetInlineGameScore_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetTyping",
 			ConstructorID: 0x58943ee2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesSetTypingRequest{} },
 			Handler:       _Messages_SetTyping_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_SetTyping_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "StartBot",
 			ConstructorID: 0xe6df7378,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesStartBotRequest{} },
 			Handler:       _Messages_StartBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_StartBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "StartHistoryImport",
 			ConstructorID: 0xb43df344,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesStartHistoryImportRequest{} },
 			Handler:       _Messages_StartHistoryImport_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_StartHistoryImport_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleBotInAttachMenu",
 			ConstructorID: 0x69f59d69,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleBotInAttachMenuRequest{} },
 			Handler:       _Messages_ToggleBotInAttachMenu_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ToggleBotInAttachMenu_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleDialogFilterTags",
 			ConstructorID: 0xfd2dda49,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleDialogFilterTagsRequest{} },
 			Handler:       _Messages_ToggleDialogFilterTags_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ToggleDialogFilterTags_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleDialogPin",
 			ConstructorID: 0xa731e257,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleDialogPinRequest{} },
 			Handler:       _Messages_ToggleDialogPin_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ToggleDialogPin_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleNoForwards",
 			ConstructorID: 0xb11eafa2,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleNoForwardsRequest{} },
 			Handler:       _Messages_ToggleNoForwards_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_ToggleNoForwards_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TogglePaidReactionPrivacy",
 			ConstructorID: 0x435885b5,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesTogglePaidReactionPrivacyRequest{} },
 			Handler:       _Messages_TogglePaidReactionPrivacy_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_TogglePaidReactionPrivacy_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TogglePeerTranslations",
 			ConstructorID: 0xe47cb579,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesTogglePeerTranslationsRequest{} },
 			Handler:       _Messages_TogglePeerTranslations_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_TogglePeerTranslations_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleSavedDialogPin",
 			ConstructorID: 0xac81bbde,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleSavedDialogPinRequest{} },
 			Handler:       _Messages_ToggleSavedDialogPin_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ToggleSavedDialogPin_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleStickerSets",
 			ConstructorID: 0xb5052fea,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleStickerSetsRequest{} },
 			Handler:       _Messages_ToggleStickerSets_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ToggleStickerSets_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleSuggestedPostApproval",
 			ConstructorID: 0x8107455c,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleSuggestedPostApprovalRequest{} },
 			Handler:       _Messages_ToggleSuggestedPostApproval_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_ToggleSuggestedPostApproval_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleTodoCompleted",
 			ConstructorID: 0xd3e03124,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesToggleTodoCompletedRequest{} },
 			Handler:       _Messages_ToggleTodoCompleted_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_ToggleTodoCompleted_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TranscribeAudio",
 			ConstructorID: 0x269e9a49,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesTranscribeAudioRequest{} },
 			Handler:       _Messages_TranscribeAudio_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesTranscribedAudio](response, layer, limits, _Messages_TranscribeAudio_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TranslateText",
 			ConstructorID: 0x63183030,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesTranslateTextRequest{} },
 			Handler:       _Messages_TranslateText_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesTranslatedText](response, layer, limits, _Messages_TranslateText_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UninstallStickerSet",
 			ConstructorID: 0xf96e55de,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUninstallStickerSetRequest{} },
 			Handler:       _Messages_UninstallStickerSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_UninstallStickerSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UnpinAllMessages",
 			ConstructorID: 0x062dd747,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUnpinAllMessagesRequest{} },
 			Handler:       _Messages_UnpinAllMessages_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*MessagesAffectedHistory](response, layer, limits, _Messages_UnpinAllMessages_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateDialogFilter",
 			ConstructorID: 0x1ad4a04a,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUpdateDialogFilterRequest{} },
 			Handler:       _Messages_UpdateDialogFilter_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_UpdateDialogFilter_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateDialogFiltersOrder",
 			ConstructorID: 0xc563c1e4,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUpdateDialogFiltersOrderRequest{} },
 			Handler:       _Messages_UpdateDialogFiltersOrder_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_UpdateDialogFiltersOrder_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdatePinnedMessage",
 			ConstructorID: 0xd2aaf7ec,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUpdatePinnedMessageRequest{} },
 			Handler:       _Messages_UpdatePinnedMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Messages_UpdatePinnedMessage_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateSavedReactionTag",
 			ConstructorID: 0x60297dec,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUpdateSavedReactionTagRequest{} },
 			Handler:       _Messages_UpdateSavedReactionTag_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_UpdateSavedReactionTag_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadEncryptedFile",
 			ConstructorID: 0x5057c497,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUploadEncryptedFileRequest{} },
 			Handler:       _Messages_UploadEncryptedFile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[EncryptedFileType](response, layer, limits, _Messages_UploadEncryptedFile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadImportedMedia",
 			ConstructorID: 0x2a862092,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUploadImportedMediaRequest{} },
 			Handler:       _Messages_UploadImportedMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessageMediaType](response, layer, limits, _Messages_UploadImportedMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadMedia",
 			ConstructorID: 0x14967978,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesUploadMediaRequest{} },
 			Handler:       _Messages_UploadMedia_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessageMediaType](response, layer, limits, _Messages_UploadMedia_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ViewSponsoredMessage",
 			ConstructorID: 0x269e3643,
 			NewRequest:    func() tlrpc.TLObject { return &MessagesViewSponsoredMessageRequest{} },
 			Handler:       _Messages_ViewSponsoredMessage_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Messages_ViewSponsoredMessage_EncodeResponse)
+			},
 		},
 	},
 }
@@ -5611,232 +15203,963 @@ func RegisterMessagesServer(s *tlrpc.Server, srv MessagesServer) {
 	s.RegisterService(Messages_ServiceDesc, srv)
 }
 
-func _Payments_ApplyGiftCode_Handler(srv interface{}, ctx context.Context, req *PaymentsApplyGiftCodeRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).ApplyGiftCode(ctx, req)
+func _Payments_ApplyGiftCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsApplyGiftCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.applyGiftCode: request %T is not *PaymentsApplyGiftCodeRequest", req)
+	}
+	return srv.(PaymentsServer).ApplyGiftCode(ctx, typedRequest)
 }
 
-func _Payments_AssignAppStoreTransaction_Handler(srv interface{}, ctx context.Context, req *PaymentsAssignAppStoreTransactionRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).AssignAppStoreTransaction(ctx, req)
+func _Payments_ApplyGiftCode_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_AssignPlayMarketTransaction_Handler(srv interface{}, ctx context.Context, req *PaymentsAssignPlayMarketTransactionRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).AssignPlayMarketTransaction(ctx, req)
+func _Payments_AssignAppStoreTransaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsAssignAppStoreTransactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.assignAppStoreTransaction: request %T is not *PaymentsAssignAppStoreTransactionRequest", req)
+	}
+	return srv.(PaymentsServer).AssignAppStoreTransaction(ctx, typedRequest)
 }
 
-func _Payments_BotCancelStarsSubscription_Handler(srv interface{}, ctx context.Context, req *PaymentsBotCancelStarsSubscriptionRequest) (bool, error) {
-	return srv.(PaymentsServer).BotCancelStarsSubscription(ctx, req)
+func _Payments_AssignAppStoreTransaction_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_CanPurchaseStore_Handler(srv interface{}, ctx context.Context, req *PaymentsCanPurchaseStoreRequest) (bool, error) {
-	return srv.(PaymentsServer).CanPurchaseStore(ctx, req)
+func _Payments_AssignPlayMarketTransaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsAssignPlayMarketTransactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.assignPlayMarketTransaction: request %T is not *PaymentsAssignPlayMarketTransactionRequest", req)
+	}
+	return srv.(PaymentsServer).AssignPlayMarketTransaction(ctx, typedRequest)
 }
 
-func _Payments_ChangeStarsSubscription_Handler(srv interface{}, ctx context.Context, req *PaymentsChangeStarsSubscriptionRequest) (bool, error) {
-	return srv.(PaymentsServer).ChangeStarsSubscription(ctx, req)
+func _Payments_AssignPlayMarketTransaction_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_CheckCanSendGift_Handler(srv interface{}, ctx context.Context, req *PaymentsCheckCanSendGiftRequest) (PaymentsCheckCanSendGiftResultType, error) {
-	return srv.(PaymentsServer).CheckCanSendGift(ctx, req)
+func _Payments_BotCancelStarsSubscription_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsBotCancelStarsSubscriptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.botCancelStarsSubscription: request %T is not *PaymentsBotCancelStarsSubscriptionRequest", req)
+	}
+	return srv.(PaymentsServer).BotCancelStarsSubscription(ctx, typedRequest)
 }
 
-func _Payments_CheckGiftCode_Handler(srv interface{}, ctx context.Context, req *PaymentsCheckGiftCodeRequest) (*PaymentsCheckedGiftCode, error) {
-	return srv.(PaymentsServer).CheckGiftCode(ctx, req)
+func _Payments_BotCancelStarsSubscription_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_ClearSavedInfo_Handler(srv interface{}, ctx context.Context, req *PaymentsClearSavedInfoRequest) (bool, error) {
-	return srv.(PaymentsServer).ClearSavedInfo(ctx, req)
+func _Payments_CanPurchaseStore_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsCanPurchaseStoreRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.canPurchaseStore: request %T is not *PaymentsCanPurchaseStoreRequest", req)
+	}
+	return srv.(PaymentsServer).CanPurchaseStore(ctx, typedRequest)
 }
 
-func _Payments_ConnectStarRefBot_Handler(srv interface{}, ctx context.Context, req *PaymentsConnectStarRefBotRequest) (*PaymentsConnectedStarRefBots, error) {
-	return srv.(PaymentsServer).ConnectStarRefBot(ctx, req)
+func _Payments_CanPurchaseStore_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_ConvertStarGift_Handler(srv interface{}, ctx context.Context, req *PaymentsConvertStarGiftRequest) (bool, error) {
-	return srv.(PaymentsServer).ConvertStarGift(ctx, req)
+func _Payments_ChangeStarsSubscription_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsChangeStarsSubscriptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.changeStarsSubscription: request %T is not *PaymentsChangeStarsSubscriptionRequest", req)
+	}
+	return srv.(PaymentsServer).ChangeStarsSubscription(ctx, typedRequest)
 }
 
-func _Payments_CreateStarGiftCollection_Handler(srv interface{}, ctx context.Context, req *PaymentsCreateStarGiftCollectionRequest) (*StarGiftCollection, error) {
-	return srv.(PaymentsServer).CreateStarGiftCollection(ctx, req)
+func _Payments_ChangeStarsSubscription_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_DeleteStarGiftCollection_Handler(srv interface{}, ctx context.Context, req *PaymentsDeleteStarGiftCollectionRequest) (bool, error) {
-	return srv.(PaymentsServer).DeleteStarGiftCollection(ctx, req)
+func _Payments_CheckCanSendGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsCheckCanSendGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.checkCanSendGift: request %T is not *PaymentsCheckCanSendGiftRequest", req)
+	}
+	return srv.(PaymentsServer).CheckCanSendGift(ctx, typedRequest)
 }
 
-func _Payments_EditConnectedStarRefBot_Handler(srv interface{}, ctx context.Context, req *PaymentsEditConnectedStarRefBotRequest) (*PaymentsConnectedStarRefBots, error) {
-	return srv.(PaymentsServer).EditConnectedStarRefBot(ctx, req)
+func _Payments_CheckCanSendGift_EncodeResponse(e *mtproto.Encoder, response PaymentsCheckCanSendGiftResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.CheckCanSendGiftResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_ExportInvoice_Handler(srv interface{}, ctx context.Context, req *PaymentsExportInvoiceRequest) (*PaymentsExportedInvoice, error) {
-	return srv.(PaymentsServer).ExportInvoice(ctx, req)
+func _Payments_CheckGiftCode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsCheckGiftCodeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.checkGiftCode: request %T is not *PaymentsCheckGiftCodeRequest", req)
+	}
+	return srv.(PaymentsServer).CheckGiftCode(ctx, typedRequest)
 }
 
-func _Payments_FulfillStarsSubscription_Handler(srv interface{}, ctx context.Context, req *PaymentsFulfillStarsSubscriptionRequest) (bool, error) {
-	return srv.(PaymentsServer).FulfillStarsSubscription(ctx, req)
+func _Payments_CheckGiftCode_EncodeResponse(e *mtproto.Encoder, response *PaymentsCheckedGiftCode) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetBankCardData_Handler(srv interface{}, ctx context.Context, req *PaymentsGetBankCardDataRequest) (*PaymentsBankCardData, error) {
-	return srv.(PaymentsServer).GetBankCardData(ctx, req)
+func _Payments_ClearSavedInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsClearSavedInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.clearSavedInfo: request %T is not *PaymentsClearSavedInfoRequest", req)
+	}
+	return srv.(PaymentsServer).ClearSavedInfo(ctx, typedRequest)
 }
 
-func _Payments_GetConnectedStarRefBot_Handler(srv interface{}, ctx context.Context, req *PaymentsGetConnectedStarRefBotRequest) (*PaymentsConnectedStarRefBots, error) {
-	return srv.(PaymentsServer).GetConnectedStarRefBot(ctx, req)
+func _Payments_ClearSavedInfo_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetConnectedStarRefBots_Handler(srv interface{}, ctx context.Context, req *PaymentsGetConnectedStarRefBotsRequest) (*PaymentsConnectedStarRefBots, error) {
-	return srv.(PaymentsServer).GetConnectedStarRefBots(ctx, req)
+func _Payments_ConnectStarRefBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsConnectStarRefBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.connectStarRefBot: request %T is not *PaymentsConnectStarRefBotRequest", req)
+	}
+	return srv.(PaymentsServer).ConnectStarRefBot(ctx, typedRequest)
 }
 
-func _Payments_GetGiveawayInfo_Handler(srv interface{}, ctx context.Context, req *PaymentsGetGiveawayInfoRequest) (PaymentsGiveawayInfoType, error) {
-	return srv.(PaymentsServer).GetGiveawayInfo(ctx, req)
+func _Payments_ConnectStarRefBot_EncodeResponse(e *mtproto.Encoder, response *PaymentsConnectedStarRefBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetPaymentForm_Handler(srv interface{}, ctx context.Context, req *PaymentsGetPaymentFormRequest) (PaymentsPaymentFormType, error) {
-	return srv.(PaymentsServer).GetPaymentForm(ctx, req)
+func _Payments_ConvertStarGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsConvertStarGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.convertStarGift: request %T is not *PaymentsConvertStarGiftRequest", req)
+	}
+	return srv.(PaymentsServer).ConvertStarGift(ctx, typedRequest)
 }
 
-func _Payments_GetPaymentReceipt_Handler(srv interface{}, ctx context.Context, req *PaymentsGetPaymentReceiptRequest) (PaymentsPaymentReceiptType, error) {
-	return srv.(PaymentsServer).GetPaymentReceipt(ctx, req)
+func _Payments_ConvertStarGift_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetPremiumGiftCodeOptions_Handler(srv interface{}, ctx context.Context, req *PaymentsGetPremiumGiftCodeOptionsRequest) ([]*PremiumGiftCodeOption, error) {
-	return srv.(PaymentsServer).GetPremiumGiftCodeOptions(ctx, req)
+func _Payments_CreateStarGiftCollection_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsCreateStarGiftCollectionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.createStarGiftCollection: request %T is not *PaymentsCreateStarGiftCollectionRequest", req)
+	}
+	return srv.(PaymentsServer).CreateStarGiftCollection(ctx, typedRequest)
 }
 
-func _Payments_GetResaleStarGifts_Handler(srv interface{}, ctx context.Context, req *PaymentsGetResaleStarGiftsRequest) (*PaymentsResaleStarGifts, error) {
-	return srv.(PaymentsServer).GetResaleStarGifts(ctx, req)
+func _Payments_CreateStarGiftCollection_EncodeResponse(e *mtproto.Encoder, response *StarGiftCollection) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetSavedInfo_Handler(srv interface{}, ctx context.Context, req *PaymentsGetSavedInfoRequest) (*PaymentsSavedInfo, error) {
-	return srv.(PaymentsServer).GetSavedInfo(ctx, req)
+func _Payments_DeleteStarGiftCollection_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsDeleteStarGiftCollectionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.deleteStarGiftCollection: request %T is not *PaymentsDeleteStarGiftCollectionRequest", req)
+	}
+	return srv.(PaymentsServer).DeleteStarGiftCollection(ctx, typedRequest)
 }
 
-func _Payments_GetSavedStarGift_Handler(srv interface{}, ctx context.Context, req *PaymentsGetSavedStarGiftRequest) (*PaymentsSavedStarGifts, error) {
-	return srv.(PaymentsServer).GetSavedStarGift(ctx, req)
+func _Payments_DeleteStarGiftCollection_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetSavedStarGifts_Handler(srv interface{}, ctx context.Context, req *PaymentsGetSavedStarGiftsRequest) (*PaymentsSavedStarGifts, error) {
-	return srv.(PaymentsServer).GetSavedStarGifts(ctx, req)
+func _Payments_EditConnectedStarRefBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsEditConnectedStarRefBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.editConnectedStarRefBot: request %T is not *PaymentsEditConnectedStarRefBotRequest", req)
+	}
+	return srv.(PaymentsServer).EditConnectedStarRefBot(ctx, typedRequest)
 }
 
-func _Payments_GetStarGiftCollections_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarGiftCollectionsRequest) (PaymentsStarGiftCollectionsType, error) {
-	return srv.(PaymentsServer).GetStarGiftCollections(ctx, req)
+func _Payments_EditConnectedStarRefBot_EncodeResponse(e *mtproto.Encoder, response *PaymentsConnectedStarRefBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarGiftUpgradePreview_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarGiftUpgradePreviewRequest) (*PaymentsStarGiftUpgradePreview, error) {
-	return srv.(PaymentsServer).GetStarGiftUpgradePreview(ctx, req)
+func _Payments_ExportInvoice_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsExportInvoiceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.exportInvoice: request %T is not *PaymentsExportInvoiceRequest", req)
+	}
+	return srv.(PaymentsServer).ExportInvoice(ctx, typedRequest)
 }
 
-func _Payments_GetStarGiftWithdrawalURL_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarGiftWithdrawalURLRequest) (*PaymentsStarGiftWithdrawalURL, error) {
-	return srv.(PaymentsServer).GetStarGiftWithdrawalURL(ctx, req)
+func _Payments_ExportInvoice_EncodeResponse(e *mtproto.Encoder, response *PaymentsExportedInvoice) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarGifts_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarGiftsRequest) (PaymentsStarGiftsType, error) {
-	return srv.(PaymentsServer).GetStarGifts(ctx, req)
+func _Payments_FulfillStarsSubscription_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsFulfillStarsSubscriptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.fulfillStarsSubscription: request %T is not *PaymentsFulfillStarsSubscriptionRequest", req)
+	}
+	return srv.(PaymentsServer).FulfillStarsSubscription(ctx, typedRequest)
 }
 
-func _Payments_GetStarsGiftOptions_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsGiftOptionsRequest) ([]*StarsGiftOption, error) {
-	return srv.(PaymentsServer).GetStarsGiftOptions(ctx, req)
+func _Payments_FulfillStarsSubscription_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarsGiveawayOptions_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsGiveawayOptionsRequest) ([]*StarsGiveawayOption, error) {
-	return srv.(PaymentsServer).GetStarsGiveawayOptions(ctx, req)
+func _Payments_GetBankCardData_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetBankCardDataRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getBankCardData: request %T is not *PaymentsGetBankCardDataRequest", req)
+	}
+	return srv.(PaymentsServer).GetBankCardData(ctx, typedRequest)
 }
 
-func _Payments_GetStarsRevenueAdsAccountURL_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsRevenueAdsAccountURLRequest) (*PaymentsStarsRevenueAdsAccountURL, error) {
-	return srv.(PaymentsServer).GetStarsRevenueAdsAccountURL(ctx, req)
+func _Payments_GetBankCardData_EncodeResponse(e *mtproto.Encoder, response *PaymentsBankCardData) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarsRevenueStats_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsRevenueStatsRequest) (*PaymentsStarsRevenueStats, error) {
-	return srv.(PaymentsServer).GetStarsRevenueStats(ctx, req)
+func _Payments_GetConnectedStarRefBot_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetConnectedStarRefBotRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getConnectedStarRefBot: request %T is not *PaymentsGetConnectedStarRefBotRequest", req)
+	}
+	return srv.(PaymentsServer).GetConnectedStarRefBot(ctx, typedRequest)
 }
 
-func _Payments_GetStarsRevenueWithdrawalURL_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsRevenueWithdrawalURLRequest) (*PaymentsStarsRevenueWithdrawalURL, error) {
-	return srv.(PaymentsServer).GetStarsRevenueWithdrawalURL(ctx, req)
+func _Payments_GetConnectedStarRefBot_EncodeResponse(e *mtproto.Encoder, response *PaymentsConnectedStarRefBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarsStatus_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsStatusRequest) (*PaymentsStarsStatus, error) {
-	return srv.(PaymentsServer).GetStarsStatus(ctx, req)
+func _Payments_GetConnectedStarRefBots_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetConnectedStarRefBotsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getConnectedStarRefBots: request %T is not *PaymentsGetConnectedStarRefBotsRequest", req)
+	}
+	return srv.(PaymentsServer).GetConnectedStarRefBots(ctx, typedRequest)
 }
 
-func _Payments_GetStarsSubscriptions_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsSubscriptionsRequest) (*PaymentsStarsStatus, error) {
-	return srv.(PaymentsServer).GetStarsSubscriptions(ctx, req)
+func _Payments_GetConnectedStarRefBots_EncodeResponse(e *mtproto.Encoder, response *PaymentsConnectedStarRefBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarsTopupOptions_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsTopupOptionsRequest) ([]*StarsTopupOption, error) {
-	return srv.(PaymentsServer).GetStarsTopupOptions(ctx, req)
+func _Payments_GetGiveawayInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetGiveawayInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getGiveawayInfo: request %T is not *PaymentsGetGiveawayInfoRequest", req)
+	}
+	return srv.(PaymentsServer).GetGiveawayInfo(ctx, typedRequest)
 }
 
-func _Payments_GetStarsTransactions_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsTransactionsRequest) (*PaymentsStarsStatus, error) {
-	return srv.(PaymentsServer).GetStarsTransactions(ctx, req)
+func _Payments_GetGiveawayInfo_EncodeResponse(e *mtproto.Encoder, response PaymentsGiveawayInfoType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.GiveawayInfo is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetStarsTransactionsByID_Handler(srv interface{}, ctx context.Context, req *PaymentsGetStarsTransactionsByIDRequest) (*PaymentsStarsStatus, error) {
-	return srv.(PaymentsServer).GetStarsTransactionsByID(ctx, req)
+func _Payments_GetPaymentForm_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetPaymentFormRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getPaymentForm: request %T is not *PaymentsGetPaymentFormRequest", req)
+	}
+	return srv.(PaymentsServer).GetPaymentForm(ctx, typedRequest)
 }
 
-func _Payments_GetSuggestedStarRefBots_Handler(srv interface{}, ctx context.Context, req *PaymentsGetSuggestedStarRefBotsRequest) (*PaymentsSuggestedStarRefBots, error) {
-	return srv.(PaymentsServer).GetSuggestedStarRefBots(ctx, req)
+func _Payments_GetPaymentForm_EncodeResponse(e *mtproto.Encoder, response PaymentsPaymentFormType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.PaymentForm is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_GetUniqueStarGift_Handler(srv interface{}, ctx context.Context, req *PaymentsGetUniqueStarGiftRequest) (*PaymentsUniqueStarGift, error) {
-	return srv.(PaymentsServer).GetUniqueStarGift(ctx, req)
+func _Payments_GetPaymentReceipt_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetPaymentReceiptRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getPaymentReceipt: request %T is not *PaymentsGetPaymentReceiptRequest", req)
+	}
+	return srv.(PaymentsServer).GetPaymentReceipt(ctx, typedRequest)
 }
 
-func _Payments_GetUniqueStarGiftValueInfo_Handler(srv interface{}, ctx context.Context, req *PaymentsGetUniqueStarGiftValueInfoRequest) (*PaymentsUniqueStarGiftValueInfo, error) {
-	return srv.(PaymentsServer).GetUniqueStarGiftValueInfo(ctx, req)
+func _Payments_GetPaymentReceipt_EncodeResponse(e *mtproto.Encoder, response PaymentsPaymentReceiptType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.PaymentReceipt is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_LaunchPrepaidGiveaway_Handler(srv interface{}, ctx context.Context, req *PaymentsLaunchPrepaidGiveawayRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).LaunchPrepaidGiveaway(ctx, req)
+func _Payments_GetPremiumGiftCodeOptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetPremiumGiftCodeOptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getPremiumGiftCodeOptions: request %T is not *PaymentsGetPremiumGiftCodeOptionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetPremiumGiftCodeOptions(ctx, typedRequest)
 }
 
-func _Payments_RefundStarsCharge_Handler(srv interface{}, ctx context.Context, req *PaymentsRefundStarsChargeRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).RefundStarsCharge(ctx, req)
+func _Payments_GetPremiumGiftCodeOptions_EncodeResponse(e *mtproto.Encoder, response []*PremiumGiftCodeOption) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_ReorderStarGiftCollections_Handler(srv interface{}, ctx context.Context, req *PaymentsReorderStarGiftCollectionsRequest) (bool, error) {
-	return srv.(PaymentsServer).ReorderStarGiftCollections(ctx, req)
+func _Payments_GetResaleStarGifts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetResaleStarGiftsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getResaleStarGifts: request %T is not *PaymentsGetResaleStarGiftsRequest", req)
+	}
+	return srv.(PaymentsServer).GetResaleStarGifts(ctx, typedRequest)
 }
 
-func _Payments_SaveStarGift_Handler(srv interface{}, ctx context.Context, req *PaymentsSaveStarGiftRequest) (bool, error) {
-	return srv.(PaymentsServer).SaveStarGift(ctx, req)
+func _Payments_GetResaleStarGifts_EncodeResponse(e *mtproto.Encoder, response *PaymentsResaleStarGifts) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_SendPaymentForm_Handler(srv interface{}, ctx context.Context, req *PaymentsSendPaymentFormRequest) (PaymentsPaymentResultType, error) {
-	return srv.(PaymentsServer).SendPaymentForm(ctx, req)
+func _Payments_GetSavedInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetSavedInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getSavedInfo: request %T is not *PaymentsGetSavedInfoRequest", req)
+	}
+	return srv.(PaymentsServer).GetSavedInfo(ctx, typedRequest)
 }
 
-func _Payments_SendStarsForm_Handler(srv interface{}, ctx context.Context, req *PaymentsSendStarsFormRequest) (PaymentsPaymentResultType, error) {
-	return srv.(PaymentsServer).SendStarsForm(ctx, req)
+func _Payments_GetSavedInfo_EncodeResponse(e *mtproto.Encoder, response *PaymentsSavedInfo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_ToggleChatStarGiftNotifications_Handler(srv interface{}, ctx context.Context, req *PaymentsToggleChatStarGiftNotificationsRequest) (bool, error) {
-	return srv.(PaymentsServer).ToggleChatStarGiftNotifications(ctx, req)
+func _Payments_GetSavedStarGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetSavedStarGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getSavedStarGift: request %T is not *PaymentsGetSavedStarGiftRequest", req)
+	}
+	return srv.(PaymentsServer).GetSavedStarGift(ctx, typedRequest)
 }
 
-func _Payments_ToggleStarGiftsPinnedToTop_Handler(srv interface{}, ctx context.Context, req *PaymentsToggleStarGiftsPinnedToTopRequest) (bool, error) {
-	return srv.(PaymentsServer).ToggleStarGiftsPinnedToTop(ctx, req)
+func _Payments_GetSavedStarGift_EncodeResponse(e *mtproto.Encoder, response *PaymentsSavedStarGifts) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_TransferStarGift_Handler(srv interface{}, ctx context.Context, req *PaymentsTransferStarGiftRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).TransferStarGift(ctx, req)
+func _Payments_GetSavedStarGifts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetSavedStarGiftsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getSavedStarGifts: request %T is not *PaymentsGetSavedStarGiftsRequest", req)
+	}
+	return srv.(PaymentsServer).GetSavedStarGifts(ctx, typedRequest)
 }
 
-func _Payments_UpdateStarGiftCollection_Handler(srv interface{}, ctx context.Context, req *PaymentsUpdateStarGiftCollectionRequest) (*StarGiftCollection, error) {
-	return srv.(PaymentsServer).UpdateStarGiftCollection(ctx, req)
+func _Payments_GetSavedStarGifts_EncodeResponse(e *mtproto.Encoder, response *PaymentsSavedStarGifts) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_UpdateStarGiftPrice_Handler(srv interface{}, ctx context.Context, req *PaymentsUpdateStarGiftPriceRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).UpdateStarGiftPrice(ctx, req)
+func _Payments_GetStarGiftCollections_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarGiftCollectionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarGiftCollections: request %T is not *PaymentsGetStarGiftCollectionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarGiftCollections(ctx, typedRequest)
 }
 
-func _Payments_UpgradeStarGift_Handler(srv interface{}, ctx context.Context, req *PaymentsUpgradeStarGiftRequest) (UpdatesType, error) {
-	return srv.(PaymentsServer).UpgradeStarGift(ctx, req)
+func _Payments_GetStarGiftCollections_EncodeResponse(e *mtproto.Encoder, response PaymentsStarGiftCollectionsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.StarGiftCollections is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Payments_ValidateRequestedInfo_Handler(srv interface{}, ctx context.Context, req *PaymentsValidateRequestedInfoRequest) (*PaymentsValidatedRequestedInfo, error) {
-	return srv.(PaymentsServer).ValidateRequestedInfo(ctx, req)
+func _Payments_GetStarGiftUpgradePreview_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarGiftUpgradePreviewRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarGiftUpgradePreview: request %T is not *PaymentsGetStarGiftUpgradePreviewRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarGiftUpgradePreview(ctx, typedRequest)
+}
+
+func _Payments_GetStarGiftUpgradePreview_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarGiftUpgradePreview) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarGiftWithdrawalURL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarGiftWithdrawalURLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarGiftWithdrawalUrl: request %T is not *PaymentsGetStarGiftWithdrawalURLRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarGiftWithdrawalURL(ctx, typedRequest)
+}
+
+func _Payments_GetStarGiftWithdrawalURL_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarGiftWithdrawalURL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarGifts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarGiftsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarGifts: request %T is not *PaymentsGetStarGiftsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarGifts(ctx, typedRequest)
+}
+
+func _Payments_GetStarGifts_EncodeResponse(e *mtproto.Encoder, response PaymentsStarGiftsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.StarGifts is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsGiftOptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsGiftOptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsGiftOptions: request %T is not *PaymentsGetStarsGiftOptionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsGiftOptions(ctx, typedRequest)
+}
+
+func _Payments_GetStarsGiftOptions_EncodeResponse(e *mtproto.Encoder, response []*StarsGiftOption) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsGiveawayOptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsGiveawayOptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsGiveawayOptions: request %T is not *PaymentsGetStarsGiveawayOptionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsGiveawayOptions(ctx, typedRequest)
+}
+
+func _Payments_GetStarsGiveawayOptions_EncodeResponse(e *mtproto.Encoder, response []*StarsGiveawayOption) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsRevenueAdsAccountURL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsRevenueAdsAccountURLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsRevenueAdsAccountUrl: request %T is not *PaymentsGetStarsRevenueAdsAccountURLRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsRevenueAdsAccountURL(ctx, typedRequest)
+}
+
+func _Payments_GetStarsRevenueAdsAccountURL_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsRevenueAdsAccountURL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsRevenueStats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsRevenueStatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsRevenueStats: request %T is not *PaymentsGetStarsRevenueStatsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsRevenueStats(ctx, typedRequest)
+}
+
+func _Payments_GetStarsRevenueStats_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsRevenueStats) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsRevenueWithdrawalURL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsRevenueWithdrawalURLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsRevenueWithdrawalUrl: request %T is not *PaymentsGetStarsRevenueWithdrawalURLRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsRevenueWithdrawalURL(ctx, typedRequest)
+}
+
+func _Payments_GetStarsRevenueWithdrawalURL_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsRevenueWithdrawalURL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsStatus: request %T is not *PaymentsGetStarsStatusRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsStatus(ctx, typedRequest)
+}
+
+func _Payments_GetStarsStatus_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsStatus) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsSubscriptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsSubscriptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsSubscriptions: request %T is not *PaymentsGetStarsSubscriptionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsSubscriptions(ctx, typedRequest)
+}
+
+func _Payments_GetStarsSubscriptions_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsStatus) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsTopupOptions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsTopupOptionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsTopupOptions: request %T is not *PaymentsGetStarsTopupOptionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsTopupOptions(ctx, typedRequest)
+}
+
+func _Payments_GetStarsTopupOptions_EncodeResponse(e *mtproto.Encoder, response []*StarsTopupOption) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsTransactions_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsTransactionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsTransactions: request %T is not *PaymentsGetStarsTransactionsRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsTransactions(ctx, typedRequest)
+}
+
+func _Payments_GetStarsTransactions_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsStatus) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetStarsTransactionsByID_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetStarsTransactionsByIDRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getStarsTransactionsByID: request %T is not *PaymentsGetStarsTransactionsByIDRequest", req)
+	}
+	return srv.(PaymentsServer).GetStarsTransactionsByID(ctx, typedRequest)
+}
+
+func _Payments_GetStarsTransactionsByID_EncodeResponse(e *mtproto.Encoder, response *PaymentsStarsStatus) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetSuggestedStarRefBots_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetSuggestedStarRefBotsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getSuggestedStarRefBots: request %T is not *PaymentsGetSuggestedStarRefBotsRequest", req)
+	}
+	return srv.(PaymentsServer).GetSuggestedStarRefBots(ctx, typedRequest)
+}
+
+func _Payments_GetSuggestedStarRefBots_EncodeResponse(e *mtproto.Encoder, response *PaymentsSuggestedStarRefBots) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetUniqueStarGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetUniqueStarGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getUniqueStarGift: request %T is not *PaymentsGetUniqueStarGiftRequest", req)
+	}
+	return srv.(PaymentsServer).GetUniqueStarGift(ctx, typedRequest)
+}
+
+func _Payments_GetUniqueStarGift_EncodeResponse(e *mtproto.Encoder, response *PaymentsUniqueStarGift) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_GetUniqueStarGiftValueInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsGetUniqueStarGiftValueInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.getUniqueStarGiftValueInfo: request %T is not *PaymentsGetUniqueStarGiftValueInfoRequest", req)
+	}
+	return srv.(PaymentsServer).GetUniqueStarGiftValueInfo(ctx, typedRequest)
+}
+
+func _Payments_GetUniqueStarGiftValueInfo_EncodeResponse(e *mtproto.Encoder, response *PaymentsUniqueStarGiftValueInfo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_LaunchPrepaidGiveaway_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsLaunchPrepaidGiveawayRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.launchPrepaidGiveaway: request %T is not *PaymentsLaunchPrepaidGiveawayRequest", req)
+	}
+	return srv.(PaymentsServer).LaunchPrepaidGiveaway(ctx, typedRequest)
+}
+
+func _Payments_LaunchPrepaidGiveaway_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_RefundStarsCharge_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsRefundStarsChargeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.refundStarsCharge: request %T is not *PaymentsRefundStarsChargeRequest", req)
+	}
+	return srv.(PaymentsServer).RefundStarsCharge(ctx, typedRequest)
+}
+
+func _Payments_RefundStarsCharge_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_ReorderStarGiftCollections_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsReorderStarGiftCollectionsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.reorderStarGiftCollections: request %T is not *PaymentsReorderStarGiftCollectionsRequest", req)
+	}
+	return srv.(PaymentsServer).ReorderStarGiftCollections(ctx, typedRequest)
+}
+
+func _Payments_ReorderStarGiftCollections_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_SaveStarGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsSaveStarGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.saveStarGift: request %T is not *PaymentsSaveStarGiftRequest", req)
+	}
+	return srv.(PaymentsServer).SaveStarGift(ctx, typedRequest)
+}
+
+func _Payments_SaveStarGift_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_SendPaymentForm_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsSendPaymentFormRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.sendPaymentForm: request %T is not *PaymentsSendPaymentFormRequest", req)
+	}
+	return srv.(PaymentsServer).SendPaymentForm(ctx, typedRequest)
+}
+
+func _Payments_SendPaymentForm_EncodeResponse(e *mtproto.Encoder, response PaymentsPaymentResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.PaymentResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_SendStarsForm_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsSendStarsFormRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.sendStarsForm: request %T is not *PaymentsSendStarsFormRequest", req)
+	}
+	return srv.(PaymentsServer).SendStarsForm(ctx, typedRequest)
+}
+
+func _Payments_SendStarsForm_EncodeResponse(e *mtproto.Encoder, response PaymentsPaymentResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed payments.PaymentResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_ToggleChatStarGiftNotifications_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsToggleChatStarGiftNotificationsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.toggleChatStarGiftNotifications: request %T is not *PaymentsToggleChatStarGiftNotificationsRequest", req)
+	}
+	return srv.(PaymentsServer).ToggleChatStarGiftNotifications(ctx, typedRequest)
+}
+
+func _Payments_ToggleChatStarGiftNotifications_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_ToggleStarGiftsPinnedToTop_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsToggleStarGiftsPinnedToTopRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.toggleStarGiftsPinnedToTop: request %T is not *PaymentsToggleStarGiftsPinnedToTopRequest", req)
+	}
+	return srv.(PaymentsServer).ToggleStarGiftsPinnedToTop(ctx, typedRequest)
+}
+
+func _Payments_ToggleStarGiftsPinnedToTop_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_TransferStarGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsTransferStarGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.transferStarGift: request %T is not *PaymentsTransferStarGiftRequest", req)
+	}
+	return srv.(PaymentsServer).TransferStarGift(ctx, typedRequest)
+}
+
+func _Payments_TransferStarGift_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_UpdateStarGiftCollection_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsUpdateStarGiftCollectionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.updateStarGiftCollection: request %T is not *PaymentsUpdateStarGiftCollectionRequest", req)
+	}
+	return srv.(PaymentsServer).UpdateStarGiftCollection(ctx, typedRequest)
+}
+
+func _Payments_UpdateStarGiftCollection_EncodeResponse(e *mtproto.Encoder, response *StarGiftCollection) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_UpdateStarGiftPrice_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsUpdateStarGiftPriceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.updateStarGiftPrice: request %T is not *PaymentsUpdateStarGiftPriceRequest", req)
+	}
+	return srv.(PaymentsServer).UpdateStarGiftPrice(ctx, typedRequest)
+}
+
+func _Payments_UpdateStarGiftPrice_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_UpgradeStarGift_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsUpgradeStarGiftRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.upgradeStarGift: request %T is not *PaymentsUpgradeStarGiftRequest", req)
+	}
+	return srv.(PaymentsServer).UpgradeStarGift(ctx, typedRequest)
+}
+
+func _Payments_UpgradeStarGift_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Payments_ValidateRequestedInfo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PaymentsValidateRequestedInfoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("payments.validateRequestedInfo: request %T is not *PaymentsValidateRequestedInfoRequest", req)
+	}
+	return srv.(PaymentsServer).ValidateRequestedInfo(ctx, typedRequest)
+}
+
+func _Payments_ValidateRequestedInfo_EncodeResponse(e *mtproto.Encoder, response *PaymentsValidatedRequestedInfo) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Payments_ServiceDesc is the static descriptor for the PaymentsServer service.
@@ -5846,346 +16169,631 @@ var Payments_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*PaymentsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ApplyGiftCode",
 			ConstructorID: 0xf6e26854,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsApplyGiftCodeRequest{} },
 			Handler:       _Payments_ApplyGiftCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_ApplyGiftCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AssignAppStoreTransaction",
 			ConstructorID: 0x80ed747d,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsAssignAppStoreTransactionRequest{} },
 			Handler:       _Payments_AssignAppStoreTransaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_AssignAppStoreTransaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AssignPlayMarketTransaction",
 			ConstructorID: 0xdffd50d3,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsAssignPlayMarketTransactionRequest{} },
 			Handler:       _Payments_AssignPlayMarketTransaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_AssignPlayMarketTransaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "BotCancelStarsSubscription",
 			ConstructorID: 0x6dfa0622,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsBotCancelStarsSubscriptionRequest{} },
 			Handler:       _Payments_BotCancelStarsSubscription_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_BotCancelStarsSubscription_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CanPurchaseStore",
 			ConstructorID: 0x4fdc5ea7,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsCanPurchaseStoreRequest{} },
 			Handler:       _Payments_CanPurchaseStore_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_CanPurchaseStore_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ChangeStarsSubscription",
 			ConstructorID: 0xc7770878,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsChangeStarsSubscriptionRequest{} },
 			Handler:       _Payments_ChangeStarsSubscription_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_ChangeStarsSubscription_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckCanSendGift",
 			ConstructorID: 0xc0c4edc9,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsCheckCanSendGiftRequest{} },
 			Handler:       _Payments_CheckCanSendGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsCheckCanSendGiftResultType](response, layer, limits, _Payments_CheckCanSendGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckGiftCode",
 			ConstructorID: 0x8e51b4c1,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsCheckGiftCodeRequest{} },
 			Handler:       _Payments_CheckGiftCode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsCheckedGiftCode](response, layer, limits, _Payments_CheckGiftCode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ClearSavedInfo",
 			ConstructorID: 0xd83d70c1,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsClearSavedInfoRequest{} },
 			Handler:       _Payments_ClearSavedInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_ClearSavedInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ConnectStarRefBot",
 			ConstructorID: 0x7ed5348a,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsConnectStarRefBotRequest{} },
 			Handler:       _Payments_ConnectStarRefBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsConnectedStarRefBots](response, layer, limits, _Payments_ConnectStarRefBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ConvertStarGift",
 			ConstructorID: 0x74bf076b,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsConvertStarGiftRequest{} },
 			Handler:       _Payments_ConvertStarGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_ConvertStarGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateStarGiftCollection",
 			ConstructorID: 0x1f4a0e87,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsCreateStarGiftCollectionRequest{} },
 			Handler:       _Payments_CreateStarGiftCollection_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StarGiftCollection](response, layer, limits, _Payments_CreateStarGiftCollection_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteStarGiftCollection",
 			ConstructorID: 0xad5648e8,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsDeleteStarGiftCollectionRequest{} },
 			Handler:       _Payments_DeleteStarGiftCollection_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_DeleteStarGiftCollection_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditConnectedStarRefBot",
 			ConstructorID: 0xe4fca4a3,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsEditConnectedStarRefBotRequest{} },
 			Handler:       _Payments_EditConnectedStarRefBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsConnectedStarRefBots](response, layer, limits, _Payments_EditConnectedStarRefBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportInvoice",
 			ConstructorID: 0x0f91b065,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsExportInvoiceRequest{} },
 			Handler:       _Payments_ExportInvoice_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsExportedInvoice](response, layer, limits, _Payments_ExportInvoice_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "FulfillStarsSubscription",
 			ConstructorID: 0xcc5bebb3,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsFulfillStarsSubscriptionRequest{} },
 			Handler:       _Payments_FulfillStarsSubscription_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_FulfillStarsSubscription_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBankCardData",
 			ConstructorID: 0x2e79d779,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetBankCardDataRequest{} },
 			Handler:       _Payments_GetBankCardData_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsBankCardData](response, layer, limits, _Payments_GetBankCardData_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetConnectedStarRefBot",
 			ConstructorID: 0xb7d998f0,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotRequest{} },
 			Handler:       _Payments_GetConnectedStarRefBot_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsConnectedStarRefBots](response, layer, limits, _Payments_GetConnectedStarRefBot_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetConnectedStarRefBots",
 			ConstructorID: 0x5869a553,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetConnectedStarRefBotsRequest{} },
 			Handler:       _Payments_GetConnectedStarRefBots_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsConnectedStarRefBots](response, layer, limits, _Payments_GetConnectedStarRefBots_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGiveawayInfo",
 			ConstructorID: 0xf4239425,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetGiveawayInfoRequest{} },
 			Handler:       _Payments_GetGiveawayInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsGiveawayInfoType](response, layer, limits, _Payments_GetGiveawayInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPaymentForm",
 			ConstructorID: 0x37148dbb,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetPaymentFormRequest{} },
 			Handler:       _Payments_GetPaymentForm_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsPaymentFormType](response, layer, limits, _Payments_GetPaymentForm_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPaymentReceipt",
 			ConstructorID: 0x2478d1cc,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetPaymentReceiptRequest{} },
 			Handler:       _Payments_GetPaymentReceipt_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsPaymentReceiptType](response, layer, limits, _Payments_GetPaymentReceipt_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPremiumGiftCodeOptions",
 			ConstructorID: 0x2757ba54,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetPremiumGiftCodeOptionsRequest{} },
 			Handler:       _Payments_GetPremiumGiftCodeOptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*PremiumGiftCodeOption](response, layer, limits, _Payments_GetPremiumGiftCodeOptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetResaleStarGifts",
 			ConstructorID: 0x7a5fa236,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetResaleStarGiftsRequest{} },
 			Handler:       _Payments_GetResaleStarGifts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsResaleStarGifts](response, layer, limits, _Payments_GetResaleStarGifts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedInfo",
 			ConstructorID: 0x227d824b,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetSavedInfoRequest{} },
 			Handler:       _Payments_GetSavedInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsSavedInfo](response, layer, limits, _Payments_GetSavedInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedStarGift",
 			ConstructorID: 0xb455a106,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftRequest{} },
 			Handler:       _Payments_GetSavedStarGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsSavedStarGifts](response, layer, limits, _Payments_GetSavedStarGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedStarGifts",
 			ConstructorID: 0xa319e569,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetSavedStarGiftsRequest{} },
 			Handler:       _Payments_GetSavedStarGifts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsSavedStarGifts](response, layer, limits, _Payments_GetSavedStarGifts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarGiftCollections",
 			ConstructorID: 0x981b91dd,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarGiftCollectionsRequest{} },
 			Handler:       _Payments_GetStarGiftCollections_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsStarGiftCollectionsType](response, layer, limits, _Payments_GetStarGiftCollections_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarGiftUpgradePreview",
 			ConstructorID: 0x9c9abcb1,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarGiftUpgradePreviewRequest{} },
 			Handler:       _Payments_GetStarGiftUpgradePreview_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarGiftUpgradePreview](response, layer, limits, _Payments_GetStarGiftUpgradePreview_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarGiftWithdrawalURL",
 			ConstructorID: 0xd06e93a8,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarGiftWithdrawalURLRequest{} },
 			Handler:       _Payments_GetStarGiftWithdrawalURL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarGiftWithdrawalURL](response, layer, limits, _Payments_GetStarGiftWithdrawalURL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarGifts",
 			ConstructorID: 0xc4563590,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarGiftsRequest{} },
 			Handler:       _Payments_GetStarGifts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsStarGiftsType](response, layer, limits, _Payments_GetStarGifts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsGiftOptions",
 			ConstructorID: 0xd3c96bc8,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsGiftOptionsRequest{} },
 			Handler:       _Payments_GetStarsGiftOptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*StarsGiftOption](response, layer, limits, _Payments_GetStarsGiftOptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsGiveawayOptions",
 			ConstructorID: 0xbd1efd3e,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsGiveawayOptionsRequest{} },
 			Handler:       _Payments_GetStarsGiveawayOptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*StarsGiveawayOption](response, layer, limits, _Payments_GetStarsGiveawayOptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsRevenueAdsAccountURL",
 			ConstructorID: 0xd1d7efc5,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsRevenueAdsAccountURLRequest{} },
 			Handler:       _Payments_GetStarsRevenueAdsAccountURL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsRevenueAdsAccountURL](response, layer, limits, _Payments_GetStarsRevenueAdsAccountURL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsRevenueStats",
 			ConstructorID: 0xd91ffad6,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsRevenueStatsRequest{} },
 			Handler:       _Payments_GetStarsRevenueStats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsRevenueStats](response, layer, limits, _Payments_GetStarsRevenueStats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsRevenueWithdrawalURL",
 			ConstructorID: 0x2433dc92,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsRevenueWithdrawalURLRequest{} },
 			Handler:       _Payments_GetStarsRevenueWithdrawalURL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsRevenueWithdrawalURL](response, layer, limits, _Payments_GetStarsRevenueWithdrawalURL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsStatus",
 			ConstructorID: 0x4ea9b3bf,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsStatusRequest{} },
 			Handler:       _Payments_GetStarsStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsStatus](response, layer, limits, _Payments_GetStarsStatus_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsSubscriptions",
 			ConstructorID: 0x032512c5,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsSubscriptionsRequest{} },
 			Handler:       _Payments_GetStarsSubscriptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsStatus](response, layer, limits, _Payments_GetStarsSubscriptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsTopupOptions",
 			ConstructorID: 0xc00ec7d3,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsTopupOptionsRequest{} },
 			Handler:       _Payments_GetStarsTopupOptions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*StarsTopupOption](response, layer, limits, _Payments_GetStarsTopupOptions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsTransactions",
 			ConstructorID: 0x69da4557,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsRequest{} },
 			Handler:       _Payments_GetStarsTransactions_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsStatus](response, layer, limits, _Payments_GetStarsTransactions_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStarsTransactionsByID",
 			ConstructorID: 0x2dca16b8,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetStarsTransactionsByIDRequest{} },
 			Handler:       _Payments_GetStarsTransactionsByID_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsStarsStatus](response, layer, limits, _Payments_GetStarsTransactionsByID_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSuggestedStarRefBots",
 			ConstructorID: 0x0d6b48f7,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetSuggestedStarRefBotsRequest{} },
 			Handler:       _Payments_GetSuggestedStarRefBots_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsSuggestedStarRefBots](response, layer, limits, _Payments_GetSuggestedStarRefBots_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUniqueStarGift",
 			ConstructorID: 0xa1974d72,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftRequest{} },
 			Handler:       _Payments_GetUniqueStarGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsUniqueStarGift](response, layer, limits, _Payments_GetUniqueStarGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUniqueStarGiftValueInfo",
 			ConstructorID: 0x4365af6b,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsGetUniqueStarGiftValueInfoRequest{} },
 			Handler:       _Payments_GetUniqueStarGiftValueInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsUniqueStarGiftValueInfo](response, layer, limits, _Payments_GetUniqueStarGiftValueInfo_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LaunchPrepaidGiveaway",
 			ConstructorID: 0x5ff58f20,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsLaunchPrepaidGiveawayRequest{} },
 			Handler:       _Payments_LaunchPrepaidGiveaway_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_LaunchPrepaidGiveaway_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RefundStarsCharge",
 			ConstructorID: 0x25ae8f4a,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsRefundStarsChargeRequest{} },
 			Handler:       _Payments_RefundStarsCharge_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_RefundStarsCharge_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderStarGiftCollections",
 			ConstructorID: 0xc32af4cc,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsReorderStarGiftCollectionsRequest{} },
 			Handler:       _Payments_ReorderStarGiftCollections_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_ReorderStarGiftCollections_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveStarGift",
 			ConstructorID: 0x2a2a697c,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsSaveStarGiftRequest{} },
 			Handler:       _Payments_SaveStarGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_SaveStarGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendPaymentForm",
 			ConstructorID: 0x2d03522f,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsSendPaymentFormRequest{} },
 			Handler:       _Payments_SendPaymentForm_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsPaymentResultType](response, layer, limits, _Payments_SendPaymentForm_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendStarsForm",
 			ConstructorID: 0x7998c914,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsSendStarsFormRequest{} },
 			Handler:       _Payments_SendStarsForm_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PaymentsPaymentResultType](response, layer, limits, _Payments_SendStarsForm_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleChatStarGiftNotifications",
 			ConstructorID: 0x60eaefa1,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsToggleChatStarGiftNotificationsRequest{} },
 			Handler:       _Payments_ToggleChatStarGiftNotifications_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_ToggleChatStarGiftNotifications_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleStarGiftsPinnedToTop",
 			ConstructorID: 0x1513e7b0,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsToggleStarGiftsPinnedToTopRequest{} },
 			Handler:       _Payments_ToggleStarGiftsPinnedToTop_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Payments_ToggleStarGiftsPinnedToTop_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TransferStarGift",
 			ConstructorID: 0x7f18176a,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsTransferStarGiftRequest{} },
 			Handler:       _Payments_TransferStarGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_TransferStarGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateStarGiftCollection",
 			ConstructorID: 0x4fddbee7,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsUpdateStarGiftCollectionRequest{} },
 			Handler:       _Payments_UpdateStarGiftCollection_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StarGiftCollection](response, layer, limits, _Payments_UpdateStarGiftCollection_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateStarGiftPrice",
 			ConstructorID: 0xedbe6ccb,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsUpdateStarGiftPriceRequest{} },
 			Handler:       _Payments_UpdateStarGiftPrice_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_UpdateStarGiftPrice_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpgradeStarGift",
 			ConstructorID: 0xaed6e4f5,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsUpgradeStarGiftRequest{} },
 			Handler:       _Payments_UpgradeStarGift_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Payments_UpgradeStarGift_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ValidateRequestedInfo",
 			ConstructorID: 0xb6c8f12b,
 			NewRequest:    func() tlrpc.TLObject { return &PaymentsValidateRequestedInfoRequest{} },
 			Handler:       _Payments_ValidateRequestedInfo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PaymentsValidatedRequestedInfo](response, layer, limits, _Payments_ValidateRequestedInfo_EncodeResponse)
+			},
 		},
 	},
 }
@@ -6202,152 +16810,636 @@ func RegisterPaymentsServer(s *tlrpc.Server, srv PaymentsServer) {
 	s.RegisterService(Payments_ServiceDesc, srv)
 }
 
-func _Phone_AcceptCall_Handler(srv interface{}, ctx context.Context, req *PhoneAcceptCallRequest) (*PhonePhoneCall, error) {
-	return srv.(PhoneServer).AcceptCall(ctx, req)
+func _Phone_AcceptCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneAcceptCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.acceptCall: request %T is not *PhoneAcceptCallRequest", req)
+	}
+	return srv.(PhoneServer).AcceptCall(ctx, typedRequest)
 }
 
-func _Phone_CheckGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneCheckGroupCallRequest) ([]int32, error) {
-	return srv.(PhoneServer).CheckGroupCall(ctx, req)
+func _Phone_AcceptCall_EncodeResponse(e *mtproto.Encoder, response *PhonePhoneCall) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_ConfirmCall_Handler(srv interface{}, ctx context.Context, req *PhoneConfirmCallRequest) (*PhonePhoneCall, error) {
-	return srv.(PhoneServer).ConfirmCall(ctx, req)
+func _Phone_CheckGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneCheckGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.checkGroupCall: request %T is not *PhoneCheckGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).CheckGroupCall(ctx, typedRequest)
 }
 
-func _Phone_CreateConferenceCall_Handler(srv interface{}, ctx context.Context, req *PhoneCreateConferenceCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).CreateConferenceCall(ctx, req)
+func _Phone_CheckGroupCall_EncodeResponse(e *mtproto.Encoder, response []int32) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt32(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_CreateGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneCreateGroupCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).CreateGroupCall(ctx, req)
+func _Phone_ConfirmCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneConfirmCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.confirmCall: request %T is not *PhoneConfirmCallRequest", req)
+	}
+	return srv.(PhoneServer).ConfirmCall(ctx, typedRequest)
 }
 
-func _Phone_DeclineConferenceCallInvite_Handler(srv interface{}, ctx context.Context, req *PhoneDeclineConferenceCallInviteRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).DeclineConferenceCallInvite(ctx, req)
+func _Phone_ConfirmCall_EncodeResponse(e *mtproto.Encoder, response *PhonePhoneCall) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_DeleteConferenceCallParticipants_Handler(srv interface{}, ctx context.Context, req *PhoneDeleteConferenceCallParticipantsRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).DeleteConferenceCallParticipants(ctx, req)
+func _Phone_CreateConferenceCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneCreateConferenceCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.createConferenceCall: request %T is not *PhoneCreateConferenceCallRequest", req)
+	}
+	return srv.(PhoneServer).CreateConferenceCall(ctx, typedRequest)
 }
 
-func _Phone_DiscardCall_Handler(srv interface{}, ctx context.Context, req *PhoneDiscardCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).DiscardCall(ctx, req)
+func _Phone_CreateConferenceCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_DiscardGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneDiscardGroupCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).DiscardGroupCall(ctx, req)
+func _Phone_CreateGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneCreateGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.createGroupCall: request %T is not *PhoneCreateGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).CreateGroupCall(ctx, typedRequest)
 }
 
-func _Phone_EditGroupCallParticipant_Handler(srv interface{}, ctx context.Context, req *PhoneEditGroupCallParticipantRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).EditGroupCallParticipant(ctx, req)
+func _Phone_CreateGroupCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_EditGroupCallTitle_Handler(srv interface{}, ctx context.Context, req *PhoneEditGroupCallTitleRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).EditGroupCallTitle(ctx, req)
+func _Phone_DeclineConferenceCallInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneDeclineConferenceCallInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.declineConferenceCallInvite: request %T is not *PhoneDeclineConferenceCallInviteRequest", req)
+	}
+	return srv.(PhoneServer).DeclineConferenceCallInvite(ctx, typedRequest)
 }
 
-func _Phone_ExportGroupCallInvite_Handler(srv interface{}, ctx context.Context, req *PhoneExportGroupCallInviteRequest) (*PhoneExportedGroupCallInvite, error) {
-	return srv.(PhoneServer).ExportGroupCallInvite(ctx, req)
+func _Phone_DeclineConferenceCallInvite_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_GetCallConfig_Handler(srv interface{}, ctx context.Context, req *PhoneGetCallConfigRequest) (*DataJSON, error) {
-	return srv.(PhoneServer).GetCallConfig(ctx, req)
+func _Phone_DeleteConferenceCallParticipants_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneDeleteConferenceCallParticipantsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.deleteConferenceCallParticipants: request %T is not *PhoneDeleteConferenceCallParticipantsRequest", req)
+	}
+	return srv.(PhoneServer).DeleteConferenceCallParticipants(ctx, typedRequest)
 }
 
-func _Phone_GetGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneGetGroupCallRequest) (*PhoneGroupCall, error) {
-	return srv.(PhoneServer).GetGroupCall(ctx, req)
+func _Phone_DeleteConferenceCallParticipants_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_GetGroupCallChainBlocks_Handler(srv interface{}, ctx context.Context, req *PhoneGetGroupCallChainBlocksRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).GetGroupCallChainBlocks(ctx, req)
+func _Phone_DiscardCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneDiscardCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.discardCall: request %T is not *PhoneDiscardCallRequest", req)
+	}
+	return srv.(PhoneServer).DiscardCall(ctx, typedRequest)
 }
 
-func _Phone_GetGroupCallJoinAs_Handler(srv interface{}, ctx context.Context, req *PhoneGetGroupCallJoinAsRequest) (*PhoneJoinAsPeers, error) {
-	return srv.(PhoneServer).GetGroupCallJoinAs(ctx, req)
+func _Phone_DiscardCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_GetGroupCallStreamChannels_Handler(srv interface{}, ctx context.Context, req *PhoneGetGroupCallStreamChannelsRequest) (*PhoneGroupCallStreamChannels, error) {
-	return srv.(PhoneServer).GetGroupCallStreamChannels(ctx, req)
+func _Phone_DiscardGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneDiscardGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.discardGroupCall: request %T is not *PhoneDiscardGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).DiscardGroupCall(ctx, typedRequest)
 }
 
-func _Phone_GetGroupCallStreamRtmpURL_Handler(srv interface{}, ctx context.Context, req *PhoneGetGroupCallStreamRtmpURLRequest) (*PhoneGroupCallStreamRtmpURL, error) {
-	return srv.(PhoneServer).GetGroupCallStreamRtmpURL(ctx, req)
+func _Phone_DiscardGroupCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_GetGroupParticipants_Handler(srv interface{}, ctx context.Context, req *PhoneGetGroupParticipantsRequest) (*PhoneGroupParticipants, error) {
-	return srv.(PhoneServer).GetGroupParticipants(ctx, req)
+func _Phone_EditGroupCallParticipant_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneEditGroupCallParticipantRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.editGroupCallParticipant: request %T is not *PhoneEditGroupCallParticipantRequest", req)
+	}
+	return srv.(PhoneServer).EditGroupCallParticipant(ctx, typedRequest)
 }
 
-func _Phone_InviteConferenceCallParticipant_Handler(srv interface{}, ctx context.Context, req *PhoneInviteConferenceCallParticipantRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).InviteConferenceCallParticipant(ctx, req)
+func _Phone_EditGroupCallParticipant_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_InviteToGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneInviteToGroupCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).InviteToGroupCall(ctx, req)
+func _Phone_EditGroupCallTitle_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneEditGroupCallTitleRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.editGroupCallTitle: request %T is not *PhoneEditGroupCallTitleRequest", req)
+	}
+	return srv.(PhoneServer).EditGroupCallTitle(ctx, typedRequest)
 }
 
-func _Phone_JoinGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneJoinGroupCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).JoinGroupCall(ctx, req)
+func _Phone_EditGroupCallTitle_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_JoinGroupCallPresentation_Handler(srv interface{}, ctx context.Context, req *PhoneJoinGroupCallPresentationRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).JoinGroupCallPresentation(ctx, req)
+func _Phone_ExportGroupCallInvite_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneExportGroupCallInviteRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.exportGroupCallInvite: request %T is not *PhoneExportGroupCallInviteRequest", req)
+	}
+	return srv.(PhoneServer).ExportGroupCallInvite(ctx, typedRequest)
 }
 
-func _Phone_LeaveGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneLeaveGroupCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).LeaveGroupCall(ctx, req)
+func _Phone_ExportGroupCallInvite_EncodeResponse(e *mtproto.Encoder, response *PhoneExportedGroupCallInvite) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_LeaveGroupCallPresentation_Handler(srv interface{}, ctx context.Context, req *PhoneLeaveGroupCallPresentationRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).LeaveGroupCallPresentation(ctx, req)
+func _Phone_GetCallConfig_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetCallConfigRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getCallConfig: request %T is not *PhoneGetCallConfigRequest", req)
+	}
+	return srv.(PhoneServer).GetCallConfig(ctx, typedRequest)
 }
 
-func _Phone_ReceivedCall_Handler(srv interface{}, ctx context.Context, req *PhoneReceivedCallRequest) (bool, error) {
-	return srv.(PhoneServer).ReceivedCall(ctx, req)
+func _Phone_GetCallConfig_EncodeResponse(e *mtproto.Encoder, response *DataJSON) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_RequestCall_Handler(srv interface{}, ctx context.Context, req *PhoneRequestCallRequest) (*PhonePhoneCall, error) {
-	return srv.(PhoneServer).RequestCall(ctx, req)
+func _Phone_GetGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getGroupCall: request %T is not *PhoneGetGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).GetGroupCall(ctx, typedRequest)
 }
 
-func _Phone_SaveCallDebug_Handler(srv interface{}, ctx context.Context, req *PhoneSaveCallDebugRequest) (bool, error) {
-	return srv.(PhoneServer).SaveCallDebug(ctx, req)
+func _Phone_GetGroupCall_EncodeResponse(e *mtproto.Encoder, response *PhoneGroupCall) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_SaveCallLog_Handler(srv interface{}, ctx context.Context, req *PhoneSaveCallLogRequest) (bool, error) {
-	return srv.(PhoneServer).SaveCallLog(ctx, req)
+func _Phone_GetGroupCallChainBlocks_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetGroupCallChainBlocksRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getGroupCallChainBlocks: request %T is not *PhoneGetGroupCallChainBlocksRequest", req)
+	}
+	return srv.(PhoneServer).GetGroupCallChainBlocks(ctx, typedRequest)
 }
 
-func _Phone_SaveDefaultGroupCallJoinAs_Handler(srv interface{}, ctx context.Context, req *PhoneSaveDefaultGroupCallJoinAsRequest) (bool, error) {
-	return srv.(PhoneServer).SaveDefaultGroupCallJoinAs(ctx, req)
+func _Phone_GetGroupCallChainBlocks_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_SendConferenceCallBroadcast_Handler(srv interface{}, ctx context.Context, req *PhoneSendConferenceCallBroadcastRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).SendConferenceCallBroadcast(ctx, req)
+func _Phone_GetGroupCallJoinAs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetGroupCallJoinAsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getGroupCallJoinAs: request %T is not *PhoneGetGroupCallJoinAsRequest", req)
+	}
+	return srv.(PhoneServer).GetGroupCallJoinAs(ctx, typedRequest)
 }
 
-func _Phone_SendSignalingData_Handler(srv interface{}, ctx context.Context, req *PhoneSendSignalingDataRequest) (bool, error) {
-	return srv.(PhoneServer).SendSignalingData(ctx, req)
+func _Phone_GetGroupCallJoinAs_EncodeResponse(e *mtproto.Encoder, response *PhoneJoinAsPeers) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_SetCallRating_Handler(srv interface{}, ctx context.Context, req *PhoneSetCallRatingRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).SetCallRating(ctx, req)
+func _Phone_GetGroupCallStreamChannels_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetGroupCallStreamChannelsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getGroupCallStreamChannels: request %T is not *PhoneGetGroupCallStreamChannelsRequest", req)
+	}
+	return srv.(PhoneServer).GetGroupCallStreamChannels(ctx, typedRequest)
 }
 
-func _Phone_StartScheduledGroupCall_Handler(srv interface{}, ctx context.Context, req *PhoneStartScheduledGroupCallRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).StartScheduledGroupCall(ctx, req)
+func _Phone_GetGroupCallStreamChannels_EncodeResponse(e *mtproto.Encoder, response *PhoneGroupCallStreamChannels) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_ToggleGroupCallRecord_Handler(srv interface{}, ctx context.Context, req *PhoneToggleGroupCallRecordRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).ToggleGroupCallRecord(ctx, req)
+func _Phone_GetGroupCallStreamRtmpURL_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetGroupCallStreamRtmpURLRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getGroupCallStreamRtmpUrl: request %T is not *PhoneGetGroupCallStreamRtmpURLRequest", req)
+	}
+	return srv.(PhoneServer).GetGroupCallStreamRtmpURL(ctx, typedRequest)
 }
 
-func _Phone_ToggleGroupCallSettings_Handler(srv interface{}, ctx context.Context, req *PhoneToggleGroupCallSettingsRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).ToggleGroupCallSettings(ctx, req)
+func _Phone_GetGroupCallStreamRtmpURL_EncodeResponse(e *mtproto.Encoder, response *PhoneGroupCallStreamRtmpURL) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Phone_ToggleGroupCallStartSubscription_Handler(srv interface{}, ctx context.Context, req *PhoneToggleGroupCallStartSubscriptionRequest) (UpdatesType, error) {
-	return srv.(PhoneServer).ToggleGroupCallStartSubscription(ctx, req)
+func _Phone_GetGroupParticipants_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneGetGroupParticipantsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.getGroupParticipants: request %T is not *PhoneGetGroupParticipantsRequest", req)
+	}
+	return srv.(PhoneServer).GetGroupParticipants(ctx, typedRequest)
+}
+
+func _Phone_GetGroupParticipants_EncodeResponse(e *mtproto.Encoder, response *PhoneGroupParticipants) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_InviteConferenceCallParticipant_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneInviteConferenceCallParticipantRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.inviteConferenceCallParticipant: request %T is not *PhoneInviteConferenceCallParticipantRequest", req)
+	}
+	return srv.(PhoneServer).InviteConferenceCallParticipant(ctx, typedRequest)
+}
+
+func _Phone_InviteConferenceCallParticipant_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_InviteToGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneInviteToGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.inviteToGroupCall: request %T is not *PhoneInviteToGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).InviteToGroupCall(ctx, typedRequest)
+}
+
+func _Phone_InviteToGroupCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_JoinGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneJoinGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.joinGroupCall: request %T is not *PhoneJoinGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).JoinGroupCall(ctx, typedRequest)
+}
+
+func _Phone_JoinGroupCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_JoinGroupCallPresentation_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneJoinGroupCallPresentationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.joinGroupCallPresentation: request %T is not *PhoneJoinGroupCallPresentationRequest", req)
+	}
+	return srv.(PhoneServer).JoinGroupCallPresentation(ctx, typedRequest)
+}
+
+func _Phone_JoinGroupCallPresentation_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_LeaveGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneLeaveGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.leaveGroupCall: request %T is not *PhoneLeaveGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).LeaveGroupCall(ctx, typedRequest)
+}
+
+func _Phone_LeaveGroupCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_LeaveGroupCallPresentation_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneLeaveGroupCallPresentationRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.leaveGroupCallPresentation: request %T is not *PhoneLeaveGroupCallPresentationRequest", req)
+	}
+	return srv.(PhoneServer).LeaveGroupCallPresentation(ctx, typedRequest)
+}
+
+func _Phone_LeaveGroupCallPresentation_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_ReceivedCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneReceivedCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.receivedCall: request %T is not *PhoneReceivedCallRequest", req)
+	}
+	return srv.(PhoneServer).ReceivedCall(ctx, typedRequest)
+}
+
+func _Phone_ReceivedCall_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_RequestCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneRequestCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.requestCall: request %T is not *PhoneRequestCallRequest", req)
+	}
+	return srv.(PhoneServer).RequestCall(ctx, typedRequest)
+}
+
+func _Phone_RequestCall_EncodeResponse(e *mtproto.Encoder, response *PhonePhoneCall) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_SaveCallDebug_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneSaveCallDebugRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.saveCallDebug: request %T is not *PhoneSaveCallDebugRequest", req)
+	}
+	return srv.(PhoneServer).SaveCallDebug(ctx, typedRequest)
+}
+
+func _Phone_SaveCallDebug_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_SaveCallLog_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneSaveCallLogRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.saveCallLog: request %T is not *PhoneSaveCallLogRequest", req)
+	}
+	return srv.(PhoneServer).SaveCallLog(ctx, typedRequest)
+}
+
+func _Phone_SaveCallLog_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_SaveDefaultGroupCallJoinAs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneSaveDefaultGroupCallJoinAsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.saveDefaultGroupCallJoinAs: request %T is not *PhoneSaveDefaultGroupCallJoinAsRequest", req)
+	}
+	return srv.(PhoneServer).SaveDefaultGroupCallJoinAs(ctx, typedRequest)
+}
+
+func _Phone_SaveDefaultGroupCallJoinAs_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_SendConferenceCallBroadcast_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneSendConferenceCallBroadcastRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.sendConferenceCallBroadcast: request %T is not *PhoneSendConferenceCallBroadcastRequest", req)
+	}
+	return srv.(PhoneServer).SendConferenceCallBroadcast(ctx, typedRequest)
+}
+
+func _Phone_SendConferenceCallBroadcast_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_SendSignalingData_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneSendSignalingDataRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.sendSignalingData: request %T is not *PhoneSendSignalingDataRequest", req)
+	}
+	return srv.(PhoneServer).SendSignalingData(ctx, typedRequest)
+}
+
+func _Phone_SendSignalingData_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_SetCallRating_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneSetCallRatingRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.setCallRating: request %T is not *PhoneSetCallRatingRequest", req)
+	}
+	return srv.(PhoneServer).SetCallRating(ctx, typedRequest)
+}
+
+func _Phone_SetCallRating_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_StartScheduledGroupCall_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneStartScheduledGroupCallRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.startScheduledGroupCall: request %T is not *PhoneStartScheduledGroupCallRequest", req)
+	}
+	return srv.(PhoneServer).StartScheduledGroupCall(ctx, typedRequest)
+}
+
+func _Phone_StartScheduledGroupCall_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_ToggleGroupCallRecord_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneToggleGroupCallRecordRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.toggleGroupCallRecord: request %T is not *PhoneToggleGroupCallRecordRequest", req)
+	}
+	return srv.(PhoneServer).ToggleGroupCallRecord(ctx, typedRequest)
+}
+
+func _Phone_ToggleGroupCallRecord_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_ToggleGroupCallSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneToggleGroupCallSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.toggleGroupCallSettings: request %T is not *PhoneToggleGroupCallSettingsRequest", req)
+	}
+	return srv.(PhoneServer).ToggleGroupCallSettings(ctx, typedRequest)
+}
+
+func _Phone_ToggleGroupCallSettings_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Phone_ToggleGroupCallStartSubscription_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhoneToggleGroupCallStartSubscriptionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("phone.toggleGroupCallStartSubscription: request %T is not *PhoneToggleGroupCallStartSubscriptionRequest", req)
+	}
+	return srv.(PhoneServer).ToggleGroupCallStartSubscription(ctx, typedRequest)
+}
+
+func _Phone_ToggleGroupCallStartSubscription_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Phone_ServiceDesc is the static descriptor for the PhoneServer service.
@@ -6357,226 +17449,411 @@ var Phone_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*PhoneServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AcceptCall",
 			ConstructorID: 0x3bd2b4a0,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneAcceptCallRequest{} },
 			Handler:       _Phone_AcceptCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhonePhoneCall](response, layer, limits, _Phone_AcceptCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckGroupCall",
 			ConstructorID: 0xb59cf977,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneCheckGroupCallRequest{} },
 			Handler:       _Phone_CheckGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int32](response, layer, limits, _Phone_CheckGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ConfirmCall",
 			ConstructorID: 0x2efe1722,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneConfirmCallRequest{} },
 			Handler:       _Phone_ConfirmCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhonePhoneCall](response, layer, limits, _Phone_ConfirmCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateConferenceCall",
 			ConstructorID: 0x7d0444bb,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneCreateConferenceCallRequest{} },
 			Handler:       _Phone_CreateConferenceCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_CreateConferenceCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateGroupCall",
 			ConstructorID: 0x48cdc6d8,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneCreateGroupCallRequest{} },
 			Handler:       _Phone_CreateGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_CreateGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeclineConferenceCallInvite",
 			ConstructorID: 0x3c479971,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneDeclineConferenceCallInviteRequest{} },
 			Handler:       _Phone_DeclineConferenceCallInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_DeclineConferenceCallInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteConferenceCallParticipants",
 			ConstructorID: 0x8ca60525,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneDeleteConferenceCallParticipantsRequest{} },
 			Handler:       _Phone_DeleteConferenceCallParticipants_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_DeleteConferenceCallParticipants_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DiscardCall",
 			ConstructorID: 0xb2cbc1c0,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneDiscardCallRequest{} },
 			Handler:       _Phone_DiscardCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_DiscardCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DiscardGroupCall",
 			ConstructorID: 0x7a777135,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneDiscardGroupCallRequest{} },
 			Handler:       _Phone_DiscardGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_DiscardGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditGroupCallParticipant",
 			ConstructorID: 0xa5273abf,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneEditGroupCallParticipantRequest{} },
 			Handler:       _Phone_EditGroupCallParticipant_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_EditGroupCallParticipant_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditGroupCallTitle",
 			ConstructorID: 0x1ca6ac0a,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneEditGroupCallTitleRequest{} },
 			Handler:       _Phone_EditGroupCallTitle_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_EditGroupCallTitle_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportGroupCallInvite",
 			ConstructorID: 0xe6aa647f,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneExportGroupCallInviteRequest{} },
 			Handler:       _Phone_ExportGroupCallInvite_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhoneExportedGroupCallInvite](response, layer, limits, _Phone_ExportGroupCallInvite_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCallConfig",
 			ConstructorID: 0x55451fa9,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetCallConfigRequest{} },
 			Handler:       _Phone_GetCallConfig_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*DataJSON](response, layer, limits, _Phone_GetCallConfig_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupCall",
 			ConstructorID: 0x041845db,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetGroupCallRequest{} },
 			Handler:       _Phone_GetGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhoneGroupCall](response, layer, limits, _Phone_GetGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupCallChainBlocks",
 			ConstructorID: 0xee9f88a6,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetGroupCallChainBlocksRequest{} },
 			Handler:       _Phone_GetGroupCallChainBlocks_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_GetGroupCallChainBlocks_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupCallJoinAs",
 			ConstructorID: 0xef7c213a,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetGroupCallJoinAsRequest{} },
 			Handler:       _Phone_GetGroupCallJoinAs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhoneJoinAsPeers](response, layer, limits, _Phone_GetGroupCallJoinAs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupCallStreamChannels",
 			ConstructorID: 0x1ab21940,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetGroupCallStreamChannelsRequest{} },
 			Handler:       _Phone_GetGroupCallStreamChannels_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhoneGroupCallStreamChannels](response, layer, limits, _Phone_GetGroupCallStreamChannels_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupCallStreamRtmpURL",
 			ConstructorID: 0xdeb3abbf,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetGroupCallStreamRtmpURLRequest{} },
 			Handler:       _Phone_GetGroupCallStreamRtmpURL_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhoneGroupCallStreamRtmpURL](response, layer, limits, _Phone_GetGroupCallStreamRtmpURL_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetGroupParticipants",
 			ConstructorID: 0xc558d8ab,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneGetGroupParticipantsRequest{} },
 			Handler:       _Phone_GetGroupParticipants_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhoneGroupParticipants](response, layer, limits, _Phone_GetGroupParticipants_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InviteConferenceCallParticipant",
 			ConstructorID: 0xbcf22685,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneInviteConferenceCallParticipantRequest{} },
 			Handler:       _Phone_InviteConferenceCallParticipant_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_InviteConferenceCallParticipant_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "InviteToGroupCall",
 			ConstructorID: 0x7b393160,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneInviteToGroupCallRequest{} },
 			Handler:       _Phone_InviteToGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_InviteToGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "JoinGroupCall",
 			ConstructorID: 0x8fb53057,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneJoinGroupCallRequest{} },
 			Handler:       _Phone_JoinGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_JoinGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "JoinGroupCallPresentation",
 			ConstructorID: 0xcbea6bc4,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneJoinGroupCallPresentationRequest{} },
 			Handler:       _Phone_JoinGroupCallPresentation_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_JoinGroupCallPresentation_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LeaveGroupCall",
 			ConstructorID: 0x500377f9,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneLeaveGroupCallRequest{} },
 			Handler:       _Phone_LeaveGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_LeaveGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LeaveGroupCallPresentation",
 			ConstructorID: 0x1c50d144,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneLeaveGroupCallPresentationRequest{} },
 			Handler:       _Phone_LeaveGroupCallPresentation_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_LeaveGroupCallPresentation_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReceivedCall",
 			ConstructorID: 0x17d54f61,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneReceivedCallRequest{} },
 			Handler:       _Phone_ReceivedCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Phone_ReceivedCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RequestCall",
 			ConstructorID: 0x42ff96ed,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneRequestCallRequest{} },
 			Handler:       _Phone_RequestCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhonePhoneCall](response, layer, limits, _Phone_RequestCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveCallDebug",
 			ConstructorID: 0x277add7e,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneSaveCallDebugRequest{} },
 			Handler:       _Phone_SaveCallDebug_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Phone_SaveCallDebug_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveCallLog",
 			ConstructorID: 0x41248786,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneSaveCallLogRequest{} },
 			Handler:       _Phone_SaveCallLog_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Phone_SaveCallLog_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveDefaultGroupCallJoinAs",
 			ConstructorID: 0x575e1f8c,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneSaveDefaultGroupCallJoinAsRequest{} },
 			Handler:       _Phone_SaveDefaultGroupCallJoinAs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Phone_SaveDefaultGroupCallJoinAs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendConferenceCallBroadcast",
 			ConstructorID: 0xc6701900,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneSendConferenceCallBroadcastRequest{} },
 			Handler:       _Phone_SendConferenceCallBroadcast_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_SendConferenceCallBroadcast_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendSignalingData",
 			ConstructorID: 0xff7a9383,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneSendSignalingDataRequest{} },
 			Handler:       _Phone_SendSignalingData_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Phone_SendSignalingData_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetCallRating",
 			ConstructorID: 0x59ead627,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneSetCallRatingRequest{} },
 			Handler:       _Phone_SetCallRating_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_SetCallRating_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "StartScheduledGroupCall",
 			ConstructorID: 0x5680e342,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneStartScheduledGroupCallRequest{} },
 			Handler:       _Phone_StartScheduledGroupCall_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_StartScheduledGroupCall_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleGroupCallRecord",
 			ConstructorID: 0xf128c708,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneToggleGroupCallRecordRequest{} },
 			Handler:       _Phone_ToggleGroupCallRecord_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_ToggleGroupCallRecord_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleGroupCallSettings",
 			ConstructorID: 0x74bbb43d,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneToggleGroupCallSettingsRequest{} },
 			Handler:       _Phone_ToggleGroupCallSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_ToggleGroupCallSettings_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleGroupCallStartSubscription",
 			ConstructorID: 0x219c34e6,
 			NewRequest:    func() tlrpc.TLObject { return &PhoneToggleGroupCallStartSubscriptionRequest{} },
 			Handler:       _Phone_ToggleGroupCallStartSubscription_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Phone_ToggleGroupCallStartSubscription_EncodeResponse)
+			},
 		},
 	},
 }
@@ -6593,24 +17870,96 @@ func RegisterPhoneServer(s *tlrpc.Server, srv PhoneServer) {
 	s.RegisterService(Phone_ServiceDesc, srv)
 }
 
-func _Photos_DeletePhotos_Handler(srv interface{}, ctx context.Context, req *PhotosDeletePhotosRequest) ([]int64, error) {
-	return srv.(PhotosServer).DeletePhotos(ctx, req)
+func _Photos_DeletePhotos_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhotosDeletePhotosRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("photos.deletePhotos: request %T is not *PhotosDeletePhotosRequest", req)
+	}
+	return srv.(PhotosServer).DeletePhotos(ctx, typedRequest)
 }
 
-func _Photos_GetUserPhotos_Handler(srv interface{}, ctx context.Context, req *PhotosGetUserPhotosRequest) (PhotosPhotosType, error) {
-	return srv.(PhotosServer).GetUserPhotos(ctx, req)
+func _Photos_DeletePhotos_EncodeResponse(e *mtproto.Encoder, response []int64) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt64(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Photos_UpdateProfilePhoto_Handler(srv interface{}, ctx context.Context, req *PhotosUpdateProfilePhotoRequest) (*PhotosPhoto, error) {
-	return srv.(PhotosServer).UpdateProfilePhoto(ctx, req)
+func _Photos_GetUserPhotos_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhotosGetUserPhotosRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("photos.getUserPhotos: request %T is not *PhotosGetUserPhotosRequest", req)
+	}
+	return srv.(PhotosServer).GetUserPhotos(ctx, typedRequest)
 }
 
-func _Photos_UploadContactProfilePhoto_Handler(srv interface{}, ctx context.Context, req *PhotosUploadContactProfilePhotoRequest) (*PhotosPhoto, error) {
-	return srv.(PhotosServer).UploadContactProfilePhoto(ctx, req)
+func _Photos_GetUserPhotos_EncodeResponse(e *mtproto.Encoder, response PhotosPhotosType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed photos.Photos is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Photos_UploadProfilePhoto_Handler(srv interface{}, ctx context.Context, req *PhotosUploadProfilePhotoRequest) (*PhotosPhoto, error) {
-	return srv.(PhotosServer).UploadProfilePhoto(ctx, req)
+func _Photos_UpdateProfilePhoto_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhotosUpdateProfilePhotoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("photos.updateProfilePhoto: request %T is not *PhotosUpdateProfilePhotoRequest", req)
+	}
+	return srv.(PhotosServer).UpdateProfilePhoto(ctx, typedRequest)
+}
+
+func _Photos_UpdateProfilePhoto_EncodeResponse(e *mtproto.Encoder, response *PhotosPhoto) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Photos_UploadContactProfilePhoto_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhotosUploadContactProfilePhotoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("photos.uploadContactProfilePhoto: request %T is not *PhotosUploadContactProfilePhotoRequest", req)
+	}
+	return srv.(PhotosServer).UploadContactProfilePhoto(ctx, typedRequest)
+}
+
+func _Photos_UploadContactProfilePhoto_EncodeResponse(e *mtproto.Encoder, response *PhotosPhoto) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Photos_UploadProfilePhoto_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PhotosUploadProfilePhotoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("photos.uploadProfilePhoto: request %T is not *PhotosUploadProfilePhotoRequest", req)
+	}
+	return srv.(PhotosServer).UploadProfilePhoto(ctx, typedRequest)
+}
+
+func _Photos_UploadProfilePhoto_EncodeResponse(e *mtproto.Encoder, response *PhotosPhoto) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Photos_ServiceDesc is the static descriptor for the PhotosServer service.
@@ -6620,34 +17969,59 @@ var Photos_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*PhotosServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeletePhotos",
 			ConstructorID: 0x87cf7f2f,
 			NewRequest:    func() tlrpc.TLObject { return &PhotosDeletePhotosRequest{} },
 			Handler:       _Photos_DeletePhotos_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int64](response, layer, limits, _Photos_DeletePhotos_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUserPhotos",
 			ConstructorID: 0x91cd32a8,
 			NewRequest:    func() tlrpc.TLObject { return &PhotosGetUserPhotosRequest{} },
 			Handler:       _Photos_GetUserPhotos_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[PhotosPhotosType](response, layer, limits, _Photos_GetUserPhotos_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateProfilePhoto",
 			ConstructorID: 0x09e82039,
 			NewRequest:    func() tlrpc.TLObject { return &PhotosUpdateProfilePhotoRequest{} },
 			Handler:       _Photos_UpdateProfilePhoto_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhotosPhoto](response, layer, limits, _Photos_UpdateProfilePhoto_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadContactProfilePhoto",
 			ConstructorID: 0xe14c4a71,
 			NewRequest:    func() tlrpc.TLObject { return &PhotosUploadContactProfilePhotoRequest{} },
 			Handler:       _Photos_UploadContactProfilePhoto_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhotosPhoto](response, layer, limits, _Photos_UploadContactProfilePhoto_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UploadProfilePhoto",
 			ConstructorID: 0x0388a3b5,
 			NewRequest:    func() tlrpc.TLObject { return &PhotosUploadProfilePhotoRequest{} },
 			Handler:       _Photos_UploadProfilePhoto_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PhotosPhoto](response, layer, limits, _Photos_UploadProfilePhoto_EncodeResponse)
+			},
 		},
 	},
 }
@@ -6664,24 +18038,79 @@ func RegisterPhotosServer(s *tlrpc.Server, srv PhotosServer) {
 	s.RegisterService(Photos_ServiceDesc, srv)
 }
 
-func _Premium_ApplyBoost_Handler(srv interface{}, ctx context.Context, req *PremiumApplyBoostRequest) (*PremiumMyBoosts, error) {
-	return srv.(PremiumServer).ApplyBoost(ctx, req)
+func _Premium_ApplyBoost_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PremiumApplyBoostRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("premium.applyBoost: request %T is not *PremiumApplyBoostRequest", req)
+	}
+	return srv.(PremiumServer).ApplyBoost(ctx, typedRequest)
 }
 
-func _Premium_GetBoostsList_Handler(srv interface{}, ctx context.Context, req *PremiumGetBoostsListRequest) (*PremiumBoostsList, error) {
-	return srv.(PremiumServer).GetBoostsList(ctx, req)
+func _Premium_ApplyBoost_EncodeResponse(e *mtproto.Encoder, response *PremiumMyBoosts) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Premium_GetBoostsStatus_Handler(srv interface{}, ctx context.Context, req *PremiumGetBoostsStatusRequest) (*PremiumBoostsStatus, error) {
-	return srv.(PremiumServer).GetBoostsStatus(ctx, req)
+func _Premium_GetBoostsList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PremiumGetBoostsListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("premium.getBoostsList: request %T is not *PremiumGetBoostsListRequest", req)
+	}
+	return srv.(PremiumServer).GetBoostsList(ctx, typedRequest)
 }
 
-func _Premium_GetMyBoosts_Handler(srv interface{}, ctx context.Context, req *PremiumGetMyBoostsRequest) (*PremiumMyBoosts, error) {
-	return srv.(PremiumServer).GetMyBoosts(ctx, req)
+func _Premium_GetBoostsList_EncodeResponse(e *mtproto.Encoder, response *PremiumBoostsList) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Premium_GetUserBoosts_Handler(srv interface{}, ctx context.Context, req *PremiumGetUserBoostsRequest) (*PremiumBoostsList, error) {
-	return srv.(PremiumServer).GetUserBoosts(ctx, req)
+func _Premium_GetBoostsStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PremiumGetBoostsStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("premium.getBoostsStatus: request %T is not *PremiumGetBoostsStatusRequest", req)
+	}
+	return srv.(PremiumServer).GetBoostsStatus(ctx, typedRequest)
+}
+
+func _Premium_GetBoostsStatus_EncodeResponse(e *mtproto.Encoder, response *PremiumBoostsStatus) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Premium_GetMyBoosts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PremiumGetMyBoostsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("premium.getMyBoosts: request %T is not *PremiumGetMyBoostsRequest", req)
+	}
+	return srv.(PremiumServer).GetMyBoosts(ctx, typedRequest)
+}
+
+func _Premium_GetMyBoosts_EncodeResponse(e *mtproto.Encoder, response *PremiumMyBoosts) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Premium_GetUserBoosts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*PremiumGetUserBoostsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("premium.getUserBoosts: request %T is not *PremiumGetUserBoostsRequest", req)
+	}
+	return srv.(PremiumServer).GetUserBoosts(ctx, typedRequest)
+}
+
+func _Premium_GetUserBoosts_EncodeResponse(e *mtproto.Encoder, response *PremiumBoostsList) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Premium_ServiceDesc is the static descriptor for the PremiumServer service.
@@ -6691,34 +18120,59 @@ var Premium_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*PremiumServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ApplyBoost",
 			ConstructorID: 0x6b7da746,
 			NewRequest:    func() tlrpc.TLObject { return &PremiumApplyBoostRequest{} },
 			Handler:       _Premium_ApplyBoost_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PremiumMyBoosts](response, layer, limits, _Premium_ApplyBoost_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBoostsList",
 			ConstructorID: 0x60f67660,
 			NewRequest:    func() tlrpc.TLObject { return &PremiumGetBoostsListRequest{} },
 			Handler:       _Premium_GetBoostsList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PremiumBoostsList](response, layer, limits, _Premium_GetBoostsList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBoostsStatus",
 			ConstructorID: 0x042f1f61,
 			NewRequest:    func() tlrpc.TLObject { return &PremiumGetBoostsStatusRequest{} },
 			Handler:       _Premium_GetBoostsStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PremiumBoostsStatus](response, layer, limits, _Premium_GetBoostsStatus_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMyBoosts",
 			ConstructorID: 0x0be77b4a,
 			NewRequest:    func() tlrpc.TLObject { return &PremiumGetMyBoostsRequest{} },
 			Handler:       _Premium_GetMyBoosts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PremiumMyBoosts](response, layer, limits, _Premium_GetMyBoosts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUserBoosts",
 			ConstructorID: 0x39854d1f,
 			NewRequest:    func() tlrpc.TLObject { return &PremiumGetUserBoostsRequest{} },
 			Handler:       _Premium_GetUserBoosts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*PremiumBoostsList](response, layer, limits, _Premium_GetUserBoosts_EncodeResponse)
+			},
 		},
 	},
 }
@@ -6755,32 +18209,109 @@ func RegisterRootServer(s *tlrpc.Server, srv RootServer) {
 	s.RegisterService(Root_ServiceDesc, srv)
 }
 
-func _Smsjobs_FinishJob_Handler(srv interface{}, ctx context.Context, req *SmsjobsFinishJobRequest) (bool, error) {
-	return srv.(SmsjobsServer).FinishJob(ctx, req)
+func _Smsjobs_FinishJob_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsFinishJobRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.finishJob: request %T is not *SmsjobsFinishJobRequest", req)
+	}
+	return srv.(SmsjobsServer).FinishJob(ctx, typedRequest)
 }
 
-func _Smsjobs_GetSmsJob_Handler(srv interface{}, ctx context.Context, req *SmsjobsGetSmsJobRequest) (*SmsJob, error) {
-	return srv.(SmsjobsServer).GetSmsJob(ctx, req)
+func _Smsjobs_FinishJob_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Smsjobs_GetStatus_Handler(srv interface{}, ctx context.Context, req *SmsjobsGetStatusRequest) (*SmsjobsStatus, error) {
-	return srv.(SmsjobsServer).GetStatus(ctx, req)
+func _Smsjobs_GetSmsJob_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsGetSmsJobRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.getSmsJob: request %T is not *SmsjobsGetSmsJobRequest", req)
+	}
+	return srv.(SmsjobsServer).GetSmsJob(ctx, typedRequest)
 }
 
-func _Smsjobs_IsEligibleToJoin_Handler(srv interface{}, ctx context.Context, req *SmsjobsIsEligibleToJoinRequest) (*SmsjobsEligibilityToJoin, error) {
-	return srv.(SmsjobsServer).IsEligibleToJoin(ctx, req)
+func _Smsjobs_GetSmsJob_EncodeResponse(e *mtproto.Encoder, response *SmsJob) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Smsjobs_Join_Handler(srv interface{}, ctx context.Context, req *SmsjobsJoinRequest) (bool, error) {
-	return srv.(SmsjobsServer).Join(ctx, req)
+func _Smsjobs_GetStatus_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsGetStatusRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.getStatus: request %T is not *SmsjobsGetStatusRequest", req)
+	}
+	return srv.(SmsjobsServer).GetStatus(ctx, typedRequest)
 }
 
-func _Smsjobs_Leave_Handler(srv interface{}, ctx context.Context, req *SmsjobsLeaveRequest) (bool, error) {
-	return srv.(SmsjobsServer).Leave(ctx, req)
+func _Smsjobs_GetStatus_EncodeResponse(e *mtproto.Encoder, response *SmsjobsStatus) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Smsjobs_UpdateSettings_Handler(srv interface{}, ctx context.Context, req *SmsjobsUpdateSettingsRequest) (bool, error) {
-	return srv.(SmsjobsServer).UpdateSettings(ctx, req)
+func _Smsjobs_IsEligibleToJoin_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsIsEligibleToJoinRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.isEligibleToJoin: request %T is not *SmsjobsIsEligibleToJoinRequest", req)
+	}
+	return srv.(SmsjobsServer).IsEligibleToJoin(ctx, typedRequest)
+}
+
+func _Smsjobs_IsEligibleToJoin_EncodeResponse(e *mtproto.Encoder, response *SmsjobsEligibilityToJoin) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Smsjobs_Join_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsJoinRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.join: request %T is not *SmsjobsJoinRequest", req)
+	}
+	return srv.(SmsjobsServer).Join(ctx, typedRequest)
+}
+
+func _Smsjobs_Join_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Smsjobs_Leave_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsLeaveRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.leave: request %T is not *SmsjobsLeaveRequest", req)
+	}
+	return srv.(SmsjobsServer).Leave(ctx, typedRequest)
+}
+
+func _Smsjobs_Leave_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Smsjobs_UpdateSettings_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*SmsjobsUpdateSettingsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("smsjobs.updateSettings: request %T is not *SmsjobsUpdateSettingsRequest", req)
+	}
+	return srv.(SmsjobsServer).UpdateSettings(ctx, typedRequest)
+}
+
+func _Smsjobs_UpdateSettings_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Smsjobs_ServiceDesc is the static descriptor for the SmsjobsServer service.
@@ -6790,46 +18321,81 @@ var Smsjobs_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*SmsjobsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "FinishJob",
 			ConstructorID: 0x4f1ebf24,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsFinishJobRequest{} },
 			Handler:       _Smsjobs_FinishJob_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Smsjobs_FinishJob_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSmsJob",
 			ConstructorID: 0x778d902f,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsGetSmsJobRequest{} },
 			Handler:       _Smsjobs_GetSmsJob_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*SmsJob](response, layer, limits, _Smsjobs_GetSmsJob_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStatus",
 			ConstructorID: 0x10a698e8,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsGetStatusRequest{} },
 			Handler:       _Smsjobs_GetStatus_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*SmsjobsStatus](response, layer, limits, _Smsjobs_GetStatus_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "IsEligibleToJoin",
 			ConstructorID: 0x0edc39d0,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsIsEligibleToJoinRequest{} },
 			Handler:       _Smsjobs_IsEligibleToJoin_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*SmsjobsEligibilityToJoin](response, layer, limits, _Smsjobs_IsEligibleToJoin_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Join",
 			ConstructorID: 0xa74ece2d,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsJoinRequest{} },
 			Handler:       _Smsjobs_Join_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Smsjobs_Join_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Leave",
 			ConstructorID: 0x9898ad73,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsLeaveRequest{} },
 			Handler:       _Smsjobs_Leave_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Smsjobs_Leave_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateSettings",
 			ConstructorID: 0x093fa0bf,
 			NewRequest:    func() tlrpc.TLObject { return &SmsjobsUpdateSettingsRequest{} },
 			Handler:       _Smsjobs_UpdateSettings_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Smsjobs_UpdateSettings_EncodeResponse)
+			},
 		},
 	},
 }
@@ -6846,32 +18412,112 @@ func RegisterSmsjobsServer(s *tlrpc.Server, srv SmsjobsServer) {
 	s.RegisterService(Smsjobs_ServiceDesc, srv)
 }
 
-func _Stats_GetBroadcastStats_Handler(srv interface{}, ctx context.Context, req *StatsGetBroadcastStatsRequest) (*StatsBroadcastStats, error) {
-	return srv.(StatsServer).GetBroadcastStats(ctx, req)
+func _Stats_GetBroadcastStats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsGetBroadcastStatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.getBroadcastStats: request %T is not *StatsGetBroadcastStatsRequest", req)
+	}
+	return srv.(StatsServer).GetBroadcastStats(ctx, typedRequest)
 }
 
-func _Stats_GetMegagroupStats_Handler(srv interface{}, ctx context.Context, req *StatsGetMegagroupStatsRequest) (*StatsMegagroupStats, error) {
-	return srv.(StatsServer).GetMegagroupStats(ctx, req)
+func _Stats_GetBroadcastStats_EncodeResponse(e *mtproto.Encoder, response *StatsBroadcastStats) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stats_GetMessagePublicForwards_Handler(srv interface{}, ctx context.Context, req *StatsGetMessagePublicForwardsRequest) (*StatsPublicForwards, error) {
-	return srv.(StatsServer).GetMessagePublicForwards(ctx, req)
+func _Stats_GetMegagroupStats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsGetMegagroupStatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.getMegagroupStats: request %T is not *StatsGetMegagroupStatsRequest", req)
+	}
+	return srv.(StatsServer).GetMegagroupStats(ctx, typedRequest)
 }
 
-func _Stats_GetMessageStats_Handler(srv interface{}, ctx context.Context, req *StatsGetMessageStatsRequest) (*StatsMessageStats, error) {
-	return srv.(StatsServer).GetMessageStats(ctx, req)
+func _Stats_GetMegagroupStats_EncodeResponse(e *mtproto.Encoder, response *StatsMegagroupStats) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stats_GetStoryPublicForwards_Handler(srv interface{}, ctx context.Context, req *StatsGetStoryPublicForwardsRequest) (*StatsPublicForwards, error) {
-	return srv.(StatsServer).GetStoryPublicForwards(ctx, req)
+func _Stats_GetMessagePublicForwards_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsGetMessagePublicForwardsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.getMessagePublicForwards: request %T is not *StatsGetMessagePublicForwardsRequest", req)
+	}
+	return srv.(StatsServer).GetMessagePublicForwards(ctx, typedRequest)
 }
 
-func _Stats_GetStoryStats_Handler(srv interface{}, ctx context.Context, req *StatsGetStoryStatsRequest) (*StatsStoryStats, error) {
-	return srv.(StatsServer).GetStoryStats(ctx, req)
+func _Stats_GetMessagePublicForwards_EncodeResponse(e *mtproto.Encoder, response *StatsPublicForwards) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stats_LoadAsyncGraph_Handler(srv interface{}, ctx context.Context, req *StatsLoadAsyncGraphRequest) (StatsGraphType, error) {
-	return srv.(StatsServer).LoadAsyncGraph(ctx, req)
+func _Stats_GetMessageStats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsGetMessageStatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.getMessageStats: request %T is not *StatsGetMessageStatsRequest", req)
+	}
+	return srv.(StatsServer).GetMessageStats(ctx, typedRequest)
+}
+
+func _Stats_GetMessageStats_EncodeResponse(e *mtproto.Encoder, response *StatsMessageStats) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stats_GetStoryPublicForwards_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsGetStoryPublicForwardsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.getStoryPublicForwards: request %T is not *StatsGetStoryPublicForwardsRequest", req)
+	}
+	return srv.(StatsServer).GetStoryPublicForwards(ctx, typedRequest)
+}
+
+func _Stats_GetStoryPublicForwards_EncodeResponse(e *mtproto.Encoder, response *StatsPublicForwards) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stats_GetStoryStats_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsGetStoryStatsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.getStoryStats: request %T is not *StatsGetStoryStatsRequest", req)
+	}
+	return srv.(StatsServer).GetStoryStats(ctx, typedRequest)
+}
+
+func _Stats_GetStoryStats_EncodeResponse(e *mtproto.Encoder, response *StatsStoryStats) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stats_LoadAsyncGraph_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StatsLoadAsyncGraphRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stats.loadAsyncGraph: request %T is not *StatsLoadAsyncGraphRequest", req)
+	}
+	return srv.(StatsServer).LoadAsyncGraph(ctx, typedRequest)
+}
+
+func _Stats_LoadAsyncGraph_EncodeResponse(e *mtproto.Encoder, response StatsGraphType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed StatsGraph is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Stats_ServiceDesc is the static descriptor for the StatsServer service.
@@ -6881,46 +18527,81 @@ var Stats_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*StatsServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetBroadcastStats",
 			ConstructorID: 0xab42441a,
 			NewRequest:    func() tlrpc.TLObject { return &StatsGetBroadcastStatsRequest{} },
 			Handler:       _Stats_GetBroadcastStats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StatsBroadcastStats](response, layer, limits, _Stats_GetBroadcastStats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMegagroupStats",
 			ConstructorID: 0xdcdf8607,
 			NewRequest:    func() tlrpc.TLObject { return &StatsGetMegagroupStatsRequest{} },
 			Handler:       _Stats_GetMegagroupStats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StatsMegagroupStats](response, layer, limits, _Stats_GetMegagroupStats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessagePublicForwards",
 			ConstructorID: 0x5f150144,
 			NewRequest:    func() tlrpc.TLObject { return &StatsGetMessagePublicForwardsRequest{} },
 			Handler:       _Stats_GetMessagePublicForwards_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StatsPublicForwards](response, layer, limits, _Stats_GetMessagePublicForwards_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetMessageStats",
 			ConstructorID: 0xb6e0a3f5,
 			NewRequest:    func() tlrpc.TLObject { return &StatsGetMessageStatsRequest{} },
 			Handler:       _Stats_GetMessageStats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StatsMessageStats](response, layer, limits, _Stats_GetMessageStats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoryPublicForwards",
 			ConstructorID: 0xa6437ef6,
 			NewRequest:    func() tlrpc.TLObject { return &StatsGetStoryPublicForwardsRequest{} },
 			Handler:       _Stats_GetStoryPublicForwards_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StatsPublicForwards](response, layer, limits, _Stats_GetStoryPublicForwards_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoryStats",
 			ConstructorID: 0x374fef40,
 			NewRequest:    func() tlrpc.TLObject { return &StatsGetStoryStatsRequest{} },
 			Handler:       _Stats_GetStoryStats_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StatsStoryStats](response, layer, limits, _Stats_GetStoryStats_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "LoadAsyncGraph",
 			ConstructorID: 0x621d5fa0,
 			NewRequest:    func() tlrpc.TLObject { return &StatsLoadAsyncGraphRequest{} },
 			Handler:       _Stats_LoadAsyncGraph_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[StatsGraphType](response, layer, limits, _Stats_LoadAsyncGraph_EncodeResponse)
+			},
 		},
 	},
 }
@@ -6937,48 +18618,193 @@ func RegisterStatsServer(s *tlrpc.Server, srv StatsServer) {
 	s.RegisterService(Stats_ServiceDesc, srv)
 }
 
-func _Stickers_AddStickerToSet_Handler(srv interface{}, ctx context.Context, req *StickersAddStickerToSetRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).AddStickerToSet(ctx, req)
+func _Stickers_AddStickerToSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersAddStickerToSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.addStickerToSet: request %T is not *StickersAddStickerToSetRequest", req)
+	}
+	return srv.(StickersServer).AddStickerToSet(ctx, typedRequest)
 }
 
-func _Stickers_ChangeSticker_Handler(srv interface{}, ctx context.Context, req *StickersChangeStickerRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).ChangeSticker(ctx, req)
+func _Stickers_AddStickerToSet_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stickers_ChangeStickerPosition_Handler(srv interface{}, ctx context.Context, req *StickersChangeStickerPositionRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).ChangeStickerPosition(ctx, req)
+func _Stickers_ChangeSticker_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersChangeStickerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.changeSticker: request %T is not *StickersChangeStickerRequest", req)
+	}
+	return srv.(StickersServer).ChangeSticker(ctx, typedRequest)
 }
 
-func _Stickers_CheckShortName_Handler(srv interface{}, ctx context.Context, req *StickersCheckShortNameRequest) (bool, error) {
-	return srv.(StickersServer).CheckShortName(ctx, req)
+func _Stickers_ChangeSticker_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stickers_CreateStickerSet_Handler(srv interface{}, ctx context.Context, req *StickersCreateStickerSetRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).CreateStickerSet(ctx, req)
+func _Stickers_ChangeStickerPosition_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersChangeStickerPositionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.changeStickerPosition: request %T is not *StickersChangeStickerPositionRequest", req)
+	}
+	return srv.(StickersServer).ChangeStickerPosition(ctx, typedRequest)
 }
 
-func _Stickers_DeleteStickerSet_Handler(srv interface{}, ctx context.Context, req *StickersDeleteStickerSetRequest) (bool, error) {
-	return srv.(StickersServer).DeleteStickerSet(ctx, req)
+func _Stickers_ChangeStickerPosition_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stickers_RemoveStickerFromSet_Handler(srv interface{}, ctx context.Context, req *StickersRemoveStickerFromSetRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).RemoveStickerFromSet(ctx, req)
+func _Stickers_CheckShortName_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersCheckShortNameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.checkShortName: request %T is not *StickersCheckShortNameRequest", req)
+	}
+	return srv.(StickersServer).CheckShortName(ctx, typedRequest)
 }
 
-func _Stickers_RenameStickerSet_Handler(srv interface{}, ctx context.Context, req *StickersRenameStickerSetRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).RenameStickerSet(ctx, req)
+func _Stickers_CheckShortName_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stickers_ReplaceSticker_Handler(srv interface{}, ctx context.Context, req *StickersReplaceStickerRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).ReplaceSticker(ctx, req)
+func _Stickers_CreateStickerSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersCreateStickerSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.createStickerSet: request %T is not *StickersCreateStickerSetRequest", req)
+	}
+	return srv.(StickersServer).CreateStickerSet(ctx, typedRequest)
 }
 
-func _Stickers_SetStickerSetThumb_Handler(srv interface{}, ctx context.Context, req *StickersSetStickerSetThumbRequest) (MessagesStickerSetType, error) {
-	return srv.(StickersServer).SetStickerSetThumb(ctx, req)
+func _Stickers_CreateStickerSet_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stickers_SuggestShortName_Handler(srv interface{}, ctx context.Context, req *StickersSuggestShortNameRequest) (*StickersSuggestedShortName, error) {
-	return srv.(StickersServer).SuggestShortName(ctx, req)
+func _Stickers_DeleteStickerSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersDeleteStickerSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.deleteStickerSet: request %T is not *StickersDeleteStickerSetRequest", req)
+	}
+	return srv.(StickersServer).DeleteStickerSet(ctx, typedRequest)
+}
+
+func _Stickers_DeleteStickerSet_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stickers_RemoveStickerFromSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersRemoveStickerFromSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.removeStickerFromSet: request %T is not *StickersRemoveStickerFromSetRequest", req)
+	}
+	return srv.(StickersServer).RemoveStickerFromSet(ctx, typedRequest)
+}
+
+func _Stickers_RemoveStickerFromSet_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stickers_RenameStickerSet_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersRenameStickerSetRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.renameStickerSet: request %T is not *StickersRenameStickerSetRequest", req)
+	}
+	return srv.(StickersServer).RenameStickerSet(ctx, typedRequest)
+}
+
+func _Stickers_RenameStickerSet_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stickers_ReplaceSticker_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersReplaceStickerRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.replaceSticker: request %T is not *StickersReplaceStickerRequest", req)
+	}
+	return srv.(StickersServer).ReplaceSticker(ctx, typedRequest)
+}
+
+func _Stickers_ReplaceSticker_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stickers_SetStickerSetThumb_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersSetStickerSetThumbRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.setStickerSetThumb: request %T is not *StickersSetStickerSetThumbRequest", req)
+	}
+	return srv.(StickersServer).SetStickerSetThumb(ctx, typedRequest)
+}
+
+func _Stickers_SetStickerSetThumb_EncodeResponse(e *mtproto.Encoder, response MessagesStickerSetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.StickerSet is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stickers_SuggestShortName_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StickersSuggestShortNameRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stickers.suggestShortName: request %T is not *StickersSuggestShortNameRequest", req)
+	}
+	return srv.(StickersServer).SuggestShortName(ctx, typedRequest)
+}
+
+func _Stickers_SuggestShortName_EncodeResponse(e *mtproto.Encoder, response *StickersSuggestedShortName) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Stickers_ServiceDesc is the static descriptor for the StickersServer service.
@@ -6988,70 +18814,125 @@ var Stickers_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*StickersServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "AddStickerToSet",
 			ConstructorID: 0x8653febe,
 			NewRequest:    func() tlrpc.TLObject { return &StickersAddStickerToSetRequest{} },
 			Handler:       _Stickers_AddStickerToSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_AddStickerToSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ChangeSticker",
 			ConstructorID: 0xf5537ebc,
 			NewRequest:    func() tlrpc.TLObject { return &StickersChangeStickerRequest{} },
 			Handler:       _Stickers_ChangeSticker_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_ChangeSticker_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ChangeStickerPosition",
 			ConstructorID: 0xffb6d4ca,
 			NewRequest:    func() tlrpc.TLObject { return &StickersChangeStickerPositionRequest{} },
 			Handler:       _Stickers_ChangeStickerPosition_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_ChangeStickerPosition_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CheckShortName",
 			ConstructorID: 0x284b3639,
 			NewRequest:    func() tlrpc.TLObject { return &StickersCheckShortNameRequest{} },
 			Handler:       _Stickers_CheckShortName_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stickers_CheckShortName_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateStickerSet",
 			ConstructorID: 0x9021ab67,
 			NewRequest:    func() tlrpc.TLObject { return &StickersCreateStickerSetRequest{} },
 			Handler:       _Stickers_CreateStickerSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_CreateStickerSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteStickerSet",
 			ConstructorID: 0x87704394,
 			NewRequest:    func() tlrpc.TLObject { return &StickersDeleteStickerSetRequest{} },
 			Handler:       _Stickers_DeleteStickerSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stickers_DeleteStickerSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RemoveStickerFromSet",
 			ConstructorID: 0xf7760f51,
 			NewRequest:    func() tlrpc.TLObject { return &StickersRemoveStickerFromSetRequest{} },
 			Handler:       _Stickers_RemoveStickerFromSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_RemoveStickerFromSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "RenameStickerSet",
 			ConstructorID: 0x124b1c00,
 			NewRequest:    func() tlrpc.TLObject { return &StickersRenameStickerSetRequest{} },
 			Handler:       _Stickers_RenameStickerSet_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_RenameStickerSet_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReplaceSticker",
 			ConstructorID: 0x4696459a,
 			NewRequest:    func() tlrpc.TLObject { return &StickersReplaceStickerRequest{} },
 			Handler:       _Stickers_ReplaceSticker_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_ReplaceSticker_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetStickerSetThumb",
 			ConstructorID: 0xa76a5392,
 			NewRequest:    func() tlrpc.TLObject { return &StickersSetStickerSetThumbRequest{} },
 			Handler:       _Stickers_SetStickerSetThumb_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesStickerSetType](response, layer, limits, _Stickers_SetStickerSetThumb_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SuggestShortName",
 			ConstructorID: 0x4dafc503,
 			NewRequest:    func() tlrpc.TLObject { return &StickersSuggestShortNameRequest{} },
 			Handler:       _Stickers_SuggestShortName_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StickersSuggestedShortName](response, layer, limits, _Stickers_SuggestShortName_EncodeResponse)
+			},
 		},
 	},
 }
@@ -7068,132 +18949,567 @@ func RegisterStickersServer(s *tlrpc.Server, srv StickersServer) {
 	s.RegisterService(Stickers_ServiceDesc, srv)
 }
 
-func _Stories_ActivateStealthMode_Handler(srv interface{}, ctx context.Context, req *StoriesActivateStealthModeRequest) (UpdatesType, error) {
-	return srv.(StoriesServer).ActivateStealthMode(ctx, req)
+func _Stories_ActivateStealthMode_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesActivateStealthModeRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.activateStealthMode: request %T is not *StoriesActivateStealthModeRequest", req)
+	}
+	return srv.(StoriesServer).ActivateStealthMode(ctx, typedRequest)
 }
 
-func _Stories_CanSendStory_Handler(srv interface{}, ctx context.Context, req *StoriesCanSendStoryRequest) (*StoriesCanSendStoryCount, error) {
-	return srv.(StoriesServer).CanSendStory(ctx, req)
+func _Stories_ActivateStealthMode_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_CreateAlbum_Handler(srv interface{}, ctx context.Context, req *StoriesCreateAlbumRequest) (*StoryAlbum, error) {
-	return srv.(StoriesServer).CreateAlbum(ctx, req)
+func _Stories_CanSendStory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesCanSendStoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.canSendStory: request %T is not *StoriesCanSendStoryRequest", req)
+	}
+	return srv.(StoriesServer).CanSendStory(ctx, typedRequest)
 }
 
-func _Stories_DeleteAlbum_Handler(srv interface{}, ctx context.Context, req *StoriesDeleteAlbumRequest) (bool, error) {
-	return srv.(StoriesServer).DeleteAlbum(ctx, req)
+func _Stories_CanSendStory_EncodeResponse(e *mtproto.Encoder, response *StoriesCanSendStoryCount) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_DeleteStories_Handler(srv interface{}, ctx context.Context, req *StoriesDeleteStoriesRequest) ([]int32, error) {
-	return srv.(StoriesServer).DeleteStories(ctx, req)
+func _Stories_CreateAlbum_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesCreateAlbumRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.createAlbum: request %T is not *StoriesCreateAlbumRequest", req)
+	}
+	return srv.(StoriesServer).CreateAlbum(ctx, typedRequest)
 }
 
-func _Stories_EditStory_Handler(srv interface{}, ctx context.Context, req *StoriesEditStoryRequest) (UpdatesType, error) {
-	return srv.(StoriesServer).EditStory(ctx, req)
+func _Stories_CreateAlbum_EncodeResponse(e *mtproto.Encoder, response *StoryAlbum) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_ExportStoryLink_Handler(srv interface{}, ctx context.Context, req *StoriesExportStoryLinkRequest) (*ExportedStoryLink, error) {
-	return srv.(StoriesServer).ExportStoryLink(ctx, req)
+func _Stories_DeleteAlbum_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesDeleteAlbumRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.deleteAlbum: request %T is not *StoriesDeleteAlbumRequest", req)
+	}
+	return srv.(StoriesServer).DeleteAlbum(ctx, typedRequest)
 }
 
-func _Stories_GetAlbumStories_Handler(srv interface{}, ctx context.Context, req *StoriesGetAlbumStoriesRequest) (*StoriesStories, error) {
-	return srv.(StoriesServer).GetAlbumStories(ctx, req)
+func _Stories_DeleteAlbum_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_GetAlbums_Handler(srv interface{}, ctx context.Context, req *StoriesGetAlbumsRequest) (StoriesAlbumsType, error) {
-	return srv.(StoriesServer).GetAlbums(ctx, req)
+func _Stories_DeleteStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesDeleteStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.deleteStories: request %T is not *StoriesDeleteStoriesRequest", req)
+	}
+	return srv.(StoriesServer).DeleteStories(ctx, typedRequest)
 }
 
-func _Stories_GetAllReadPeerStories_Handler(srv interface{}, ctx context.Context, req *StoriesGetAllReadPeerStoriesRequest) (UpdatesType, error) {
-	return srv.(StoriesServer).GetAllReadPeerStories(ctx, req)
+func _Stories_DeleteStories_EncodeResponse(e *mtproto.Encoder, response []int32) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt32(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_GetAllStories_Handler(srv interface{}, ctx context.Context, req *StoriesGetAllStoriesRequest) (StoriesAllStoriesType, error) {
-	return srv.(StoriesServer).GetAllStories(ctx, req)
+func _Stories_EditStory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesEditStoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.editStory: request %T is not *StoriesEditStoryRequest", req)
+	}
+	return srv.(StoriesServer).EditStory(ctx, typedRequest)
 }
 
-func _Stories_GetChatsToSend_Handler(srv interface{}, ctx context.Context, req *StoriesGetChatsToSendRequest) (MessagesChatsType, error) {
-	return srv.(StoriesServer).GetChatsToSend(ctx, req)
+func _Stories_EditStory_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_GetPeerMaxIDs_Handler(srv interface{}, ctx context.Context, req *StoriesGetPeerMaxIDsRequest) ([]int32, error) {
-	return srv.(StoriesServer).GetPeerMaxIDs(ctx, req)
+func _Stories_ExportStoryLink_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesExportStoryLinkRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.exportStoryLink: request %T is not *StoriesExportStoryLinkRequest", req)
+	}
+	return srv.(StoriesServer).ExportStoryLink(ctx, typedRequest)
 }
 
-func _Stories_GetPeerStories_Handler(srv interface{}, ctx context.Context, req *StoriesGetPeerStoriesRequest) (*StoriesPeerStories, error) {
-	return srv.(StoriesServer).GetPeerStories(ctx, req)
+func _Stories_ExportStoryLink_EncodeResponse(e *mtproto.Encoder, response *ExportedStoryLink) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_GetPinnedStories_Handler(srv interface{}, ctx context.Context, req *StoriesGetPinnedStoriesRequest) (*StoriesStories, error) {
-	return srv.(StoriesServer).GetPinnedStories(ctx, req)
+func _Stories_GetAlbumStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetAlbumStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getAlbumStories: request %T is not *StoriesGetAlbumStoriesRequest", req)
+	}
+	return srv.(StoriesServer).GetAlbumStories(ctx, typedRequest)
 }
 
-func _Stories_GetStoriesArchive_Handler(srv interface{}, ctx context.Context, req *StoriesGetStoriesArchiveRequest) (*StoriesStories, error) {
-	return srv.(StoriesServer).GetStoriesArchive(ctx, req)
+func _Stories_GetAlbumStories_EncodeResponse(e *mtproto.Encoder, response *StoriesStories) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_GetStoriesByID_Handler(srv interface{}, ctx context.Context, req *StoriesGetStoriesByIDRequest) (*StoriesStories, error) {
-	return srv.(StoriesServer).GetStoriesByID(ctx, req)
+func _Stories_GetAlbums_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetAlbumsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getAlbums: request %T is not *StoriesGetAlbumsRequest", req)
+	}
+	return srv.(StoriesServer).GetAlbums(ctx, typedRequest)
 }
 
-func _Stories_GetStoriesViews_Handler(srv interface{}, ctx context.Context, req *StoriesGetStoriesViewsRequest) (*StoriesStoryViews, error) {
-	return srv.(StoriesServer).GetStoriesViews(ctx, req)
+func _Stories_GetAlbums_EncodeResponse(e *mtproto.Encoder, response StoriesAlbumsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed stories.Albums is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_GetStoryReactionsList_Handler(srv interface{}, ctx context.Context, req *StoriesGetStoryReactionsListRequest) (*StoriesStoryReactionsList, error) {
-	return srv.(StoriesServer).GetStoryReactionsList(ctx, req)
+func _Stories_GetAllReadPeerStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetAllReadPeerStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getAllReadPeerStories: request %T is not *StoriesGetAllReadPeerStoriesRequest", req)
+	}
+	return srv.(StoriesServer).GetAllReadPeerStories(ctx, typedRequest)
 }
 
-func _Stories_GetStoryViewsList_Handler(srv interface{}, ctx context.Context, req *StoriesGetStoryViewsListRequest) (*StoriesStoryViewsList, error) {
-	return srv.(StoriesServer).GetStoryViewsList(ctx, req)
+func _Stories_GetAllReadPeerStories_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_IncrementStoryViews_Handler(srv interface{}, ctx context.Context, req *StoriesIncrementStoryViewsRequest) (bool, error) {
-	return srv.(StoriesServer).IncrementStoryViews(ctx, req)
+func _Stories_GetAllStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetAllStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getAllStories: request %T is not *StoriesGetAllStoriesRequest", req)
+	}
+	return srv.(StoriesServer).GetAllStories(ctx, typedRequest)
 }
 
-func _Stories_ReadStories_Handler(srv interface{}, ctx context.Context, req *StoriesReadStoriesRequest) ([]int32, error) {
-	return srv.(StoriesServer).ReadStories(ctx, req)
+func _Stories_GetAllStories_EncodeResponse(e *mtproto.Encoder, response StoriesAllStoriesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed stories.AllStories is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_ReorderAlbums_Handler(srv interface{}, ctx context.Context, req *StoriesReorderAlbumsRequest) (bool, error) {
-	return srv.(StoriesServer).ReorderAlbums(ctx, req)
+func _Stories_GetChatsToSend_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetChatsToSendRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getChatsToSend: request %T is not *StoriesGetChatsToSendRequest", req)
+	}
+	return srv.(StoriesServer).GetChatsToSend(ctx, typedRequest)
 }
 
-func _Stories_Report_Handler(srv interface{}, ctx context.Context, req *StoriesReportRequest) (ReportResultType, error) {
-	return srv.(StoriesServer).Report(ctx, req)
+func _Stories_GetChatsToSend_EncodeResponse(e *mtproto.Encoder, response MessagesChatsType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed messages.Chats is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_SearchPosts_Handler(srv interface{}, ctx context.Context, req *StoriesSearchPostsRequest) (*StoriesFoundStories, error) {
-	return srv.(StoriesServer).SearchPosts(ctx, req)
+func _Stories_GetPeerMaxIDs_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetPeerMaxIDsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getPeerMaxIDs: request %T is not *StoriesGetPeerMaxIDsRequest", req)
+	}
+	return srv.(StoriesServer).GetPeerMaxIDs(ctx, typedRequest)
 }
 
-func _Stories_SendReaction_Handler(srv interface{}, ctx context.Context, req *StoriesSendReactionRequest) (UpdatesType, error) {
-	return srv.(StoriesServer).SendReaction(ctx, req)
+func _Stories_GetPeerMaxIDs_EncodeResponse(e *mtproto.Encoder, response []int32) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt32(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_SendStory_Handler(srv interface{}, ctx context.Context, req *StoriesSendStoryRequest) (UpdatesType, error) {
-	return srv.(StoriesServer).SendStory(ctx, req)
+func _Stories_GetPeerStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetPeerStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getPeerStories: request %T is not *StoriesGetPeerStoriesRequest", req)
+	}
+	return srv.(StoriesServer).GetPeerStories(ctx, typedRequest)
 }
 
-func _Stories_ToggleAllStoriesHidden_Handler(srv interface{}, ctx context.Context, req *StoriesToggleAllStoriesHiddenRequest) (bool, error) {
-	return srv.(StoriesServer).ToggleAllStoriesHidden(ctx, req)
+func _Stories_GetPeerStories_EncodeResponse(e *mtproto.Encoder, response *StoriesPeerStories) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_TogglePeerStoriesHidden_Handler(srv interface{}, ctx context.Context, req *StoriesTogglePeerStoriesHiddenRequest) (bool, error) {
-	return srv.(StoriesServer).TogglePeerStoriesHidden(ctx, req)
+func _Stories_GetPinnedStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetPinnedStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getPinnedStories: request %T is not *StoriesGetPinnedStoriesRequest", req)
+	}
+	return srv.(StoriesServer).GetPinnedStories(ctx, typedRequest)
 }
 
-func _Stories_TogglePinned_Handler(srv interface{}, ctx context.Context, req *StoriesTogglePinnedRequest) ([]int32, error) {
-	return srv.(StoriesServer).TogglePinned(ctx, req)
+func _Stories_GetPinnedStories_EncodeResponse(e *mtproto.Encoder, response *StoriesStories) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Stories_TogglePinnedToTop_Handler(srv interface{}, ctx context.Context, req *StoriesTogglePinnedToTopRequest) (bool, error) {
-	return srv.(StoriesServer).TogglePinnedToTop(ctx, req)
+func _Stories_GetStoriesArchive_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetStoriesArchiveRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getStoriesArchive: request %T is not *StoriesGetStoriesArchiveRequest", req)
+	}
+	return srv.(StoriesServer).GetStoriesArchive(ctx, typedRequest)
 }
 
-func _Stories_UpdateAlbum_Handler(srv interface{}, ctx context.Context, req *StoriesUpdateAlbumRequest) (*StoryAlbum, error) {
-	return srv.(StoriesServer).UpdateAlbum(ctx, req)
+func _Stories_GetStoriesArchive_EncodeResponse(e *mtproto.Encoder, response *StoriesStories) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_GetStoriesByID_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetStoriesByIDRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getStoriesByID: request %T is not *StoriesGetStoriesByIDRequest", req)
+	}
+	return srv.(StoriesServer).GetStoriesByID(ctx, typedRequest)
+}
+
+func _Stories_GetStoriesByID_EncodeResponse(e *mtproto.Encoder, response *StoriesStories) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_GetStoriesViews_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetStoriesViewsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getStoriesViews: request %T is not *StoriesGetStoriesViewsRequest", req)
+	}
+	return srv.(StoriesServer).GetStoriesViews(ctx, typedRequest)
+}
+
+func _Stories_GetStoriesViews_EncodeResponse(e *mtproto.Encoder, response *StoriesStoryViews) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_GetStoryReactionsList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetStoryReactionsListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getStoryReactionsList: request %T is not *StoriesGetStoryReactionsListRequest", req)
+	}
+	return srv.(StoriesServer).GetStoryReactionsList(ctx, typedRequest)
+}
+
+func _Stories_GetStoryReactionsList_EncodeResponse(e *mtproto.Encoder, response *StoriesStoryReactionsList) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_GetStoryViewsList_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesGetStoryViewsListRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.getStoryViewsList: request %T is not *StoriesGetStoryViewsListRequest", req)
+	}
+	return srv.(StoriesServer).GetStoryViewsList(ctx, typedRequest)
+}
+
+func _Stories_GetStoryViewsList_EncodeResponse(e *mtproto.Encoder, response *StoriesStoryViewsList) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_IncrementStoryViews_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesIncrementStoryViewsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.incrementStoryViews: request %T is not *StoriesIncrementStoryViewsRequest", req)
+	}
+	return srv.(StoriesServer).IncrementStoryViews(ctx, typedRequest)
+}
+
+func _Stories_IncrementStoryViews_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_ReadStories_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesReadStoriesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.readStories: request %T is not *StoriesReadStoriesRequest", req)
+	}
+	return srv.(StoriesServer).ReadStories(ctx, typedRequest)
+}
+
+func _Stories_ReadStories_EncodeResponse(e *mtproto.Encoder, response []int32) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt32(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_ReorderAlbums_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesReorderAlbumsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.reorderAlbums: request %T is not *StoriesReorderAlbumsRequest", req)
+	}
+	return srv.(StoriesServer).ReorderAlbums(ctx, typedRequest)
+}
+
+func _Stories_ReorderAlbums_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_Report_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesReportRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.report: request %T is not *StoriesReportRequest", req)
+	}
+	return srv.(StoriesServer).Report(ctx, typedRequest)
+}
+
+func _Stories_Report_EncodeResponse(e *mtproto.Encoder, response ReportResultType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed ReportResult is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_SearchPosts_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesSearchPostsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.searchPosts: request %T is not *StoriesSearchPostsRequest", req)
+	}
+	return srv.(StoriesServer).SearchPosts(ctx, typedRequest)
+}
+
+func _Stories_SearchPosts_EncodeResponse(e *mtproto.Encoder, response *StoriesFoundStories) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_SendReaction_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesSendReactionRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.sendReaction: request %T is not *StoriesSendReactionRequest", req)
+	}
+	return srv.(StoriesServer).SendReaction(ctx, typedRequest)
+}
+
+func _Stories_SendReaction_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_SendStory_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesSendStoryRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.sendStory: request %T is not *StoriesSendStoryRequest", req)
+	}
+	return srv.(StoriesServer).SendStory(ctx, typedRequest)
+}
+
+func _Stories_SendStory_EncodeResponse(e *mtproto.Encoder, response UpdatesType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Updates is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_ToggleAllStoriesHidden_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesToggleAllStoriesHiddenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.toggleAllStoriesHidden: request %T is not *StoriesToggleAllStoriesHiddenRequest", req)
+	}
+	return srv.(StoriesServer).ToggleAllStoriesHidden(ctx, typedRequest)
+}
+
+func _Stories_ToggleAllStoriesHidden_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_TogglePeerStoriesHidden_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesTogglePeerStoriesHiddenRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.togglePeerStoriesHidden: request %T is not *StoriesTogglePeerStoriesHiddenRequest", req)
+	}
+	return srv.(StoriesServer).TogglePeerStoriesHidden(ctx, typedRequest)
+}
+
+func _Stories_TogglePeerStoriesHidden_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_TogglePinned_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesTogglePinnedRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.togglePinned: request %T is not *StoriesTogglePinnedRequest", req)
+	}
+	return srv.(StoriesServer).TogglePinned(ctx, typedRequest)
+}
+
+func _Stories_TogglePinned_EncodeResponse(e *mtproto.Encoder, response []int32) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := e.WriteInt32(element); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_TogglePinnedToTop_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesTogglePinnedToTopRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.togglePinnedToTop: request %T is not *StoriesTogglePinnedToTopRequest", req)
+	}
+	return srv.(StoriesServer).TogglePinnedToTop(ctx, typedRequest)
+}
+
+func _Stories_TogglePinnedToTop_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Stories_UpdateAlbum_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*StoriesUpdateAlbumRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("stories.updateAlbum: request %T is not *StoriesUpdateAlbumRequest", req)
+	}
+	return srv.(StoriesServer).UpdateAlbum(ctx, typedRequest)
+}
+
+func _Stories_UpdateAlbum_EncodeResponse(e *mtproto.Encoder, response *StoryAlbum) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Stories_ServiceDesc is the static descriptor for the StoriesServer service.
@@ -7203,196 +19519,356 @@ var Stories_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*StoriesServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ActivateStealthMode",
 			ConstructorID: 0x57bbd166,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesActivateStealthModeRequest{} },
 			Handler:       _Stories_ActivateStealthMode_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Stories_ActivateStealthMode_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CanSendStory",
 			ConstructorID: 0x30eb63f0,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesCanSendStoryRequest{} },
 			Handler:       _Stories_CanSendStory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesCanSendStoryCount](response, layer, limits, _Stories_CanSendStory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "CreateAlbum",
 			ConstructorID: 0xa36396e5,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesCreateAlbumRequest{} },
 			Handler:       _Stories_CreateAlbum_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoryAlbum](response, layer, limits, _Stories_CreateAlbum_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteAlbum",
 			ConstructorID: 0x8d3456d0,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesDeleteAlbumRequest{} },
 			Handler:       _Stories_DeleteAlbum_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stories_DeleteAlbum_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "DeleteStories",
 			ConstructorID: 0xae59db5f,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesDeleteStoriesRequest{} },
 			Handler:       _Stories_DeleteStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int32](response, layer, limits, _Stories_DeleteStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "EditStory",
 			ConstructorID: 0xb583ba46,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesEditStoryRequest{} },
 			Handler:       _Stories_EditStory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Stories_EditStory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ExportStoryLink",
 			ConstructorID: 0x7b8def20,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesExportStoryLinkRequest{} },
 			Handler:       _Stories_ExportStoryLink_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*ExportedStoryLink](response, layer, limits, _Stories_ExportStoryLink_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAlbumStories",
 			ConstructorID: 0xac806d61,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetAlbumStoriesRequest{} },
 			Handler:       _Stories_GetAlbumStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStories](response, layer, limits, _Stories_GetAlbumStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAlbums",
 			ConstructorID: 0x25b3eac7,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetAlbumsRequest{} },
 			Handler:       _Stories_GetAlbums_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[StoriesAlbumsType](response, layer, limits, _Stories_GetAlbums_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAllReadPeerStories",
 			ConstructorID: 0x9b5ae7f9,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetAllReadPeerStoriesRequest{} },
 			Handler:       _Stories_GetAllReadPeerStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Stories_GetAllReadPeerStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetAllStories",
 			ConstructorID: 0xeeb0d625,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetAllStoriesRequest{} },
 			Handler:       _Stories_GetAllStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[StoriesAllStoriesType](response, layer, limits, _Stories_GetAllStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChatsToSend",
 			ConstructorID: 0xa56a8b60,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetChatsToSendRequest{} },
 			Handler:       _Stories_GetChatsToSend_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[MessagesChatsType](response, layer, limits, _Stories_GetChatsToSend_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPeerMaxIDs",
 			ConstructorID: 0x535983c3,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetPeerMaxIDsRequest{} },
 			Handler:       _Stories_GetPeerMaxIDs_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int32](response, layer, limits, _Stories_GetPeerMaxIDs_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPeerStories",
 			ConstructorID: 0x2c4ada50,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetPeerStoriesRequest{} },
 			Handler:       _Stories_GetPeerStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesPeerStories](response, layer, limits, _Stories_GetPeerStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetPinnedStories",
 			ConstructorID: 0x5821a5dc,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetPinnedStoriesRequest{} },
 			Handler:       _Stories_GetPinnedStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStories](response, layer, limits, _Stories_GetPinnedStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoriesArchive",
 			ConstructorID: 0xb4352016,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetStoriesArchiveRequest{} },
 			Handler:       _Stories_GetStoriesArchive_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStories](response, layer, limits, _Stories_GetStoriesArchive_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoriesByID",
 			ConstructorID: 0x5774ca74,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetStoriesByIDRequest{} },
 			Handler:       _Stories_GetStoriesByID_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStories](response, layer, limits, _Stories_GetStoriesByID_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoriesViews",
 			ConstructorID: 0x28e16cc8,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetStoriesViewsRequest{} },
 			Handler:       _Stories_GetStoriesViews_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStoryViews](response, layer, limits, _Stories_GetStoriesViews_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoryReactionsList",
 			ConstructorID: 0xb9b2881f,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetStoryReactionsListRequest{} },
 			Handler:       _Stories_GetStoryReactionsList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStoryReactionsList](response, layer, limits, _Stories_GetStoryReactionsList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetStoryViewsList",
 			ConstructorID: 0x7ed23c57,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesGetStoryViewsListRequest{} },
 			Handler:       _Stories_GetStoryViewsList_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesStoryViewsList](response, layer, limits, _Stories_GetStoryViewsList_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "IncrementStoryViews",
 			ConstructorID: 0xb2028afb,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesIncrementStoryViewsRequest{} },
 			Handler:       _Stories_IncrementStoryViews_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stories_IncrementStoryViews_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReadStories",
 			ConstructorID: 0xa556dac8,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesReadStoriesRequest{} },
 			Handler:       _Stories_ReadStories_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int32](response, layer, limits, _Stories_ReadStories_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReorderAlbums",
 			ConstructorID: 0x8535fbd9,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesReorderAlbumsRequest{} },
 			Handler:       _Stories_ReorderAlbums_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stories_ReorderAlbums_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Report",
 			ConstructorID: 0x19d8eb45,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesReportRequest{} },
 			Handler:       _Stories_Report_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[ReportResultType](response, layer, limits, _Stories_Report_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SearchPosts",
 			ConstructorID: 0xd1810907,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesSearchPostsRequest{} },
 			Handler:       _Stories_SearchPosts_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoriesFoundStories](response, layer, limits, _Stories_SearchPosts_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendReaction",
 			ConstructorID: 0x7fd736b2,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesSendReactionRequest{} },
 			Handler:       _Stories_SendReaction_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Stories_SendReaction_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SendStory",
 			ConstructorID: 0x737fc2ec,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesSendStoryRequest{} },
 			Handler:       _Stories_SendStory_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesType](response, layer, limits, _Stories_SendStory_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ToggleAllStoriesHidden",
 			ConstructorID: 0x7c2557c4,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesToggleAllStoriesHiddenRequest{} },
 			Handler:       _Stories_ToggleAllStoriesHidden_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stories_ToggleAllStoriesHidden_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TogglePeerStoriesHidden",
 			ConstructorID: 0xbd0415c4,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesTogglePeerStoriesHiddenRequest{} },
 			Handler:       _Stories_TogglePeerStoriesHidden_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stories_TogglePeerStoriesHidden_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TogglePinned",
 			ConstructorID: 0x9a75a1ef,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesTogglePinnedRequest{} },
 			Handler:       _Stories_TogglePinned_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]int32](response, layer, limits, _Stories_TogglePinned_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "TogglePinnedToTop",
 			ConstructorID: 0x0b297e9b,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesTogglePinnedToTopRequest{} },
 			Handler:       _Stories_TogglePinnedToTop_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Stories_TogglePinnedToTop_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "UpdateAlbum",
 			ConstructorID: 0x5e5259b6,
 			NewRequest:    func() tlrpc.TLObject { return &StoriesUpdateAlbumRequest{} },
 			Handler:       _Stories_UpdateAlbum_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*StoryAlbum](response, layer, limits, _Stories_UpdateAlbum_EncodeResponse)
+			},
 		},
 	},
 }
@@ -7409,16 +19885,55 @@ func RegisterStoriesServer(s *tlrpc.Server, srv StoriesServer) {
 	s.RegisterService(Stories_ServiceDesc, srv)
 }
 
-func _Updates_GetChannelDifference_Handler(srv interface{}, ctx context.Context, req *UpdatesGetChannelDifferenceRequest) (UpdatesChannelDifferenceType, error) {
-	return srv.(UpdatesServer).GetChannelDifference(ctx, req)
+func _Updates_GetChannelDifference_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UpdatesGetChannelDifferenceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("updates.getChannelDifference: request %T is not *UpdatesGetChannelDifferenceRequest", req)
+	}
+	return srv.(UpdatesServer).GetChannelDifference(ctx, typedRequest)
 }
 
-func _Updates_GetDifference_Handler(srv interface{}, ctx context.Context, req *UpdatesGetDifferenceRequest) (UpdatesDifferenceType, error) {
-	return srv.(UpdatesServer).GetDifference(ctx, req)
+func _Updates_GetChannelDifference_EncodeResponse(e *mtproto.Encoder, response UpdatesChannelDifferenceType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed updates.ChannelDifference is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Updates_GetState_Handler(srv interface{}, ctx context.Context, req *UpdatesGetStateRequest) (*UpdatesState, error) {
-	return srv.(UpdatesServer).GetState(ctx, req)
+func _Updates_GetDifference_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UpdatesGetDifferenceRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("updates.getDifference: request %T is not *UpdatesGetDifferenceRequest", req)
+	}
+	return srv.(UpdatesServer).GetDifference(ctx, typedRequest)
+}
+
+func _Updates_GetDifference_EncodeResponse(e *mtproto.Encoder, response UpdatesDifferenceType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed updates.Difference is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Updates_GetState_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UpdatesGetStateRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("updates.getState: request %T is not *UpdatesGetStateRequest", req)
+	}
+	return srv.(UpdatesServer).GetState(ctx, typedRequest)
+}
+
+func _Updates_GetState_EncodeResponse(e *mtproto.Encoder, response *UpdatesState) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Updates_ServiceDesc is the static descriptor for the UpdatesServer service.
@@ -7428,22 +19943,37 @@ var Updates_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*UpdatesServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetChannelDifference",
 			ConstructorID: 0x03173d78,
 			NewRequest:    func() tlrpc.TLObject { return &UpdatesGetChannelDifferenceRequest{} },
 			Handler:       _Updates_GetChannelDifference_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesChannelDifferenceType](response, layer, limits, _Updates_GetChannelDifference_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetDifference",
 			ConstructorID: 0x19c2f763,
 			NewRequest:    func() tlrpc.TLObject { return &UpdatesGetDifferenceRequest{} },
 			Handler:       _Updates_GetDifference_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UpdatesDifferenceType](response, layer, limits, _Updates_GetDifference_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetState",
 			ConstructorID: 0xedd4882a,
 			NewRequest:    func() tlrpc.TLObject { return &UpdatesGetStateRequest{} },
 			Handler:       _Updates_GetState_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*UpdatesState](response, layer, limits, _Updates_GetState_EncodeResponse)
+			},
 		},
 	},
 }
@@ -7460,36 +19990,172 @@ func RegisterUpdatesServer(s *tlrpc.Server, srv UpdatesServer) {
 	s.RegisterService(Updates_ServiceDesc, srv)
 }
 
-func _Upload_GetCdnFile_Handler(srv interface{}, ctx context.Context, req *UploadGetCdnFileRequest) (UploadCdnFileType, error) {
-	return srv.(UploadServer).GetCdnFile(ctx, req)
+func _Upload_GetCdnFile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadGetCdnFileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.getCdnFile: request %T is not *UploadGetCdnFileRequest", req)
+	}
+	return srv.(UploadServer).GetCdnFile(ctx, typedRequest)
 }
 
-func _Upload_GetCdnFileHashes_Handler(srv interface{}, ctx context.Context, req *UploadGetCdnFileHashesRequest) ([]*FileHash, error) {
-	return srv.(UploadServer).GetCdnFileHashes(ctx, req)
+func _Upload_GetCdnFile_EncodeResponse(e *mtproto.Encoder, response UploadCdnFileType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed upload.CdnFile is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Upload_GetFile_Handler(srv interface{}, ctx context.Context, req *UploadGetFileRequest) (UploadFileType, error) {
-	return srv.(UploadServer).GetFile(ctx, req)
+func _Upload_GetCdnFileHashes_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadGetCdnFileHashesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.getCdnFileHashes: request %T is not *UploadGetCdnFileHashesRequest", req)
+	}
+	return srv.(UploadServer).GetCdnFileHashes(ctx, typedRequest)
 }
 
-func _Upload_GetFileHashes_Handler(srv interface{}, ctx context.Context, req *UploadGetFileHashesRequest) ([]*FileHash, error) {
-	return srv.(UploadServer).GetFileHashes(ctx, req)
+func _Upload_GetCdnFileHashes_EncodeResponse(e *mtproto.Encoder, response []*FileHash) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Upload_GetWebFile_Handler(srv interface{}, ctx context.Context, req *UploadGetWebFileRequest) (*UploadWebFile, error) {
-	return srv.(UploadServer).GetWebFile(ctx, req)
+func _Upload_GetFile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadGetFileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.getFile: request %T is not *UploadGetFileRequest", req)
+	}
+	return srv.(UploadServer).GetFile(ctx, typedRequest)
 }
 
-func _Upload_ReuploadCdnFile_Handler(srv interface{}, ctx context.Context, req *UploadReuploadCdnFileRequest) ([]*FileHash, error) {
-	return srv.(UploadServer).ReuploadCdnFile(ctx, req)
+func _Upload_GetFile_EncodeResponse(e *mtproto.Encoder, response UploadFileType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed upload.File is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Upload_SaveBigFilePart_Handler(srv interface{}, ctx context.Context, req *UploadSaveBigFilePartRequest) (bool, error) {
-	return srv.(UploadServer).SaveBigFilePart(ctx, req)
+func _Upload_GetFileHashes_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadGetFileHashesRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.getFileHashes: request %T is not *UploadGetFileHashesRequest", req)
+	}
+	return srv.(UploadServer).GetFileHashes(ctx, typedRequest)
 }
 
-func _Upload_SaveFilePart_Handler(srv interface{}, ctx context.Context, req *UploadSaveFilePartRequest) (bool, error) {
-	return srv.(UploadServer).SaveFilePart(ctx, req)
+func _Upload_GetFileHashes_EncodeResponse(e *mtproto.Encoder, response []*FileHash) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Upload_GetWebFile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadGetWebFileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.getWebFile: request %T is not *UploadGetWebFileRequest", req)
+	}
+	return srv.(UploadServer).GetWebFile(ctx, typedRequest)
+}
+
+func _Upload_GetWebFile_EncodeResponse(e *mtproto.Encoder, response *UploadWebFile) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Upload_ReuploadCdnFile_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadReuploadCdnFileRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.reuploadCdnFile: request %T is not *UploadReuploadCdnFileRequest", req)
+	}
+	return srv.(UploadServer).ReuploadCdnFile(ctx, typedRequest)
+}
+
+func _Upload_ReuploadCdnFile_EncodeResponse(e *mtproto.Encoder, response []*FileHash) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Upload_SaveBigFilePart_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadSaveBigFilePartRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.saveBigFilePart: request %T is not *UploadSaveBigFilePartRequest", req)
+	}
+	return srv.(UploadServer).SaveBigFilePart(ctx, typedRequest)
+}
+
+func _Upload_SaveBigFilePart_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Upload_SaveFilePart_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UploadSaveFilePartRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("upload.saveFilePart: request %T is not *UploadSaveFilePartRequest", req)
+	}
+	return srv.(UploadServer).SaveFilePart(ctx, typedRequest)
+}
+
+func _Upload_SaveFilePart_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Upload_ServiceDesc is the static descriptor for the UploadServer service.
@@ -7499,52 +20165,92 @@ var Upload_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*UploadServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCdnFile",
 			ConstructorID: 0x395f69da,
 			NewRequest:    func() tlrpc.TLObject { return &UploadGetCdnFileRequest{} },
 			Handler:       _Upload_GetCdnFile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UploadCdnFileType](response, layer, limits, _Upload_GetCdnFile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetCdnFileHashes",
 			ConstructorID: 0x91dc3f31,
 			NewRequest:    func() tlrpc.TLObject { return &UploadGetCdnFileHashesRequest{} },
 			Handler:       _Upload_GetCdnFileHashes_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*FileHash](response, layer, limits, _Upload_GetCdnFileHashes_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFile",
 			ConstructorID: 0xbe5335be,
 			NewRequest:    func() tlrpc.TLObject { return &UploadGetFileRequest{} },
 			Handler:       _Upload_GetFile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UploadFileType](response, layer, limits, _Upload_GetFile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFileHashes",
 			ConstructorID: 0x9156982a,
 			NewRequest:    func() tlrpc.TLObject { return &UploadGetFileHashesRequest{} },
 			Handler:       _Upload_GetFileHashes_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*FileHash](response, layer, limits, _Upload_GetFileHashes_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetWebFile",
 			ConstructorID: 0x24e6818d,
 			NewRequest:    func() tlrpc.TLObject { return &UploadGetWebFileRequest{} },
 			Handler:       _Upload_GetWebFile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*UploadWebFile](response, layer, limits, _Upload_GetWebFile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "ReuploadCdnFile",
 			ConstructorID: 0x9b2754a8,
 			NewRequest:    func() tlrpc.TLObject { return &UploadReuploadCdnFileRequest{} },
 			Handler:       _Upload_ReuploadCdnFile_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]*FileHash](response, layer, limits, _Upload_ReuploadCdnFile_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveBigFilePart",
 			ConstructorID: 0xde7b673d,
 			NewRequest:    func() tlrpc.TLObject { return &UploadSaveBigFilePartRequest{} },
 			Handler:       _Upload_SaveBigFilePart_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Upload_SaveBigFilePart_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SaveFilePart",
 			ConstructorID: 0xb304a621,
 			NewRequest:    func() tlrpc.TLObject { return &UploadSaveFilePartRequest{} },
 			Handler:       _Upload_SaveFilePart_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Upload_SaveFilePart_EncodeResponse)
+			},
 		},
 	},
 }
@@ -7561,28 +20267,134 @@ func RegisterUploadServer(s *tlrpc.Server, srv UploadServer) {
 	s.RegisterService(Upload_ServiceDesc, srv)
 }
 
-func _Users_GetFullUser_Handler(srv interface{}, ctx context.Context, req *UsersGetFullUserRequest) (*UsersUserFull, error) {
-	return srv.(UsersServer).GetFullUser(ctx, req)
+func _Users_GetFullUser_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UsersGetFullUserRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("users.getFullUser: request %T is not *UsersGetFullUserRequest", req)
+	}
+	return srv.(UsersServer).GetFullUser(ctx, typedRequest)
 }
 
-func _Users_GetRequirementsToContact_Handler(srv interface{}, ctx context.Context, req *UsersGetRequirementsToContactRequest) ([]RequirementToContactType, error) {
-	return srv.(UsersServer).GetRequirementsToContact(ctx, req)
+func _Users_GetFullUser_EncodeResponse(e *mtproto.Encoder, response *UsersUserFull) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Users_GetSavedMusic_Handler(srv interface{}, ctx context.Context, req *UsersGetSavedMusicRequest) (UsersSavedMusicType, error) {
-	return srv.(UsersServer).GetSavedMusic(ctx, req)
+func _Users_GetRequirementsToContact_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UsersGetRequirementsToContactRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("users.getRequirementsToContact: request %T is not *UsersGetRequirementsToContactRequest", req)
+	}
+	return srv.(UsersServer).GetRequirementsToContact(ctx, typedRequest)
 }
 
-func _Users_GetSavedMusicByID_Handler(srv interface{}, ctx context.Context, req *UsersGetSavedMusicByIDRequest) (UsersSavedMusicType, error) {
-	return srv.(UsersServer).GetSavedMusicByID(ctx, req)
+func _Users_GetRequirementsToContact_EncodeResponse(e *mtproto.Encoder, response []RequirementToContactType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed RequirementToContact is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func _Users_GetUsers_Handler(srv interface{}, ctx context.Context, req *UsersGetUsersRequest) ([]UserType, error) {
-	return srv.(UsersServer).GetUsers(ctx, req)
+func _Users_GetSavedMusic_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UsersGetSavedMusicRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("users.getSavedMusic: request %T is not *UsersGetSavedMusicRequest", req)
+	}
+	return srv.(UsersServer).GetSavedMusic(ctx, typedRequest)
 }
 
-func _Users_SetSecureValueErrors_Handler(srv interface{}, ctx context.Context, req *UsersSetSecureValueErrorsRequest) (bool, error) {
-	return srv.(UsersServer).SetSecureValueErrors(ctx, req)
+func _Users_GetSavedMusic_EncodeResponse(e *mtproto.Encoder, response UsersSavedMusicType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed users.SavedMusic is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Users_GetSavedMusicByID_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UsersGetSavedMusicByIDRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("users.getSavedMusicByID: request %T is not *UsersGetSavedMusicByIDRequest", req)
+	}
+	return srv.(UsersServer).GetSavedMusicByID(ctx, typedRequest)
+}
+
+func _Users_GetSavedMusicByID_EncodeResponse(e *mtproto.Encoder, response UsersSavedMusicType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed users.SavedMusic is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Users_GetUsers_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UsersGetUsersRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("users.getUsers: request %T is not *UsersGetUsersRequest", req)
+	}
+	return srv.(UsersServer).GetUsers(ctx, typedRequest)
+}
+
+func _Users_GetUsers_EncodeResponse(e *mtproto.Encoder, response []UserType) error {
+	if err := func() error {
+		if err := e.EnterObject(); err != nil {
+			return err
+		}
+		defer e.LeaveObject()
+		if err := e.WriteVectorHeader(len(response)); err != nil {
+			return err
+		}
+		for _, element := range response {
+			if element == nil {
+				return fmt.Errorf("required boxed User is nil")
+			}
+			if err := element.SerializeTL(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Users_SetSecureValueErrors_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*UsersSetSecureValueErrorsRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("users.setSecureValueErrors: request %T is not *UsersSetSecureValueErrorsRequest", req)
+	}
+	return srv.(UsersServer).SetSecureValueErrors(ctx, typedRequest)
+}
+
+func _Users_SetSecureValueErrors_EncodeResponse(e *mtproto.Encoder, response bool) error {
+	if err := e.WriteBool(response); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Users_ServiceDesc is the static descriptor for the UsersServer service.
@@ -7592,40 +20404,70 @@ var Users_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*UsersServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetFullUser",
 			ConstructorID: 0xb60f5918,
 			NewRequest:    func() tlrpc.TLObject { return &UsersGetFullUserRequest{} },
 			Handler:       _Users_GetFullUser_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*UsersUserFull](response, layer, limits, _Users_GetFullUser_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetRequirementsToContact",
 			ConstructorID: 0xd89a83a3,
 			NewRequest:    func() tlrpc.TLObject { return &UsersGetRequirementsToContactRequest{} },
 			Handler:       _Users_GetRequirementsToContact_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]RequirementToContactType](response, layer, limits, _Users_GetRequirementsToContact_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedMusic",
 			ConstructorID: 0x788d7fe3,
 			NewRequest:    func() tlrpc.TLObject { return &UsersGetSavedMusicRequest{} },
 			Handler:       _Users_GetSavedMusic_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UsersSavedMusicType](response, layer, limits, _Users_GetSavedMusic_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetSavedMusicByID",
 			ConstructorID: 0x7573a4e9,
 			NewRequest:    func() tlrpc.TLObject { return &UsersGetSavedMusicByIDRequest{} },
 			Handler:       _Users_GetSavedMusicByID_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[UsersSavedMusicType](response, layer, limits, _Users_GetSavedMusicByID_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "GetUsers",
 			ConstructorID: 0x0d91a548,
 			NewRequest:    func() tlrpc.TLObject { return &UsersGetUsersRequest{} },
 			Handler:       _Users_GetUsers_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[[]UserType](response, layer, limits, _Users_GetUsers_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "SetSecureValueErrors",
 			ConstructorID: 0x90c894b5,
 			NewRequest:    func() tlrpc.TLObject { return &UsersSetSecureValueErrorsRequest{} },
 			Handler:       _Users_SetSecureValueErrors_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[bool](response, layer, limits, _Users_SetSecureValueErrors_EncodeResponse)
+			},
 		},
 	},
 }

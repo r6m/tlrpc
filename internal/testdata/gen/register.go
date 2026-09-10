@@ -7,15 +7,43 @@ package gen
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/mtproto"
 )
 
-func _Catalog_Resolve_Handler(srv interface{}, ctx context.Context, req *CatalogResolveRequest) (AssetType, error) {
-	return srv.(CatalogServer).Resolve(ctx, req)
+func _Catalog_Resolve_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*CatalogResolveRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("catalog.resolve: request %T is not *CatalogResolveRequest", req)
+	}
+	return srv.(CatalogServer).Resolve(ctx, typedRequest)
 }
 
-func _Catalog_Search_Handler(srv interface{}, ctx context.Context, req *CatalogSearchRequest) (*CatalogPage, error) {
-	return srv.(CatalogServer).Search(ctx, req)
+func _Catalog_Resolve_EncodeResponse(e *mtproto.Encoder, response AssetType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed Asset is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Catalog_Search_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*CatalogSearchRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("catalog.search: request %T is not *CatalogSearchRequest", req)
+	}
+	return srv.(CatalogServer).Search(ctx, typedRequest)
+}
+
+func _Catalog_Search_EncodeResponse(e *mtproto.Encoder, response *CatalogPage) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Catalog_ServiceDesc is the static descriptor for the CatalogServer service.
@@ -25,16 +53,26 @@ var Catalog_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*CatalogServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Resolve",
 			ConstructorID: 0xb2200002,
 			NewRequest:    func() tlrpc.TLObject { return &CatalogResolveRequest{} },
 			Handler:       _Catalog_Resolve_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[AssetType](response, layer, limits, _Catalog_Resolve_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Search",
 			ConstructorID: 0xb2200001,
 			NewRequest:    func() tlrpc.TLObject { return &CatalogSearchRequest{} },
 			Handler:       _Catalog_Search_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*CatalogPage](response, layer, limits, _Catalog_Search_EncodeResponse)
+			},
 		},
 	},
 }
@@ -51,12 +89,40 @@ func RegisterCatalogServer(s *tlrpc.Server, srv CatalogServer) {
 	s.RegisterService(Catalog_ServiceDesc, srv)
 }
 
-func _Workflow_Reject_Handler(srv interface{}, ctx context.Context, req *WorkflowRejectRequest) (JobStatusType, error) {
-	return srv.(WorkflowServer).Reject(ctx, req)
+func _Workflow_Reject_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*WorkflowRejectRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("workflow.reject: request %T is not *WorkflowRejectRequest", req)
+	}
+	return srv.(WorkflowServer).Reject(ctx, typedRequest)
 }
 
-func _Workflow_Submit_Handler(srv interface{}, ctx context.Context, req *WorkflowSubmitRequest) (JobStatusType, error) {
-	return srv.(WorkflowServer).Submit(ctx, req)
+func _Workflow_Reject_EncodeResponse(e *mtproto.Encoder, response JobStatusType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed JobStatus is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
+}
+
+func _Workflow_Submit_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*WorkflowSubmitRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("workflow.submit: request %T is not *WorkflowSubmitRequest", req)
+	}
+	return srv.(WorkflowServer).Submit(ctx, typedRequest)
+}
+
+func _Workflow_Submit_EncodeResponse(e *mtproto.Encoder, response JobStatusType) error {
+	if response == nil {
+		return fmt.Errorf("required boxed JobStatus is nil")
+	}
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Workflow_ServiceDesc is the static descriptor for the WorkflowServer service.
@@ -66,16 +132,26 @@ var Workflow_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*WorkflowServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Reject",
 			ConstructorID: 0xb2200004,
 			NewRequest:    func() tlrpc.TLObject { return &WorkflowRejectRequest{} },
 			Handler:       _Workflow_Reject_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[JobStatusType](response, layer, limits, _Workflow_Reject_EncodeResponse)
+			},
 		},
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Submit",
 			ConstructorID: 0xb2200003,
 			NewRequest:    func() tlrpc.TLObject { return &WorkflowSubmitRequest{} },
 			Handler:       _Workflow_Submit_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[JobStatusType](response, layer, limits, _Workflow_Submit_EncodeResponse)
+			},
 		},
 	},
 }

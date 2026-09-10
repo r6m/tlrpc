@@ -379,6 +379,9 @@ func ReadBytes(r io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	first := sizeBuf[0]
+	if first == 255 {
+		return nil, ErrInvalidMessageLength
+	}
 
 	var length int
 	var headerSize int

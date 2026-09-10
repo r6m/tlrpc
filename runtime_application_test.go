@@ -85,6 +85,14 @@ func runtimeApplicationTestHandler(service interface{}, ctx context.Context, req
 	return service.(runtimeApplicationTestService).Call(ctx, request)
 }
 
+var runtimeApplicationMethodHandler = BindMethod(runtimeApplicationTestHandler)
+
+func encodeRuntimeApplicationTestResponse(response any, layer int, limits EncodeLimits) ([]byte, error) {
+	return EncodeTypedResponse(response, layer, limits, func(encoder *mtproto.Encoder, value *runtimeApplicationTestResponse) error {
+		return value.SerializeTL(encoder)
+	})
+}
+
 func registerRuntimeApplicationTestService(server *Server, impl runtimeApplicationTestService) {
 	server.RegisterService(ServiceDesc{
 		ServiceName: "custom.SchemaService",
@@ -97,7 +105,7 @@ func registerRuntimeApplicationTestService(server *Server, impl runtimeApplicati
 				NewRequest: func() TLObject {
 					return &runtimeApplicationTestRequest{}
 				},
-				Handler: runtimeApplicationTestHandler,
+				Handler: runtimeApplicationMethodHandler, EncodeResponse: encodeRuntimeApplicationTestResponse,
 			},
 		},
 	}, impl)

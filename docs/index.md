@@ -14,7 +14,7 @@ TL/MTProto client <- TCP or WebSocket <- Runtime v2
 Each page has one responsibility:
 
 1. [Requirements](./requirements.md) is the normative framework/application
-   boundary and the v0.12.0 release contract.
+   boundary and current source-tree contract.
 2. [Architecture](./architecture.md) explains ownership and the end-to-end
    Runtime v2 request, session, replay, and write paths.
 3. [Implementation](./implementation.md) documents current public APIs,
@@ -26,6 +26,12 @@ Each page has one responsibility:
 
 Historical release changes are in [CHANGELOG.md](../CHANGELOG.md).
 
+The [distinct layer contracts refactor](./distinct-layer-contracts-plan.md)
+defines stable boxed-type interfaces, source-compatible concrete initializers,
+generated codec dispatch, strict method lifetimes and consumer migration gates.
+Framework implementation and validation are complete in the working tree;
+tgserver regeneration and migration are a separate follow-up.
+
 ## Scope at a glance
 
 TLRPC provides schema parsing/generation, generated registration, MTProto
@@ -36,3 +42,8 @@ live push.
 Applications provide service behavior, user authentication and authorization,
 durable product state, recipient policy, durable update logs/difference APIs,
 cross-process fanout, storage, HTTP APIs, and deployment policy.
+
+The [codec performance plan](./codec-performance-plan.md) records the implemented
+codec, dispatch and buffer-ownership improvements. The
+[performance report](./performance/README.md) includes measured gains, tradeoffs,
+raw results, and the zero-copy decision.

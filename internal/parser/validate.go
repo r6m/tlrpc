@@ -113,7 +113,7 @@ func (v *Validator) validateUniqueFunctionIDs() {
 func disjointConstructorVariants(constructors []*Constructor) bool {
 	for i := range constructors {
 		for j := i + 1; j < len(constructors); j++ {
-			if layerRangesOverlap(constructors[i].MinLayer, constructors[i].MaxLayer, constructors[j].MinLayer, constructors[j].MaxLayer) {
+			if declarationIntervalSetsOverlap(constructors[i].Intervals, constructors[j].Intervals) {
 				return false
 			}
 		}
@@ -127,12 +127,22 @@ func disjointFunctionVariants(functions []*FuncDecl) bool {
 			if serializerPrefixPair(*functions[i], *functions[j]) {
 				continue
 			}
-			if layerRangesOverlap(functions[i].MinLayer, functions[i].MaxLayer, functions[j].MinLayer, functions[j].MaxLayer) {
+			if declarationIntervalSetsOverlap(functions[i].Intervals, functions[j].Intervals) {
 				return false
 			}
 		}
 	}
 	return true
+}
+
+func declarationIntervalSetsOverlap(first, second []LayerInterval) bool {
+	if len(first) == 0 {
+		first = []LayerInterval{{}}
+	}
+	if len(second) == 0 {
+		second = []LayerInterval{{}}
+	}
+	return intervalSetsOverlap(first, second)
 }
 
 func layerRangesOverlap(firstMin, firstMax, secondMin, secondMax int) bool {

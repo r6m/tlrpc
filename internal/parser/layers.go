@@ -146,6 +146,59 @@ func ResolveLayer(base *Schema, baseLayer, targetLayer int, differences []LayerD
 	return rebuildSchema(targetLayer, constructors, functions), nil
 }
 
+// ResolveSelectedLayer resolves one generation target from a baseline that may
+// contain explicitly accepted historical function declarations. Historical
+// declarations are excluded while canonical differences are applied, then only
+// the declarations accepting targetLayer are added to the selected schema.
+func ResolveSelectedLayer(base *Schema, baseLayer, targetLayer int, differences []LayerDifference) (*Schema, error) {
+	if base == nil {
+		return nil, fmt.Errorf("resolve selected layer: base schema is nil")
+	}
+
+	for _, function := range base.Functions {
+		if function.VariantLayer != 0 {
+			if _, err := ResolveLayers(base, baseLayer, differences); err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+	canonicalBase := cloneSchema(base)
+	canonicalBase.Functions = canonicalBase.Functions[:0]
+	for _, function := range base.Functions {
+		if function.VariantLayer == 0 {
+			canonicalBase.Functions = append(canonicalBase.Functions, cloneFunction(function))
+		}
+	}
+	canonical, err := ResolveLayer(canonicalBase, baseLayer, targetLayer, differences)
+	if err != nil {
+		return nil, err
+	}
+
+	maxLayer := baseLayer
+	if len(differences) > 0 {
+		maxLayer = differences[len(differences)-1].Layer
+	}
+	if err := validateHistoricalAcceptance(base, baseLayer, maxLayer, "resolve selected layer"); err != nil {
+		return nil, err
+	}
+
+	withHistorical := cloneSchema(canonical)
+	for _, function := range base.Functions {
+		if function.VariantLayer != 0 {
+			withHistorical.Functions = append(withHistorical.Functions, cloneFunction(function))
+		}
+	}
+	selected, err := SelectBaselineLayer(withHistorical, targetLayer)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateBareLayouts(selected); err != nil {
+		return nil, fmt.Errorf("resolve selected layer at layer %d: %w", targetLayer, err)
+	}
+	return selected, nil
+}
+
 func validateLayerDifference(difference LayerDifference) error {
 	if difference.Schema == nil {
 		return fmt.Errorf("%s: schema is nil", layerDifferenceLabel(difference))
@@ -365,6 +418,7 @@ func cloneConstructor(constructor Constructor) Constructor {
 	constructor.Params = cloneParameters(constructor.Params)
 	constructor.ResultType = cloneTypeRef(constructor.ResultType)
 	constructor.VectorCount = cloneStringPointer(constructor.VectorCount)
+	constructor.Intervals = cloneIntervals(constructor.Intervals)
 	return constructor
 }
 
@@ -380,6 +434,9 @@ func cloneFunction(function FuncDecl) FuncDecl {
 	function.GenericParams = append([]GenericParam(nil), function.GenericParams...)
 	function.Params = cloneParameters(function.Params)
 	function.ResultType = cloneTypeRef(function.ResultType)
+	function.Intervals = cloneIntervals(function.Intervals)
+	function.RequestIntervals = cloneIntervals(function.RequestIntervals)
+	function.AcceptIntervals = cloneIntervals(function.AcceptIntervals)
 	return function
 }
 

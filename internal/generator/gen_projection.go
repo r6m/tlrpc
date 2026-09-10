@@ -29,26 +29,22 @@ type projectionConcrete struct {
 
 func (g *ProjectionGenerator) validateTargetRanges(name string, targets []projectionConcrete) error {
 	for i := range targets {
-		leftMin, leftMax := targets[i].constructor.OutputMinLayer, targets[i].constructor.OutputMaxLayer
-		if leftMin == 0 {
-			leftMin = g.schema.BaseLayer
-		}
-		if leftMax == 0 {
-			leftMax = g.schema.Layer
-		}
-		if leftMin > leftMax {
-			return fmt.Errorf("generate projection: constructor %q has invalid output range %d..%d", name, leftMin, leftMax)
-		}
-		for j := i + 1; j < len(targets); j++ {
-			rightMin, rightMax := targets[j].constructor.OutputMinLayer, targets[j].constructor.OutputMaxLayer
-			if rightMin == 0 {
-				rightMin = g.schema.BaseLayer
+		for _, left := range targets[i].constructor.Intervals {
+			if left.MaxLayer == 0 {
+				left.MaxLayer = g.schema.Layer
 			}
-			if rightMax == 0 {
-				rightMax = g.schema.Layer
+			if left.MinLayer <= 0 || left.MaxLayer < left.MinLayer {
+				return fmt.Errorf("generate projection: constructor %q has invalid output range %d..%d", name, left.MinLayer, left.MaxLayer)
 			}
-			if rightMin <= leftMax && leftMin <= rightMax {
-				return fmt.Errorf("generate projection: constructor %q has overlapping output ranges for %s and %s", name, targets[i].goName, targets[j].goName)
+			for j := i + 1; j < len(targets); j++ {
+				for _, right := range targets[j].constructor.Intervals {
+					if right.MaxLayer == 0 {
+						right.MaxLayer = g.schema.Layer
+					}
+					if right.MinLayer <= left.MaxLayer && left.MinLayer <= right.MaxLayer {
+						return fmt.Errorf("generate projection: constructor %q has overlapping output ranges for %s and %s", name, targets[i].goName, targets[j].goName)
+					}
+				}
 			}
 		}
 	}
@@ -87,10 +83,6 @@ func (g *ProjectionGenerator) Generate(schema *parser.Schema) error {
 	}
 	for name := range g.byName {
 		sort.Slice(g.byName[name], func(i, j int) bool {
-			left, right := g.byName[name][i].constructor, g.byName[name][j].constructor
-			if left.OutputMinLayer != right.OutputMinLayer {
-				return left.OutputMinLayer < right.OutputMinLayer
-			}
 			return g.byName[name][i].goName < g.byName[name][j].goName
 		})
 		if err := g.validateTargetRanges(name, g.byName[name]); err != nil {
@@ -147,9 +139,7 @@ func tlProjectionError(path []string, format string, args ...interface{}) error 
 	return fmt.Errorf("project TL object at %%v: %%s", path, fmt.Sprintf(format, args...))
 }
 
-func tlProjectionLayerSupports(layer, minLayer, maxLayer int) bool {
-	return (minLayer == 0 || layer >= minLayer) && (maxLayer == 0 || layer <= maxLayer)
-}
+
 
 `, baseLayer, baseLayer, maxLayer, baseLayer, maxLayer)
 	return err
@@ -250,7 +240,7 @@ func projectTLObject(source tlrpc.TLObject, targetLayer int, hook TLProjectionHo
 	}
 
 	_, err := io.WriteString(g.out, `	default:
-		return nil, tlProjectionError(path, "unsupported source type %T", source)
+		return nil, tlProjectionError(path, "unsupported source type %T", value)
 	}
 }
 
@@ -268,7 +258,7 @@ func (g *ProjectionGenerator) writeConcreteProjection(source projectionConcrete,
 		return err
 	}
 	for _, target := range targets {
-		if _, err := fmt.Fprintf(g.out, "%scase tlProjectionLayerSupports(targetLayer, %d, %d):\n", indent, target.constructor.OutputMinLayer, target.constructor.OutputMaxLayer); err != nil {
+		if _, err := fmt.Fprintf(g.out, "%scase %s:\n", indent, layerSupportExpression("targetLayer", target.constructor.Intervals)); err != nil {
 			return err
 		}
 		var fields bytes.Buffer
@@ -333,24 +323,7 @@ func (g *ProjectionGenerator) writeFields(source, target projectionConcrete, sou
 			}
 			continue
 		}
-		if targetField.MinLayer != 0 || targetField.MaxLayer != 0 {
-			if _, err := fmt.Fprintf(g.out, "%sif tlProjectionLayerSupports(targetLayer, %d, %d) {\n", indent, targetField.MinLayer, targetField.MaxLayer); err != nil {
-				return false, err
-			}
-			if err := g.writeProjectValue(field, targetField, fieldExpr, targetName+"."+g.namer.FieldName(targetField.Name), field.Name, indent+"\t"); err != nil {
-				return false, err
-			}
-			if _, err := fmt.Fprintf(g.out, "%s} else {\n", indent); err != nil {
-				return false, err
-			}
-			if _, err := g.writeRejectNonzero(field, fieldExpr, field.Name, indent+"\t"); err != nil {
-				return false, err
-			}
-			if _, err := fmt.Fprintf(g.out, "%s}\n", indent); err != nil {
-				return false, err
-			}
-			continue
-		}
+
 		if err := g.writeProjectValue(field, targetField, fieldExpr, targetName+"."+g.namer.FieldName(targetField.Name), field.Name, indent); err != nil {
 			return false, err
 		}
@@ -359,12 +332,7 @@ func (g *ProjectionGenerator) writeFields(source, target projectionConcrete, sou
 		if _, exists := sourceByName[field.Name]; exists || projectionOptional(field) {
 			continue
 		}
-		if field.MinLayer != 0 || field.MaxLayer != 0 {
-			if _, err := fmt.Fprintf(g.out, "%sif tlProjectionLayerSupports(targetLayer, %d, %d) {\n%s\treturn nil, tlProjectionError(tlProjectionChildPath(path, %q), \"required target field is missing; projection hook must provide it\")\n%s}\n", indent, field.MinLayer, field.MaxLayer, indent, field.Name, indent); err != nil {
-				return false, err
-			}
-			continue
-		}
+
 		if _, err := fmt.Fprintf(g.out, "%sreturn nil, tlProjectionError(tlProjectionChildPath(path, %q), \"required target field is missing; projection hook must provide it\")\n", indent, field.Name); err != nil {
 			return false, err
 		}
@@ -392,7 +360,7 @@ func projectionTypesCompatible(source, target parser.TypeRef) bool {
 	if source.IsVector || target.IsVector {
 		return source.IsVector && target.IsVector && source.Generic != nil && target.Generic != nil && projectionTypesCompatible(*source.Generic, *target.Generic)
 	}
-	return source.Name == target.Name && source.Namespace == target.Namespace && source.IsTypeVar == target.IsTypeVar
+	return source.Name == target.Name && source.Namespace == target.Namespace && source.IsTypeVar == target.IsTypeVar && source.IsBare == target.IsBare
 }
 
 func (g *ProjectionGenerator) writeRejectIncompatible(source, target parser.Parameter, sourceExpr, fieldName, indent string) (bool, error) {
@@ -589,10 +557,7 @@ func (g *ProjectionGenerator) concreteTypes() ([]projectionConcrete, error) {
 			if len(constructor.GenericParams) != 0 || constructor.ResultType.IsTypeVar || g.types.isBaseType(&constructor) {
 				continue
 			}
-			goName := constructorName(g.namer, constructor)
-			if len(declaration.Constructors) == 1 {
-				goName = typeName(g.namer, declaration.Name, declaration.VariantLayer)
-			}
+			goName := concreteTypeName(g.namer, g.schema, constructor)
 			if _, exists := seen[goName]; exists {
 				continue
 			}

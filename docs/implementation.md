@@ -1,6 +1,6 @@
 # Implementation
 
-This page documents the current v0.12.0 code surface. Requirements are in
+This page documents the current source-tree API. Requirements are in
 [requirements.md](./requirements.md); ownership and flow are in
 [architecture.md](./architecture.md).
 
@@ -40,8 +40,8 @@ earlier declarations and new names append. Removals use exact directives:
 ```
 
 Differences after the selected target are not applied. Generation validates
-duplicate domains and removal targets. Runtime dispatch remains constructor
-driven and does not select layers.
+duplicate domains and removal targets. Single-target contracts are selected during generation; runtime dispatch
+matches the method IDs in that selected schema.
 
 Multi-layer mode emits one package for an exact base/difference history:
 
@@ -55,35 +55,38 @@ tlrpc-gen \
   --package=gen
 ```
 
-The generated package preserves unsuffixed base names and emits suffixes only
-for changed requests or incompatible concrete shapes. Response-only changes do
-not create service methods. Same-ID request variants receive inclusive
-`MinLayer`/`MaxLayer` descriptor ranges; zero means unbounded. A sole historical
-form may remain unbounded, while same-ID forms must have disjoint ranges.
+Multi-layer output uses a stable family interface for every boxed application
+result type, even when only the base layer or one constructor is selected.
+For example, `Channel.AdminRights ChatAdminRightsType` accepts concrete
+`*ChatAdminRights` and `*ChatAdminRightsLayer229` values. Existing old literals
+still compile when the next layer is added. Direct field reads through the
+interface require a type switch or domain conversion. Scalars retain their
+native mappings; bare references keep their statically resolved wire layouts.
 
-A type that is a union in any selected snapshot remains one unsuffixed union
-for the complete history. Changed same-name constructors receive their own
-`Layer<N>` concrete variants inside that union, and removed constructors remain
-available for historical decoding. References to the union stay unsuffixed.
-Incompatible single-constructor types may propagate a required static parent
-shape, but propagation stops when it reaches a stable union owner.
+Each changed constructor gets an exact struct and codec, including same-ID
+optional-field additions. Boxed references use family identity, so child changes
+do not cascade into parent structs, request types or service handlers. A changed
+method ID, request layout or declared result family/shape does create a handler
+variant. Response-only changes reuse an unchanged request struct. All layer
+variants share the category files; there are no per-layer Go files.
 
-Additive flagged objects use one superset struct. Their codecs obtain the wire
-layer from `mtproto.TLLayer`; layer zero means the base layer. Decoding rejects
-flag bits unknown to the selected layer, and encoding omits fields unavailable
-at that layer. Layered nested decoding uses `NewConstructorForLayer`, and
-same-ID request decoding uses `NewMethodRequestForLayer`.
+Methods and constructors retain their actual layer intervals, including gaps
+when an identical contract disappears and returns. Replaced/removed unique IDs
+are no longer implicitly accepted by newer layers. Historical baseline methods
+must declare their exact input availability with `// @tlrpc accept-layers 228-229` as well as their naming provenance `// @tlrpc variant-layer <N>`.
+The baseline remains the supported floor, not a claim that all older sessions
+are supported. Extending the supported layer history requires reviewing these
+bounded exceptions.
 
-The base schema may contain multiple accepted constructor IDs for one method.
-It must contain exactly one unannotated canonical declaration and place
-`// @tlrpc variant-layer <N>` immediately before each historical declaration.
-IDs and positive variant layers must be unique, and a variant layer cannot
-exceed the declared base layer. The annotation controls generated name
-provenance, not session acceptance: every form included in the baseline remains
-available from the generated package's base layer upward. The base is the
-package's supported floor, not a universal TL protocol minimum. Generated names
-retain provenance, for example `AuthSignUpRequestLayer172` and
-`UpdatesGetDifferenceRequestLayer158`.
+Nested boxed decoding reads the constructor ID, calls `NewConstructorForLayer`
+with the effective layer, checks the expected family interface, then calls the
+selected object's generated field decoder without replaying the constructor.
+Encoding uses `SerializeTL` through the
+family interface. Fixed codecs enforce availability and known flags themselves;
+no application serialization type switch or implicit field-dropping is needed.
+Standalone generated APIs interpret zero as the base layer. Runtime resolves
+unset layer to the package maximum and passes a nonzero effective layer for
+layered requests, replies and sending; future-layer capping remains unchanged.
 
 Layered output also provides `ProjectTLObject(source, targetLayer, hook)`. It
 recursively clones response objects, vectors, and unions into the target wire
@@ -106,8 +109,28 @@ For layered packages, `ServiceDesc.SchemaLayer` is the highest supported layer
 and each changed request variant carries its accepted range. Runtime v2 selects
 among same-ID request descriptors using the effective request layer, decodes
 the generated typed request, runs unary interceptors, invokes the typed method,
-and encodes its declared TL result. Generated unimplemented stubs return
+and invokes the generated `MethodDesc.EncodeResponse` callback. The callback
+uses `EncodeTypedResponse[T]` to check the exact declared Go return type after
+interceptors and run generated scalar, vector, or object encoding at the effective
+layer within the configured byte budget. A fixed `MethodHandler` adapter asserts
+the request type and directly calls the service method; invocation does not use
+`reflect.Call`. Handwritten descriptors use `BindMethod` for the same boundary.
+Registration rejects a missing encoder; there is no
+untyped fallback. Generated unimplemented stubs return
 structured unimplemented errors.
+
+Generated field codecs share concrete `mtproto.Encoder` and `mtproto.Decoder`
+cursors. The runtime supplies bounded append buffers and byte-backed decoders;
+public `SerializeTL(io.Writer)` and `DeserializeTL(io.Reader)` adapt streams into
+the same implementation. Nested calls reuse layer and budget state. Strings and
+byte fields are owned values. Decoding clears the receiver before its fields are
+read, so absent optional fields cannot survive reuse; a failed decode may leave a
+partially populated receiver. Vector declarations are checked against aggregate
+element budgets and minimum wire sizes before allocating capacity. TL string and
+byte lengths cannot exceed the wire format's 24-bit maximum.
+
+See [the performance plan](codec-performance-plan.md) for measurement gates and
+the distinction between internal buffer borrowing and service-visible ownership.
 
 Request context exposes immutable values such as layer, auth-key ID, client
 metadata, user binding, and semantic sender. `BindSessionUser` and
@@ -392,3 +415,13 @@ It includes an unauthenticated main session that has subscribed through a
 normal request, but excludes non-subscribing file/import sessions. The API is
 process-local; applications must retain polling or another durable recovery
 path when delivery is missed or the target is connected to another process.
+
+### Bare-layout limits
+
+Multi-layer generation supports acyclic, unambiguous bare fields and bare vector
+members through dedicated codecs that omit constructor tags. It rejects recursive
+bare dependencies, replacement of a bare family's constructor name, and bare
+method results, including bare result-vector members. Historical methods with
+bare dependencies must resolve to one concrete layout throughout their accepted
+intervals.
+Boxed recursive families remain supported and use bounded codec traversal.

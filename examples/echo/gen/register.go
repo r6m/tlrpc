@@ -7,11 +7,25 @@ package gen
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/r6m/tlrpc"
+	"github.com/r6m/tlrpc/mtproto"
 )
 
-func _Echo_Echo_Handler(srv interface{}, ctx context.Context, req *EchoEchoRequest) (*EchoResponse, error) {
-	return srv.(EchoServer).Echo(ctx, req)
+func _Echo_Echo_Handler(srv any, ctx context.Context, req tlrpc.TLObject) (any, error) {
+	typedRequest, ok := req.(*EchoEchoRequest)
+	if !ok || typedRequest == nil {
+		return nil, fmt.Errorf("echo.echo: request %T is not *EchoEchoRequest", req)
+	}
+	return srv.(EchoServer).Echo(ctx, typedRequest)
+}
+
+func _Echo_Echo_EncodeResponse(e *mtproto.Encoder, response *EchoResponse) error {
+	if err := response.SerializeTL(e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Echo_ServiceDesc is the static descriptor for the EchoServer service.
@@ -21,10 +35,15 @@ var Echo_ServiceDesc = tlrpc.ServiceDesc{
 	HandlerType: (*EchoServer)(nil),
 	Methods: []tlrpc.MethodDesc{
 		{
+			MinLayer:      0,
+			MaxLayer:      0,
 			MethodName:    "Echo",
 			ConstructorID: 0x5e1f91a2,
 			NewRequest:    func() tlrpc.TLObject { return &EchoEchoRequest{} },
 			Handler:       _Echo_Echo_Handler,
+			EncodeResponse: func(response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+				return tlrpc.EncodeTypedResponse[*EchoResponse](response, layer, limits, _Echo_Echo_EncodeResponse)
+			},
 		},
 	},
 }

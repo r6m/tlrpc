@@ -21,6 +21,16 @@ import (
 	"github.com/r6m/tlrpc/transport"
 )
 
+type compatSerializableResponse interface {
+	SerializeTL(io.Writer) error
+}
+
+func encodeCompatResponse[T compatSerializableResponse](response any, layer int, limits tlrpc.EncodeLimits) ([]byte, error) {
+	return tlrpc.EncodeTypedResponse(response, layer, limits, func(encoder *mtproto.Encoder, value T) error {
+		return value.SerializeTL(encoder)
+	})
+}
+
 type scenarioServer struct {
 	srv      *tlrpc.Server
 	tcpLis   transport.Listener

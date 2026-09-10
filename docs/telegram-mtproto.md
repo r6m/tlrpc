@@ -23,16 +23,19 @@ the client's declared layer, caps it at the generated maximum, and runtime
 dispatch uses that effective layer to select generated same-ID request and
 nested-constructor layouts.
 
-The multi-layer generator keeps unchanged definitions once, retains base-layer
-Go names, and versions changed incoming requests. Same-ID additive objects use
-layer-gated superset fields, so shared parents do not need variants solely for
-an added flag. A type that is a union in any selected Telegram layer remains
-one union containing all historical and current constructor variants; nested
-shape propagation stops there. Unknown flag bits are rejected against the
-selected known layer. Historical compatibility methods and removed union
-constructors remain available when supplied by the generated schema history.
-Output objects are recursively cloned by generated projection code; semantic
-conversions require an application hook.
+The multi-layer generator emits one stable interface per boxed TL result
+family, including singleton families, and one concrete struct per distinct
+constructor contract. Optional-field additions create variants even when an ID
+is reused. Boxed child variants do not force new parents or handlers. Bare
+references retain their fixed layouts. Generated factories select by ID and
+layer, check the expected family and invoke the selected codec.
+
+Historical wire contracts remain generated for their valid intervals, not
+implicitly accepted forever. Additional historical method acceptance requires
+bounded schema metadata independent of naming provenance. Unknown flag bits
+and wrong-layer objects are rejected. Explicit generated projection clones
+objects between representations; lossy conversion requires application hooks.
+All variants stay in the same generated category files.
 
 The repository's exact Telegram layer-228 schema is a compatibility fixture for
 parser/generator determinism and Runtime v2 tests. Custom projects neither

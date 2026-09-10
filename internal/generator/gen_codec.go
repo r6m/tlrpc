@@ -66,14 +66,14 @@ type MethodConstructorTemplateData struct {
 
 // codecTemplate generates static constructor and method maps
 const codecTemplate = `// Static constructor map for efficient decoding
-{{if .IsLayered}}
 func tlLayerSupports(layer, minLayer, maxLayer int) bool {
+	{{if .IsLayered}}
 	if layer == 0 {
 		layer = {{.BaseLayer}}
 	}
+	{{end}}
 	return (minLayer == 0 || layer >= minLayer) && (maxLayer == 0 || layer <= maxLayer)
 }
-{{end}}
 
 var staticConstructors = map[uint32]func() tlrpc.TLObject{
 	// Base MTProto types
@@ -115,7 +115,7 @@ var constructorLayerVariants = map[uint32][]tlConstructorLayerVariant{
 func NewConstructorForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
 	variants, hasLayerVariants := constructorLayerVariants[id]
 	for _, variant := range variants {
-		if layer == 0 || ((variant.minLayer == 0 || layer >= variant.minLayer) && (variant.maxLayer == 0 || layer <= variant.maxLayer)) {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
 			return variant.newObject(), true
 		}
 	}
@@ -154,7 +154,7 @@ var methodLayerVariants = map[uint32][]tlConstructorLayerVariant{
 // NewMethodRequestForLayer constructs a typed request wire variant.
 func NewMethodRequestForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
 	for _, variant := range methodLayerVariants[id] {
-		if layer == 0 || ((variant.minLayer == 0 || layer >= variant.minLayer) && (variant.maxLayer == 0 || layer <= variant.maxLayer)) {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
 			return variant.newObject(), true
 		}
 	}
@@ -210,14 +210,14 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 			if g.isBaseConstructor(only.Name) {
 				continue
 			}
-			emittedTypeByCtor[variantKey(only.Name, only.VariantLayer)] = typeName(g.namer, decl.Name, decl.VariantLayer)
+			emittedTypeByCtor[variantKey(only.Name, only.VariantLayer)] = concreteTypeName(g.namer, schema, only)
 			continue
 		}
 		for _, ctor := range decl.Constructors {
 			if g.isBaseConstructor(ctor.Name) {
 				continue
 			}
-			emittedTypeByCtor[variantKey(ctor.Name, ctor.VariantLayer)] = constructorName(g.namer, ctor)
+			emittedTypeByCtor[variantKey(ctor.Name, ctor.VariantLayer)] = concreteTypeName(g.namer, schema, ctor)
 		}
 	}
 	constructors := make([]parser.Constructor, 0, len(schema.Constructors))
@@ -233,7 +233,7 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 	}
 	sort.Slice(constructors, func(i, j int) bool {
 		if constructors[i].ID == constructors[j].ID {
-			return constructors[i].MinLayer < constructors[j].MinLayer
+			return declarationIntervals(constructors[i].Intervals)[0].MinLayer < declarationIntervals(constructors[j].Intervals)[0].MinLayer
 		}
 		return constructors[i].ID < constructors[j].ID
 	})
@@ -243,9 +243,11 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 		if !ok {
 			continue
 		}
-		generatedConstructors = append(generatedConstructors, GeneratedConstructorTemplateData{
-			ID: ctor.ID, Name: name, MinLayer: ctor.MinLayer, MaxLayer: ctor.MaxLayer,
-		})
+		for _, interval := range declarationIntervals(ctor.Intervals) {
+			generatedConstructors = append(generatedConstructors, GeneratedConstructorTemplateData{
+				ID: ctor.ID, Name: name, MinLayer: interval.MinLayer, MaxLayer: interval.MaxLayer,
+			})
+		}
 	}
 
 	// Build method constructors data
@@ -259,9 +261,11 @@ func (g *CodecGenerator) GenerateStatic(schema *parser.Schema) error {
 			}
 			methodName := fn.Name // Use full method name with service prefix
 			requestType := requestName(g.namer, fn)
-			methodConstructors = append(methodConstructors, MethodConstructorTemplateData{
-				ID: fn.ID, Name: methodName, Type: requestType, MinLayer: fn.MinLayer, MaxLayer: fn.MaxLayer,
-			})
+			for _, interval := range declarationIntervals(fn.Intervals) {
+				methodConstructors = append(methodConstructors, MethodConstructorTemplateData{
+					ID: fn.ID, Name: methodName, Type: requestType, MinLayer: interval.MinLayer, MaxLayer: interval.MaxLayer,
+				})
+			}
 		}
 	}
 

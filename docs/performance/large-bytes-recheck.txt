@@ -1,0 +1,91 @@
+Alternating before/after processes; 5 samples each, 500ms, cpu=1, p=1. Command: go test -p=1 . -run ^$ -bench ^BenchmarkEncodeMethodResponse$/^bytes$/^64KiB$ -benchmem -count=1 -benchtime=500ms -cpu=1
+
+before, pair 1
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  112935	      4958 ns/op	13218.14 MB/s	   73964 B/op	       9 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	1.119s
+
+after, pair 1
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  106248	      4866 ns/op	13468.90 MB/s	   73864 B/op	       3 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.813s
+
+after, pair 2
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  130856	      5041 ns/op	13000.35 MB/s	   73864 B/op	       3 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	1.420s
+
+before, pair 2
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  121670	      5451 ns/op	12021.89 MB/s	   73964 B/op	       9 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.927s
+
+before, pair 3
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  104581	      4949 ns/op	13243.14 MB/s	   73964 B/op	       9 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.791s
+
+after, pair 3
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  130500	      4727 ns/op	13863.47 MB/s	   73864 B/op	       3 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.893s
+
+after, pair 4
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  108658	      4765 ns/op	13754.43 MB/s	   73864 B/op	       3 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.803s
+
+before, pair 4
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  103734	      4948 ns/op	13245.24 MB/s	   73964 B/op	       9 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.801s
+
+before, pair 5
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  112516	      4931 ns/op	13291.75 MB/s	   73964 B/op	       9 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.824s
+
+after, pair 5
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkEncodeMethodResponse/bytes/64KiB         	  122977	      5114 ns/op	12814.77 MB/s	   73864 B/op	       3 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	0.915s

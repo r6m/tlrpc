@@ -4,7 +4,7 @@ import "io"
 
 // GenerateBaseAliases emits aliases for built-in TL primitive/object types.
 func GenerateBaseAliases(out io.Writer) error {
-	content := `// Aliases for built-in TL primitives provided by github.com/r6m/tlrpc/types.
+	content := `// Aliases for the runtime's built-in TL primitives.
 type BoolTrue = tltypes.BoolTrue
 type BoolFalse = tltypes.BoolFalse
 type True = tltypes.True

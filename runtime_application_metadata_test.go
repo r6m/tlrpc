@@ -21,7 +21,7 @@ func TestRuntimeApplicationClientMetadataPresenceAfterSessionRotation(t *testing
 		t.Run(test.name, func(t *testing.T) {
 			request := runtimeApplicationRequest(t, 101, "value")
 			request.Info.Client = test.client
-			ctx := runtimeApplicationHandlerContext(context.Background(), request, &runtimeMutationCollector{})
+			ctx := runtimeApplicationHandlerContext(context.Background(), request, &runtimeMutationCollector{}, EncodeLimits{})
 			metadata, present := ClientMetadataFromContext(ctx)
 			if metadata != test.client || present != test.present {
 				t.Fatalf("client metadata = %+v, present=%t; want %+v, present=%t", metadata, present, test.client, test.present)

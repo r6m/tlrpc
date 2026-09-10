@@ -58,6 +58,40 @@ func TestDecodeFrameRejectsMalformedAndMismatchedKeys(t *testing.T) {
 	}
 }
 
+func TestDecodeFrameOwnsPlaintextAndDoesNotMutateCiphertext(t *testing.T) {
+	var key crypto.AuthKey
+	for i := range key {
+		key[i] = byte(i + 1)
+	}
+	want := bytes.Repeat([]byte{1, 2, 3, 4}, 1024)
+	encrypted, err := (&mtproto.InnerData{Salt: 7, SessionID: 9, MsgID: 12, SeqNo: 1, Data: want}).EncryptFromClient(key, key.ID())
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame := serializeEncryptedFrame(encrypted)
+	original := bytes.Clone(frame)
+	decoded, err := DecodeFrame(frame, authKeyMap{key.ID(): key})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(frame, original) {
+		t.Fatal("decryption mutated caller-owned ciphertext")
+	}
+	clear(frame)
+	if decoded.Encrypted == nil || !bytes.Equal(decoded.Encrypted.Data, want) {
+		t.Fatal("decoded plaintext changed after input frame reuse")
+	}
+	// Authentication failure must also leave the caller's input unchanged.
+	original[len(original)-1] ^= 1
+	corrupt := bytes.Clone(original)
+	if _, err := DecodeFrame(corrupt, authKeyMap{key.ID(): key}); err == nil {
+		t.Fatal("corrupted ciphertext accepted")
+	}
+	if !bytes.Equal(corrupt, original) {
+		t.Fatal("failed decryption mutated caller-owned ciphertext")
+	}
+}
+
 type authKeyMap map[crypto.KeyID]crypto.AuthKey
 
 func (m authKeyMap) Get(keyID crypto.KeyID) (crypto.AuthKey, error) {

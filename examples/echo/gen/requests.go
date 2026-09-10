@@ -6,13 +6,11 @@
 package gen
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/r6m/tlrpc/mtproto"
 	"io"
-)
 
-var _ = bytes.Buffer{}
+	"github.com/r6m/tlrpc/mtproto"
+)
 
 type EchoEchoRequest struct {
 	Message string
@@ -24,30 +22,59 @@ func (r *EchoEchoRequest) Method() string        { return "echo.echo" }
 func (r *EchoEchoRequest) TLName() string { return "echo.echo" }
 
 func (r *EchoEchoRequest) SerializeTL(w io.Writer) error {
-	if err := mtproto.WriteUint32(w, r.ConstructorID()); err != nil {
+	return r.serializeTL(mtproto.NewEncoder(w))
+}
+
+func (r *EchoEchoRequest) serializeTL(e *mtproto.Encoder) error {
+	if r == nil {
+		return fmt.Errorf("serialize echo.echo: nil receiver")
+	}
+	if err := e.EnterObject(); err != nil {
 		return err
 	}
-	if err := mtproto.WriteString(w, r.Message); err != nil {
+	defer e.LeaveObject()
+	if err := e.WriteUint32(r.ConstructorID()); err != nil {
+		return err
+	}
+	return r.serializeTLBody(e)
+}
+
+func (r *EchoEchoRequest) serializeTLBody(e *mtproto.Encoder) error {
+	if err := e.WriteString(r.Message); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *EchoEchoRequest) DeserializeTL(rd io.Reader) error {
-	leaveDecode, err := mtproto.EnterObject(rd)
+	return r.deserializeTL(mtproto.NewDecoder(rd))
+}
+
+func (r *EchoEchoRequest) deserializeTL(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize echo.echo: nil receiver")
+	}
+	constructorID, err := d.ReadUint32()
 	if err != nil {
 		return err
 	}
-	defer leaveDecode()
-	ctorID, err := mtproto.ReadUint32(rd)
-	if err != nil {
+	if constructorID != r.ConstructorID() {
+		return fmt.Errorf("wrong constructor: got %x, want %x", constructorID, r.ConstructorID())
+	}
+	return r.deserializeTLBody(d)
+}
+
+func (r *EchoEchoRequest) deserializeTLBody(d *mtproto.Decoder) error {
+	if r == nil {
+		return fmt.Errorf("deserialize echo.echo body: nil receiver")
+	}
+	*r = EchoEchoRequest{}
+	if err := d.EnterObject(); err != nil {
 		return err
 	}
-	if ctorID != r.ConstructorID() {
-		return fmt.Errorf("wrong constructor: got %x, want %x", ctorID, r.ConstructorID())
-	}
+	defer d.LeaveObject()
 	{
-		value, err := mtproto.ReadString(rd)
+		value, err := d.ReadString()
 		if err != nil {
 			return err
 		}

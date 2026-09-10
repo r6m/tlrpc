@@ -38,13 +38,13 @@ func TestHandlerUserBindingIsPersistedBeforeReconnect(t *testing.T) {
 				MethodName:    "SignIn",
 				ConstructorID: (&gen.AuthSignInRequest{}).ConstructorID(),
 				NewRequest:    func() tlrpc.TLObject { return &gen.AuthSignInRequest{} },
-				Handler:       sessionBindingSignInHandler,
+				Handler:       tlrpc.BindMethod(sessionBindingSignInHandler), EncodeResponse: encodeCompatResponse[gen.AuthAuthorizationType],
 			},
 			{
 				MethodName:    "GetConfig",
 				ConstructorID: (&gen.HelpGetConfigRequest{}).ConstructorID(),
 				NewRequest:    func() tlrpc.TLObject { return &gen.HelpGetConfigRequest{} },
-				Handler:       sessionBindingGetConfigHandler,
+				Handler:       tlrpc.BindMethod(sessionBindingGetConfigHandler), EncodeResponse: encodeCompatResponse[*gen.Config],
 			},
 		},
 	}, &sessionBindingService{seenUser: seenUser})

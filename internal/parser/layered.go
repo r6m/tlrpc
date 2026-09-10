@@ -1,15 +1,14 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 )
 
 // LayeredSchema is the generation view of a base schema and its ordered layer
-// differences. Schema contains every historical wire shape needed by one Go
-// package. Unchanged declarations occur once; changed declarations carry a
-// VariantLayer suffix and an inclusive validity range.
+// differences. Distinct contracts occur once and carry their actual interval
+// sets, including gaps caused by removal and reappearance.
 type LayeredSchema struct {
 	BaseLayer int
 	MaxLayer  int
@@ -17,9 +16,9 @@ type LayeredSchema struct {
 	Schema    *Schema
 }
 
-// ResolveLayers builds one deterministic generation schema containing the
-// base layer and every supplied difference. It preserves declarations removed
-// from later layers so historical incoming constructors remain decodable.
+// ResolveLayers builds one deterministic generation schema. Boxed references
+// retain stable family identity; only bare dependencies propagate concrete
+// layout changes.
 func ResolveLayers(base *Schema, baseLayer int, differences []LayerDifference) (*LayeredSchema, error) {
 	if base == nil {
 		return nil, fmt.Errorf("resolve layers: base schema is nil")
@@ -28,502 +27,675 @@ func ResolveLayers(base *Schema, baseLayer int, differences []LayerDifference) (
 	if len(differences) > 0 {
 		maxLayer = differences[len(differences)-1].Layer
 	}
-	// ResolveLayer owns sequence, removal, and per-layer collision validation.
-	if _, err := ResolveLayer(base, baseLayer, maxLayer, differences); err != nil {
+	if err := validateHistoricalAcceptance(base, baseLayer, maxLayer, "resolve layers"); err != nil {
+		return nil, err
+	}
+	snapshotBase := cloneSchema(base)
+	snapshotBase.Functions = snapshotBase.Functions[:0]
+	for _, function := range base.Functions {
+		if function.VariantLayer == 0 {
+			snapshotBase.Functions = append(snapshotBase.Functions, cloneFunction(function))
+		}
+	}
+	if _, err := ResolveLayer(snapshotBase, baseLayer, maxLayer, differences); err != nil {
 		return nil, err
 	}
 
-	layers := make([]int, 0, len(differences)+1)
+	layers := []int{baseLayer}
 	snapshots := make([]*Schema, 0, len(differences)+1)
-	layers = append(layers, baseLayer)
-	baseSnapshot, err := ResolveLayer(base, baseLayer, baseLayer, differences)
-	if err != nil {
-		return nil, err
-	}
-	snapshots = append(snapshots, baseSnapshot)
-	for _, difference := range differences {
-		resolved, err := ResolveLayer(base, baseLayer, difference.Layer, differences)
+	for _, layer := range append([]int{baseLayer}, differenceLayers(differences)...) {
+		snapshot, err := ResolveLayer(snapshotBase, baseLayer, layer, differences)
 		if err != nil {
 			return nil, err
 		}
-		layers = append(layers, difference.Layer)
-		snapshots = append(snapshots, resolved)
+		snapshots = append(snapshots, snapshot)
+		if err := validateBareLayouts(snapshot); err != nil {
+			return nil, fmt.Errorf("resolve layers at layer %d: %w", layer, err)
+		}
+		if layer != baseLayer {
+			layers = append(layers, layer)
+		}
 	}
 
+	if err := validateBareConstructorNames(snapshots, base.Functions); err != nil {
+		return nil, err
+	}
 	combined := NewSchema(maxLayer)
 	combined.BaseLayer = baseLayer
 	combined.IsLayered = true
-	stableUnions := stableUnionNames(snapshots)
-	typeVersions := make(map[string]int)
-	constructorVersions := make(map[string]int)
-	functionVersions := make(map[string]int)
-	seenTypes := make(map[string]bool)
-	seenConstructors := make(map[string]bool)
-	seenFunctions := make(map[string]bool)
-	typeIndexes := make(map[string]int)
+
+	constructorVariants := make(map[string]map[string]int)
 	constructorIndexes := make(map[string]int)
+	requestVariants := make(map[string]map[string]int)
+	handlerVariants := make(map[string]map[string]int)
+	typeVariants := make(map[string]map[string]int)
 	functionIndexes := make(map[string]int)
+	typeVersions := make(map[string]int)
+	versionsBySnapshot := make([]map[string]int, 0, len(snapshots))
 	activeConstructors := make(map[string]int)
 	activeFunctions := make(map[string]int)
+	families := make(map[string]int)
 
-	var previous *Schema
 	for snapshotIndex, snapshot := range snapshots {
 		layer := layers[snapshotIndex]
-		changedTypes := changedTypeNames(previous, snapshot, seenTypes, stableUnions)
-		propagateReferencedTypeChanges(changedTypes, stableUnions, previous, snapshot)
-
-		previousTypes := typeDeclsByName(previous)
-		for _, decl := range snapshot.Types {
-			if !stableUnions[decl.Name] && seenTypes[decl.Name] && (changedTypes[decl.Name] || previousTypes[decl.Name] == nil) {
-				typeVersions[decl.Name] = layer
+		typeVersions = make(map[string]int)
+		for _, declaration := range snapshot.Types {
+			signature, err := resolvedTypeContractSignature(declaration.Name, snapshot, nil)
+			if err != nil {
+				return nil, fmt.Errorf("resolve layers at layer %d: %w", layer, err)
 			}
-			seenTypes[decl.Name] = true
+			typeVersions[declaration.Name] = contractVariantLayer(typeVariants, declaration.Name, signature, layer)
 		}
 
-		previousConstructors := constructorsByName(previous)
-		currentConstructorKeys := make(map[string]struct{})
+		versionsBySnapshot = append(versionsBySnapshot, typeVersions)
+		currentConstructors := make(map[string]struct{})
 		for _, constructor := range snapshot.Constructors {
-			old := previousConstructors[constructor.Name]
-			additive := old != nil && additiveFlagExtension(*old, constructor)
-			changed := old != nil && !reflect.DeepEqual(*old, constructor) && !additive
-			changed = changed || referencesChangedType(constructor.Params, changedTypes)
-			if seenConstructors[constructor.Name] && (changed || old == nil) {
-				constructorVersions[constructor.Name] = layer
-			}
-			seenConstructors[constructor.Name] = true
-
 			projected := cloneConstructor(constructor)
-			projected.VariantLayer = constructorVersions[constructor.Name]
-			projected.MinLayer = layer
-			projected.MaxLayer = 0
-			projected.OutputMinLayer = layer
-			projected.OutputMaxLayer = 0
-			projected.Params = annotateParameters(projected.Params, typeVersions)
-			projected.ResultType = annotateTypeRef(projected.ResultType, typeVersions)
-			key := variantKey(projected.Name, projected.VariantLayer)
-			if additive {
-				if index, exists := constructorIndexes[key]; exists {
-					projected = mergeAdditiveConstructor(combined.Constructors[index], projected, layer)
-				}
+			projected.Params = annotateBareParameters(projected.Params, typeVersions)
+			projected.ResultType = annotateBareTypeRef(projected.ResultType, typeVersions)
+			signature := constructorContractSignature(projected)
+			variants := constructorVariants[projected.Name]
+			if variants == nil {
+				variants = make(map[string]int)
+				constructorVariants[projected.Name] = variants
 			}
-			currentConstructorKeys[key] = struct{}{}
-			if index, exists := constructorIndexes[key]; exists {
-				if additive {
-					combined.Constructors[index] = projected
-				} else {
-					combined.Constructors[index].MaxLayer = 0
-					combined.Constructors[index].OutputMaxLayer = 0
+			variantLayer, exists := variants[signature]
+			if !exists {
+				if len(variants) != 0 {
+					variantLayer = layer
 				}
-			} else {
-				constructorIndexes[key] = len(combined.Constructors)
-				combined.Constructors = append(combined.Constructors, projected)
+				variants[signature] = variantLayer
 			}
-			activeConstructors[key] = constructorIndexes[key]
-		}
-		closeInactiveConstructors(combined, activeConstructors, currentConstructorKeys, layer-1)
-
-		previousFunctions := functionsByName(previous)
-		currentFunctionKeys := make(map[string]struct{})
-		for _, function := range snapshot.Functions {
-			if function.VariantLayer != 0 {
-				projected := cloneFunction(function)
-				projected.MinLayer = baseLayer
-				projected.MaxLayer = 0
-				projected.Params = annotateParameters(projected.Params, typeVersions)
-				projected.ResultType = annotateTypeRef(projected.ResultType, typeVersions)
-				key := variantKey(projected.Name, projected.VariantLayer)
-				currentFunctionKeys[key] = struct{}{}
-				if index, exists := functionIndexes[key]; exists {
-					combined.Functions[index] = projected
-				} else {
-					functionIndexes[key] = len(combined.Functions)
-					combined.Functions = append(combined.Functions, projected)
-				}
-				activeFunctions[key] = functionIndexes[key]
+			projected.VariantLayer = variantLayer
+			key := variantKey(projected.Name, variantLayer)
+			currentConstructors[key] = struct{}{}
+			if index, ok := constructorIndexes[key]; ok {
+				openInterval(&combined.Constructors[index].Intervals, layer)
+				activeConstructors[key] = index
 				continue
 			}
-			old := previousFunctions[function.Name]
-			changed := old != nil && !sameFunctionRequest(*old, function)
-			changed = changed || referencesChangedType(function.Params, changedTypes)
-			if seenFunctions[function.Name] && (changed || old == nil) {
-				functionVersions[function.Name] = layer
-			}
-			seenFunctions[function.Name] = true
+			projected.Intervals = []LayerInterval{{MinLayer: layer}}
+			constructorIndexes[key] = len(combined.Constructors)
+			activeConstructors[key] = len(combined.Constructors)
+			combined.Constructors = append(combined.Constructors, projected)
+		}
+		closeInactiveConstructorIntervals(combined, activeConstructors, currentConstructors, layer-1)
 
+		currentFunctions := make(map[string]struct{})
+		for _, function := range snapshot.Functions {
+			if function.VariantLayer != 0 {
+				continue
+			}
 			projected := cloneFunction(function)
-			projected.VariantLayer = functionVersions[function.Name]
-			projected.MinLayer = layer
-			projected.MaxLayer = 0
-			projected.Params = annotateParameters(projected.Params, typeVersions)
-			projected.ResultType = annotateTypeRef(projected.ResultType, typeVersions)
+			projected.Params = annotateBareParameters(projected.Params, typeVersions)
+			projected.ResultType = annotateBareTypeRef(projected.ResultType, typeVersions)
+			requestSignature := functionRequestSignature(projected)
+			projected.RequestVariantLayer = contractVariantLayer(requestVariants, projected.Name, requestSignature, layer)
+			handlerSignature := semanticKey(struct {
+				RequestVariantLayer int
+				Result              semanticTypeRef
+			}{projected.RequestVariantLayer, contractTypeRef(projected.ResultType)})
+			projected.VariantLayer = contractVariantLayer(handlerVariants, projected.Name, handlerSignature, layer)
 			key := variantKey(projected.Name, projected.VariantLayer)
-			currentFunctionKeys[key] = struct{}{}
-			if index, exists := functionIndexes[key]; exists {
-				combined.Functions[index].MaxLayer = 0
-			} else {
-				functionIndexes[key] = len(combined.Functions)
-				combined.Functions = append(combined.Functions, projected)
+			currentFunctions[key] = struct{}{}
+			if index, ok := functionIndexes[key]; ok {
+				openInterval(&combined.Functions[index].Intervals, layer)
+				activeFunctions[key] = index
+				continue
 			}
-			activeFunctions[key] = functionIndexes[key]
+			projected.Intervals = []LayerInterval{{MinLayer: layer}}
+			functionIndexes[key] = len(combined.Functions)
+			activeFunctions[key] = len(combined.Functions)
+			combined.Functions = append(combined.Functions, projected)
 		}
-		closeInactiveFunctions(combined, activeFunctions, currentFunctionKeys, layer-1)
-
-		for _, decl := range snapshot.Types {
-			projected := TypeDecl{
-				Name:         decl.Name,
-				IsUnion:      stableUnions[decl.Name] || decl.IsUnion,
-				VariantLayer: typeVersions[decl.Name],
-			}
-			for _, constructor := range decl.Constructors {
-				key := variantKey(constructor.Name, constructorVersions[constructor.Name])
-				index, ok := constructorIndexes[key]
-				if !ok {
-					return nil, fmt.Errorf("resolve layers: missing constructor variant %s", key)
-				}
-				projected.Constructors = append(projected.Constructors, cloneConstructor(combined.Constructors[index]))
-			}
-			key := variantKey(projected.Name, projected.VariantLayer)
-			if index, exists := typeIndexes[key]; exists {
-				combined.Types[index] = mergeHistoricalType(combined.Types[index], projected)
-			} else {
-				typeIndexes[key] = len(combined.Types)
-				combined.Types = append(combined.Types, projected)
-				if projected.IsUnion {
-					combined.UnionTypes[key] = true
-				}
-			}
-		}
-		previous = snapshot
+		closeInactiveFunctionIntervals(combined, activeFunctions, currentFunctions, layer-1)
 	}
 
-	normalizeUniqueIDRanges(combined.Constructors, combined.Functions)
-	syncTypeConstructors(combined)
+	// Historical declarations are policy exceptions, not active snapshot state.
+	for _, function := range base.Functions {
+		if function.VariantLayer == 0 {
+			continue
+		}
+		projected := cloneFunction(function)
+		projected.RequestVariantLayer = function.RequestVariantLayer
+		if projected.RequestVariantLayer == 0 {
+			projected.RequestVariantLayer = projected.VariantLayer
+		}
+		projected.Intervals = intersectIntervals(projected.AcceptIntervals, baseLayer, maxLayer)
+		if len(projected.Intervals) == 0 {
+			continue
+		}
+		var selectedSignature string
+		for i, snapshot := range snapshots {
+			lastLayer := maxLayer
+			if i+1 < len(layers) {
+				lastLayer = layers[i+1] - 1
+			}
+			if len(intersectIntervals(projected.Intervals, layers[i], lastLayer)) == 0 {
+				continue
+			}
+			candidate := cloneFunction(function)
+			for _, parameter := range candidate.Params {
+				for _, family := range bareReferenceNames(parameter.Type) {
+					if _, ok := snapshot.FindType(family); !ok {
+						return nil, fmt.Errorf("historical method %s: bare family %s is unavailable at layer %d", function.Name, family, layers[i])
+					}
+				}
+			}
+			candidate.Params = annotateBareParameters(candidate.Params, versionsBySnapshot[i])
+			candidate.ResultType = annotateBareTypeRef(candidate.ResultType, versionsBySnapshot[i])
+			signature := functionRequestSignature(candidate) + semanticKey(contractTypeRef(candidate.ResultType))
+			if selectedSignature != "" && selectedSignature != signature {
+				return nil, fmt.Errorf("historical method %s: bare contract changes within accepted layers", function.Name)
+			}
+			selectedSignature = signature
+			projected.Params, projected.ResultType = candidate.Params, candidate.ResultType
+		}
+		key := variantKey(projected.Name, projected.VariantLayer)
+		if _, duplicate := functionIndexes[key]; duplicate {
+			return nil, fmt.Errorf("resolve layers: duplicate historical handler contract %s", key)
+		}
+		functionIndexes[key] = len(combined.Functions)
+		combined.Functions = append(combined.Functions, projected)
+	}
+	requestIntervals := make(map[string][]LayerInterval)
+	for _, function := range combined.Functions {
+		key := variantKey(function.Name, function.RequestVariantLayer)
+		requestIntervals[key] = append(requestIntervals[key], function.Intervals...)
+	}
+	for i := range combined.Functions {
+		key := variantKey(combined.Functions[i].Name, combined.Functions[i].RequestVariantLayer)
+		combined.Functions[i].RequestIntervals = normalizeIntervals(requestIntervals[key])
+	}
+
+	for _, constructor := range combined.Constructors {
+		family := constructor.ResultType.FullName()
+		index, exists := families[family]
+		if !exists {
+			index = len(combined.Types)
+			families[family] = index
+			combined.Types = append(combined.Types, TypeDecl{Name: family, IsUnion: true})
+			combined.UnionTypes[family] = true
+		}
+		combined.Types[index].Constructors = append(combined.Types[index].Constructors, cloneConstructor(constructor))
+	}
+	for i := range combined.Types {
+		sort.SliceStable(combined.Types[i].Constructors, func(a, b int) bool {
+			left, right := combined.Types[i].Constructors[a], combined.Types[i].Constructors[b]
+			if left.Name == right.Name {
+				return left.VariantLayer < right.VariantLayer
+			}
+			return left.Name < right.Name
+		})
+	}
+	if err := validateLayeredIntervals(combined); err != nil {
+		return nil, err
+	}
 	return &LayeredSchema{BaseLayer: baseLayer, MaxLayer: maxLayer, Layers: layers, Schema: combined}, nil
 }
 
-func syncTypeConstructors(schema *Schema) {
-	constructors := make(map[string]Constructor, len(schema.Constructors))
+func validateHistoricalAcceptance(base *Schema, baseLayer, maxLayer int, operation string) error {
+	for _, function := range base.Functions {
+		if function.VariantLayer == 0 {
+			continue
+		}
+		for _, interval := range function.AcceptIntervals {
+			if interval.MinLayer < baseLayer || interval.MaxLayer > maxLayer {
+				return fmt.Errorf("%s: historical function %q accepts %d-%d outside supplied history %d-%d", operation, function.Name, interval.MinLayer, interval.MaxLayer, baseLayer, maxLayer)
+			}
+		}
+	}
+	return nil
+}
+
+func validateBareLayouts(schema *Schema) error {
+	constructorsByFamily := make(map[string][]Constructor)
 	for _, constructor := range schema.Constructors {
-		constructors[variantKey(constructor.Name, constructor.VariantLayer)] = constructor
+		constructorsByFamily[constructor.ResultType.FullName()] = append(constructorsByFamily[constructor.ResultType.FullName()], constructor)
 	}
-	for i := range schema.Types {
-		for j := range schema.Types[i].Constructors {
-			constructor := schema.Types[i].Constructors[j]
-			if canonical, ok := constructors[variantKey(constructor.Name, constructor.VariantLayer)]; ok {
-				schema.Types[i].Constructors[j] = cloneConstructor(canonical)
+	check := func(owner string, reference TypeRef) error {
+		var visit func(TypeRef) error
+		visit = func(value TypeRef) error {
+			if value.IsVector && value.Generic != nil {
+				return visit(*value.Generic)
+			}
+			if !value.IsBare || value.IsBuiltin() || value.IsTypeVar {
+				return nil
+			}
+			constructors := constructorsByFamily[value.FullName()]
+			if len(constructors) != 1 {
+				return fmt.Errorf("%s: bare reference %s requires exactly one constructor, got %d", owner, value.FullName(), len(constructors))
+			}
+			return nil
+		}
+		return visit(reference)
+	}
+	for _, constructor := range schema.Constructors {
+		for _, parameter := range constructor.Params {
+			if err := check(constructor.Name+"."+parameter.Name, parameter.Type); err != nil {
+				return err
 			}
 		}
 	}
-}
-
-func sameFunctionRequest(old, next FuncDecl) bool {
-	return old.Name == next.Name && old.ID == next.ID &&
-		reflect.DeepEqual(old.GenericParams, next.GenericParams) &&
-		reflect.DeepEqual(old.Params, next.Params) &&
-		old.IsTemplate == next.IsTemplate && old.IsHelper == next.IsHelper
-}
-
-func stableUnionNames(snapshots []*Schema) map[string]bool {
-	unions := make(map[string]bool)
-	for _, snapshot := range snapshots {
-		if snapshot == nil {
-			continue
-		}
-		for _, declaration := range snapshot.Types {
-			if declaration.IsUnion {
-				unions[declaration.Name] = true
+	for _, function := range schema.Functions {
+		for _, parameter := range function.Params {
+			if err := check(function.Name+"."+parameter.Name, parameter.Type); err != nil {
+				return err
 			}
 		}
-	}
-	return unions
-}
-
-func changedTypeNames(previous, current *Schema, seen map[string]bool, stableUnions map[string]bool) map[string]bool {
-	changed := make(map[string]bool)
-	if previous == nil {
-		return changed
-	}
-	oldTypes := typeDeclsByName(previous)
-	newTypes := typeDeclsByName(current)
-	for name, old := range oldTypes {
-		if stableUnions[name] {
-			continue
-		}
-		if next := newTypes[name]; next != nil && !compatibleTypeEvolution(*old, *next) {
-			changed[name] = true
+		if err := check(function.Name+" result", function.ResultType); err != nil {
+			return err
 		}
 	}
-	for name := range newTypes {
-		if stableUnions[name] {
-			continue
-		}
-		if oldTypes[name] == nil && seen[name] {
-			changed[name] = true
-		}
-	}
-	return changed
-}
-
-func compatibleTypeEvolution(old, next TypeDecl) bool {
-	oldConstructors := make(map[string]Constructor, len(old.Constructors))
-	for _, constructor := range old.Constructors {
-		oldConstructors[constructor.Name] = constructor
-	}
-	for _, constructor := range next.Constructors {
-		previous, exists := oldConstructors[constructor.Name]
-		if !exists {
-			continue // Stable unions retain constructors introduced or removed by a layer.
-		}
-		if reflect.DeepEqual(previous, constructor) || additiveFlagExtension(previous, constructor) {
-			continue
-		}
-		return false
-	}
-	return true
-}
-
-func additiveFlagExtension(old, next Constructor) bool {
-	if old.Name != next.Name || old.ID != next.ID || !reflect.DeepEqual(old.ResultType, next.ResultType) || len(next.Params) <= len(old.Params) {
-		return false
-	}
-	oldByName := make(map[string]Parameter, len(old.Params))
-	for _, parameter := range old.Params {
-		oldByName[parameter.Name] = parameter
-	}
-	for _, parameter := range next.Params {
-		previous, exists := oldByName[parameter.Name]
-		if exists {
-			if !reflect.DeepEqual(previous, parameter) {
-				return false
-			}
-			continue
-		}
-		if parameter.FlagBit == nil && parameter.Type.FlagBit == nil && !(parameter.Type.Name == "#") {
-			return false
+	graph := make(map[string][]string)
+	for _, constructor := range schema.Constructors {
+		family := constructor.ResultType.FullName()
+		for _, parameter := range constructor.Params {
+			graph[family] = append(graph[family], bareReferenceNames(parameter.Type)...)
 		}
 	}
-	return true
-}
-
-func mergeAdditiveConstructor(old, next Constructor, layer int) Constructor {
-	ranges := make(map[string]Parameter, len(old.Params))
-	for _, parameter := range old.Params {
-		ranges[parameter.Name] = parameter
-	}
-	for i := range next.Params {
-		if previous, exists := ranges[next.Params[i].Name]; exists {
-			next.Params[i].MinLayer = previous.MinLayer
-			next.Params[i].MaxLayer = previous.MaxLayer
-			continue
+	visiting := make(map[string]bool)
+	visited := make(map[string]bool)
+	var visitFamily func(string) error
+	visitFamily = func(family string) error {
+		if visiting[family] {
+			return fmt.Errorf("unsupported recursive bare layout involving %s", family)
 		}
-		next.Params[i].MinLayer = layer
-	}
-	next.MinLayer = old.MinLayer
-	next.MaxLayer = old.MaxLayer
-	next.OutputMinLayer = old.OutputMinLayer
-	next.OutputMaxLayer = old.OutputMaxLayer
-	return next
-}
-
-func mergeHistoricalType(old, next TypeDecl) TypeDecl {
-	seen := make(map[string]struct{}, len(old.Constructors))
-	for _, constructor := range old.Constructors {
-		seen[variantKey(constructor.Name, constructor.VariantLayer)] = struct{}{}
-	}
-	for _, constructor := range next.Constructors {
-		key := variantKey(constructor.Name, constructor.VariantLayer)
-		if _, exists := seen[key]; exists {
-			for i := range old.Constructors {
-				if variantKey(old.Constructors[i].Name, old.Constructors[i].VariantLayer) == key {
-					old.Constructors[i] = constructor
-					break
-				}
-			}
-			continue
+		if visited[family] {
+			return nil
 		}
-		old.Constructors = append(old.Constructors, constructor)
-		seen[key] = struct{}{}
-	}
-	old.IsUnion = len(old.Constructors) > 1
-	return old
-}
-
-func propagateReferencedTypeChanges(changed map[string]bool, stableUnions map[string]bool, schemas ...*Schema) {
-	reverse := make(map[string]map[string]struct{})
-	for _, schema := range schemas {
-		if schema == nil {
-			continue
-		}
-		for _, decl := range schema.Types {
-			for _, constructor := range decl.Constructors {
-				for _, referenced := range referencedTypes(constructor.Params) {
-					if reverse[referenced] == nil {
-						reverse[referenced] = make(map[string]struct{})
-					}
-					reverse[referenced][decl.Name] = struct{}{}
-				}
+		visiting[family] = true
+		for _, child := range graph[family] {
+			if err := visitFamily(child); err != nil {
+				return err
 			}
 		}
+		delete(visiting, family)
+		visited[family] = true
+		return nil
 	}
-	queue := make([]string, 0, len(changed))
-	for name := range changed {
-		queue = append(queue, name)
-	}
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-		for owner := range reverse[name] {
-			if stableUnions[owner] || changed[owner] {
-				continue
-			}
-			changed[owner] = true
-			queue = append(queue, owner)
+	for family := range graph {
+		if err := visitFamily(family); err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
-func typeDeclsByName(schema *Schema) map[string]*TypeDecl {
-	out := make(map[string]*TypeDecl)
-	if schema == nil {
-		return out
-	}
-	for i := range schema.Types {
-		out[schema.Types[i].Name] = &schema.Types[i]
-	}
-	return out
-}
-
-func constructorsByName(schema *Schema) map[string]*Constructor {
-	out := make(map[string]*Constructor)
-	if schema == nil {
-		return out
-	}
-	for i := range schema.Constructors {
-		out[schema.Constructors[i].Name] = &schema.Constructors[i]
-	}
-	return out
-}
-
-func functionsByName(schema *Schema) map[string]*FuncDecl {
-	out := make(map[string]*FuncDecl)
-	if schema == nil {
-		return out
-	}
-	for i := range schema.Functions {
-		if schema.Functions[i].VariantLayer == 0 {
-			out[schema.Functions[i].Name] = &schema.Functions[i]
-		}
-	}
-	return out
-}
-
-func referencedTypes(parameters []Parameter) []string {
-	seen := make(map[string]struct{})
-	for _, parameter := range parameters {
-		collectTypeRefs(parameter.Type, seen)
-	}
-	out := make([]string, 0, len(seen))
-	for name := range seen {
-		out = append(out, name)
-	}
-	sort.Strings(out)
-	return out
-}
-
-func collectTypeRefs(reference TypeRef, out map[string]struct{}) {
+func bareReferenceNames(reference TypeRef) []string {
 	if reference.IsVector && reference.Generic != nil {
-		collectTypeRefs(*reference.Generic, out)
-		return
+		return bareReferenceNames(*reference.Generic)
 	}
-	if !reference.IsBuiltin() && !reference.IsTypeVar {
-		out[reference.FullName()] = struct{}{}
+	if reference.IsBare && !reference.IsBuiltin() && !reference.IsTypeVar {
+		return []string{reference.FullName()}
 	}
+	return nil
 }
 
-func referencesChangedType(parameters []Parameter, changed map[string]bool) bool {
-	for _, name := range referencedTypes(parameters) {
-		if changed[name] {
-			return true
+func differenceLayers(differences []LayerDifference) []int {
+	layers := make([]int, len(differences))
+	for i := range differences {
+		layers[i] = differences[i].Layer
+	}
+	return layers
+}
+
+func contractVariantLayer(all map[string]map[string]int, name, signature string, layer int) int {
+	variants := all[name]
+	if variants == nil {
+		variants = make(map[string]int)
+		all[name] = variants
+	}
+	if variant, ok := variants[signature]; ok {
+		return variant
+	}
+	variant := 0
+	if len(variants) != 0 {
+		variant = layer
+	}
+	variants[signature] = variant
+	return variant
+}
+
+func constructorContractSignature(constructor Constructor) string {
+	return semanticKey(struct {
+		Name          string
+		ID            uint32
+		GenericParams []semanticGeneric
+		Params        []semanticParameter
+		Result        semanticTypeRef
+		IsBare        bool
+		VectorCount   string
+	}{constructor.Name, constructor.ID, semanticGenerics(constructor.GenericParams), semanticParameters(constructor.Params), semanticReference(constructor.ResultType), constructor.IsBare, stringValue(constructor.VectorCount)})
+}
+
+func functionRequestSignature(function FuncDecl) string {
+	return semanticKey(struct {
+		Name          string
+		ID            uint32
+		GenericParams []semanticGeneric
+		Params        []semanticParameter
+		IsTemplate    bool
+		IsHelper      bool
+	}{function.Name, function.ID, semanticGenerics(function.GenericParams), semanticParameters(function.Params), function.IsTemplate, function.IsHelper})
+}
+
+func contractTypeRef(reference TypeRef) semanticTypeRef {
+	return semanticReference(reference)
+}
+
+type semanticGeneric struct{ Name, Constraint string }
+type semanticParameter struct {
+	Name    string
+	Type    semanticTypeRef
+	FlagBit *int
+}
+type semanticTypeRef struct {
+	Name, Namespace, GenericArg, FlagName string
+	IsVector, IsBare, Optional, IsTypeVar bool
+	Generic                               *semanticTypeRef
+	FlagBit                               *int
+	VariantLayer                          int
+}
+
+type resolvedSemanticTypeRef struct {
+	Name, Namespace, GenericArg, FlagName string
+	IsVector, IsBare, Optional, IsTypeVar bool
+	Generic                               *resolvedSemanticTypeRef
+	FlagBit                               *int
+	BareContract                          string
+}
+
+type resolvedSemanticParameter struct {
+	Name    string
+	Type    resolvedSemanticTypeRef
+	FlagBit *int
+}
+
+func resolvedTypeContractSignature(name string, schema *Schema, stack map[string]bool) (string, error) {
+	if stack == nil {
+		stack = make(map[string]bool)
+	}
+	if stack[name] {
+		return "cycle:" + name, nil
+	}
+	declaration, ok := schema.FindType(name)
+	if !ok {
+		return "", fmt.Errorf("missing type %s", name)
+	}
+	stack[name] = true
+	defer delete(stack, name)
+	type semanticConstructorContract struct {
+		Name          string
+		ID            uint32
+		GenericParams []semanticGeneric
+		Params        []resolvedSemanticParameter
+		ResultFamily  string
+		IsBare        bool
+		VectorCount   string
+	}
+	constructors := make([]semanticConstructorContract, 0, len(declaration.Constructors))
+	for _, constructor := range declaration.Constructors {
+		params := make([]resolvedSemanticParameter, len(constructor.Params))
+		for i, parameter := range constructor.Params {
+			reference, err := resolvedSemanticReference(parameter.Type, schema, stack)
+			if err != nil {
+				return "", err
+			}
+			params[i] = resolvedSemanticParameter{Name: parameter.Name, Type: reference, FlagBit: cloneIntPointer(parameter.FlagBit)}
 		}
+		constructors = append(constructors, semanticConstructorContract{
+			Name: constructor.Name, ID: constructor.ID, GenericParams: semanticGenerics(constructor.GenericParams),
+			Params: params, ResultFamily: constructor.ResultType.FullName(), IsBare: constructor.IsBare,
+			VectorCount: stringValue(constructor.VectorCount),
+		})
 	}
-	return false
+	return semanticKey(constructors), nil
 }
 
-func typeRefChanged(reference TypeRef, changed map[string]bool) bool {
-	seen := make(map[string]struct{})
-	collectTypeRefs(reference, seen)
-	for name := range seen {
-		if changed[name] {
-			return true
+func resolvedSemanticReference(value TypeRef, schema *Schema, stack map[string]bool) (resolvedSemanticTypeRef, error) {
+	out := resolvedSemanticTypeRef{Name: value.Name, Namespace: value.Namespace, GenericArg: value.GenericArg, FlagName: value.FlagName, IsVector: value.IsVector, IsBare: value.IsBare, Optional: value.Optional, IsTypeVar: value.IsTypeVar, FlagBit: cloneIntPointer(value.FlagBit)}
+	if value.Generic != nil {
+		generic, err := resolvedSemanticReference(*value.Generic, schema, stack)
+		if err != nil {
+			return resolvedSemanticTypeRef{}, err
 		}
+		out.Generic = &generic
 	}
-	return false
+	if value.IsBare && !value.IsBuiltin() && !value.IsTypeVar {
+		contract, err := resolvedTypeContractSignature(value.FullName(), schema, stack)
+		if err != nil {
+			return resolvedSemanticTypeRef{}, err
+		}
+		out.BareContract = contract
+	}
+	return out, nil
 }
 
-func annotateParameters(parameters []Parameter, versions map[string]int) []Parameter {
+func semanticGenerics(values []GenericParam) []semanticGeneric {
+	out := make([]semanticGeneric, len(values))
+	for i, value := range values {
+		out[i] = semanticGeneric{Name: value.Name, Constraint: value.Constraint}
+	}
+	return out
+}
+
+func semanticParameters(values []Parameter) []semanticParameter {
+	out := make([]semanticParameter, len(values))
+	for i, value := range values {
+		out[i] = semanticParameter{Name: value.Name, Type: semanticReference(value.Type), FlagBit: cloneIntPointer(value.FlagBit)}
+	}
+	return out
+}
+
+func semanticReference(value TypeRef) semanticTypeRef {
+	out := semanticTypeRef{Name: value.Name, Namespace: value.Namespace, GenericArg: value.GenericArg, FlagName: value.FlagName, IsVector: value.IsVector, IsBare: value.IsBare, Optional: value.Optional, IsTypeVar: value.IsTypeVar, FlagBit: cloneIntPointer(value.FlagBit), VariantLayer: value.VariantLayer}
+	if value.Generic != nil {
+		generic := semanticReference(*value.Generic)
+		out.Generic = &generic
+	}
+	return out
+}
+
+func semanticKey(value any) string {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		panic(fmt.Sprintf("semantic contract key: %v", err))
+	}
+	return string(encoded)
+}
+
+func stringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func annotateBareParameters(parameters []Parameter, versions map[string]int) []Parameter {
 	parameters = cloneParameters(parameters)
 	for i := range parameters {
-		parameters[i].Type = annotateTypeRef(parameters[i].Type, versions)
+		parameters[i].Type = annotateBareTypeRef(parameters[i].Type, versions)
 	}
 	return parameters
 }
 
-func annotateTypeRef(reference TypeRef, versions map[string]int) TypeRef {
+func annotateBareTypeRef(reference TypeRef, versions map[string]int) TypeRef {
 	reference = cloneTypeRef(reference)
 	if reference.Generic != nil {
-		generic := annotateTypeRef(*reference.Generic, versions)
+		generic := annotateBareTypeRef(*reference.Generic, versions)
 		reference.Generic = &generic
 	}
-	if !reference.IsBuiltin() && !reference.IsTypeVar {
+	if reference.IsBare && !reference.IsBuiltin() && !reference.IsTypeVar {
 		reference.VariantLayer = versions[reference.FullName()]
+	} else if !reference.IsBare {
+		reference.VariantLayer = 0
 	}
 	return reference
 }
 
-func variantKey(name string, layer int) string {
-	return fmt.Sprintf("%s@%d", name, layer)
+func variantKey(name string, layer int) string { return fmt.Sprintf("%s@%d", name, layer) }
+
+func openInterval(intervals *[]LayerInterval, layer int) {
+	values := *intervals
+	if len(values) == 0 {
+		*intervals = []LayerInterval{{MinLayer: layer}}
+		return
+	}
+	last := &values[len(values)-1]
+	if last.MaxLayer == 0 || layer <= last.MaxLayer+1 {
+		last.MaxLayer = 0
+		return
+	}
+	*intervals = append(values, LayerInterval{MinLayer: layer})
 }
 
-func closeInactiveConstructors(schema *Schema, active map[string]int, current map[string]struct{}, maxLayer int) {
+func closeInactiveConstructorIntervals(schema *Schema, active map[string]int, current map[string]struct{}, maxLayer int) {
 	for key, index := range active {
 		if _, ok := current[key]; ok {
 			continue
 		}
-		schema.Constructors[index].MaxLayer = maxLayer
-		schema.Constructors[index].OutputMaxLayer = maxLayer
+		closeInterval(&schema.Constructors[index].Intervals, maxLayer)
 		delete(active, key)
 	}
 }
 
-func closeInactiveFunctions(schema *Schema, active map[string]int, current map[string]struct{}, maxLayer int) {
+func closeInactiveFunctionIntervals(schema *Schema, active map[string]int, current map[string]struct{}, maxLayer int) {
 	for key, index := range active {
 		if _, ok := current[key]; ok {
 			continue
 		}
-		schema.Functions[index].MaxLayer = maxLayer
+		closeInterval(&schema.Functions[index].Intervals, maxLayer)
 		delete(active, key)
 	}
 }
 
-func normalizeUniqueIDRanges(constructors []Constructor, functions []FuncDecl) {
-	constructorCounts := make(map[uint32]int)
-	for _, constructor := range constructors {
-		constructorCounts[constructor.ID]++
+func closeInterval(intervals *[]LayerInterval, maxLayer int) {
+	if len(*intervals) != 0 {
+		(*intervals)[len(*intervals)-1].MaxLayer = maxLayer
 	}
-	for i := range constructors {
-		if constructorCounts[constructors[i].ID] == 1 {
-			constructors[i].MaxLayer = 0
+}
+
+func intersectIntervals(intervals []LayerInterval, minLayer, maxLayer int) []LayerInterval {
+	var out []LayerInterval
+	for _, interval := range intervals {
+		min := interval.MinLayer
+		if min < minLayer {
+			min = minLayer
+		}
+		max := interval.MaxLayer
+		if max > maxLayer {
+			max = maxLayer
+		}
+		if min <= max {
+			out = append(out, LayerInterval{MinLayer: min, MaxLayer: max})
 		}
 	}
-	functionCounts := make(map[uint32]int)
-	for _, function := range functions {
+	return out
+}
+
+func normalizeIntervals(intervals []LayerInterval) []LayerInterval {
+	if len(intervals) == 0 {
+		return nil
+	}
+	out := cloneIntervals(intervals)
+	sort.Slice(out, func(i, j int) bool { return out[i].MinLayer < out[j].MinLayer })
+	merged := out[:1]
+	for _, interval := range out[1:] {
+		last := &merged[len(merged)-1]
+		if last.MaxLayer == 0 || interval.MinLayer <= last.MaxLayer+1 {
+			if last.MaxLayer != 0 && (interval.MaxLayer == 0 || interval.MaxLayer > last.MaxLayer) {
+				last.MaxLayer = interval.MaxLayer
+			}
+			continue
+		}
+		merged = append(merged, interval)
+	}
+	return merged
+}
+
+func validateLayeredIntervals(schema *Schema) error {
+	constructorsByID := make(map[uint32][]Constructor)
+	for _, constructor := range schema.Constructors {
+		constructorsByID[constructor.ID] = append(constructorsByID[constructor.ID], constructor)
+	}
+	for id, constructors := range constructorsByID {
+		for i := range constructors {
+			for j := i + 1; j < len(constructors); j++ {
+				if intervalSetsOverlap(constructors[i].Intervals, constructors[j].Intervals) {
+					return fmt.Errorf("resolve layers: constructor ID 0x%08x has overlapping contracts", id)
+				}
+			}
+		}
+	}
+	functionsByID := make(map[uint32][]FuncDecl)
+	for _, function := range schema.Functions {
 		if !function.IsHelper {
-			functionCounts[function.ID]++
+			functionsByID[function.ID] = append(functionsByID[function.ID], function)
 		}
 	}
-	for i := range functions {
-		if !functions[i].IsHelper && functionCounts[functions[i].ID] == 1 {
-			functions[i].MaxLayer = 0
+	for id, functions := range functionsByID {
+		for i := range functions {
+			for j := i + 1; j < len(functions); j++ {
+				if intervalSetsOverlap(functions[i].Intervals, functions[j].Intervals) {
+					return fmt.Errorf("resolve layers: function ID 0x%08x has overlapping contracts", id)
+				}
+			}
 		}
 	}
+	return nil
+}
+
+func intervalSetsOverlap(first, second []LayerInterval) bool {
+	for _, left := range first {
+		for _, right := range second {
+			if layerRangesOverlap(left.MinLayer, left.MaxLayer, right.MinLayer, right.MaxLayer) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Bare references have one statically named concrete codec. Replacing that name
+// needs explicit constructor-reference metadata; reject it instead of emitting
+// a nonexistent family-derived concrete type.
+func validateBareConstructorNames(snapshots []*Schema, historical []FuncDecl) error {
+	families := make(map[string]bool)
+	collect := func(parameters []Parameter) {
+		for _, parameter := range parameters {
+			for _, family := range bareReferenceNames(parameter.Type) {
+				families[family] = true
+			}
+		}
+	}
+	for _, function := range historical {
+		collect(function.Params)
+	}
+	for _, snapshot := range snapshots {
+		for _, constructor := range snapshot.Constructors {
+			collect(constructor.Params)
+		}
+		for _, function := range snapshot.Functions {
+			collect(function.Params)
+		}
+	}
+	for family := range families {
+		name := ""
+		for _, snapshot := range snapshots {
+			declaration, ok := snapshot.FindType(family)
+			if !ok {
+				continue
+			}
+			if len(declaration.Constructors) != 1 {
+				return fmt.Errorf("bare family %s requires one constructor at layer %d", family, snapshot.Layer)
+			}
+			current := declaration.Constructors[0].Name
+			if name != "" && name != current {
+				return fmt.Errorf("bare family %s: replacing constructor name %s with %s is unsupported", family, name, current)
+			}
+			name = current
+		}
+	}
+	return nil
 }

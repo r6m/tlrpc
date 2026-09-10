@@ -29,11 +29,17 @@ compatibility consumers, not framework dependencies.
 - Multi-layer output must preserve unchanged definitions and unsuffixed base
   names, distinguish same-ID wire layouts by disjoint layer ranges, reject
   flags unknown to a known layer, and keep historical union members decodable.
-- A type that is a union in any supported snapshot must remain one unsuffixed
-  union across the generated history. Concrete shape propagation must stop at
-  that union boundary.
-- Changed incoming request contracts must remain typed service methods.
-  Response-only changes must not duplicate service methods.
+- Multi-layer generation must expose every boxed result family through a stable
+  named interface, including singleton families. Exact constructor variants
+  implement that family. Boxed descendants must not cause parent variants.
+- Changed own request or declared return contracts must remain typed service
+  methods. Evolution inside the same boxed result family must not duplicate
+  handlers; response-only changes must reuse an unchanged request type.
+- Replaced and removed methods/constructors must expire at their declared
+  intervals. Historical method acceptance must be explicitly bounded; unique
+  constructor IDs must not silently reopen expired intervals.
+- All generated variants must remain in the existing category files. No
+  layer-suffixed filenames or compatibility shim APIs are required.
 - Runtime v2 must select generated request and constructor variants using the
   effective session layer. Semantic output changes require explicit
   application projection; no canonical business request or response model is

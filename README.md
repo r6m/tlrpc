@@ -55,12 +55,11 @@ tlrpc-gen \
 To generate one package that serves every selected layer, opt in with
 `--layers`. The list must contain the base and every supplied difference in
 strictly increasing order. The base is the complete accepted baseline. It may
-include older forms of a method by placing `// @tlrpc variant-layer <N>`
-immediately before each historical declaration; the canonical declaration is
-left unannotated. The annotation must be positive and no greater than the base
-layer. It controls generated name provenance only; accepted baseline forms are
-available from the generated package's base layer upward. This is the package's
-supported floor, not a universal TL protocol minimum.
+include explicitly accepted historical methods by placing both
+`// @tlrpc variant-layer <N>` and `// @tlrpc accept-layers 228-229` immediately
+before each historical declaration. The unannotated declaration is the active
+baseline method. Naming provenance never grants acceptance in another layer;
+historical ranges are bounded and explicit.
 
 ```bash
 tlrpc-gen \
@@ -72,23 +71,36 @@ tlrpc-gen \
   --package=gen
 ```
 
-Multi-layer output keeps unchanged definitions and base-layer Go names once.
-Changed request contracts get typed `Layer<N>` methods and disjoint descriptor
-layer ranges. Additive object fields share one generated superset and are
-encoded and decoded only in their declared layers. Other incompatible shapes
-receive `Layer<N>` types. A type that is a union in any selected snapshot stays
-one unsuffixed union containing its historical and current constructor
-variants. Static shape propagation stops at that union boundary. The generated
-constructor and method factories select same-ID wire variants by layer, and
-`ProjectTLObject` recursively clones output objects for a target layer.
-Hook-handled replacements re-enter automatic projection with the replacement
-root hook skipped; nested hooks still run, so nested layer constraints remain
-validated. A zero layer selects the base layer.
+Multi-layer output gives every boxed TL result family a stable named interface,
+including families that currently have only one constructor. Each distinct
+constructor contract gets its own concrete struct, including optional-field
+additions with an unchanged constructor ID. Unchanged constructors and methods
+are reused. Existing concrete initializers remain valid assignments to their
+family interfaces; adding a boxed child variant does not change its parents.
 
-Single-layer generation remains unchanged. Runtime v2 records the client's
-effective layer and uses generated descriptor and codec metadata when a
-multi-layer package is registered; application semantics remain in typed
-handlers and explicit projection hooks.
+Method input or declared result-contract changes receive typed `Layer<N>`
+handlers. Constructor evolution inside an unchanged boxed family does not
+require another handler. Replaced or removed IDs expire at their declared
+layers; generated factories and Runtime v2 select by ID and effective layer,
+then check the expected boxed family. A unique historical ID is not a bypass.
+
+All variants remain in the existing files (`types.go`, `requests.go`,
+`interfaces.go`, `services.go`, `register.go`, `codec.go` and `projection.go`),
+with layer suffixes on names rather than filenames. Generated codecs dispatch
+through concrete values' methods and reject unavailable variants. Explicit
+`ProjectTLObject` conversion clones nested output for a target layer; lossy
+changes require application hooks. Runtime v2 checks post-interceptor results
+through generated typed response encoders and applies bounded layer-aware
+encoding to replies and request-scoped sending.
+
+Generated fields use a shared cursor codec, direct handler adapters, and typed
+result encoding. Buffered decoding returns owned values; internal ciphertext
+borrowing avoids one frame copy. See the [performance report](docs/performance/README.md)
+for benchmark results, stream-decoding tradeoffs, and the buffer-ownership model.
+
+This is a breaking source-tree refactor. Regenerate consumers with the matching
+runtime/generator revision; obsolete superset and implicit historical-acceptance
+paths are removed. The tgserver upgrade is a separate follow-up.
 
 ```go
 type EchoService struct {

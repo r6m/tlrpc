@@ -1,0 +1,139 @@
+Final codec and dispatch measurements.
+Command: rtk proxy go test -p=1 . -run '^$' -bench '^(BenchmarkRuntimeApplicationDispatch|BenchmarkEncodeMethodResponse|BenchmarkGeneratedEchoCodec|BenchmarkGeneratedNestedBoxedVectorCodec|BenchmarkGeneratedEchoCallback|BenchmarkGeneratedEchoCodecBufferPath|BenchmarkGeneratedNestedBoxedVectorCodecBufferPath)$' -benchmem -count=5 -benchtime=200ms -cpu=1
+
+goos: darwin
+goarch: arm64
+pkg: github.com/r6m/tlrpc
+cpu: Apple M4 Pro
+BenchmarkRuntimeApplicationDispatch/small          	  324086	       693.4 ns/op	  34.61 MB/s	    1260 B/op	      30 allocs/op
+BenchmarkRuntimeApplicationDispatch/small          	  351364	       693.5 ns/op	  34.61 MB/s	    1260 B/op	      30 allocs/op
+BenchmarkRuntimeApplicationDispatch/small          	  342304	       686.2 ns/op	  34.98 MB/s	    1260 B/op	      30 allocs/op
+BenchmarkRuntimeApplicationDispatch/small          	  348614	       722.1 ns/op	  33.24 MB/s	    1260 B/op	      30 allocs/op
+BenchmarkRuntimeApplicationDispatch/small          	  350115	       685.8 ns/op	  34.99 MB/s	    1260 B/op	      30 allocs/op
+BenchmarkRuntimeApplicationDispatch/1KiB           	  208674	      1158 ns/op	 891.32 MB/s	    5432 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/1KiB           	  211491	      1128 ns/op	 915.24 MB/s	    5432 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/1KiB           	  206664	      1136 ns/op	 908.84 MB/s	    5432 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/1KiB           	  214891	      1134 ns/op	 909.95 MB/s	    5432 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/1KiB           	  207270	      1139 ns/op	 906.03 MB/s	    5432 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/64KiB          	   10000	     20556 ns/op	3188.49 MB/s	  271544 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/64KiB          	   10000	     20896 ns/op	3136.61 MB/s	  271544 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/64KiB          	   10000	     20669 ns/op	3171.16 MB/s	  271544 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/64KiB          	   10000	     20318 ns/op	3225.85 MB/s	  271544 B/op	      29 allocs/op
+BenchmarkRuntimeApplicationDispatch/64KiB          	   10000	     20825 ns/op	3147.32 MB/s	  271544 B/op	      29 allocs/op
+BenchmarkEncodeMethodResponse/scalar               	 5678653	        41.93 ns/op	     176 B/op	       2 allocs/op
+BenchmarkEncodeMethodResponse/scalar               	 5798361	        41.80 ns/op	     176 B/op	       2 allocs/op
+BenchmarkEncodeMethodResponse/scalar               	 5750241	        41.50 ns/op	     176 B/op	       2 allocs/op
+BenchmarkEncodeMethodResponse/scalar               	 5693487	        41.93 ns/op	     176 B/op	       2 allocs/op
+BenchmarkEncodeMethodResponse/scalar               	 5704132	        42.14 ns/op	     176 B/op	       2 allocs/op
+BenchmarkEncodeMethodResponse/vector               	 2473153	        96.80 ns/op	 330.57 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/vector               	 2399493	        96.49 ns/op	 331.64 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/vector               	 2478099	        96.73 ns/op	 330.81 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/vector               	 2475452	        96.46 ns/op	 331.73 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/vector               	 2464916	        96.33 ns/op	 332.18 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/nested_vector        	 1997554	       122.1 ns/op	  98.31 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/nested_vector        	 1935070	       121.5 ns/op	  98.76 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/nested_vector        	 1889049	       126.0 ns/op	  95.22 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/nested_vector        	 1881098	       121.9 ns/op	  98.42 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/nested_vector        	 1948724	       122.0 ns/op	  98.37 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/small          	 3201475	        74.06 ns/op	 216.05 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/small          	 3248203	        75.21 ns/op	 212.75 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/small          	 3203898	        75.99 ns/op	 210.57 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/small          	 2910781	        75.16 ns/op	 212.88 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/small          	 3202784	        74.63 ns/op	 214.40 MB/s	     200 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/1KiB           	 1280144	       182.6 ns/op	5608.28 MB/s	    1288 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/1KiB           	 1325488	       186.3 ns/op	5495.29 MB/s	    1288 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/1KiB           	 1268272	       182.2 ns/op	5619.18 MB/s	    1288 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/1KiB           	 1273178	       183.8 ns/op	5570.54 MB/s	    1288 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/1KiB           	 1306266	       184.3 ns/op	5556.72 MB/s	    1288 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/64KiB          	   45325	      4704 ns/op	13932.03 MB/s	   73864 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/64KiB          	   48823	      4894 ns/op	13390.04 MB/s	   73864 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/64KiB          	   49989	      4966 ns/op	13197.25 MB/s	   73864 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/64KiB          	   48956	      4863 ns/op	13477.56 MB/s	   73864 B/op	       3 allocs/op
+BenchmarkEncodeMethodResponse/bytes/64KiB          	   49113	      4900 ns/op	13374.86 MB/s	   73864 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodec/encode/small           	 5165418	        47.49 ns/op	 336.91 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/small           	 5013014	        46.13 ns/op	 346.85 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/small           	 5253676	        45.00 ns/op	 355.56 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/small           	 5359719	        44.69 ns/op	 358.00 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/small           	 5395627	        45.07 ns/op	 355.00 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/decode/small           	 1304506	       181.7 ns/op	 132.10 MB/s	     344 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/small           	 1277168	       182.0 ns/op	 131.86 MB/s	     344 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/small           	 1325623	       180.1 ns/op	 133.24 MB/s	     344 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/small           	 1325344	       181.7 ns/op	 132.05 MB/s	     344 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/small           	 1338540	       178.9 ns/op	 134.18 MB/s	     344 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/encode/1KiB            	 4518429	        52.84 ns/op	19380.62 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/1KiB            	 4512373	        54.07 ns/op	18939.77 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/1KiB            	 4509504	        52.86 ns/op	19372.17 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/1KiB            	 4591104	        52.69 ns/op	19433.47 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/1KiB            	 4474567	        53.03 ns/op	19310.91 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/decode/1KiB            	  600249	       463.6 ns/op	2225.88 MB/s	    2360 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/1KiB            	  527374	       399.8 ns/op	2581.11 MB/s	    2360 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/1KiB            	  607664	       393.2 ns/op	2624.39 MB/s	    2360 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/1KiB            	  603842	       379.1 ns/op	2722.18 MB/s	    2360 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/1KiB            	  627272	       380.6 ns/op	2711.43 MB/s	    2360 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/encode/64KiB           	  364512	       667.6 ns/op	98161.24 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/64KiB           	  300506	       687.9 ns/op	95276.57 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/64KiB           	  359202	       688.4 ns/op	95194.19 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/64KiB           	  363314	       691.9 ns/op	94718.20 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/encode/64KiB           	  340617	       679.3 ns/op	96470.87 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCodec/decode/64KiB           	   24178	     10276 ns/op	6378.39 MB/s	  131384 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/64KiB           	   23876	     10289 ns/op	6370.44 MB/s	  131384 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/64KiB           	   23653	     10190 ns/op	6432.17 MB/s	  131384 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/64KiB           	   23678	     10160 ns/op	6451.23 MB/s	  131384 B/op	       6 allocs/op
+BenchmarkGeneratedEchoCodec/decode/64KiB           	   23760	     10121 ns/op	6476.13 MB/s	  131384 B/op	       6 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/encode    	 2229133	       106.8 ns/op	 562.04 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/encode    	 2245642	       103.6 ns/op	 579.09 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/encode    	 2282840	       106.3 ns/op	 564.58 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/encode    	 2388159	       105.9 ns/op	 566.84 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/encode    	 2242102	       105.4 ns/op	 569.26 MB/s	     112 B/op	       1 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/decode    	  513487	       458.8 ns/op	 130.78 MB/s	     424 B/op	       9 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/decode    	  505821	       460.5 ns/op	 130.29 MB/s	     424 B/op	       9 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/decode    	  545846	       450.6 ns/op	 133.16 MB/s	     424 B/op	       9 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/decode    	  522580	       455.4 ns/op	 131.75 MB/s	     424 B/op	       9 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodec/decode    	  539992	       453.6 ns/op	 132.27 MB/s	     424 B/op	       9 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/small 	 4010823	        59.35 ns/op	 269.59 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/small 	 4092058	        58.99 ns/op	 271.24 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/small 	 4066110	        59.79 ns/op	 267.62 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/small 	 4067721	        59.44 ns/op	 269.19 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/small 	 4019847	        60.25 ns/op	 265.56 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/small 	 2546149	        93.80 ns/op	 255.87 MB/s	     256 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/small 	 2632989	        93.33 ns/op	 257.14 MB/s	     256 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/small 	 2611317	        92.60 ns/op	 259.17 MB/s	     256 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/small 	 2585461	        92.06 ns/op	 260.71 MB/s	     256 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/small 	 2466200	        93.14 ns/op	 257.68 MB/s	     256 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/1KiB  	 1287800	       185.4 ns/op	5524.26 MB/s	    1328 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/1KiB  	 1274329	       189.0 ns/op	5419.36 MB/s	    1328 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/1KiB  	 1256720	       190.0 ns/op	5389.99 MB/s	    1328 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/1KiB  	 1289558	       184.8 ns/op	5540.13 MB/s	    1328 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/1KiB  	 1291016	       186.3 ns/op	5495.04 MB/s	    1328 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/1KiB  	 1296735	       185.2 ns/op	5571.71 MB/s	    1264 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/1KiB  	 1292361	       188.1 ns/op	5487.71 MB/s	    1264 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/1KiB  	 1295146	       185.8 ns/op	5553.27 MB/s	    1264 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/1KiB  	 1315801	       183.5 ns/op	5622.69 MB/s	    1264 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/1KiB  	 1290534	       188.3 ns/op	5479.90 MB/s	    1264 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/64KiB 	   46686	      4873 ns/op	13449.84 MB/s	   73904 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/64KiB 	   51804	      4957 ns/op	13220.97 MB/s	   73904 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/64KiB 	   51574	      4790 ns/op	13680.51 MB/s	   73904 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/64KiB 	   51417	      4527 ns/op	14476.98 MB/s	   73904 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/encode/64KiB 	   50144	      4730 ns/op	13856.06 MB/s	   73904 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/64KiB 	   43627	      5362 ns/op	12223.02 MB/s	   65776 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/64KiB 	   57528	      4183 ns/op	15668.46 MB/s	   65776 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/64KiB 	   58802	      4530 ns/op	14468.27 MB/s	   65776 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/64KiB 	   62724	      4585 ns/op	14296.00 MB/s	   65776 B/op	       3 allocs/op
+BenchmarkGeneratedEchoCodecBufferPath/decode/64KiB 	   78468	      4223 ns/op	15519.25 MB/s	   65776 B/op	       3 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/encode         	 1733980	       138.1 ns/op	 434.52 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/encode         	 1786648	       133.1 ns/op	 450.85 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/encode         	 1796864	       135.6 ns/op	 442.50 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/encode         	 1810767	       133.4 ns/op	 449.78 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/encode         	 1799179	       136.5 ns/op	 439.40 MB/s	     176 B/op	       2 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/decode         	  961072	       238.4 ns/op	 251.70 MB/s	     352 B/op	       7 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/decode         	 1000000	       239.8 ns/op	 250.17 MB/s	     352 B/op	       7 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/decode         	  984631	       239.4 ns/op	 250.62 MB/s	     352 B/op	       7 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/decode         	  995470	       238.5 ns/op	 251.62 MB/s	     352 B/op	       7 allocs/op
+BenchmarkGeneratedNestedBoxedVectorCodecBufferPath/decode         	 1000000	       238.7 ns/op	 251.34 MB/s	     352 B/op	       7 allocs/op
+BenchmarkGeneratedEchoCallback                                    	16860591	        14.53 ns/op	      16 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCallback                                    	16300056	        14.47 ns/op	      16 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCallback                                    	15686017	        14.93 ns/op	      16 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCallback                                    	17139949	        14.46 ns/op	      16 B/op	       1 allocs/op
+BenchmarkGeneratedEchoCallback                                    	16474840	        14.52 ns/op	      16 B/op	       1 allocs/op
+PASS
+ok  	github.com/r6m/tlrpc	41.096s

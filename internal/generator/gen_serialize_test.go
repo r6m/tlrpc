@@ -58,13 +58,13 @@ multiFlags#01020304 flags:# flags2:# a:flags.0?true b:flags2.1?true c:flags2.2?s
 	if !strings.Contains(content, "flags2 := uint32(0)") {
 		t.Fatalf("expected flags2 local variable in serialize path")
 	}
-	if !strings.Contains(content, "if v.B {\n\t\tflags2 |= 1 << 1") {
+	if !strings.Contains(content, "if v.B { flags2 |= 1 << 1 }") {
 		t.Fatalf("expected flags2 bool bit computation")
 	}
 	if !strings.Contains(content, "if flags2&(1<<2) != 0") {
 		t.Fatalf("expected flags2 bit gate for optional fields")
 	}
-	if !strings.Contains(content, "if err := mtproto.WriteUint32(w, flags2); err != nil") {
+	if !strings.Contains(content, "if err := e.WriteUint32(flags2); err != nil") {
 		t.Fatalf("expected flags2 field serialization")
 	}
 	if !strings.Contains(content, "v.B = flags2&(1<<1) != 0") {

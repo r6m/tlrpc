@@ -11,6 +11,11 @@ import (
 )
 
 // Static constructor map for efficient decoding
+func tlLayerSupports(layer, minLayer, maxLayer int) bool {
+
+	return (minLayer == 0 || layer >= minLayer) && (maxLayer == 0 || layer <= maxLayer)
+}
+
 var staticConstructors = map[uint32]func() tlrpc.TLObject{
 	// Base MTProto types
 	0x3fedd339: func() tlrpc.TLObject { return &types.True{} },
@@ -31,6 +36,40 @@ func GetStaticConstructors() map[uint32]func() tlrpc.TLObject {
 	return staticConstructors
 }
 
+type tlConstructorLayerVariant struct {
+	minLayer  int
+	maxLayer  int
+	newObject func() tlrpc.TLObject
+}
+
+var constructorLayerVariants = map[uint32][]tlConstructorLayerVariant{
+	0x2c1c9a11: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EchoUpdate{} }},
+	},
+	0x9f57e1e8: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EchoResponse{} }},
+	},
+}
+
+// NewConstructorForLayer constructs the wire shape selected by an incoming
+// constructor ID and the negotiated session layer.
+func NewConstructorForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	variants, hasLayerVariants := constructorLayerVariants[id]
+	for _, variant := range variants {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
+			return variant.newObject(), true
+		}
+	}
+	if hasLayerVariants {
+		return nil, false
+	}
+	constructor, ok := staticConstructors[id]
+	if !ok {
+		return nil, false
+	}
+	return constructor(), true
+}
+
 // Static method constructor map for RPC request deserialization
 var staticMethods = map[string]func() tlrpc.TLObject{
 	"echo.echo": func() tlrpc.TLObject { return &EchoEchoRequest{} },
@@ -39,4 +78,20 @@ var staticMethods = map[string]func() tlrpc.TLObject{
 // GetStaticMethods returns the static method constructor map
 func GetStaticMethods() map[string]func() tlrpc.TLObject {
 	return staticMethods
+}
+
+var methodLayerVariants = map[uint32][]tlConstructorLayerVariant{
+	0x5e1f91a2: {
+		{minLayer: 0, maxLayer: 0, newObject: func() tlrpc.TLObject { return &EchoEchoRequest{} }},
+	},
+}
+
+// NewMethodRequestForLayer constructs a typed request wire variant.
+func NewMethodRequestForLayer(id uint32, layer int) (tlrpc.TLObject, bool) {
+	for _, variant := range methodLayerVariants[id] {
+		if tlLayerSupports(layer, variant.minLayer, variant.maxLayer) {
+			return variant.newObject(), true
+		}
+	}
+	return nil, false
 }

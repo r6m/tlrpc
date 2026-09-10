@@ -1,0 +1,10 @@
+Baseline environment
+
+Source copy: /tmp/tlrpc-perf-baseline-g_vzb16e/tlrpc
+Go version: go version go1.26.4 darwin/arm64
+GOOS: darwin
+GOARCH: arm64
+CPU: Apple M4 Pro
+Benchmark settings: -benchmem -count=5 -benchtime=200ms -cpu=1 -p=1
+Generated-codec command: rtk proxy go test . -run '^$' -bench '^(BenchmarkGeneratedEchoCodec|BenchmarkGeneratedNestedBoxedVectorCodec|BenchmarkGeneratedEchoCallback)$' -benchmem -count=5 -benchtime=200ms -cpu=1 -p=1
+Generated buffer-path command: rtk proxy go test . -run '^$' -bench '^(BenchmarkGeneratedEchoCodecBufferPath|BenchmarkGeneratedNestedBoxedVectorCodecBufferPath)$' -benchmem -count=5 -benchtime=200ms -cpu=1 -p=1

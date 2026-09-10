@@ -5,6 +5,7 @@ package tlrpc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/r6m/tlrpc/transport"
 )
@@ -37,16 +38,37 @@ type ServiceDesc struct {
 	Methods     []MethodDesc
 }
 
+// MethodHandler is the erased dispatch ABI used by generated service adapters.
+// Generated adapters check the concrete request type before directly invoking
+// the typed service method.
+type MethodHandler func(srv any, ctx context.Context, req TLObject) (any, error)
+
+// BindMethod adapts a handwritten typed service adapter to MethodHandler
+// without reflection.
+func BindMethod[Req TLObject, Resp any](handler func(any, context.Context, Req) (Resp, error)) MethodHandler {
+	return func(srv any, ctx context.Context, req TLObject) (any, error) {
+		typed, ok := req.(Req)
+		if !ok {
+			return nil, fmt.Errorf("tlrpc: request %T does not satisfy the declared method input", req)
+		}
+		return handler(srv, ctx, typed)
+	}
+}
+
 // MethodDesc describes a method within a service.
 type MethodDesc struct {
 	// MinLayer and MaxLayer bound this wire variant inclusively. Zero leaves
-	// that side unbounded. Historical constructors may remain unbounded.
+	// that side unbounded. Repeated rows may describe disjoint intervals for
+	// the same generated method contract.
 	MinLayer      int
 	MaxLayer      int
 	MethodName    string
 	ConstructorID uint32          // TL constructor ID for the request method.
 	NewRequest    func() TLObject // Constructs an empty request object for decoding.
-	Handler       interface{}     // Handler function (various signatures supported)
+	Handler       MethodHandler   // Erased adapter for the generated typed service method.
+	// EncodeResponse is generated for the method's exact result type. It checks
+	// interceptor output and encodes it using the effective layer and limits.
+	EncodeResponse func(any, int, EncodeLimits) ([]byte, error)
 }
 
 // UnaryServerInfo provides information about the current RPC call.

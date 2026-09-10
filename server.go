@@ -4,7 +4,6 @@ package tlrpc
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -218,15 +217,11 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 	}
 	registrations := make([]registration, 0, len(desc.Methods))
 	methodIDs := make(map[uint32][]MethodDesc, len(desc.Methods))
-	methodNames := make(map[string]struct{}, len(desc.Methods))
+	methodNames := make(map[string]MethodDesc, len(desc.Methods))
 	for _, method := range desc.Methods {
 		if method.MethodName == "" {
 			panic(fmt.Sprintf("service %q has a method with no name", desc.ServiceName))
 		}
-		if _, exists := methodNames[method.MethodName]; exists {
-			panic(fmt.Sprintf("service %q has duplicate method name %q", desc.ServiceName, method.MethodName))
-		}
-		methodNames[method.MethodName] = struct{}{}
 		if method.ConstructorID == 0 {
 			panic(fmt.Sprintf("method %q is missing constructor ID", method.MethodName))
 		}
@@ -235,6 +230,9 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 		}
 		if method.Handler == nil {
 			panic(fmt.Sprintf("method %q is missing handler", method.MethodName))
+		}
+		if method.EncodeResponse == nil {
+			panic(fmt.Sprintf("method %q is missing response encoder", method.MethodName))
 		}
 		if method.MinLayer < 0 || method.MaxLayer < 0 || (method.MaxLayer != 0 && method.MinLayer > method.MaxLayer) {
 			panic(fmt.Sprintf("method %q has invalid layer range", method.MethodName))
@@ -246,17 +244,22 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 		}
 		methodIDs[method.ConstructorID] = append(methodIDs[method.ConstructorID], method)
 
-		invoker, err := bindServiceMethodHandler(impl, method.Handler)
-		if err != nil {
-			panic(fmt.Sprintf("method %q handler bind failed: %v", method.MethodName, err))
-		}
 		request := method.NewRequest()
-		if request == nil {
+		if request == nil || (reflect.ValueOf(request).Kind() == reflect.Pointer && reflect.ValueOf(request).IsNil()) {
 			panic(fmt.Sprintf("method %q request constructor returned nil", method.MethodName))
 		}
 		if request.ConstructorID() != method.ConstructorID {
 			panic(fmt.Sprintf("method %q request constructor ID 0x%08x does not match descriptor ID 0x%08x", method.MethodName, request.ConstructorID(), method.ConstructorID))
 		}
+		if previous, exists := methodNames[method.MethodName]; exists {
+			if previous.ConstructorID != method.ConstructorID ||
+				reflect.TypeOf(previous.NewRequest()) != reflect.TypeOf(request) ||
+				reflect.ValueOf(previous.Handler).Pointer() != reflect.ValueOf(method.Handler).Pointer() ||
+				reflect.ValueOf(previous.EncodeResponse).Pointer() != reflect.ValueOf(method.EncodeResponse).Pointer() {
+				panic(fmt.Sprintf("service %q has duplicate method name %q with different contracts", desc.ServiceName, method.MethodName))
+			}
+		}
+		methodNames[method.MethodName] = method
 		if _, exists := s.dispatcher.LookupMethod(method.ConstructorID); exists {
 			panic(fmt.Sprintf("duplicate method constructor ID 0x%08x for %q", method.ConstructorID, method.MethodName))
 		}
@@ -264,7 +267,13 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 			panic(fmt.Sprintf("duplicate request constructor ID 0x%08x for %q", method.ConstructorID, method.MethodName))
 		}
 
-		registrations = append(registrations, registration{method: method, invoker: invoker})
+		handler := method.Handler
+		registrations = append(registrations, registration{
+			method: method,
+			invoker: func(ctx context.Context, req TLObject) (interface{}, error) {
+				return handler(impl, ctx, req)
+			},
+		})
 	}
 
 	for _, registration := range registrations {
@@ -275,48 +284,6 @@ func (s *Server) RegisterService(desc ServiceDesc, impl interface{}) {
 	s.schemaLayer = desc.SchemaLayer
 	s.schemaLayerSet = true
 	s.services[desc.ServiceName] = &serviceInfo{desc: desc, impl: impl}
-}
-
-func bindServiceMethodHandler(impl interface{}, handler interface{}) (func(context.Context, TLObject) (interface{}, error), error) {
-	handlerValue := reflect.ValueOf(handler)
-	if !handlerValue.IsValid() || handlerValue.Kind() != reflect.Func {
-		return nil, errors.New("handler is not a function")
-	}
-
-	handlerType := handlerValue.Type()
-	if handlerType.NumIn() != 3 || handlerType.NumOut() != 2 {
-		return nil, fmt.Errorf("unexpected handler signature: %v", handlerType)
-	}
-	if !handlerType.In(1).Implements(reflect.TypeOf((*context.Context)(nil)).Elem()) {
-		return nil, fmt.Errorf("second arg must implement context.Context: %v", handlerType)
-	}
-	errType := reflect.TypeOf((*error)(nil)).Elem()
-	if !handlerType.Out(1).Implements(errType) {
-		return nil, fmt.Errorf("second return value must be error: %v", handlerType)
-	}
-
-	implValue := reflect.ValueOf(impl)
-	reqType := handlerType.In(2)
-
-	return func(ctx context.Context, req TLObject) (interface{}, error) {
-		reqValue := reflect.ValueOf(req)
-		if !reqValue.IsValid() {
-			reqValue = reflect.Zero(reqType)
-		} else if reqType.Kind() == reflect.Interface {
-			if !reqValue.Type().Implements(reqType) {
-				return nil, fmt.Errorf("request type %T does not implement %v", req, reqType)
-			}
-		} else if !reqValue.Type().AssignableTo(reqType) {
-			return nil, fmt.Errorf("request type %T is not assignable to %v", req, reqType)
-		}
-
-		out := handlerValue.Call([]reflect.Value{implValue, reflect.ValueOf(ctx), reqValue})
-		resp := out[0].Interface()
-		if out[1].IsNil() {
-			return resp, nil
-		}
-		return resp, out[1].Interface().(error)
-	}, nil
 }
 
 // Serve starts serving on the given listener
