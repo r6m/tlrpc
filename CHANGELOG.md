@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Released entries are historical records; the Unreleased section and current
 documentation define future framework behavior.
 
-## [0.15.0] - Unreleased
+## [0.15.0] - 2026-09-10
 
 This is a coordinated, breaking pre-1.0 minor release. Regenerate consuming
 schemas and migrate their service implementations with the same generator and
@@ -47,8 +47,8 @@ runtime revision before upgrading.
 
 - Full Go tests, vet, build, architecture guards, generated application tests,
   and deterministic regeneration of 23 existing fixture files pass for the
-  selective-interface correction. Consumer migration and release-module
-  validation remain prerequisites for publishing the release.
+  selective-interface correction. Consumer migration, integration acceptance
+  and validation against this published module remain separate consumer gates.
 
 ## [0.14.4] - 2026-09-09
 
