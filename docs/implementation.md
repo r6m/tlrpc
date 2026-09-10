@@ -55,13 +55,21 @@ tlrpc-gen \
   --package=gen
 ```
 
-Multi-layer output uses a stable family interface for every boxed application
-result type, even when only the base layer or one constructor is selected.
-For example, `Channel.AdminRights ChatAdminRightsType` accepts concrete
-`*ChatAdminRights` and `*ChatAdminRightsLayer229` values. Existing old literals
-still compile when the next layer is added. Direct field reads through the
-interface require a type switch or domain conversion. Scalars retain their
-native mappings; bare references keep their statically resolved wire layouts.
+Multi-layer output uses a stable family interface only for a boxed application
+result family with multiple constructors or multiple distinct contracts in the
+selected history. An unchanged singleton keeps its concrete pointer mapping.
+When layer evolution introduces another contract, such as
+`ChatAdminRightsLayer229`, `Channel.AdminRights` becomes
+`ChatAdminRightsType` and accepts both concrete rights pointers. Existing old
+struct literals still compile because their pointer value is assignable to the
+new interface. Direct field reads through the evolved field require a type
+switch or domain conversion. Scalars retain their native mappings; bare
+references keep their statically resolved wire layouts.
+
+This section describes the corrected API. Candidate `d9581b0` emitted interfaces
+for unchanged singleton families; the current working tree corrects that output
+and has passed the full sequential framework validation, generated-fixture drift
+checks, architecture guards, 226 targeted tests and independent review.
 
 Each changed constructor gets an exact struct and codec, including same-ID
 optional-field additions. Boxed references use family identity, so child changes

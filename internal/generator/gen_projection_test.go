@@ -378,7 +378,7 @@ func TestUnknownRequestsErrorsAndDepthBound(t *testing.T) {
 	}
 
 	var childPath []string
-	tree := &Node{Label: "root", Children: []NodeType{&Node{Label: "child"}}}
+	tree := &Node{Label: "root", Children: []*Node{&Node{Label: "child"}}}
 	projectedTreeObject, err := ProjectTLObject(tree, 228, func(path []string, object tlrpc.TLObject, _ int) (tlrpc.TLObject, bool, error) {
 		if value, ok := object.(*Node); ok && value.Label == "root" {
 			path[0] = "mutated-copy"

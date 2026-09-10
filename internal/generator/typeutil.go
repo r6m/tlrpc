@@ -45,13 +45,6 @@ func isUnionType(schema *parser.Schema, t parser.TypeRef) bool {
 	if naming.IsBuiltinType(name) || naming.IsBuiltinType(t.Name) {
 		return false
 	}
-	if schema.IsLayered {
-		for i := range schema.Types {
-			if schema.Types[i].Name == name {
-				return true
-			}
-		}
-	}
 	if schema.UnionTypes != nil && schema.UnionTypes[name] {
 		return true
 	}
@@ -98,13 +91,19 @@ func concreteTypeName(namer *naming.Namer, schema *parser.Schema, constructor pa
 	return constructorName(namer, constructor)
 }
 
-func bareConcreteTypeName(namer *naming.Namer, schema *parser.Schema, reference parser.TypeRef) (string, bool) {
-	if !reference.IsBare || schema == nil {
+func referenceConcreteTypeName(namer *naming.Namer, schema *parser.Schema, reference parser.TypeRef) (string, bool) {
+	if schema == nil {
 		return "", false
 	}
 	for _, declaration := range schema.Types {
 		if declaration.Name != reference.FullName() {
 			continue
+		}
+		if !reference.IsBare {
+			if len(declaration.Constructors) == 1 {
+				return concreteTypeName(namer, schema, declaration.Constructors[0]), true
+			}
+			return "", false
 		}
 		for _, constructor := range declaration.Constructors {
 			if constructor.VariantLayer == reference.VariantLayer {
@@ -156,7 +155,7 @@ func needsOptionalPointer(t parser.TypeRef, base string, schema *parser.Schema) 
 	if !t.Optional || isTrueType(t) {
 		return false
 	}
-	if isUnionType(schema, t) || strings.HasPrefix(base, "[]") {
+	if isUnionType(schema, t) || isBoxedSingletonPointer(schema, t) || strings.HasPrefix(base, "[]") {
 		return false
 	}
 	return true
@@ -182,4 +181,18 @@ func shouldUsePointerForType(schema *parser.Schema, t parser.TypeRef) bool {
 		return false
 	}
 	return true
+}
+
+// Layered boxed singletons use concrete pointers. A later family interface can
+// therefore accept the same constructor initializer without changing parents.
+func isBoxedSingletonPointer(schema *parser.Schema, t parser.TypeRef) bool {
+	if schema == nil || !schema.IsLayered || t.IsBare || t.IsVector || t.IsTypeVar || isBuiltinTLType(t.Name) {
+		return false
+	}
+	for _, decl := range schema.Types {
+		if decl.Name == t.FullName() {
+			return len(decl.Constructors) == 1
+		}
+	}
+	return false
 }

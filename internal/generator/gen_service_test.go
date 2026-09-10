@@ -162,14 +162,48 @@ test.call#10 value:int = ResultB;`, 229, "229.tl")
 	if got := strings.Count(requests.String(), "type TestCallRequest struct"); got != 1 {
 		t.Fatalf("request declarations = %d, want 1\n%s", got, requests.String())
 	}
-	if !strings.Contains(services.String(), "CallLayer229(ctx context.Context, req *TestCallRequest) (ResultBType, error)") {
+	if !strings.Contains(services.String(), "Call(ctx context.Context, req *TestCallRequest) (*ResultA, error)") ||
+		!strings.Contains(services.String(), "CallLayer229(ctx context.Context, req *TestCallRequest) (*ResultB, error)") {
 		t.Fatalf("missing result-versioned handler:\n%s", services.String())
 	}
-	if !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[ResultAType]") || !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[ResultBType]") {
+	if !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[*ResultA]") || !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[*ResultB]") {
 		t.Fatalf("missing exact response encoders:\n%s", registration.String())
 	}
 	if !strings.Contains(requests.String(), "tlLayerSupports(layer, 228, 0)") {
 		t.Fatalf("shared request did not union handler intervals:\n%s", requests.String())
+	}
+}
+
+func TestServiceGenerator_LayeredSingletonResultsStayConcrete(t *testing.T) {
+	base, err := parser.NewParser(`---types---
+only#1 value:int = Only;
+---functions---
+test.get#10 = Only;
+test.list#11 = Vector<Only>;`).ParseWithLayer(228)
+	if err != nil {
+		t.Fatal(err)
+	}
+	layered, err := parser.ResolveLayers(base, 228, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var services, registration bytes.Buffer
+	if err := NewServiceGenerator(naming.NewNamer(), layered.Schema, &services).GenerateService(layered.Schema.Functions); err != nil {
+		t.Fatal(err)
+	}
+	if err := NewServiceGenerator(naming.NewNamer(), layered.Schema, &registration).GenerateRegistration(layered.Schema.Functions); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(services.String(), "Get(ctx context.Context, req *TestGetRequest) (*Only, error)") ||
+		!strings.Contains(services.String(), "List(ctx context.Context, req *TestListRequest) ([]*Only, error)") {
+		t.Fatalf("singleton results were not concrete:\n%s", services.String())
+	}
+	if strings.Contains(services.String(), "OnlyType") || strings.Contains(registration.String(), "OnlyType") {
+		t.Fatalf("singleton results introduced a speculative interface:\n%s\n%s", services.String(), registration.String())
+	}
+	if !strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[*Only]") ||
+		!strings.Contains(registration.String(), "tlrpc.EncodeTypedResponse[[]*Only]") {
+		t.Fatalf("singleton response encoders lost concrete result types:\n%s", registration.String())
 	}
 }
 

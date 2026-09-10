@@ -214,12 +214,15 @@ func ResolveLayers(base *Schema, baseLayer int, differences []LayerDifference) (
 		if !exists {
 			index = len(combined.Types)
 			families[family] = index
-			combined.Types = append(combined.Types, TypeDecl{Name: family, IsUnion: true})
-			combined.UnionTypes[family] = true
+			combined.Types = append(combined.Types, TypeDecl{Name: family})
 		}
 		combined.Types[index].Constructors = append(combined.Types[index].Constructors, cloneConstructor(constructor))
 	}
 	for i := range combined.Types {
+		combined.Types[i].IsUnion = len(combined.Types[i].Constructors) > 1
+		if combined.Types[i].IsUnion {
+			combined.UnionTypes[combined.Types[i].Name] = true
+		}
 		sort.SliceStable(combined.Types[i].Constructors, func(a, b int) bool {
 			left, right := combined.Types[i].Constructors[a], combined.Types[i].Constructors[b]
 			if left.Name == right.Name {

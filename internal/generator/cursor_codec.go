@@ -190,7 +190,7 @@ func (c cursorCodec) writeDeserializeValueDepth(t parser.TypeRef, target, indent
 			if _, err := fmt.Fprintf(c.out, "%s\tcapacity := count\n%s\tif capacity > 1024 { capacity = 1024 }\n%s\titems := make([]%s, 0, capacity)\n%s\tfor %s := 0; %s < count; %s++ {\n", indent, indent, indent, elemType, indent, index, index, index); err != nil {
 				return err
 			}
-			if elemPointer {
+			if elemPointer && !isBoxedSingletonPointer(c.schema, elem) {
 				if _, err := fmt.Fprintf(c.out, "%s\t\titem := &%s{}\n", indent, c.goBase(elem)); err != nil {
 					return err
 				}
@@ -210,6 +210,10 @@ func (c cursorCodec) writeDeserializeValueDepth(t parser.TypeRef, target, indent
 	if isUnionType(c.schema, t) {
 		helper := "decode" + unionInterfaceName(c.namer, t)
 		_, err := fmt.Fprintf(c.out, "%s{\n%s\tvalue, err := %s(%s)\n%s\tif err != nil { return err }\n%s\t%s = value\n%s}\n", indent, indent, helper, c.cursor, indent, indent, target, indent)
+		return err
+	}
+	if isBoxedSingletonPointer(c.schema, t) {
+		_, err := fmt.Fprintf(c.out, "%s%s = &%s{}\n%sif err := %s.deserializeTL(%s); err != nil { return err }\n", indent, target, c.goBase(t), indent, target, c.cursor)
 		return err
 	}
 	if t.Optional && !isTrueType(t) && needsOptionalPointer(t, c.goBase(t), c.schema) {
@@ -460,7 +464,7 @@ func (g *TypeGenerator) generateDeserializeTLBare(ctor *parser.Constructor, name
 }
 
 func (g *TypeGenerator) generateFamilyDecoder(decl *parser.TypeDecl) error {
-	if (!decl.IsUnion || len(decl.Constructors) == 1) && !g.schema.IsLayered {
+	if len(decl.Constructors) <= 1 {
 		return nil
 	}
 	hasConcrete := false

@@ -130,10 +130,10 @@ func TestTypeGenerator_UnionFieldDeserializeUsesConstructorDispatch(t *testing.T
 	}
 }
 
-func TestTypeGenerator_LayeredSingletonUsesStableInterfaceAndConditionalBareCodec(t *testing.T) {
+func TestTypeGenerator_LayeredSingletonStaysConcreteAndKeepsConditionalBareCodec(t *testing.T) {
 	base, err := parser.NewParser(`---types---
 leaf#1 value:int = Leaf;
-box#2 leaf:!Leaf = Box;`).ParseWithLayer(228)
+box#2 flags:# bare:!Leaf optional_bare:flags.0?!Leaf boxed:Leaf optional_boxed:flags.1?Leaf leaves:Vector<Leaf> = Box;`).ParseWithLayer(228)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,8 +152,16 @@ box#2 leaf:!Leaf = Box;`).ParseWithLayer(228)
 			t.Fatal(err)
 		}
 	}
-	if !strings.Contains(interfaces.String(), "type LeafType interface") || !strings.Contains(interfaces.String(), "func (*Leaf) isLeafType()") {
-		t.Fatalf("missing layered singleton interface:\n%s", interfaces.String())
+	if strings.Contains(interfaces.String(), "type LeafType interface") || strings.Contains(interfaces.String(), "isLeafType") {
+		t.Fatalf("layered singleton generated a speculative interface:\n%s", interfaces.String())
+	}
+	for _, field := range []string{"Bare Leaf", "OptionalBare *Leaf", "Boxed *Leaf", "OptionalBoxed *Leaf", "Leaves []*Leaf"} {
+		if !strings.Contains(types.String(), field) {
+			t.Fatalf("missing concrete singleton field %q:\n%s", field, types.String())
+		}
+	}
+	if strings.Contains(types.String(), "decodeLeafType") {
+		t.Fatalf("layered singleton generated a family decoder:\n%s", types.String())
 	}
 	if strings.Count(types.String(), "func (v *Leaf) serializeTLBare") != 1 || strings.Contains(types.String(), "func (v *Box) serializeTLBare") {
 		t.Fatalf("bare helpers must be emitted only for referenced Leaf codec:\n%s", types.String())

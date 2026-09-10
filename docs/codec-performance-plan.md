@@ -85,7 +85,7 @@ and platforms, not as a universal zero-copy operation
 objects and may discard entries; it does not track borrowers or release lifetimes
 ([sync.Pool](https://pkg.go.dev/sync#Pool)). Both can be added below the generated
 contract model later, after transport benchmarks and ownership tests. Neither
-requires replacing stable family interfaces or making handlers fill view structs.
+requires changing generated family typing or making handlers fill view structs.
 
 ## Ownership and execution
 

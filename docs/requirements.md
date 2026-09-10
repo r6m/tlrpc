@@ -29,9 +29,12 @@ compatibility consumers, not framework dependencies.
 - Multi-layer output must preserve unchanged definitions and unsuffixed base
   names, distinguish same-ID wire layouts by disjoint layer ranges, reject
   flags unknown to a known layer, and keep historical union members decodable.
-- Multi-layer generation must expose every boxed result family through a stable
-  named interface, including singleton families. Exact constructor variants
-  implement that family. Boxed descendants must not cause parent variants.
+- Multi-layer generation must expose a boxed result family through a stable
+  named interface only when the selected history contains multiple constructors
+  or multiple distinct contracts for one constructor. An unchanged singleton
+  family retains its concrete pointer mapping. Same-ID optional-field evolution
+  creates a concrete variant and promotes boxed references to the family
+  interface. Boxed descendants must not cause parent variants.
 - Changed own request or declared return contracts must remain typed service
   methods. Evolution inside the same boxed result family must not duplicate
   handlers; response-only changes must reuse an unchanged request type.

@@ -120,7 +120,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 	typesOut := writer.NewFile("types.go")
 	var interfacesOut io.Writer
-	if hasUnionTypes(schema) {
+	// Keep this category in layered output even when empty, so regeneration
+	// cannot leave stale family interfaces after the final variant is removed.
+	if schema.IsLayered || hasUnionTypes(schema) {
 		interfacesOut = writer.NewFile("interfaces.go")
 	}
 	servicesOut := writer.NewFile("services.go")
@@ -416,7 +418,7 @@ func hasUnionTypes(schema *parser.Schema) bool {
 		if naming.IsBuiltinType(schema.Types[i].Name) {
 			continue
 		}
-		if schema.IsLayered || schema.Types[i].IsUnion || len(schema.Types[i].Constructors) > 1 {
+		if schema.Types[i].IsUnion || len(schema.Types[i].Constructors) > 1 {
 			return true
 		}
 	}

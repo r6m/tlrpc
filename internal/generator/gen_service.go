@@ -317,6 +317,9 @@ func (g *ServiceGenerator) shouldPointerReturn(t parser.TypeRef) bool {
 
 func (g *ServiceGenerator) goType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
+	if isBoxedSingletonPointer(g.schema, t) {
+		return "*" + base
+	}
 	if t.Optional && !isTrueType(t) && !isUnionType(g.schema, t) && !strings.HasPrefix(base, "[]") {
 		return "*" + base
 	}
@@ -371,7 +374,7 @@ func (g *ServiceGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 	if isUnionType(g.schema, t) {
 		return unionInterfaceName(g.namer, t)
 	}
-	if name, ok := bareConcreteTypeName(g.namer, g.schema, t); ok {
+	if name, ok := referenceConcreteTypeName(g.namer, g.schema, t); ok {
 		return name
 	}
 

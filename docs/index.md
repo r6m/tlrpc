@@ -27,10 +27,13 @@ Each page has one responsibility:
 Historical release changes are in [CHANGELOG.md](../CHANGELOG.md).
 
 The [distinct layer contracts refactor](./distinct-layer-contracts-plan.md)
-defines stable boxed-type interfaces, source-compatible concrete initializers,
+defines exact constructor variants, interfaces for families that actually have
+multiple constructors or contracts, source-compatible concrete initializers,
 generated codec dispatch, strict method lifetimes and consumer migration gates.
-Framework implementation and validation are complete in the working tree;
-tgserver regeneration and migration are a separate follow-up.
+The earlier broad singleton-interface candidate has been corrected. The current
+working tree passes full sequential test, vet and build gates, generated-fixture
+drift checks, architecture guards, targeted tests and independent review.
+Tgserver acceptance remains separate.
 
 ## Scope at a glance
 

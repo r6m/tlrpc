@@ -96,7 +96,9 @@ Do not run timing concurrently with generation, test suites, or other benchmarks
 The user's proposed reusable-buffer/slice/view/writev architecture is compatible
 with the cursor design, but each optimization belongs to a particular owner.
 See [the technique-by-technique decisions](../codec-performance-plan.md#how-the-broader-zero-copy-architecture-fits).
-Services keep ordinary Go fields and stable boxed family interfaces. Internal
+Services keep ordinary Go fields, concrete pointers for unchanged singleton
+boxed families, and stable interfaces for families with multiple constructors
+or distinct contracts. Internal
 slicing avoids intermediate work; converting the final field to owned storage
 is the explicit boundary that allows handlers to retain it safely.
 

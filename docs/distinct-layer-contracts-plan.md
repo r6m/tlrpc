@@ -1,14 +1,17 @@
 # Distinct layer contracts refactor
 
-Status: TLRPC refactor completed and validated, 2026-09-10. This document
-records stable boxed-family interfaces, source-compatible concrete initializers,
-and generated codec dispatch. Tgserver generation and upgrade are deferred.
+Status: selective-interface correction implemented and validated, 2026-09-10.
+Candidate `d9581b0` implemented interfaces for unchanged singleton families too
+broadly; the current working tree corrects that behavior. Framework gates pass.
+Tgserver migration and acceptance remain separate.
 
 ## Goal
 
-Generate stable boxed TL result-type interfaces and one concrete Go struct per
-distinct constructor contract, with explicit method lifetimes and layer-aware
-runtime validation. Keep one generated package and
+Generate a stable boxed TL result-type interface when a family has multiple
+constructors or multiple distinct constructor contracts across the selected
+layers, and one concrete Go struct per distinct contract. Keep unchanged
+singleton families mapped to concrete pointers, with explicit method lifetimes
+and layer-aware runtime validation. Keep one generated package and
 typed service boundary; introduce no canonical RPC model or Telegram semantics
 into TLRPC. Coordinate the consuming server through its
 `docs/distinct-layer-contracts-plan.md` migration plan.
@@ -30,22 +33,24 @@ convenient example. Runtime layer legality remains a separate condition.
 - Exclude source locations, comments, availability ranges and naming provenance
   from contract equality. Do not use annotated AST equality as contract identity.
 - Reuse unchanged contracts across snapshots. The baseline uses unsuffixed constructor-derived Go
-  names from the first multi-layer generation, even for a singleton family; subsequent distinct contracts get `Layer<N>` using first introduction.
+  names; subsequent distinct contracts get `Layer<N>` using first introduction.
   Preserve historical provenance names such as `Layer172` where explicit.
 - If an identical contract disappears and returns, reuse its type and retain
   separate availability intervals. A gap must not become a valid interval.
-- In multi-layer output, every application-defined boxed TL result family gets
-  a stable unsuffixed interface, including families with only one constructor.
-  This applies even when the selected history currently contains only layer
-  228: adding a second layer must not be the trigger for introducing interfaces.
-  Use the existing `Type` suffix convention: `ChatAdminRightsType`. Concrete
-  constructors implement their family's marker and TL codec methods. Primitive
-  scalars, bytes, flags and runtime-owned controls keep their existing mappings.
-- Parent fields, boxed vector elements and boxed method results use these
-  interfaces. An optional-field change creates `ChatAdminRightsLayer229` but
-  leaves `Channel.AdminRights ChatAdminRightsType` unchanged. A parent gets a
-  variant only when its own declaration or a bare dependency changes; changed
-  boxed descendants never trigger a parent or request-type cascade.
+- In multi-layer output, an application-defined boxed TL result family gets a
+  stable unsuffixed interface only when the selected history contains multiple
+  constructors or multiple distinct contracts for one constructor. Use the
+  existing `Type` suffix convention: `ChatAdminRightsType`. An unchanged
+  singleton family keeps its concrete pointer mapping. Primitive scalars, bytes,
+  flags and runtime-owned controls keep their existing mappings.
+- Parent fields, boxed vector elements and boxed method results use the concrete
+  pointer for an unchanged singleton and the interface for a multi-constructor or
+  multi-contract family. A same-ID optional-field change creates
+  `ChatAdminRightsLayer229` and changes `Channel.AdminRights` from
+  `*ChatAdminRights` to `ChatAdminRightsType`. `Channel` itself stays unsuffixed:
+  a parent gets a variant only when its own declaration or a bare dependency
+  changes. Changed boxed descendants never trigger a parent or request-type
+  cascade.
 - Interfaces describe a TL family across history, not an anonymous `any` field
   or a field-specific union. Generated validation accepts only known concrete
   members of that family and checks their layer intervals. A Go interface type
@@ -62,7 +67,8 @@ convenient example. Runtime layer legality remains a separate condition.
   type and effective layer. Never add a constructor tag to a bare encoding.
 - Keep bare references statically typed to the resolved constructor variant.
   Propagate changes only through bare dependencies, including bare vector
-  elements. Stop at every boxed family interface.
+  elements. Stop at every boxed reference; use an interface there only when the
+  family has multiple constructors or contracts.
 - Resolve bare layouts independently in each snapshot. Reject an ambiguous or
   unsupported bare reference at generation with an owner/layer diagnostic;
   never choose a constructor by payload guessing or silently box it.
@@ -95,7 +101,8 @@ func (*ChatAdminRights) isChatAdminRightsType() {}
 func (*ChatAdminRightsLayer229) isChatAdminRightsType() {}
 ```
 
-Both rights variants implement one stable family. No `ChannelLayer229` is
+Both rights variants implement one stable family interface introduced because
+the selected history contains two distinct rights contracts. No `ChannelLayer229` is
 generated solely because its boxed rights member changed. Unchanged handlers
 can choose either member using the effective layer; live output uses the
 recipient binding's layer, independently of the originating method.
@@ -109,13 +116,15 @@ channel := &Channel{
 }
 ```
 
-Construct concrete values and assign them to the named family interface; never
-require callers to construct an interface or wrap each assignment. Adding 229
-does not change this initializer's concrete value into a 229 representation.
-An unchanged method's output builder may select a newer value or explicitly
-project it. Migrating an existing concrete field to an interface can still
-require changes to direct field reads, slice types and helper signatures; this
-guarantee covers compatible concrete assignments, not all previous API usage.
+With only the unchanged baseline contract, `Channel.AdminRights` is
+`*ChatAdminRights`. Adding layer 229 promotes that boxed field to the named
+family interface, but callers still construct the same concrete pointer and the
+initializer above remains valid without a wrapper or conversion. Adding 229
+does not turn that old value into a 229 representation. An unchanged method's
+output builder may select a newer value or explicitly project it. Readers of the
+promoted field must use a type switch or domain conversion, and concrete slice
+or helper signatures may need the same variant-aware treatment. The compatibility
+guarantee covers concrete assignments and initializers, not direct field reads.
 
 ### Request types and handler contracts
 
@@ -132,7 +141,9 @@ guarantee covers compatible concrete assignments, not all previous API usage.
   deduplicating methods. Boxed input/output references use stable family identity;
   their changing members do not change the enclosing method's identity.
 - Adding or replacing a constructor in an unchanged boxed result family creates
-  no extra handler, including when that family was previously a singleton.
+  no extra handler. If the family was previously a singleton, its method result
+  or enclosing boxed field may be promoted from a concrete pointer to the family
+  interface without creating a handler or parent variant.
   A changed method ID or own request layout still creates a distinct handler.
 - Both typed handlers may call private application business operations. TLRPC
   generates no business input/result conversion layer.
@@ -178,11 +189,11 @@ guarantee covers compatible concrete assignments, not all previous API usage.
 ### Dispatch and codec enforcement
 
 TLRPC generates the dispatch machinery. Existing boxed union serialization
-already calls a value's `SerializeTL` method through its interface, and union
-decoding uses `NewConstructorForLayer` followed by a family assertion and the
-selected value's `DeserializeTL`. Extend those paths to every boxed family,
-including singletons, while enforcing the strict interval and family rules
-below. Application handlers do not implement serialization type switches.
+calls a value's `SerializeTL` method through its interface, and union decoding
+uses `NewConstructorForLayer` followed by a family assertion and the selected
+value's `DeserializeTL`. Reuse that machinery for every multi-constructor or
+multi-contract boxed family while keeping unchanged singletons concrete.
+Application handlers do not implement serialization type switches.
 Decoding cannot inspect a Go dynamic type before constructing a value: the
 generated factory chooses it from the wire ID and effective layer, then verifies
 the expected family. Encoding uses interface method dispatch; a handwritten
@@ -265,10 +276,11 @@ generation. Each shared file has one assigned owner; tests follow the owner of
 the code they exercise. The server plan's P1-P8 work packages define the
 cross-repository dependency and exclusive write scopes.
 
-The first milestone is a generated small schema package that proves the locked
-initializer compiles both before and after the next layer is supplied. Full
-Telegram regeneration begins only after that package proves stable boxed family
-interfaces, correct same-ID decoding and lifecycle enforcement. Generated Go
+The first milestone is a generated small schema package that proves an unchanged
+singleton remains concrete and the locked initializer compiles before and after
+the next contract promotes its field to an interface. Full Telegram regeneration
+begins only after that package proves selective boxed-family interfaces, correct
+same-ID decoding and lifecycle enforcement. Generated Go
 compilation is part of each semantic milestone, not deferred to server migration.
 
 All implementation/review agents are capped at `gpt-5.6-sol`, medium reasoning.
@@ -280,7 +292,7 @@ No agent may silently escalate the model or reasoning effort.
 1. **Freeze the contract and failing fixtures — Sol medium.** Replace the
    contradictory requirements that additive fields share supersets and that
    all response-only changes preserve handlers. Add synthetic 228/229/230
-   fixtures for optional additions, stable singleton boxed interfaces, unchanged
+   fixtures for optional additions, concrete unchanged singletons, selective family interfaces, unchanged
    parents/handlers, bare-only propagation, declared result changes,
    removal/reappearance and bounded historical exceptions.
 2. **Resolve identities and lifetimes — Sol medium.** Change
@@ -289,8 +301,8 @@ No agent may silently escalate the model or reasoning effort.
    representation selection; remove unique-ID lifetime reopening from
    `normalizeUniqueIDRanges`. Implement independent contract identities and
    interval sets, boxed family references, bare dependencies, result references
-   and historical input policy. Replace snapshot-dependent singleton/union Go
-   mapping with stable boxed-family mapping in multi-layer generation.
+   and historical input policy. Emit interfaces only for families with multiple
+   constructors or distinct contracts in the selected history.
 3. **Emit fixed contracts in existing files — Sol medium.**
    Update types, requests, services, registration, codec and projection
    generators. A single owner handles the parser/generator semantic boundary;
@@ -298,7 +310,7 @@ No agent may silently escalate the model or reasoning effort.
    Update `cmd/tlrpc-gen/main.go` and `internal/generator/writer.go`; generate
    fixtures rather than editing generated files.
    Reuse existing union interface serialization and layer-aware factory decoding
-   for singleton boxed families. Compile the same application initializer
+   when a singleton evolves into multiple contracts. Compile the same application initializer
    against one-layer and extended multi-layer output before consumer migration.
 4. **Prove runtime enforcement — Sol medium.** Review `server.go`,
    `runtime_application.go`, `method_layers.go`, `types.go`, `sender.go`, codec entry points and runtime
@@ -321,9 +333,11 @@ No agent may silently escalate the model or reasoning effort.
   category files; compile examples and fixtures. No per-layer Go files.
 - Exactly one type per distinct contract; same-ID optional addition yields two
   concrete types and fixed codecs; unchanged third-layer reuse is proven.
-- Same-ID rights variants share one family interface; the parent declaration,
-  request type, method result signature and handler count stay unchanged when
-  only a boxed descendant changes. Prove singleton-to-multiple evolution and
+- Same-ID rights variants share one family interface in the expanded selected
+  history; the parent Go type, request type and handler count stay unchanged
+  when only a boxed descendant changes. A boxed field or method result that was
+  concrete in a baseline-only package becomes the family interface in the
+  expanded package. Prove singleton-to-multiple evolution and
   boxed vector/recursive parents do not introduce redundant variants.
 - Compile an identical application fixture containing
   `Channel{AdminRights: &ChatAdminRights{ChangeInfo: true}}` against baseline-only
@@ -359,15 +373,25 @@ Run focused tests first, then `GOWORK=off rtk go test -p=1 ./...`,
 the existing Makefile architecture guards. Compile packages sequentially;
 parallelize independent reviews, not resource-heavy full suites.
 
-## Completion record
+## Validation record
 
-Framework implementation is complete in the working tree. Validation performed:
+The selective-interface correction passed:
+
+- `go test -p=1 ./...`: passed.
+- `go vet -p=1 ./...` and `go build -p=1 ./...`: passed.
+- All 23 generated fixture files remained unchanged after regeneration.
+- Architecture guards passed.
+- 226 targeted tests passed.
+- Independent review found no actionable defects.
+
+The following validation predates the correction and remains historical evidence
+for candidate `d9581b0`:
 
 - `go test -p=1 ./... -count=1`: 782 tests passed across 26 packages.
 - `go vet -p=1 ./...` and `go build -p=1 ./...`: passed.
 - Focused response, sender, registration and codec-budget race tests: 15 passed.
 - All four Makefile architecture guards and `git diff --check`: passed.
-- Each of the three checked-in framework fixtures matches two fresh generations
+- Each of the three then-current framework fixtures matched two fresh generations
   byte for byte (23 category files total). Layered CLI fixtures separately prove
   deterministic output and unchanged baseline/expanded application initializers.
 - Generated runtime fixtures verify same-ID variants, projection, strict method
@@ -378,6 +402,6 @@ name of a bare-referenced family are explicitly unsupported. A historical bare
 request must resolve to one layout across all its accepted intervals. These
 cases fail generation instead of silently changing the wire contract.
 
-Only TLRPC's own fixtures and examples were regenerated. Tgserver's schema,
-generated contracts, dependency upgrade, and service migration remain deferred.
-No release, commit, deployment, or consumer-compatibility claim is made.
+The corrected framework generator and fixtures are complete. Tgserver
+regeneration, migration and consumer acceptance remain separate, and this record
+makes no release or deployment claim.

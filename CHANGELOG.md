@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Released entries are historical records; the Unreleased section and current
 documentation define future framework behavior.
 
+## [0.15.0] - Unreleased
+
+This is a coordinated, breaking pre-1.0 minor release. Regenerate consuming
+schemas and migrate their service implementations with the same generator and
+runtime revision before upgrading.
+
+### Changed
+
+- Generate one concrete type per distinct constructor contract, including
+  optional-field additions with unchanged constructor IDs. Reuse unchanged
+  contracts across layers instead of generating additive object supersets.
+- Emit named family interfaces only for multiple constructors or multiple
+  distinct layer contracts. Unchanged boxed singleton families use concrete
+  pointers. Adding a variant promotes the field to its family interface while
+  preserving existing concrete pointer initializers; field readers and concrete
+  vector/helper types must explicitly handle the alternatives.
+- Preserve parent and request types when only a boxed child contract changes.
+  Method ID, request layout, or declared result-contract changes produce
+  distinct handlers. Bare dependencies retain their concrete layout semantics.
+- Enforce constructor and method availability using the effective layer.
+  Historical methods require explicit bounded acceptance metadata; unavailable
+  IDs and unknown flag bits do not fall back to another layer's contract.
+- Replace reflective handler invocation and response normalization with
+  `MethodHandler`, `BindMethod`, and exact `EncodeTypedResponse` bindings.
+- Generate shared cursor codec bodies for buffered and stream entry points,
+  decode boxed families without replaying constructor bytes, reset reused
+  receivers, and enforce depth, vector, byte-length, and output budgets.
+
+### Performance and ownership
+
+- Reduce allocations in generated dispatch and buffered decoding; the measured
+  results and stream-path tradeoffs are recorded in `docs/performance`.
+- Borrow ciphertext only within synchronous decryption. Public decoded strings
+  and byte fields remain owned; this release adds no TCP transport prototype,
+  borrowed public fields, or unsafe string conversion.
+
+### Validation
+
+- Full Go tests, vet, build, architecture guards, generated application tests,
+  and deterministic regeneration of 23 existing fixture files pass for the
+  selective-interface correction. Consumer migration and release-module
+  validation remain prerequisites for publishing the release.
+
 ## [0.14.4] - 2026-09-09
 
 ### Added

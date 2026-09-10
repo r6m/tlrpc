@@ -117,7 +117,6 @@ other#00000003 text:string = Family;
 
 import "example.com/singleton-family/gen"
 
-var _ gen.FamilyType = &gen.Only{}
 var _ = &gen.Parent{Family: &gen.Only{Value: 1}}
 `
 	for _, layers := range [][]int{{228}, {228, 229}} {
@@ -143,7 +142,7 @@ var _ = &gen.Parent{Family: &gen.Only{Value: 1}}
 				t.Fatalf("run returned %d: %s", code, stderr.String())
 			}
 			requireLayeredGeneratedFiles(t, outDir)
-			assertConstructorDerivedFamilyName(t, outDir)
+			assertConstructorDerivedFamilyName(t, outDir, len(layers) == 2)
 			if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(layeredCLIGoMod("example.com/singleton-family")), 0o600); err != nil {
 				t.Fatal(err)
 			}
@@ -153,6 +152,100 @@ var _ = &gen.Parent{Family: &gen.Only{Value: 1}}
 			compileLayeredCLIApplication(t, moduleDir)
 		})
 	}
+}
+
+func TestRun_LayeredSingletonBoxedCodecRoundTrip(t *testing.T) {
+	basePath := writeTestFile(t, "base-228.tl", `---types---
+only#00000001 value:int = Family;
+parent#00000002 flags:# required:Family optional:flags.0?Family items:Vector<Family> = Parent;
+`)
+	moduleDir := t.TempDir()
+	outDir := filepath.Join(moduleDir, "gen")
+	var stderr strings.Builder
+	if code := run([]string{
+		"--schema=" + basePath,
+		"--base-layer=228",
+		"--layers=228",
+		"--out=" + outDir,
+		"--package=gen",
+	}, io.Discard, &stderr); code != 0 {
+		t.Fatalf("run returned %d: %s", code, stderr.String())
+	}
+	requireLayeredGeneratedFiles(t, outDir)
+	types, err := os.ReadFile(filepath.Join(outDir, "types.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{"Required *Only", "Optional *Only", "Items    []*Only"} {
+		if !strings.Contains(string(types), field) {
+			t.Fatalf("missing concrete singleton field %q:\n%s", field, types)
+		}
+	}
+	interfaces, err := os.ReadFile(filepath.Join(outDir, "interfaces.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(interfaces), "type FamilyType interface") || strings.Contains(string(interfaces), "isFamilyType") {
+		t.Fatalf("singleton family generated a speculative interface:\n%s", interfaces)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(layeredCLIGoMod("example.com/singleton-codec")), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	const application = `package application
+
+import (
+	"bytes"
+	"testing"
+
+	"example.com/singleton-codec/gen"
+)
+
+func TestConcreteBoxedSingletonCodec(t *testing.T) {
+	source := &gen.Parent{
+		Required: &gen.Only{Value: 1},
+		Optional: &gen.Only{Value: 2},
+		Items: []*gen.Only{{Value: 3}, {Value: 4}},
+	}
+	var encoded bytes.Buffer
+	if err := source.SerializeTL(&encoded); err != nil {
+		t.Fatalf("serialize: %v", err)
+	}
+	var decoded gen.Parent
+	if err := decoded.DeserializeTL(bytes.NewReader(encoded.Bytes())); err != nil {
+		t.Fatalf("deserialize: %v", err)
+	}
+	if decoded.Required == nil || decoded.Required.Value != 1 || decoded.Optional == nil || decoded.Optional.Value != 2 {
+		t.Fatalf("decoded singleton fields = %#v", decoded)
+	}
+	if len(decoded.Items) != 2 || decoded.Items[0] == nil || decoded.Items[0].Value != 3 || decoded.Items[1] == nil || decoded.Items[1].Value != 4 {
+		t.Fatalf("decoded singleton vector = %#v", decoded.Items)
+	}
+
+	withoutOptional := &gen.Parent{Required: &gen.Only{Value: 5}, Items: []*gen.Only{}}
+	encoded.Reset()
+	if err := withoutOptional.SerializeTL(&encoded); err != nil {
+		t.Fatalf("serialize without optional: %v", err)
+	}
+	decoded.Optional = &gen.Only{Value: 99}
+	if err := decoded.DeserializeTL(bytes.NewReader(encoded.Bytes())); err != nil {
+		t.Fatalf("deserialize without optional: %v", err)
+	}
+	if decoded.Optional != nil {
+		t.Fatalf("missing optional retained stale value: %#v", decoded.Optional)
+	}
+	if decoded.Items == nil || len(decoded.Items) != 0 {
+		t.Fatalf("empty singleton vector = %#v, want non-nil empty", decoded.Items)
+	}
+
+	if err := (&gen.Parent{Items: []*gen.Only{}}).SerializeTL(&bytes.Buffer{}); err == nil {
+		t.Fatal("nil required boxed singleton serialized successfully")
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(moduleDir, "application_test.go"), []byte(application), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	compileLayeredCLIApplication(t, moduleDir)
 }
 
 func TestRun_LayeredResultFamilyGeneratesTwoHandlersForOneRequest(t *testing.T) {
@@ -197,11 +290,11 @@ type messagesService struct {
 	gen.UnimplementedMessagesServer
 }
 
-func (messagesService) Get(context.Context, *gen.MessagesGetRequest) (gen.OldResultType, error) {
+func (messagesService) Get(context.Context, *gen.MessagesGetRequest) (*gen.OldResult, error) {
 	return &gen.OldResult{}, nil
 }
 
-func (messagesService) GetLayer229(context.Context, *gen.MessagesGetRequest) (gen.NewResultType, error) {
+func (messagesService) GetLayer229(context.Context, *gen.MessagesGetRequest) (*gen.NewResult, error) {
 	return &gen.NewResult{}, nil
 }
 
@@ -320,7 +413,7 @@ child#00000001 flags:# enabled:Bool label:flags.0?string = Child;
 	}
 }
 
-func TestRun_LayeredPrimitiveOnlySchemaOmitsInterfaces(t *testing.T) {
+func TestRun_LayeredPrimitiveOnlySchemaWritesEmptyInterfacesCategory(t *testing.T) {
 	basePath := writeTestFile(t, "base-228.tl", `---types---
 ---functions---
 ping#00000001 value:int = Bool;
@@ -337,8 +430,12 @@ ping#00000001 value:int = Bool;
 	}, io.Discard, &stderr); code != 0 {
 		t.Fatalf("run returned %d: %s", code, stderr.String())
 	}
-	if _, err := os.Stat(filepath.Join(outDir, "interfaces.go")); !os.IsNotExist(err) {
-		t.Fatalf("primitive-only layered schema wrote interfaces.go: %v", err)
+	interfaces, err := os.ReadFile(filepath.Join(outDir, "interfaces.go"))
+	if err != nil {
+		t.Fatalf("read primitive-only interfaces.go: %v", err)
+	}
+	if strings.Contains(string(interfaces), " interface {") {
+		t.Fatalf("primitive-only layered schema generated an interface:\n%s", interfaces)
 	}
 	if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(layeredCLIGoMod("example.com/primitive-only")), 0o600); err != nil {
 		t.Fatal(err)
@@ -372,7 +469,7 @@ func requireLayeredGeneratedFiles(t *testing.T, outDir string) {
 	}
 }
 
-func assertConstructorDerivedFamilyName(t *testing.T, outDir string) {
+func assertConstructorDerivedFamilyName(t *testing.T, outDir string, wantInterface bool) {
 	t.Helper()
 	types, err := os.ReadFile(filepath.Join(outDir, "types.go"))
 	if err != nil {
@@ -382,8 +479,21 @@ func assertConstructorDerivedFamilyName(t *testing.T, outDir string) {
 	if !strings.Contains(generated, "type Only struct") {
 		t.Fatal("multi-layer singleton family did not generate its concrete type from the constructor name")
 	}
-	if !strings.Contains(generated, "Family FamilyType") {
-		t.Fatal("multi-layer parent did not retain the FamilyType field")
+	interfaces, err := os.ReadFile(filepath.Join(outDir, "interfaces.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if wantInterface {
+		if !strings.Contains(generated, "Family FamilyType") || !strings.Contains(string(interfaces), "type FamilyType interface") {
+			t.Fatal("expanded family did not use its generated interface")
+		}
+	} else {
+		if !strings.Contains(generated, "Family *Only") {
+			t.Fatal("singleton family parent did not use its concrete pointer")
+		}
+		if strings.Contains(string(interfaces), "type FamilyType interface") || strings.Contains(string(interfaces), "isFamilyType") {
+			t.Fatal("singleton family generated a speculative interface")
+		}
 	}
 	for _, forbidden := range []string{"type Family struct", "type Family = Only"} {
 		if strings.Contains(generated, forbidden) {

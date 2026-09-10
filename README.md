@@ -71,12 +71,23 @@ tlrpc-gen \
   --package=gen
 ```
 
-Multi-layer output gives every boxed TL result family a stable named interface,
-including families that currently have only one constructor. Each distinct
-constructor contract gets its own concrete struct, including optional-field
-additions with an unchanged constructor ID. Unchanged constructors and methods
-are reused. Existing concrete initializers remain valid assignments to their
-family interfaces; adding a boxed child variant does not change its parents.
+Multi-layer output gives a boxed TL result family a stable named interface when
+the selected history contains multiple constructors or multiple distinct
+contracts for one constructor. Each distinct constructor contract gets its own
+concrete struct, including optional-field additions with an unchanged
+constructor ID. An unchanged singleton family keeps its concrete pointer type;
+the generator does not emit a speculative interface for it. If that singleton
+later evolves, boxed references change to the family interface while existing
+concrete pointer initializers remain valid assignments. Readers of the evolved
+field must handle its concrete variants. A boxed child change does not create a
+parent variant.
+
+This selective-interface rule is the locked correction to candidate `d9581b0`.
+The correction is implemented and validated in the current working tree. The
+full sequential test, vet and build gates pass; all 23 generated fixture files
+remain deterministic, architecture guards pass, 226 targeted tests pass, and
+independent review found no actionable defects. Consumer acceptance remains a
+separate gate.
 
 Method input or declared result-contract changes receive typed `Layer<N>`
 handlers. Constructor evolution inside an unchanged boxed family does not

@@ -300,7 +300,17 @@ messages.newMethod#00000021 = Result;`)
 	assert.Equal(t, 0, introduced[0].Intervals[0].MaxLayer)
 
 	containerVariants := constructorsNamed(layered.Schema.Constructors, "container")
-	require.Len(t, containerVariants, 1, "compatible nested supersets must not force parent variants")
+	require.Len(t, containerVariants, 1, "boxed child variants must not force parent variants")
+	for _, name := range []string{"Container", "Result", "Nested"} {
+		family, ok := layered.Schema.FindType(name)
+		require.True(t, ok)
+		assert.False(t, family.IsUnion, "singleton %s stays concrete", name)
+		assert.False(t, layered.Schema.UnionTypes[name])
+	}
+	childFamily, ok := layered.Schema.FindType("Child")
+	require.True(t, ok)
+	assert.True(t, childFamily.IsUnion)
+	assert.True(t, layered.Schema.UnionTypes["Child"])
 
 	forwardVariants := functionsNamed(layered.Schema.Functions, "messages.forward")
 	require.Len(t, forwardVariants, 2)

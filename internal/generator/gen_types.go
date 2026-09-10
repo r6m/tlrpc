@@ -31,7 +31,10 @@ func NewTypeGenerator(namer *naming.Namer, out io.Writer, schema *parser.Schema)
 				mark(*reference.Generic)
 				return
 			}
-			if name, ok := bareConcreteTypeName(namer, schema, reference); ok {
+			if !reference.IsBare {
+				return
+			}
+			if name, ok := referenceConcreteTypeName(namer, schema, reference); ok {
 				g.bareTypes[name] = struct{}{}
 			}
 		}
@@ -242,7 +245,7 @@ func (g *TypeGenerator) GenerateSingleConstructorType(decl *parser.TypeDecl) err
 
 // GenerateInterface emits a polymorphic interface for union types.
 func (g *TypeGenerator) GenerateInterface(decl *parser.TypeDecl) error {
-	if (!decl.IsUnion || len(decl.Constructors) == 1) && !g.schema.IsLayered {
+	if len(decl.Constructors) <= 1 {
 		return nil
 	}
 	baseName := typeName(g.namer, decl.Name, 0)
@@ -502,6 +505,9 @@ func shouldSkipParam(param parser.Parameter) bool {
 
 func (g *TypeGenerator) goType(t parser.TypeRef) string {
 	base := g.goBaseType(t)
+	if isBoxedSingletonPointer(g.schema, t) {
+		return "*" + base
+	}
 	if t.Optional && !isTrueType(t) && !isUnionType(g.schema, t) && !strings.HasPrefix(base, "[]") {
 		return "*" + base
 	}
@@ -531,7 +537,7 @@ func (g *TypeGenerator) goBaseTypeNonVector(t parser.TypeRef) string {
 	if isUnionType(g.schema, t) {
 		return unionInterfaceName(g.namer, t)
 	}
-	if name, ok := bareConcreteTypeName(g.namer, g.schema, t); ok {
+	if name, ok := referenceConcreteTypeName(g.namer, g.schema, t); ok {
 		return name
 	}
 
