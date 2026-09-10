@@ -42,6 +42,7 @@ func newConnectionFrameSink(connection FrameConnection, policies ...FrameSinkPol
 		WriteTimeout:  DefaultPhysicalWriteTimeout,
 	}
 	if len(policies) != 0 {
+		policy.Observe = policies[0].Observe
 		if policies[0].QueueCapacity > 0 {
 			policy.QueueCapacity = policies[0].QueueCapacity
 		}
@@ -63,7 +64,7 @@ func newConnectionFrameSink(connection FrameConnection, policies ...FrameSinkPol
 func (s *connectionFrameSink) WriteFrame(ctx context.Context, frame []byte) error {
 	started := time.Now()
 	finish := func(outcome string, err error) error {
-		if s.observe != nil && err != nil {
+		if s.observe != nil {
 			s.observe(len(frame), outcome, err, time.Since(started))
 		}
 		return err
@@ -100,7 +101,10 @@ func (s *connectionFrameSink) WriteFrame(ctx context.Context, frame []byte) erro
 		return finish("failed", err)
 	}
 	defer func() { _ = clearDeadline() }()
-	return finish("failed", s.connection.WriteMessage(frame))
+	if err := s.connection.WriteMessage(frame); err != nil {
+		return finish("failed", err)
+	}
+	return finish("ok", nil)
 }
 
 func writeQueueError(ctx context.Context) error {

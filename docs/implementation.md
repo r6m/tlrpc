@@ -349,6 +349,14 @@ The event variants are `ConnectionEvent`, `HandshakeEvent`, `SessionEvent`,
 They report stable identifiers, classifications, durations, counts, and error
 codes rather than payloads or secret material.
 
+`WriterEvent` reports successful physical frame writes with `Outcome: "ok"`
+and `Classification: "ok"`, as well as failed writes and queue pressure.
+Its duration covers physical-write queue waiting plus the transport write;
+it excludes response encoding, encryption, session persistence, and client
+receipt, so it is not end-to-end RPC latency. Events describe frames, which
+may contain multiple messages, and do not identify individual RPCs. Successful
+write telemetry is best-effort sampling subject to the same event drops below.
+
 Delivery is asynchronous through an internal 256-event channel. Emission is
 non-blocking: a full channel drops the new event. Observer callback panics are
 recovered. Observers should return quickly and export metrics/logs elsewhere;

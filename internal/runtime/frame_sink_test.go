@@ -17,7 +17,15 @@ import (
 
 func TestConnectionFrameSinkSerializesConcurrentWrites(t *testing.T) {
 	connection := &concurrencyCheckingFrameConnection{}
-	sink := newConnectionFrameSink(connection)
+	var observations atomic.Int32
+	sink := newConnectionFrameSink(connection, FrameSinkPolicy{
+		Observe: func(bytes int, outcome string, err error, duration time.Duration) {
+			observations.Add(1)
+			if bytes != 1 || outcome != "ok" || err != nil || duration <= 0 {
+				t.Errorf("write observation = (%d, %q, %v, %v)", bytes, outcome, err, duration)
+			}
+		},
+	})
 
 	const writers = 64
 	start := make(chan struct{})
@@ -45,6 +53,9 @@ func TestConnectionFrameSinkSerializesConcurrentWrites(t *testing.T) {
 	}
 	if got := connection.writeCount.Load(); got != writers {
 		t.Fatalf("physical writes = %d, want %d", got, writers)
+	}
+	if got := observations.Load(); got != writers {
+		t.Fatalf("write observations = %d, want %d", got, writers)
 	}
 }
 
@@ -139,7 +150,20 @@ func TestConnectionFrameSinkBoundsWaitingWriters(t *testing.T) {
 
 func TestConnectionFrameSinkDeadlineCoversPhysicalWrite(t *testing.T) {
 	connection := &deadlineFrameConnection{}
-	sink := newConnectionFrameSink(connection, FrameSinkPolicy{QueueCapacity: 1, WriteTimeout: 20 * time.Millisecond})
+	var observations int
+	var observedError error
+	var observedDuration time.Duration
+	sink := newConnectionFrameSink(connection, FrameSinkPolicy{
+		QueueCapacity: 1,
+		WriteTimeout:  20 * time.Millisecond,
+		Observe: func(bytes int, outcome string, err error, duration time.Duration) {
+			observations++
+			observedError, observedDuration = err, duration
+			if bytes != 1 || outcome != "failed" {
+				t.Errorf("write observation = (%d, %q), want (1, failed)", bytes, outcome)
+			}
+		},
+	})
 	started := time.Now()
 	err := sink.WriteFrame(context.Background(), []byte{1})
 	if !errors.Is(err, os.ErrDeadlineExceeded) {
@@ -147,6 +171,9 @@ func TestConnectionFrameSinkDeadlineCoversPhysicalWrite(t *testing.T) {
 	}
 	if elapsed := time.Since(started); elapsed > 200*time.Millisecond {
 		t.Fatalf("physical deadline took %v", elapsed)
+	}
+	if observations != 1 || observedError != err || observedDuration <= 0 || observedDuration > time.Since(started) {
+		t.Fatalf("failure observation = (%d, %v, %v), write error = %v", observations, observedError, observedDuration, err)
 	}
 }
 
