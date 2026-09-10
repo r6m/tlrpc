@@ -97,7 +97,7 @@ func (c *androidAcknowledgingConn) ReadMessage(limit int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Conn.WriteMessage(encoded); err != nil {
+	if err := c.WriteMessage(encoded); err != nil {
 		return nil, err
 	}
 	c.acknowledgements++

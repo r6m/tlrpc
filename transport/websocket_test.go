@@ -22,7 +22,7 @@ func TestWebSocketStreamFlushPreservesPacketBoundaryBeyondBufferSize(t *testing.
 			writeResult <- err
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		stream := newWSStream(conn)
 		buffered := bufio.NewWriterSize(stream, 4*1024)

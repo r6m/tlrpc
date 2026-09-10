@@ -5,5 +5,5 @@ func methodSupportsLayer(method MethodDesc, layer int) bool {
 }
 
 func methodLayersOverlap(a, b MethodDesc) bool {
-	return !(a.MaxLayer != 0 && b.MinLayer > a.MaxLayer || b.MaxLayer != 0 && a.MinLayer > b.MaxLayer)
+	return (a.MaxLayer == 0 || b.MinLayer <= a.MaxLayer) && (b.MaxLayer == 0 || a.MinLayer <= b.MaxLayer)
 }

@@ -146,7 +146,7 @@ func declarationIntervalSetsOverlap(first, second []LayerInterval) bool {
 }
 
 func layerRangesOverlap(firstMin, firstMax, secondMin, secondMax int) bool {
-	return !(firstMax != 0 && secondMin > firstMax || secondMax != 0 && firstMin > secondMax)
+	return (firstMax == 0 || secondMin <= firstMax) && (secondMax == 0 || firstMin <= secondMax)
 }
 
 // validateTypeResolution checks that all referenced types are defined

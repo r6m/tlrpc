@@ -70,7 +70,6 @@ func ResolveLayers(base *Schema, baseLayer int, differences []LayerDifference) (
 	handlerVariants := make(map[string]map[string]int)
 	typeVariants := make(map[string]map[string]int)
 	functionIndexes := make(map[string]int)
-	typeVersions := make(map[string]int)
 	versionsBySnapshot := make([]map[string]int, 0, len(snapshots))
 	activeConstructors := make(map[string]int)
 	activeFunctions := make(map[string]int)
@@ -78,7 +77,7 @@ func ResolveLayers(base *Schema, baseLayer int, differences []LayerDifference) (
 
 	for snapshotIndex, snapshot := range snapshots {
 		layer := layers[snapshotIndex]
-		typeVersions = make(map[string]int)
+		typeVersions := make(map[string]int)
 		for _, declaration := range snapshot.Types {
 			signature, err := resolvedTypeContractSignature(declaration.Name, snapshot, nil)
 			if err != nil {

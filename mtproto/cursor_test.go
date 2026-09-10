@@ -40,14 +40,30 @@ func TestCursorWireAndOwnedValues(t *testing.T) {
 		t.Fatal(err)
 	}
 	var want bytes.Buffer
-	WriteInt32(&want, -7)
-	WriteInt64(&want, -1<<40)
-	WriteDouble(&want, math.Pi)
-	WriteString(&want, "owned text")
-	WriteBytes(&want, payload)
-	WriteVectorHeader(&want, 2)
-	WriteBool(&want, true)
-	WriteBool(&want, false)
+	if err := WriteInt32(&want, -7); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteInt64(&want, -1<<40); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteDouble(&want, math.Pi); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteString(&want, "owned text"); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteBytes(&want, payload); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteVectorHeader(&want, 2); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteBool(&want, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteBool(&want, false); err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(e.Bytes(), want.Bytes()) {
 		t.Fatalf("wire mismatch %x", e.Bytes())
 	}

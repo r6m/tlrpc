@@ -23,7 +23,7 @@ func TestTemporarySinkExpiresIdleConnectionAndRejectsRevocation(t *testing.T) {
 				t.Fatal(err)
 			}
 			conn := newScriptedFrameConnection(nil, 10)
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 			owner := &Connection{config: ConnectionConfig{Conn: conn, AuthKeys: keys}, frameSink: newConnectionFrameSink(conn)}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
