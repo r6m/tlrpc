@@ -310,6 +310,87 @@ func register(server *tlrpc.Server) {
 	compileLayeredCLIApplication(t, moduleDir)
 }
 
+func TestRun_LayeredMethodSignatureAndResultChangeUsesExactRequestVariants(t *testing.T) {
+	basePath := writeTestFile(t, "base-228.tl", `---types---
+oldResult#00000001 value:int = OldResult;
+---functions---
+channels.joinChannel#00000020 channel:int = OldResult;
+`)
+	deltaPath := writeTestFile(t, "delta-229.tl", `---types---
+newResult#00000002 text:string = NewResult;
+---functions---
+channels.joinChannel#00000021 channel:string invite_hash:string = NewResult;
+`)
+
+	moduleDir := t.TempDir()
+	outDir := filepath.Join(moduleDir, "gen")
+	var stderr strings.Builder
+	if code := run([]string{
+		"--schema=" + basePath,
+		"--base-layer=228",
+		"--layers=228,229",
+		"--layer-diff=229:" + deltaPath,
+		"--out=" + outDir,
+		"--package=gen",
+	}, io.Discard, &stderr); code != 0 {
+		t.Fatalf("run returned %d: %s", code, stderr.String())
+	}
+	requireLayeredGeneratedFiles(t, outDir)
+	if err := os.WriteFile(filepath.Join(moduleDir, "go.mod"), []byte(layeredCLIGoMod("example.com/method-contract")), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	const application = `package application
+
+import (
+	"context"
+	"testing"
+
+	"example.com/method-contract/gen"
+)
+
+type channelsService struct {
+	gen.UnimplementedChannelsServer
+}
+
+func (channelsService) JoinChannel(context.Context, *gen.ChannelsJoinChannelRequest) (*gen.OldResult, error) {
+	return &gen.OldResult{}, nil
+}
+
+func (channelsService) JoinChannelLayer229(context.Context, *gen.ChannelsJoinChannelRequestLayer229) (*gen.NewResult, error) {
+	return &gen.NewResult{}, nil
+}
+
+var _ gen.ChannelsServer = channelsService{}
+
+func TestRequestConstructorsAreFencedByLayer(t *testing.T) {
+	oldRequest, ok := gen.NewMethodRequestForLayer(0x20, 228)
+	if !ok {
+		t.Fatal("layer 228 rejected its joinChannel constructor")
+	}
+	if _, ok := oldRequest.(*gen.ChannelsJoinChannelRequest); !ok {
+		t.Fatalf("layer 228 request type = %T", oldRequest)
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x20, 229); ok {
+		t.Fatal("layer 229 accepted the replaced layer 228 constructor")
+	}
+	if _, ok := gen.NewMethodRequestForLayer(0x21, 228); ok {
+		t.Fatal("layer 228 accepted the layer 229 constructor")
+	}
+	newRequest, ok := gen.NewMethodRequestForLayer(0x21, 229)
+	if !ok {
+		t.Fatal("layer 229 rejected its joinChannel constructor")
+	}
+	if _, ok := newRequest.(*gen.ChannelsJoinChannelRequestLayer229); !ok {
+		t.Fatalf("layer 229 request type = %T", newRequest)
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(moduleDir, "application_test.go"), []byte(application), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	compileLayeredCLIApplication(t, moduleDir)
+}
+
 func TestRun_HistoricalVariantRequiresAcceptLayersForEveryBaselineSelection(t *testing.T) {
 	basePath := writeTestFile(t, "base-228.tl", `---types---
 result#00000001 = Result;
